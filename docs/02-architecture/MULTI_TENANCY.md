@@ -1,6 +1,6 @@
 # Multi-Tenancy — Implementation Specification
 
-> **Status:** Approved — implementation-ready specification. **No tenancy behavior is implemented yet.**
+> **Status:** Approved — core implemented (Sprint 004): contexts, resolver, middleware, scoping stack, validation rules, queue/cache/storage isolation. Pending: correlation ID middleware (Audit module), tenant-settings and platform tenant-management endpoints (RBAC module), notification/export isolation (their owning modules). See `docs/09-modules/00-tenancy/README.md` for the per-phase status.
 > **Last updated:** 2026-08-06
 
 ## Purpose
