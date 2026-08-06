@@ -1,6 +1,6 @@
 # Module: Multi-Tenant Foundation (التأسيس متعدد المستأجرين)
 
-> **Status:** Specification complete — implementation pending. **No tenancy behavior is implemented.**
+> **Status:** Core implemented (Sprint 004). Data layer, contexts, resolver, middleware, scoping stack, validation rules, queue/cache/storage isolation, and the full core Pest suite are implemented and green. **Still pending:** correlation ID middleware (lands with the Audit module), tenant-settings and `/api/v1/platform/tenants` endpoints (require RBAC/permissions), lifecycle transition endpoints, and exceptional-access audit records.
 > **Last updated:** 2026-08-06
 
 ## Purpose
@@ -23,10 +23,10 @@ Provide the tenancy foundation every other module depends on: the tenant (organi
 
 ## Implementation order (each phase ≤ one sprint, independently mergeable)
 
-1. **Phase 1 — Data layer:** `tenants` migration (with `tenant_code`, `locale`, `timezone`, `suspended_at`, `archived_at`) + `TenantStatus` enum + `Tenant` model + `users.tenant_id` migration + factories/seeders (two-tenant fixtures). No behavior change; existing tests stay green.
-2. **Phase 2 — Contexts and resolution:** `TenantContext` + `PlatformContext` + the five exceptions → `TenantResolver` interface + `AuthenticatedUserTenantResolver` → `ResolveTenantContext` + `EnsureTenantIsActive` middleware → correlation ID middleware → login/lifecycle behavior. Test series C, P-ctx, R, X.
-3. **Phase 3 — Scoping stack:** `TenantScope` + `TenantOwned` contract + `UsesTenantScope` trait (fail-closed, force-set, immutability) → route-binding behavior → `TenantExists`/`TenantUnique` validation builders → `tenant_settings` table + endpoints as the first consumer. Test series S, B, V, T.
-4. **Phase 4 — Propagation and platform:** job payload capture + job middleware + classification behavior → cache namespace helper → storage path helper → `/api/v1/platform/tenants` endpoints + `platform_tenants.*` permissions + exceptional-access audit path. Test series Q, K, F, P, PF.
+1. **Phase 1 — Data layer:** ✅ Implemented. `tenants` migration (with `tenant_code`, `locale`, `timezone`, `suspended_at`, `archived_at`) + `TenantStatus` enum + `Tenant` model + `users.tenant_id` migration + factories + `rafee` seeder.
+2. **Phase 2 — Contexts and resolution:** ✅ Implemented except correlation ID middleware and login-time checks (both land with their owning modules — Audit and Authentication). `TenantContext` + `PlatformContext` + the five exceptions + `TenantResolver`/`AuthenticatedUserTenantResolver` + `ResolveTenantContext` + `EnsureTenantIsActive`. Test series C, PC, R green.
+3. **Phase 3 — Scoping stack:** ✅ Implemented except tenant-settings endpoints (require RBAC). `TenantScope` + `TenantOwned` + `UsesTenantScope` (fail-closed, force-set, immutability) + route-binding behavior + `TenantExists`/`TenantUnique` rules + `tenant_settings` table. Test series S, B, V green.
+4. **Phase 4 — Propagation and platform:** ✅ Isolation primitives implemented (job capture + job middleware + classification, `TenantCache`, `TenantStorage`; test series Q, K, F green). **Pending:** `/api/v1/platform/tenants` endpoints, `platform_tenants.*` permissions, and the exceptional-access audit path (require RBAC and Audit modules). Test series P, PF pending.
 
 Phases 1→4 are strictly ordered. Business modules may start only after Phase 3.
 
