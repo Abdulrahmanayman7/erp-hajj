@@ -20,7 +20,7 @@ Define what must be tested and to what standard. Per-module test plans live in e
 - **Workflow transition tests** — valid and invalid transitions for all four core workflows.
 - **Audit tests** — critical operations produce the expected audit records; secrets never appear in audit values.
 - **File authorization tests** — private files are not downloadable without permission.
-- **Multi-tenant isolation tests** — mandatory per module.
+- **Multi-tenant isolation tests** — mandatory per module. The tenancy foundation itself has a complete positive/negative/edge/security matrix in [00-tenancy/TEST_PLAN.md](../09-modules/00-tenancy/TEST_PLAN.md); business modules reuse its shared helpers (`actingAsTenantUser()`, two-tenant fixtures) and add at least one explicit cross-tenant test per endpoint group.
 
 ## Frontend Tests
 
@@ -41,14 +41,24 @@ Define what must be tested and to what standard. Per-module test plans live in e
 - Inventory transaction.
 - Asset custody assignment and return.
 
+## Rules
+
+- **Tests must be deterministic** — no time-of-day, ordering, or external-service dependence; flaky tests are fixed or quarantined with an issue, never ignored.
+- **Failing or flaky security tests block merging** (cross-tenant attack suites, policy tests, file-authorization tests) — see [DEFINITION_OF_DONE.md](../00-project/DEFINITION_OF_DONE.md).
+- Do not weaken or delete a failing test to make it pass — fix the code or raise the issue.
+
 ## Environment Rules (see [ENVIRONMENTS.md](../08-deployment/ENVIRONMENTS.md))
 
 - Isolated test database; repeatable migrations; factories for all entities; separate tenant fixtures.
 - No production external dependencies; mock storage and notifications where appropriate.
 
+## Tooling (decided at scaffolding)
+
+- **Backend: Pest** (installed; `tests/Pest.php` binds the Laravel `TestCase` to `tests/Feature`).
+- **Frontend: Vitest** (installed; `npm run test`).
+- **CI:** `.github/workflows/ci.yml` runs both suites on push/PR to `develop` and `main`.
+
 ## TBD
 
-- Backend framework (Pest vs. PHPUnit): TBD at scaffolding.
-- Frontend tooling (Vitest proposed) and E2E tooling (Playwright proposed): TBD.
-- CI pipeline in `.github/workflows/`: TBD.
-- Coverage thresholds: TBD — the required test categories above are the current gate.
+- **E2E tooling** (Playwright proposed): unresolved because no user-facing flows exist yet. **Recommended:** Playwright, introduced with the authentication module. **Impact:** new CI job; no effect on unit/feature suites.
+- **Coverage thresholds**: unresolved because a numeric gate before real modules exist would measure scaffolding. **Recommended:** enforce category completeness (the lists above) now; add a line-coverage floor after the first two business modules. **Impact:** CI configuration only.

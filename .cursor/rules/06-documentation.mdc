@@ -14,6 +14,6 @@ The `docs/` tree is the project's source of truth.
 - **Do not invent requirements or fields.** Unresolved decisions are explicitly marked **TBD** — never silently resolved.
 - **Documentation must reflect actual behavior. Do not document planned behavior as completed** — module docs describe planned contracts and conceptual models until implemented.
 - Never describe future-scope items as part of the current MVP.
-- Module documentation lives in `docs/09-modules/<module>/` with: README, BUSINESS_RULES, PERMISSIONS, API, DATA_MODEL, UI, ACCEPTANCE_CRITERIA, TEST_PLAN.
+- Module documentation lives in `docs/09-modules/<module>/` with: README, BUSINESS_RULES, PERMISSIONS, API, DATA_MODEL, UI, ACCEPTANCE_CRITERIA, TEST_PLAN — and must satisfy the checklist in `docs/02-architecture/MODULE_TEMPLATE.md` before implementation starts.
 - Every completed feature must update, where relevant: MVP scope status, business rules, API docs, database docs, module docs, CHANGELOG, and an ADR if architecture changed — in the same PR.
 - ADRs in `docs/10-decisions/` (`ADR-NNNN-TITLE.md`): Status, Context, Decision, Consequences. Changing an accepted decision requires updating or superseding its ADR.

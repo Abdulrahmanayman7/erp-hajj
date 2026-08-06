@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Engineering standards set: `docs/02-architecture/ENGINEERING_PRINCIPLES.md`, `CODING_STANDARDS.md`, `MODULE_TEMPLATE.md`, `REVIEW_CHECKLIST.md`, and `docs/00-project/DEFINITION_OF_DONE.md`; Cursor rules updated to enforce them.
+- Tenant Foundation implementation specification (documentation only — no code): tenant identity (`tenant_code`, first tenant رفيع/`rafee`), four-status lifecycle (`pending`/`active`/`suspended`/`archived`) with an explicit transition graph, `TenantContext` + `PlatformContext` (no public tenancy bypass), `TenantResolver` abstraction, `ResolveTenantContext`/`EnsureTenantIsActive` middleware separation with stable error codes, `TenantOwned`/`UsesTenantScope` model mechanism, tenant-scoped validation builders, queue/scheduler/cache/storage/notification/export isolation, mandatory correlation ID, and a complete Pest test matrix.
+
 - Backend scaffolding: Laravel 12 installed in `backend/` with Sanctum (SPA cookie mode, `statefulApi()` + CORS restricted to the SPA origin), Pest replacing PHPUnit, and Pint. Standardized response envelope helper (`App\Core\Shared\ApiResponse`), first endpoint `GET /api/v1/health` (`App\Core\Health\HealthController`), and Pest feature tests for the envelope.
 - Frontend scaffolding: Vue 3 + TypeScript (Vite) installed in `frontend/` with Pinia, Vue Router, TanStack Query, Tailwind CSS 4, vue-i18n (Arabic default), and Vitest. RTL app shell with right-side sidebar and header, system status page consuming the health endpoint, and a shared API client (`src/shared/api/http.ts`) implementing the standardized envelope with tests.
 - Continuous integration: `.github/workflows/ci.yml` running backend (composer validate, Pint, Pest) and frontend (Vitest, type-check, build) jobs with dependency caching on push/PR to `develop` and `main`.

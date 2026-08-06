@@ -5,16 +5,19 @@ alwaysApply: true
 
 # Multi-Tenancy (non-negotiable)
 
-Decided strategy (see `docs/02-architecture/MULTI_TENANCY.md`, ADR-0003): single application, single database, shared schema, `tenant_id` on tenant-owned tables, automatic scoping via `Core/Tenancy`.
+Binding spec: `docs/02-architecture/MULTI_TENANCY.md` + `docs/09-modules/00-tenancy/` (ADR-0003). Single application, single database, shared schema, `tenant_id` on tenant-owned tables, automatic scoping via `Core/Tenancy`.
 
-- **Cross-tenant access must be impossible.** No tenant-owned query without tenant scoping.
-- Tenant-owned queries are **automatically scoped** (global scope/trait) — never manually remembered `where` clauses.
-- **Never trust `tenant_id` from request payloads.** Tenant context comes only from the authenticated user.
-- Route model binding respects tenant scope; another tenant's record behaves as nonexistent (`404`, never `403`).
-- Unique constraints include `tenant_id` where needed.
-- Background jobs carry tenant context; cache keys include tenant context; file storage paths are tenant-isolated.
-- Audit logs include `tenant_id`; notifications never cross tenants; exports include only current tenant data.
-- Central platform tables may omit `tenant_id` only with explicit justification in module docs.
-- Each tenant user belongs to one tenant in the MVP; multi-organization membership is future scope.
-- Platform Super Admin access to tenant data is exceptional, permission-controlled, and always audited.
-- **Every tenant-owned module ships at least one explicit cross-tenant access test.**
+- **Cross-tenant access must be impossible.** No tenant-owned query without tenant scoping; scoping **fails closed** (throws without context).
+- Tenant-owned models implement the `TenantOwned` contract and use the `UsesTenantScope` trait — never manually remembered `where` clauses.
+- **Never trust `tenant_id` from request payloads.** Tenant context comes only from the authenticated user via `TenantResolver` → `TenantContext`. Business modules consume `TenantContext` only.
+- `tenant_code` (immutable slug; first tenant: **`rafee`** / رفيع) is an operational label for logs/exports/paths — **never an authorization input**. Do not hardcode the platform to `rafee`.
+- **No public tenancy bypass.** `runWithoutTenancy()` does not exist. Only `TenantContext::runAsTenant()` (per-tenant, restores state) and the narrowly scoped `PlatformContext` (platform routes/commands only). All-tenant work iterates tenants and calls `runAsTenant()` per tenant.
+- Middleware separation: `ResolveTenantContext` (resolution, clears context in `finally`) and `EnsureTenantIsActive` (status gate only). Stable codes: `TENANT_CONTEXT_MISSING`, `TENANT_CONTEXT_INVALID`, `TENANT_PENDING`, `TENANT_SUSPENDED`, `TENANT_ARCHIVED`.
+- Tenant statuses: `pending`/`active`/`suspended`/`archived`; `archived → active` is forbidden; lifecycle blocks return `403` + stable code; cross-tenant lookups return **`404`, never `403`**.
+- Unique/exists validation on tenant-owned data uses the tenant-scoped builders (`TenantUnique`/`TenantExists`); unique constraints include `tenant_id` where per-tenant.
+- Jobs carry server-generated tenant metadata (job middleware restores context, clears in `finally`; business jobs release on suspended/pending, cancel on archived); cache keys only via the `tenant:{id}:` namespace helper; storage under `tenants/{tenant_id}/...` (private disks); notifications and exports never cross tenants.
+- Audit logs include `tenant_id` and the mandatory **correlation ID**.
+- Central platform tables may omit `tenant_id` only with explicit justification in module docs. Each tenant user belongs to one tenant in the MVP.
+- Platform Super Admin access to tenant data is exceptional (`platform_tenants.access_data`), via `runAsTenant()` inside `PlatformContext`, and always audited into the target tenant's trail.
+- **Every tenant-owned module ships explicit cross-tenant attack tests** (see `docs/09-modules/00-tenancy/TEST_PLAN.md`); failing security tests block merge.
+- Performance never weakens isolation; raw SQL against tenant-owned tables requires an explicit tenant predicate + review.

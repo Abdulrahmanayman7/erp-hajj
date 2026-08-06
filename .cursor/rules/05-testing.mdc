@@ -24,6 +24,7 @@ See `docs/07-testing/TESTING_STRATEGY.md` and each module's `TEST_PLAN.md`. Test
 ## Rules
 
 - Do not weaken or delete a failing test to make it pass — fix the code or raise the issue.
-- Use factories and separate tenant fixtures; never depend on production data or external services in tests.
-- List executed tests in the PR "Tests executed" section.
-- Framework choices still TBD (Pest vs. PHPUnit; Vitest/Playwright proposed) — confirm before scaffolding tests.
+- **Failing or flaky security tests block merging** (cross-tenant attack suites, policy tests, file-authorization tests); tests must be deterministic.
+- Use factories and separate tenant fixtures (see `docs/09-modules/00-tenancy/TEST_PLAN.md` for the tenancy matrix and shared helpers); never depend on production data or external services in tests.
+- List executed tests in the PR "Tests executed" section; completion is defined by `docs/00-project/DEFINITION_OF_DONE.md`.
+- Tooling is decided: **Pest** (backend), **Vitest** (frontend); Playwright proposed for future E2E.
