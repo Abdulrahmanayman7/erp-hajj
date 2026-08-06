@@ -1,0 +1,20 @@
+---
+description: Tenant isolation rules — cross-tenant access must be impossible
+alwaysApply: true
+---
+
+# Multi-Tenancy (non-negotiable)
+
+Decided strategy (see `docs/02-architecture/MULTI_TENANCY.md`, ADR-0003): single application, single database, shared schema, `tenant_id` on tenant-owned tables, automatic scoping via `Core/Tenancy`.
+
+- **Cross-tenant access must be impossible.** No tenant-owned query without tenant scoping.
+- Tenant-owned queries are **automatically scoped** (global scope/trait) — never manually remembered `where` clauses.
+- **Never trust `tenant_id` from request payloads.** Tenant context comes only from the authenticated user.
+- Route model binding respects tenant scope; another tenant's record behaves as nonexistent (`404`, never `403`).
+- Unique constraints include `tenant_id` where needed.
+- Background jobs carry tenant context; cache keys include tenant context; file storage paths are tenant-isolated.
+- Audit logs include `tenant_id`; notifications never cross tenants; exports include only current tenant data.
+- Central platform tables may omit `tenant_id` only with explicit justification in module docs.
+- Each tenant user belongs to one tenant in the MVP; multi-organization membership is future scope.
+- Platform Super Admin access to tenant data is exceptional, permission-controlled, and always audited.
+- **Every tenant-owned module ships at least one explicit cross-tenant access test.**

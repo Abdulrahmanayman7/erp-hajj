@@ -1,0 +1,19 @@
+---
+description: Documentation conventions for docs/ files
+globs: docs/**
+alwaysApply: false
+---
+
+# Documentation Conventions
+
+The `docs/` tree is the project's source of truth.
+
+- Write in **clear English**; preserve Arabic business terminology where useful (see `docs/00-project/GLOSSARY.md`).
+- Every doc starts with a header block containing **Status** and **Last updated** (YYYY-MM-DD). Update both when editing.
+- Every doc contains: purpose, rules/content, and current decisions.
+- **Do not invent requirements or fields.** Unresolved decisions are explicitly marked **TBD** — never silently resolved.
+- **Documentation must reflect actual behavior. Do not document planned behavior as completed** — module docs describe planned contracts and conceptual models until implemented.
+- Never describe future-scope items as part of the current MVP.
+- Module documentation lives in `docs/09-modules/<module>/` with: README, BUSINESS_RULES, PERMISSIONS, API, DATA_MODEL, UI, ACCEPTANCE_CRITERIA, TEST_PLAN.
+- Every completed feature must update, where relevant: MVP scope status, business rules, API docs, database docs, module docs, CHANGELOG, and an ADR if architecture changed — in the same PR.
+- ADRs in `docs/10-decisions/` (`ADR-NNNN-TITLE.md`): Status, Context, Decision, Consequences. Changing an accepted decision requires updating or superseding its ADR.
