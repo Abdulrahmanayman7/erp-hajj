@@ -81,8 +81,12 @@ POST /api/v1/tasks/{task}/complete
 - No breaking change inside `v1`; breaking changes require a new version.
 - Errors must be secure: no stack traces or internal details in production responses.
 
+## Decisions
+
+- **Sanctum mode for the SPA: cookie session** (HttpOnly cookie + CSRF protection via `sanctum/csrf-cookie`). `statefulApi()` middleware is enabled; CORS allows only the SPA origin with credentials.
+- The standardized envelope is implemented by `App\Core\Shared\ApiResponse`; the first live endpoint is `GET /api/v1/health`.
+
 ## TBD
 
-- Sanctum mode for the SPA (cookie session vs. token): TBD.
 - Rate limiting values (authentication endpoints must be rate-limited — see [SECURITY_BASELINE.md](../06-security/SECURITY_BASELINE.md)): TBD.
 - OpenAPI documentation tooling: TBD.

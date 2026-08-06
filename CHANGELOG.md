@@ -7,7 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Backend scaffolding: Laravel 12 installed in `backend/` with Sanctum (SPA cookie mode, `statefulApi()` + CORS restricted to the SPA origin), Pest replacing PHPUnit, and Pint. Standardized response envelope helper (`App\Core\Shared\ApiResponse`), first endpoint `GET /api/v1/health` (`App\Core\Health\HealthController`), and Pest feature tests for the envelope.
+- Frontend scaffolding: Vue 3 + TypeScript (Vite) installed in `frontend/` with Pinia, Vue Router, TanStack Query, Tailwind CSS 4, vue-i18n (Arabic default), and Vitest. RTL app shell with right-side sidebar and header, system status page consuming the health endpoint, and a shared API client (`src/shared/api/http.ts`) implementing the standardized envelope with tests.
+- Continuous integration: `.github/workflows/ci.yml` running backend (composer validate, Pint, Pest) and frontend (Vitest, type-check, build) jobs with dependency caching on push/PR to `develop` and `main`.
+
 ### Changed
+
+- Scaffolding decisions recorded in docs: native local development (no Docker), Sanctum SPA cookie session, vue-i18n as the i18n library, single `routes/api.php` with `v1` prefix, PSR-4 under `App\Core`/`App\Modules`.
 
 - Documentation populated and refined to implementation-ready state: MVP scope expanded to the approved 21-module list; out-of-scope list completed from the long-term vision; eight default personas documented; four core workflows documented (governance chain with recommendation and closure stages, contract lifecycle, asset/custody lifecycle, inventory transactions).
 - Multi-tenancy strategy decided and ADR-0003 accepted: single application, single database, shared schema with `tenant_id`, automatic scoping, tenant context from authenticated user only.
@@ -29,4 +37,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub pull request template and issue templates (Feature, Bug, Technical Task, Change Request).
 - Root `README.md`, `CHANGELOG.md`, and `.editorconfig`.
 
-> Note: no application code exists yet. Laravel and Vue are not installed; no database migrations have been created.
+> Note: only framework scaffolding exists. No business modules, authentication flow, RBAC, or multi-tenancy logic are implemented; the only migrations are Laravel's own infrastructure tables (users, cache, jobs, personal access tokens).
