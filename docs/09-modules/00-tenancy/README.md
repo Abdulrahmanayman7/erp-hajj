@@ -1,24 +1,41 @@
 # Module: Multi-Tenant Foundation (التأسيس متعدد المستأجرين)
 
-> **Status:** Documented — not implemented
+> **Status:** Specification complete — implementation pending. **No tenancy behavior is implemented.**
 > **Last updated:** 2026-08-06
 
 ## Purpose
 
-Provide the tenancy foundation every other module depends on: the tenant (organization) entity, tenant lifecycle at platform level, automatic tenant scoping, and tenant context propagation.
+Provide the tenancy foundation every other module depends on: the tenant (organization) entity with its immutable `tenant_code` (first tenant: **رفيع** / `rafee`), the four-state lifecycle at platform level, automatic tenant scoping, and tenant context propagation to jobs, cache, storage, audit, notifications, and exports.
 
-## Scope
+## Specification map
 
-- Tenant registry (platform-level): create, activate, suspend tenants — performed by the Platform Super Admin.
-- Automatic tenant scoping for all tenant-owned models (`Core/Tenancy`).
-- Tenant context resolution after authentication; propagation to jobs, cache, storage paths, audit, notifications, exports.
-- Tenant-level settings required by MVP modules.
+| Concern | Where specified |
+|---|---|
+| Strategy, `tenant_code` rules, lifecycle, TenantContext + PlatformContext, exceptions, Resolver, middleware separation, `TenantOwned`/`UsesTenantScope`, binding, validation, queues, cache, storage, notifications, exports, correlation ID, performance | [MULTI_TENANCY.md](../../02-architecture/MULTI_TENANCY.md) |
+| Tables, columns, indexes, uniques, FKs, status enum, deletion strategy, migration order, expected first-tenant values | [DATA_MODEL.md](DATA_MODEL.md) + [DATABASE_PRINCIPLES.md](../../03-database/DATABASE_PRINCIPLES.md) |
+| Lifecycle rules, suspension behavior, platform admin boundaries, audited events | [BUSINESS_RULES.md](BUSINESS_RULES.md) |
+| Endpoints and stable error codes | [API.md](API.md) |
+| Permission catalog (`tenant_settings.*`, `platform_tenants.*`) | [PERMISSIONS.md](PERMISSIONS.md) |
+| Threat model (attack → control) | [SECURITY_BASELINE.md](../../06-security/SECURITY_BASELINE.md) |
+| Correlation ID and audit record design | [AUDIT_TRAIL.md](../../06-security/AUDIT_TRAIL.md) |
+| Complete Pest matrix | [TEST_PLAN.md](TEST_PLAN.md) |
+| Definition of done | [ACCEPTANCE_CRITERIA.md](ACCEPTANCE_CRITERIA.md) + [DEFINITION_OF_DONE.md](../../00-project/DEFINITION_OF_DONE.md) |
+
+## Implementation order (each phase ≤ one sprint, independently mergeable)
+
+1. **Phase 1 — Data layer:** `tenants` migration (with `tenant_code`, `locale`, `timezone`, `suspended_at`, `archived_at`) + `TenantStatus` enum + `Tenant` model + `users.tenant_id` migration + factories/seeders (two-tenant fixtures). No behavior change; existing tests stay green.
+2. **Phase 2 — Contexts and resolution:** `TenantContext` + `PlatformContext` + the five exceptions → `TenantResolver` interface + `AuthenticatedUserTenantResolver` → `ResolveTenantContext` + `EnsureTenantIsActive` middleware → correlation ID middleware → login/lifecycle behavior. Test series C, P-ctx, R, X.
+3. **Phase 3 — Scoping stack:** `TenantScope` + `TenantOwned` contract + `UsesTenantScope` trait (fail-closed, force-set, immutability) → route-binding behavior → `TenantExists`/`TenantUnique` validation builders → `tenant_settings` table + endpoints as the first consumer. Test series S, B, V, T.
+4. **Phase 4 — Propagation and platform:** job payload capture + job middleware + classification behavior → cache namespace helper → storage path helper → `/api/v1/platform/tenants` endpoints + `platform_tenants.*` permissions + exceptional-access audit path. Test series Q, K, F, P, PF.
+
+Phases 1→4 are strictly ordered. Business modules may start only after Phase 3.
 
 ## Out of scope
 
 - Multi-organization membership for one user (future scope).
-- Tenant self-signup/billing (TBD — commercial model not confirmed).
+- Tenant self-signup/billing (commercial model not confirmed — TBD in [BUSINESS_RULES.md](BUSINESS_RULES.md)).
+- Read-only suspension, `archived → active` recovery, physical purge of archived tenants, per-tenant domains/subdomains, API-token/SSO tenant resolution (each requires a Change Request / ADR).
 
 ## References
 
-- [MULTI_TENANCY.md](../../02-architecture/MULTI_TENANCY.md) · [ADR-0003](../../10-decisions/ADR-0003-MULTI-TENANCY.md)
+- [ADR-0003](../../10-decisions/ADR-0003-MULTI-TENANCY.md) · [MULTI_TENANCY.md](../../02-architecture/MULTI_TENANCY.md) · [ENGINEERING_PRINCIPLES.md](../../02-architecture/ENGINEERING_PRINCIPLES.md)

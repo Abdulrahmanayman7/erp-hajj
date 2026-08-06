@@ -6,7 +6,7 @@ alwaysApply: false
 
 # Frontend Standards (Vue 3 + TypeScript)
 
-See `docs/02-architecture/FRONTEND_STRUCTURE.md` (app/modules/shared layout) and `docs/05-ui-ux/DESIGN_GUIDELINES.md`.
+See `docs/02-architecture/FRONTEND_STRUCTURE.md` (app/modules/shared layout) and `docs/05-ui-ux/DESIGN_GUIDELINES.md`. Naming and hygiene rules: `docs/02-architecture/CODING_STANDARDS.md` (`<script setup lang="ts">`, typed props/emits, `@/` alias, `use*Query`/`use*Mutation` naming, no debug statements). Accessibility is part of the Definition of Done (`docs/00-project/DEFINITION_OF_DONE.md`).
 
 - **No Axios calls directly inside presentation components** — data access lives in the module `api/` layer, consumed via TanStack Query.
 - **No backend business rules duplicated in the frontend.**

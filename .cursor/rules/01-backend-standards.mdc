@@ -6,7 +6,7 @@ alwaysApply: false
 
 # Backend Standards (Laravel 12)
 
-Layering is mandatory. See `docs/02-architecture/ARCHITECTURE.md` and `BACKEND_STRUCTURE.md` (Core/ + Modules/ layout).
+Layering is mandatory. See `docs/02-architecture/ARCHITECTURE.md` and `BACKEND_STRUCTURE.md` (Core/ + Modules/ layout). Naming, typing, and hygiene rules: `docs/02-architecture/CODING_STANDARDS.md` (typed signatures everywhere, strict comparison, native enums, no dead/debug code). Daily principles: `docs/02-architecture/ENGINEERING_PRINCIPLES.md`.
 
 - **Controllers are thin**: receive validated input (Form Request) → authorize (Policy/Gate) → call an Action → return an API Resource / standardized envelope. Controllers must NOT contain workflows, perform large queries, handle storage directly, do manual permission logic, or build complex response arrays.
 - **Form Requests** hold all input validation. **API Resources** shape every response using the envelope in `docs/04-api/API_STANDARDS.md`.
