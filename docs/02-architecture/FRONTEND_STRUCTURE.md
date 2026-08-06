@@ -1,15 +1,15 @@
 # Frontend Structure
 
-> **Status:** Approved (conceptual — Vue is not installed yet)
+> **Status:** Approved — frontend scaffolded (app shell, `modules/system`, and `shared/api` exist; business modules not implemented)
 > **Last updated:** 2026-08-06
 
 ## Purpose
 
-Define the conceptual structure of the Vue 3 frontend so both developers organize code identically. It becomes binding when the frontend is scaffolded.
+Define the structure of the Vue 3 frontend so both developers organize code identically. The shell is scaffolded; module folders are created as modules are implemented.
 
 ## Stack
 
-Vue 3, TypeScript, Vite, Pinia, Vue Router, TanStack Query, Tailwind CSS. Arabic RTL, right-side navigation sidebar, responsive desktop-first design.
+Vue 3, TypeScript, Vite, Pinia, Vue Router, TanStack Query, Tailwind CSS, vue-i18n, Vitest. Arabic RTL, right-side navigation sidebar, responsive desktop-first design.
 
 ## Conceptual Structure
 
@@ -60,8 +60,13 @@ A module may contain: pages, components, api, queries, mutations, types, validat
 - **RTL must be supported everywhere**; the sidebar is on the right.
 - TypeScript throughout; typed API payloads per module; avoid `any`.
 
+## Decisions Made at Scaffolding
+
+- **i18n:** `vue-i18n` (Composition API mode), Arabic default locale, messages in `src/locales/`.
+- **Sanctum mode:** SPA cookie session (HttpOnly cookie + CSRF); the shared API client sends `credentials: 'include'`.
+- **Path alias:** `@/` → `src/`.
+
 ## TBD
 
-- i18n library choice: TBD.
-- Sanctum session mode (cookie vs. token) and its effect on guards: TBD with authentication implementation.
+- Auth/permission route guards: TBD with authentication implementation.
 - Notifications UI placement (header bell vs. page): TBD.

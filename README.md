@@ -1,6 +1,6 @@
 # ERP Hajj
 
-> **Status:** Foundation phase — repository structure and documentation only. **No application code exists yet; Laravel and Vue are not installed.**
+> **Status:** Scaffolding phase — Laravel 12 and Vue 3 are installed with a health endpoint, RTL app shell, tests, and CI. **No business modules, authentication flow, or multi-tenancy logic are implemented yet.**
 > **Last updated:** 2026-08-06
 
 ## Project Purpose
@@ -30,8 +30,8 @@ Everything else (mobile apps, pilgrims, transportation, finance, AI, integration
 
 | Layer | Technology |
 |---|---|
-| Backend | PHP 8.2+, Laravel 12, Sanctum, MySQL, Redis (when required), Laravel Queue, REST API `/api/v1`, Policies/Gates, Form Requests, API Resources |
-| Frontend | Vue 3, TypeScript, Vite, Pinia, Vue Router, TanStack Query, Tailwind CSS |
+| Backend | PHP 8.2+, Laravel 12, Sanctum (SPA cookie auth), MySQL, database queue, Redis (when required), REST API `/api/v1`, Policies/Gates, Form Requests, API Resources, Pest, Pint |
+| Frontend | Vue 3, TypeScript, Vite, Pinia, Vue Router, TanStack Query, Tailwind CSS, vue-i18n, Vitest |
 | UI | Arabic RTL first, right-side sidebar, responsive desktop-first, light theme, deep green + gold accent |
 | Architecture | Monorepo, modular monolith, API-first, multi-tenant (single DB, shared schema, `tenant_id`) |
 
@@ -39,8 +39,8 @@ Everything else (mobile apps, pilgrims, transportation, finance, AI, integration
 
 ```text
 erp-hajj/
-├── backend/          # Laravel application (not installed yet)
-├── frontend/         # Vue application (not installed yet)
+├── backend/          # Laravel 12 API (app/Core scaffolded; /api/v1/health live)
+├── frontend/         # Vue 3 SPA (RTL app shell, system status page)
 ├── docs/             # Source-of-truth documentation
 │   ├── 00-project/   # Vision, scope, roadmap, glossary, team & git workflow
 │   ├── 01-business/  # Personas, core workflows, business rules
@@ -63,9 +63,31 @@ erp-hajj/
 
 ## Local Setup
 
-> **Placeholder.** Nothing is installed yet. Setup instructions will be added when the backend and frontend are scaffolded.
+Local development is **native** (no Docker). Prerequisites: PHP 8.2+, Composer, Node.js LTS, npm, MySQL (SQLite works for quick runs and tests).
 
-Planned prerequisites: PHP 8.2+, Composer, Node.js LTS, MySQL, Redis (when required). Local approach (Docker vs. native): TBD — see [ENVIRONMENTS.md](docs/08-deployment/ENVIRONMENTS.md).
+**Backend** (serves at `http://localhost:8000`):
+
+```bash
+cd backend
+composer install
+cp .env.example .env        # set your DB credentials (MySQL: erp_hajj)
+php artisan key:generate
+php artisan migrate
+php artisan serve
+```
+
+**Frontend** (serves at `http://localhost:5173`):
+
+```bash
+cd frontend
+npm install
+cp .env.example .env        # VITE_API_URL=http://localhost:8000
+npm run dev
+```
+
+**Verify:** open `http://localhost:5173` — the system status page should show a successful call to `GET /api/v1/health`.
+
+**Quality checks:** backend `php artisan test` and `./vendor/bin/pint --test`; frontend `npm run test`, `npm run type-check`, `npm run build`. The same checks run in CI (`.github/workflows/ci.yml`) on every push/PR to `develop` and `main`.
 
 ## Git Workflow
 

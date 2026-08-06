@@ -9,6 +9,7 @@ Define the four environments and their rules. Infrastructure is not provisioned 
 
 ## 1. Local Development
 
+- **Native setup (no Docker)**: local PHP 8.2+/Composer, Node.js LTS/npm, `php artisan serve` + `npm run dev` — see the root [README.md](../../README.md).
 - Individual `.env` per developer (never committed).
 - Local MySQL database; local Redis when needed; local queue worker.
 - Fake mail service (e.g. Mailpit/log driver — choice TBD).
@@ -21,7 +22,7 @@ Define the four environments and their rules. Infrastructure is not provisioned 
 - Factories for all entities.
 - Multi-tenant isolation tests always run.
 - No production external dependencies; mock storage and notifications where appropriate.
-- Pipeline definition in `.github/workflows/`: TBD.
+- Pipeline: `.github/workflows/ci.yml` — backend (composer validate, Pint, Pest) and frontend (Vitest, type-check + build) on push/PR to `develop` and `main`, with dependency caching.
 
 ## 3. Staging
 
@@ -52,7 +53,6 @@ Define the four environments and their rules. Infrastructure is not provisioned 
 
 - **Infrastructure ownership and subscription payment: TBD (not confirmed).**
 - Hosting provider and topology: TBD.
-- Local development approach (Docker/Sail vs. native): TBD.
 - Monitoring/logging/alerting stack: TBD.
 - Backup schedule and retention: TBD.
 - Domain, TLS, and tenant URL scheme: TBD.

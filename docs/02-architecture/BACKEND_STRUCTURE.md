@@ -1,11 +1,11 @@
 # Backend Structure
 
-> **Status:** Approved (conceptual — Laravel is not installed yet)
+> **Status:** Approved — backend scaffolded (Laravel 12 installed; `Core/Shared` and `Core/Health` exist, business modules not implemented)
 > **Last updated:** 2026-08-06
 
 ## Purpose
 
-Define the conceptual structure of the Laravel 12 backend so both developers organize code identically. It becomes binding when the backend is scaffolded.
+Define the structure of the Laravel 12 backend so both developers organize code identically. The skeleton is scaffolded; module folders are created as modules are implemented.
 
 ## Stack
 
@@ -69,7 +69,9 @@ Controllers must not:
 - Every critical operation records audit via `Core/Audit`.
 - Modules must not bypass permissions or audit logging, and must not reach into other modules' internals (communicate via services/events).
 
-## TBD
+## Decisions Made at Scaffolding
 
-- Route file organization (single `api_v1.php` vs. per-module route files): TBD at scaffolding.
-- PSR-4 namespace details and service provider wiring: TBD at scaffolding.
+- **Routes:** single `routes/api.php` with a `Route::prefix('v1')->name('api.v1.')` group for now; per-module route files will be introduced when the first business modules are implemented.
+- **PSR-4:** everything lives under the default `App\` namespace — `App\Core\...` and `App\Modules\...` (e.g. `App\Core\Shared\ApiResponse`, `App\Core\Health\HealthController`). No extra service-provider wiring until a module needs it.
+- **Testing:** Pest replaces PHPUnit-style classes (`tests/Pest.php` binds `Tests\TestCase` to `tests/Feature`).
+- **Sanctum:** SPA cookie authentication — `statefulApi()` middleware enabled in `bootstrap/app.php`; `FRONTEND_URL` + `SANCTUM_STATEFUL_DOMAINS` configured; CORS allows only the SPA origin with credentials.
