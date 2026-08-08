@@ -1,0 +1,6 @@
+@import "tailwindcss";
+
+/* Arabic-first font stack; final Arabic typeface is TBD (docs/05-ui-ux/DESIGN_GUIDELINES.md) */
+body {
+  font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+}

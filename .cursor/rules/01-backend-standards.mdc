@@ -1,0 +1,34 @@
+---
+description: Laravel backend layering and coding standards
+globs: backend/**
+alwaysApply: false
+---
+
+# Backend Standards (Laravel 12)
+
+Layering is mandatory. See `docs/02-architecture/ARCHITECTURE.md` and `BACKEND_STRUCTURE.md` (Core/ + Modules/ layout). Naming, typing, and hygiene rules: `docs/02-architecture/CODING_STANDARDS.md` (typed signatures everywhere, strict comparison, native enums, no dead/debug code). Daily principles: `docs/02-architecture/ENGINEERING_PRINCIPLES.md`.
+
+- **Controllers are thin**: receive validated input (Form Request) → authorize (Policy/Gate) → call an Action → return an API Resource / standardized envelope. Controllers must NOT contain workflows, perform large queries, handle storage directly, do manual permission logic, or build complex response arrays.
+- **Form Requests** hold all input validation. **API Resources** shape every response using the envelope in `docs/04-api/API_STANDARDS.md`.
+- **Actions** implement use cases — one class per use case. **Services** only for domain operations reused across actions.
+- **Policies/Gates** guard every protected action per `docs/06-security/PERMISSION_MODEL.md` (`module.action` names).
+- **Repository pattern only where it provides real value** — no blanket repositories, no unnecessary abstractions.
+- **Events/Jobs only when justified**; queued work must carry tenant context.
+- Workflow transitions use explicit action endpoints (e.g. `POST /contracts/{contract}/approve`) — never generic status PATCHes.
+- Every tenant-owned model uses `Core/Tenancy` automatic scoping; every critical operation records audit via `Core/Audit`.
+- Do not modify unrelated modules; do not rewrite stable code without justification; do not add packages without documenting why; do not duplicate existing utilities.
+
+```php
+// ❌ BAD: logic in controller
+public function store(Request $request) {
+    $data = $request->validate([...]);
+    $contract = Contract::create($data + ['status' => 'draft']);
+    return response()->json($contract);
+}
+
+// ✅ GOOD: thin controller
+public function store(StoreContractRequest $request, CreateContract $action): ContractResource {
+    $this->authorize('create', Contract::class);
+    return new ContractResource($action->handle($request->validated()));
+}
+```

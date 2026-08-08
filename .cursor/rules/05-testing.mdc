@@ -1,0 +1,30 @@
+---
+description: Testing requirements for backend and frontend work
+alwaysApply: true
+---
+
+# Testing
+
+See `docs/07-testing/TESTING_STRATEGY.md` and each module's `TEST_PLAN.md`. Tests are part of the definition of done — **add tests with every implementation task**.
+
+## Backend
+
+- Feature API tests per endpoint: success, `422` validation, `401` unauthenticated, `403` unauthorized, `404` cross-tenant.
+- **Every tenant-owned module must have at least one explicit cross-tenant access test.**
+- Policy tests for permission-gated actions; validation tests for Form Requests.
+- Workflow transition tests (valid and invalid) for the four core workflows.
+- Audit tests: critical operations produce expected audit records; secrets never in audit values.
+- File authorization tests: private files not downloadable without permission.
+- Unit tests for non-trivial actions/services.
+
+## Frontend
+
+- Shared component tests; form validation tests; permission visibility tests; page state tests (loading/empty/error); query and mutation tests. `tsc` must pass.
+
+## Rules
+
+- Do not weaken or delete a failing test to make it pass — fix the code or raise the issue.
+- **Failing or flaky security tests block merging** (cross-tenant attack suites, policy tests, file-authorization tests); tests must be deterministic.
+- Use factories and separate tenant fixtures (see `docs/09-modules/00-tenancy/TEST_PLAN.md` for the tenancy matrix and shared helpers); never depend on production data or external services in tests.
+- List executed tests in the PR "Tests executed" section; completion is defined by `docs/00-project/DEFINITION_OF_DONE.md`.
+- Tooling is decided: **Pest** (backend), **Vitest** (frontend); Playwright proposed for future E2E.

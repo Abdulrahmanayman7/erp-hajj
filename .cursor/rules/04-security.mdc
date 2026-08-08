@@ -1,0 +1,21 @@
+---
+description: Security baseline for all code
+alwaysApply: true
+---
+
+# Security
+
+See `docs/06-security/SECURITY_BASELINE.md`, `PERMISSION_MODEL.md`, and `AUDIT_TRAIL.md`.
+
+- **Deny by default.** Every protected action passes Policies/Gates using `module.action` permissions. No authorization → no merge. No persona bypasses authorization — including the Tenant Owner.
+- Authentication via Sanctum with rate limiting on auth endpoints; login success and security-relevant failures are audited.
+- All input via Form Requests; mass-assignment protection on all models; all output via API Resources (no leakage of hashes, tokens, internal flags).
+- **Never expose secrets**; no credentials in the repository; **never use production data locally**; no production credentials exist at this stage.
+- **Audit every critical action** (user/role/permission changes, contract transitions, meeting completion, decision approval/closure, task assignment/completion, document upload/delete/sensitive download, inventory transactions, custody assign/return, tenant settings, logins). Passwords, tokens, and secrets never appear in audit values. Audit logs are immutable for normal users.
+- Files: private storage only, authorized downloads, MIME/extension validation, size limits, tenant-isolated paths.
+- Secure errors (standardized envelope, no stack traces in production); database constraints back up application rules; soft deletion where appropriate.
+- Cross-tenant access attempts return `404`; tenant lifecycle blocks return `403` with stable codes (see `03-multi-tenancy.mdc`).
+- `tenant_code` is never an authorization input — knowing a code grants nothing.
+- **Every request carries a correlation ID** (validated-or-regenerated, echoed in response headers) propagated to logs, audit records, job payloads, and exports — see `docs/06-security/AUDIT_TRAIL.md`. Audit records are append-only.
+- No formal compliance certification is claimed; Saudi PDPL and contractual requirements must be considered during implementation and deployment.
+- Security-relevant changes require review by the other developer — no self-merge.

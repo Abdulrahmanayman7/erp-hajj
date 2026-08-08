@@ -1,0 +1,30 @@
+---
+description: ERP Hajj project identity, scope, and stack context
+alwaysApply: true
+---
+
+# ERP Hajj — Project Context
+
+ERP Hajj is a **multi-tenant Arabic enterprise web platform** for managing and governing Hajj campaign companies (شركات وحملات الحج). Each tenant is an independent campaign company with strictly isolated data.
+
+## Fixed facts
+
+- MVP scope is **fixed** (21 modules): auth, dashboard, users, roles, permissions, org structure, employees, supervisors, contracts, meetings, decisions, tasks, documents, warehouses, basic inventory, custodies, assets, MVP notifications, audit trail, multi-tenant foundation, required settings. See `docs/00-project/MVP_SCOPE.md`.
+- Domain separations: Decisions ≠ Tasks; Assets ≠ Custodies; Inventory items ≠ Assets; Supervisor = Employee with supervisory classification (one identity record).
+- Four core workflows in `docs/01-business/CORE_WORKFLOWS.md` (governance chain, contract lifecycle, asset/custody lifecycle, inventory transactions).
+- Stack: Laravel 12 (PHP 8.2+), Sanctum, MySQL, Redis when required, queues, REST `/api/v1`, Policies/Gates, Form Requests, API Resources | Vue 3, TypeScript, Vite, Pinia, Vue Router, TanStack Query, Tailwind CSS.
+- Architecture: monorepo, modular monolith, API-first, multi-tenant (single DB, shared schema, `tenant_id`).
+- Web only now; API reusable by future Android/iOS apps. Do not build mobile apps.
+- Arabic first, RTL first, sidebar on the right, responsive desktop-first, light theme, deep green primary + gold accent.
+- Two developers via GitHub PRs (`main` + `develop`, Conventional Commits) — see `docs/00-project/TEAM_AND_GIT_WORKFLOW.md`.
+
+## Working rules (documentation-first)
+
+- **Read the relevant documentation before implementation** — start with `docs/09-modules/<module>/` for the module being built, then the binding standards: `docs/02-architecture/ENGINEERING_PRINCIPLES.md`, `CODING_STANDARDS.md`, `MODULE_TEMPLATE.md`, `REVIEW_CHECKLIST.md`, and `docs/00-project/DEFINITION_OF_DONE.md`.
+- The `docs/` tree is the source of truth. If code and docs disagree, raise it — do not silently pick one.
+- Anything marked **TBD** is undecided: **stop and mark the ambiguity when a business decision is required** — never assume an answer.
+- A task is complete only when it meets `DEFINITION_OF_DONE.md`.
+
+## Completion report (mandatory)
+
+Before completing any implementation task, print: files changed · migrations added · endpoints added · permissions added · audit events added · tests added · documentation updated · assumptions · remaining risks.

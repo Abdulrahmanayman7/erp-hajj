@@ -1,0 +1,32 @@
+---
+description: Vue 3 + TypeScript frontend standards and RTL requirements
+globs: frontend/**
+alwaysApply: false
+---
+
+# Frontend Standards (Vue 3 + TypeScript)
+
+See `docs/02-architecture/FRONTEND_STRUCTURE.md` (app/modules/shared layout) and `docs/05-ui-ux/DESIGN_GUIDELINES.md`. Naming and hygiene rules: `docs/02-architecture/CODING_STANDARDS.md` (`<script setup lang="ts">`, typed props/emits, `@/` alias, `use*Query`/`use*Mutation` naming, no debug statements). Accessibility is part of the Definition of Done (`docs/00-project/DEFINITION_OF_DONE.md`).
+
+- **No Axios calls directly inside presentation components** — data access lives in the module `api/` layer, consumed via TanStack Query.
+- **No backend business rules duplicated in the frontend.**
+- **Server state belongs in TanStack Query**; small client state may use Pinia or local state.
+- **Frontend permissions are UX only** (Permission Guard hides/disables); backend authorization is mandatory — never rely on frontend hiding.
+- TypeScript everywhere; typed API payloads per module; avoid `any`; handle the standardized envelope (`success`, `message`, `data`, `meta` / `errors`, `code`).
+- Generic components belong in `shared/components/` (use the shared catalog: Data Table, Form Field, Status Badge, Confirmation Dialog...); module-specific components stay in the module. Do not create a different design language per module.
+- Components use `<script setup lang="ts">`.
+
+## RTL (non-negotiable)
+
+- Arabic RTL is primary; the sidebar is on the **right**; light theme, deep green primary, gold accent.
+- Use logical utilities (`ms-*`, `me-*`, `ps-*`, `pe-*`, `start-*`, `end-*`) — never `ml-*`/`mr-*`/`left-*`/`right-*` for layout.
+- Direction-sensitive icons must mirror correctly in RTL.
+- UI wording follows `docs/00-project/GLOSSARY.md`.
+
+```vue
+<!-- ❌ BAD: physical direction utilities -->
+<div class="ml-4 text-left">...</div>
+
+<!-- ✅ GOOD: logical utilities, RTL-safe -->
+<div class="ms-4 text-start">...</div>
+```

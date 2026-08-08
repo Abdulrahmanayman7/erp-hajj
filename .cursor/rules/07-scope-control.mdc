@@ -1,0 +1,21 @@
+---
+description: Scope control — MVP is fixed, no invented requirements
+alwaysApply: true
+---
+
+# Scope Control
+
+The MVP scope is **fixed** (`docs/00-project/MVP_SCOPE.md`, 21 modules). Future-scope items are listed in `docs/00-project/OUT_OF_SCOPE.md`.
+
+- **Never expand scope.** No features outside the agreed MVP, even small ones, even if they seem obviously useful.
+- **Never invent fields, workflows, or business requirements.** If something is missing, **stop and mark the ambiguity** as TBD and surface it — a business decision is required.
+- Do not implement mobile applications, pilgrim features, transportation, finance, AI, or any other future-scope item; only keep the API reusable for future clients.
+- Scope changes require a **Change Request** issue (`.github/ISSUE_TEMPLATE/change-request.md`) and approval before any code or design work.
+- Before building anything, confirm it maps to an MVP module and its docs in `docs/09-modules/`, and that the module satisfies `docs/02-architecture/MODULE_TEMPLATE.md`. No implementation starts from a vague one-line issue.
+- Reviews follow `docs/02-architecture/REVIEW_CHECKLIST.md`; completion follows `docs/00-project/DEFINITION_OF_DONE.md`.
+- Do not modify unrelated modules; do not rewrite stable code without justification; do not add packages without documenting why; do not duplicate existing utilities.
+- Prefer the simplest implementation that satisfies the documented requirement — no speculative abstractions or extension points.
+
+## Completion report (mandatory)
+
+Before completing any implementation task, print: files changed · migrations added · endpoints added · permissions added · audit events added · tests added · documentation updated · assumptions · remaining risks.
