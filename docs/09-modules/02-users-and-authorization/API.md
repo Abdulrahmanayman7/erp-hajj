@@ -1,6 +1,6 @@
 # Users and Authorization — API
 
-> **Status:** Contract approved for Sprint 006 — implementation pending
+> **Status:** Contract — **Implemented** (Sprint 006)
 > **Base path:** `/api/v1`
 > **Auth:** Sanctum SPA session + CSRF; tenant middleware stack as Authentication/Tenancy
 > **Last updated:** 2026-08-08

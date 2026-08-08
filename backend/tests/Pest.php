@@ -1,36 +1,20 @@
 <?php
 
+use App\Core\Authorization\PermissionCatalogSynchronizer;
+use App\Core\Authorization\ProvisionDefaultTenantRoles;
 use App\Core\Tenancy\Models\Tenant;
 use App\Core\Tenancy\TenantContext;
 use App\Models\User;
+use App\Modules\Authorization\Models\Role;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\TestResponse;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
-
-/*
-|--------------------------------------------------------------------------
-| Test Case
-|--------------------------------------------------------------------------
-|
-| All Feature tests extend the Laravel TestCase so the application is
-| booted for HTTP tests. Unit tests stay framework-free by default.
-|
-*/
 
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
     ->in('Feature');
-
-/*
-|--------------------------------------------------------------------------
-| Tenancy Helpers
-|--------------------------------------------------------------------------
-|
-| Tests and factories obtain tenant context exactly like production code:
-| through TenantContext::runAsTenant(). Tests never bypass the scope.
-|
-*/
 
 function withTenant(Tenant $tenant, Closure $callback): mixed
 {
@@ -48,10 +32,47 @@ function platformUser(array $attributes = []): User
 }
 
 /**
- * Sanctum SPA cookie requests need a first-party Origin so stateful
- * session middleware starts. CSRF is disabled in Feature tests — the
- * SPA CSRF flow is covered by frontend Vitest.
- *
+ * Sync permission catalog and provision default system roles for a tenant.
+ */
+function provisionTenantRbac(Tenant $tenant, ?User $owner = null): User
+{
+    app(PermissionCatalogSynchronizer::class)->sync();
+
+    $owner ??= tenantUser($tenant);
+
+    withTenant($tenant, function () use ($tenant, $owner): void {
+        app(ProvisionDefaultTenantRoles::class)->execute($tenant, $owner);
+    });
+
+    return $owner->fresh();
+}
+
+function actingAsTenantOwner(?Tenant $tenant = null): User
+{
+    $tenant ??= Tenant::factory()->create();
+    $owner = provisionTenantRbac($tenant);
+    Sanctum::actingAs($owner);
+
+    return $owner;
+}
+
+function assignRole(User $user, string $roleCode): void
+{
+    $tenant = $user->tenant ?? Tenant::query()->findOrFail($user->tenant_id);
+
+    withTenant($tenant, function () use ($user, $roleCode): void {
+        $role = Role::query()->where('code', $roleCode)->firstOrFail();
+        $user->roles()->syncWithoutDetaching([
+            $role->id => [
+                'tenant_id' => $user->tenant_id,
+                'assigned_by' => null,
+                'created_at' => now(),
+            ],
+        ]);
+    });
+}
+
+/**
  * @param  array<string, mixed>  $data
  * @param  array<string, string>  $headers
  */
@@ -78,4 +99,48 @@ function spaGetJson(string $uri, array $headers = []): TestResponse
             'Referer' => 'http://localhost:5173/',
         ], $headers))
         ->getJson($uri);
+}
+
+/**
+ * @param  array<string, mixed>  $data
+ * @param  array<string, string>  $headers
+ */
+function spaPutJson(string $uri, array $data = [], array $headers = []): TestResponse
+{
+    return test()
+        ->withoutMiddleware(ValidateCsrfToken::class)
+        ->withHeaders(array_merge([
+            'Origin' => 'http://localhost:5173',
+            'Referer' => 'http://localhost:5173/',
+        ], $headers))
+        ->putJson($uri, $data);
+}
+
+/**
+ * @param  array<string, mixed>  $data
+ * @param  array<string, string>  $headers
+ */
+function spaPatchJson(string $uri, array $data = [], array $headers = []): TestResponse
+{
+    return test()
+        ->withoutMiddleware(ValidateCsrfToken::class)
+        ->withHeaders(array_merge([
+            'Origin' => 'http://localhost:5173',
+            'Referer' => 'http://localhost:5173/',
+        ], $headers))
+        ->patchJson($uri, $data);
+}
+
+/**
+ * @param  array<string, string>  $headers
+ */
+function spaDeleteJson(string $uri, array $headers = []): TestResponse
+{
+    return test()
+        ->withoutMiddleware(ValidateCsrfToken::class)
+        ->withHeaders(array_merge([
+            'Origin' => 'http://localhost:5173',
+            'Referer' => 'http://localhost:5173/',
+        ], $headers))
+        ->deleteJson($uri);
 }

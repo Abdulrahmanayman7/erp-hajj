@@ -1,6 +1,6 @@
 # Permission Model
 
-> **Status:** Approved (catalog may grow with modules). Sprint 006 RBAC **specification** locks architecture; seeding is implementation-pending.
+> **Status:** Approved (catalog may grow with modules). Sprint 006 RBAC **implemented**; seeding remains limited to implemented modules.
 > **Last updated:** 2026-08-08
 
 ## Purpose

@@ -1,6 +1,6 @@
 # Frontend Structure
 
-> **Status:** Approved — Auth module (Sprint 005) implemented; Users/Roles RBAC UI **specified** for Sprint 006 (not implemented)
+> **Status:** Approved — Auth (005) + Users/Roles RBAC UI (006) implemented
 > **Last updated:** 2026-08-08
 
 ## Purpose

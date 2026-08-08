@@ -48,6 +48,30 @@ export const router = createRouter({
       component: () => import('@/modules/auth/pages/AppHomePage.vue'),
       meta: { requiresAuth: true, layout: 'app' },
     },
+    {
+      path: '/app/403',
+      name: 'app-forbidden',
+      component: () => import('@/modules/auth/pages/ForbiddenPage.vue'),
+      meta: { requiresAuth: true, layout: 'app' },
+    },
+    {
+      path: '/app/users',
+      name: 'users',
+      component: () => import('@/modules/users/pages/UsersPage.vue'),
+      meta: { requiresAuth: true, layout: 'app', permission: 'users.view' },
+    },
+    {
+      path: '/app/roles',
+      name: 'roles',
+      component: () => import('@/modules/roles/pages/RolesPage.vue'),
+      meta: { requiresAuth: true, layout: 'app', permission: 'roles.view' },
+    },
+    {
+      path: '/app/roles/:id/permissions',
+      name: 'role-permissions',
+      component: () => import('@/modules/roles/pages/RolePermissionsPage.vue'),
+      meta: { requiresAuth: true, layout: 'app', permission: 'roles.view' },
+    },
   ],
 })
 

@@ -1,16 +1,20 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { RouterLink } from 'vue-router'
 
 import { useLogoutMutation } from '@/modules/auth/mutations/useLogoutMutation'
 import { useCurrentUserQuery } from '@/modules/auth/queries/useCurrentUserQuery'
+import { usePermissions } from '@/shared/composables/usePermissions'
 
 const { t } = useI18n()
 const { data: user } = useCurrentUserQuery()
 const { mutate: logout, isPending: isLoggingOut } = useLogoutMutation()
+const { can } = usePermissions()
 
 const displayName = computed(() => user.value?.name ?? '')
 const tenantName = computed(() => user.value?.tenant?.name ?? null)
+const showSystemAdmin = computed(() => can('users.view') || can('roles.view'))
 
 function onLogout(): void {
   logout()
@@ -32,6 +36,28 @@ function onLogout(): void {
         >
           {{ t('nav.home') }}
         </RouterLink>
+
+        <div v-if="showSystemAdmin" class="pt-4">
+          <p class="px-4 pb-2 text-xs font-semibold tracking-wide text-emerald-300">
+            {{ t('nav.systemAdmin') }}
+          </p>
+          <RouterLink
+            v-if="can('users.view')"
+            to="/app/users"
+            class="block rounded-md px-4 py-2 text-sm font-medium text-emerald-100 hover:bg-emerald-800"
+            active-class="bg-emerald-800 text-white"
+          >
+            {{ t('nav.users') }}
+          </RouterLink>
+          <RouterLink
+            v-if="can('roles.view')"
+            to="/app/roles"
+            class="block rounded-md px-4 py-2 text-sm font-medium text-emerald-100 hover:bg-emerald-800"
+            active-class="bg-emerald-800 text-white"
+          >
+            {{ t('nav.roles') }}
+          </RouterLink>
+        </div>
       </nav>
       <div class="border-t border-emerald-800 p-4 text-xs text-emerald-200">
         <p v-if="tenantName">{{ tenantName }}</p>

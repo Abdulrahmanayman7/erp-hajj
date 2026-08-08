@@ -1,6 +1,6 @@
 # Users and Authorization — Test Plan
 
-> **Status:** Sprint 006 — specification complete; implementation pending  
+> **Status:** Sprint 006 — **Implemented**
 > **Last updated:** 2026-08-08  
 > **Stack:** Pest (backend) · Vitest (frontend)
 

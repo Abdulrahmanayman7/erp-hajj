@@ -4,20 +4,22 @@ import type { NavigationGuard } from 'vue-router'
 import { ApiError } from '@/shared/api/http'
 import { fetchCurrentUser } from '@/modules/auth/api/authApi'
 import { currentUserQueryKey } from '@/modules/auth/queries/useCurrentUserQuery'
-import { isAuthBlockCode } from '@/modules/auth/types/auth'
+import { isAuthBlockCode, type AuthUser } from '@/modules/auth/types/auth'
 
 export function createAuthGuard(queryClient: QueryClient): NavigationGuard {
   return async (to) => {
     const needsAuth = to.matched.some((record) => record.meta.requiresAuth === true)
     const guestOnly = to.matched.some((record) => record.meta.guestOnly === true)
+    const requiredPermission = to.matched
+      .map((record) => record.meta.permission as string | undefined)
+      .filter(Boolean)
+      .at(-1)
 
-    if (!needsAuth && !guestOnly) {
+    if (!needsAuth && !guestOnly && !requiredPermission) {
       return true
     }
 
-    let user = queryClient.getQueryData(currentUserQueryKey) as Awaited<
-      ReturnType<typeof fetchCurrentUser>
-    > | null | undefined
+    let user = queryClient.getQueryData(currentUserQueryKey) as AuthUser | null | undefined
 
     if (user === undefined) {
       try {
@@ -44,7 +46,7 @@ export function createAuthGuard(queryClient: QueryClient): NavigationGuard {
 
     const authenticated = !!user
 
-    if (needsAuth && !authenticated) {
+    if ((needsAuth || requiredPermission) && !authenticated) {
       return {
         name: 'login',
         query: to.fullPath !== '/app' ? { redirect: to.fullPath } : undefined,
@@ -53,6 +55,15 @@ export function createAuthGuard(queryClient: QueryClient): NavigationGuard {
 
     if (guestOnly && authenticated) {
       return { name: 'app-home' }
+    }
+
+    if (authenticated && requiredPermission) {
+      const permissions = user?.permissions ?? []
+      if (!permissions.includes(requiredPermission)) {
+        if (to.name !== 'app-forbidden') {
+          return { name: 'app-forbidden' }
+        }
+      }
     }
 
     return true

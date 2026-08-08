@@ -2,12 +2,16 @@
 
 namespace App\Core\Auth\Resources;
 
+use App\Core\Authorization\EffectivePermissions;
+use App\Core\Tenancy\Models\Tenant;
+use App\Core\Tenancy\TenantContext;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * Authentication-safe current-user payload — no secrets, no fabricated permissions.
+ * Authentication-safe current-user payload — no secrets.
+ * Sprint 006: additive roles + sorted effective permissions.
  *
  * @mixin User
  */
@@ -21,7 +25,33 @@ class AuthUserResource extends JsonResource
         /** @var User $user */
         $user = $this->resource;
 
-        $tenant = $user->relationLoaded('tenant') ? $user->tenant : null;
+        $tenant = $user->relationLoaded('tenant') ? $user->tenant : $user->tenant()->first();
+        $effective = app(EffectivePermissions::class);
+
+        $roles = [];
+        $permissions = [];
+
+        if (! $user->isPlatformUser() && $user->tenant_id !== null) {
+            $tenantModel = $tenant instanceof Tenant
+                ? $tenant
+                : Tenant::query()->find($user->tenant_id);
+
+            if ($tenantModel !== null) {
+                [$roles, $permissions] = app(TenantContext::class)->runAsTenant(
+                    $tenantModel,
+                    function () use ($user, $effective): array {
+                        if (! $user->relationLoaded('roles')) {
+                            $user->load(['roles' => fn ($q) => $q->where('roles.is_active', true)]);
+                        }
+
+                        return [
+                            $effective->activeRolesPayload($user),
+                            $effective->forUser($user),
+                        ];
+                    },
+                );
+            }
+        }
 
         return [
             'id' => $user->id,
@@ -37,6 +67,8 @@ class AuthUserResource extends JsonResource
                 'locale' => $tenant->locale,
                 'timezone' => $tenant->timezone,
             ],
+            'roles' => $roles,
+            'permissions' => $permissions,
         ];
     }
 }
