@@ -1,7 +1,7 @@
 # Design Guidelines
 
 > **Status:** Approved direction; detailed tokens TBD
-> **Last updated:** 2026-08-06
+> **Last updated:** 2026-08-08
 
 ## Purpose
 
@@ -34,6 +34,8 @@ Rules:
 - Every list page uses Data Table + Filters Bar + pagination; every destructive action uses Confirmation Dialog.
 - Status Badge colors are consistent across modules (same status semantics → same color).
 - Permission Guard hides/disables unauthorized UI — **UX only**; backend authorization remains mandatory.
+- Prefer **Drawer** for straightforward create/edit forms (e.g. user account); use full pages for dense matrices (e.g. role permission matrix). See [02-users-and-authorization/UI.md](../09-modules/02-users-and-authorization/UI.md).
+- Authenticated but unauthorized routes: dedicated **403 / access denied** page — do not send users back to login.
 
 ## Accessibility
 
