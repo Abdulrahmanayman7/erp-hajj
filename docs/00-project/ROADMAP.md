@@ -1,7 +1,7 @@
 # Roadmap
 
-> **Status:** Draft
-> **Last updated:** 2026-08-06
+> **Status:** Draft (delivery order aligned to completed / next sprints)
+> **Last updated:** 2026-08-08
 
 ## Purpose
 
@@ -11,19 +11,25 @@ Separate the committed MVP delivery from the long-term platform vision. Only the
 
 The 21 modules and four core workflows defined in [MVP_SCOPE.md](MVP_SCOPE.md), delivered as a web platform on the approved stack.
 
-### Foundation phase (current)
+### Foundation progress
 
-- Repository structure, documentation, standards, templates: **done**.
-- Module-level documentation in `docs/09-modules/`: **done (documentation only)**.
-- Backend and frontend scaffolding: next step, not yet started.
+| Milestone | Status |
+|---|---|
+| Repository structure, documentation, standards, templates | Done |
+| Module-level documentation under `docs/09-modules/` | Done (living docs) |
+| Backend + frontend scaffolding (health, RTL shell, CI) | Done |
+| Sprint 004 — Tenant Foundation (data + core scoping/isolation) | Done (implementation) |
+| Sprint 005 — Authentication (API + SPA UI) | **Specification complete — implementation pending** |
+| Users / roles / permissions (RBAC) | Next after Authentication |
+| Organizational structure → remaining MVP modules | After RBAC |
 
-### Build phases
-
-- Module delivery order and milestones: **TBD** — to be agreed by the two developers before implementation starts. Natural dependency order: tenancy foundation → authentication → users/roles/permissions → organizational structure → remaining modules.
+Natural dependency order remains: **tenancy → authentication → users/roles/permissions → organizational structure → remaining modules**.
 
 ## Later — Future Vision (NOT part of the MVP, all TBD)
 
 The complete list is maintained in [OUT_OF_SCOPE.md](OUT_OF_SCOPE.md): mobile/pilgrim apps, transportation and GPS tracking, accommodation, procurement, finance, crisis management, command center, AI/analytics, government integrations, offline mode, dynamic builders, and more. None of these is approved, designed, or scheduled.
+
+Authentication-related future items (not Sprint 005): MFA, SSO, email verification, Bearer/PAT login for mobile, `logout-all`.
 
 ## Rules
 

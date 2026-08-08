@@ -1,7 +1,7 @@
 # API Standards
 
 > **Status:** Approved
-> **Last updated:** 2026-08-06
+> **Last updated:** 2026-08-08
 
 ## Purpose
 
@@ -65,7 +65,7 @@ POST /api/v1/tasks/{task}/complete
 
 - `errors` holds validation errors keyed by field for `422` responses.
 - `meta` holds pagination and collection metadata.
-- Machine-readable `code` values catalog: TBD (grows with implementation).
+- Machine-readable `code` values grow with modules. Auth + tenancy catalogs: [01-authentication/API.md](../09-modules/01-authentication/API.md), [00-tenancy/API.md](../09-modules/00-tenancy/API.md).
 
 ## Conventions
 
@@ -77,7 +77,7 @@ POST /api/v1/tasks/{task}/complete
 
 ## Rules
 
-- No endpoint ships without a Policy check and Form Request validation.
+- No **authorization-gated** business endpoint ships without a Policy/Gate check and Form Request validation. Guest authentication endpoints (login, forgot/reset password) are identity endpoints without `module.action` policies — they still use Form Requests and rate limiting ([01-authentication/PERMISSIONS.md](../09-modules/01-authentication/PERMISSIONS.md)).
 - No breaking change inside `v1`; breaking changes require a new version.
 - Errors must be secure: no stack traces or internal details in production responses.
 
@@ -86,7 +86,13 @@ POST /api/v1/tasks/{task}/complete
 - **Sanctum mode for the SPA: cookie session** (HttpOnly cookie + CSRF protection via `sanctum/csrf-cookie`). `statefulApi()` middleware is enabled; CORS allows only the SPA origin with credentials.
 - The standardized envelope is implemented by `App\Core\Shared\ApiResponse`; the first live endpoint is `GET /api/v1/health`.
 
+## Auth rate limiting (decided — Sprint 005)
+
+- Login and password-reset endpoints: **5 requests / minute**, keyed primarily by **normalized email + IP** (see [01-authentication/API.md](../09-modules/01-authentication/API.md)).
+- Exceeding the limit returns `429` with `AUTH_TOO_MANY_ATTEMPTS`.
+
 ## TBD
 
-- Rate limiting values (authentication endpoints must be rate-limited — see [SECURITY_BASELINE.md](../06-security/SECURITY_BASELINE.md)): TBD.
 - OpenAPI documentation tooling: TBD.
+- Global list pagination defaults/max: TBD.
+- Idempotency mechanism for workflow transitions: TBD.

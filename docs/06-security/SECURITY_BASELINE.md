@@ -1,7 +1,7 @@
 # Security Baseline
 
-> **Status:** Approved baseline; implementation details TBD
-> **Last updated:** 2026-08-06
+> **Status:** Approved baseline; authentication values finalized for Sprint 005 (implementation pending)
+> **Last updated:** 2026-08-08
 
 ## Purpose
 
@@ -30,11 +30,15 @@ Each control below names the attack it prevents. Implementation details are spec
 
 ### Authentication
 
-- Laravel Sanctum; secure token handling.
-- **Authentication rate limiting** on login and sensitive auth endpoints (values TBD).
-- Password hashing with Laravel's default strong hashing; password policy details TBD.
-- Login success and security-relevant login failures are audited.
-- CSRF protection where applicable (SPA cookie mode).
+- **Laravel Sanctum SPA cookie session** (HttpOnly cookie + CSRF via `/sanctum/csrf-cookie`). No Bearer login for the web app; Personal Access Tokens are future mobile/API scope.
+- Login identifier: **email + password** only.
+- **Rate limiting:** 5 attempts / minute on login and password-reset endpoints, keyed by normalized email + IP (reset may key IP and/or email). Successful login clears the login limiter. Responses must not reveal whether an email exists.
+- **Password policy (MVP):** minimum 8 characters; letters and numbers required; symbols allowed; confirmation on reset. Compromised-password checking is future unless an approved package exists.
+- **Password reset:** email-based, expiring one-time token, included in Sprint 005. Email verification and MFA are **out** of Sprint 005 (MFA = future enhancement only).
+- **Account status:** `active` / `disabled` on `users` — disabled users cannot log in; existing sessions denied on the next protected request.
+- **Tenant lifecycle:** pending/suspended/archived tenant users cannot establish an operational session; live sessions rejected next protected request (`TENANT_*` codes). See [01-authentication/BUSINESS_RULES.md](../09-modules/01-authentication/BUSINESS_RULES.md).
+- Password hashing with Laravel's default strong hashing; never store plaintext passwords, hashes, reset tokens, or session IDs in audit values.
+- Login success and security-relevant login failures are audited (including tenant/account blocks).
 
 ### Authorization
 
@@ -81,7 +85,7 @@ No formal compliance certification is claimed. **Saudi PDPL (نظام حماية
 
 ## TBD
 
-- Password and lockout policy values: TBD.
-- Rate limiting values: TBD.
+- Production mail provider (password-reset delivery).
 - Malware scanner selection: TBD.
 - Secure header set finalization: TBD at deployment.
+- Whether disabled-account login should collapse into generic invalid-credentials for stronger anti-enumeration (current auth spec returns `AUTH_ACCOUNT_DISABLED` after successful password verify) — Change Request only.

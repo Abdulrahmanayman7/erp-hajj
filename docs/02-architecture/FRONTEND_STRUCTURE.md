@@ -1,7 +1,7 @@
 # Frontend Structure
 
-> **Status:** Approved — frontend scaffolded (app shell, `modules/system`, and `shared/api` exist; business modules not implemented)
-> **Last updated:** 2026-08-06
+> **Status:** Approved — frontend scaffolded (app shell, `modules/system`, and `shared/api` exist; auth module specified for Sprint 005 — **not implemented**)
+> **Last updated:** 2026-08-08
 
 ## Purpose
 
@@ -50,6 +50,12 @@ src/
 
 A module may contain: pages, components, api, queries, mutations, types, validation, routes, permissions, tests.
 
+### Auth module (Sprint 005 — planned)
+
+`src/modules/auth/` owns login/forgot/reset pages, auth API client, TanStack Query current-user query + auth mutations, and auth routes. Route guards live under `src/app/guards/`.
+
+**State rule:** current user = TanStack Query server state; avoid a duplicated global Pinia auth store unless guards need a thin coordination flag (documented in [01-authentication/UI.md](../09-modules/01-authentication/UI.md)).
+
 ## Rules
 
 - **No Axios calls directly inside presentation components** — data access lives in the module `api/` layer, consumed via TanStack Query.
@@ -66,7 +72,14 @@ A module may contain: pages, components, api, queries, mutations, types, validat
 - **Sanctum mode:** SPA cookie session (HttpOnly cookie + CSRF); the shared API client sends `credentials: 'include'`.
 - **Path alias:** `@/` → `src/`.
 
+## Auth UI decisions (Sprint 005 — specification)
+
+- Guest routes: `/login`, `/forgot-password`, `/reset-password`.
+- Authenticated shell after login: temporary welcome / system status — **no fake dashboard KPIs**.
+- CSRF: `GET /sanctum/csrf-cookie` before mutating auth calls; handle `401`/`419`/`403`/`429` per [01-authentication/UI.md](../09-modules/01-authentication/UI.md).
+- No localStorage auth tokens; no fabricated permissions on the client.
+
 ## TBD
 
-- Auth/permission route guards: TBD with authentication implementation.
 - Notifications UI placement (header bell vs. page): TBD.
+- Exact home path naming (`/` vs `/app`): finalize at implementation within auth UI spec.
