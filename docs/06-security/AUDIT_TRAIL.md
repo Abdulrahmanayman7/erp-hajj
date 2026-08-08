@@ -1,6 +1,7 @@
 # Audit Trail
 
-> **Status:** Approved requirement (correlation ID design finalized; auth event names aligned with Sprint 005); storage design TBD
+> **Status:** Approved requirement (correlation ID design finalized; auth + RBAC event names aligned with Sprint 005/006 specs); storage design TBD
+> **Last updated:** 2026-08-08
 > **Last updated:** 2026-08-08
 
 ## Purpose
@@ -37,8 +38,8 @@ Every incoming request receives a **correlation ID** assigned by early middlewar
 
 ## Audited Events (minimum)
 
-- User created, updated, deleted, disabled.
-- Role or permission changed.
+- User created, updated, enabled, disabled; user roles changed (`USER_*` — see Users & Authorization).
+- Role created/updated/activated/deactivated/deleted; role permissions changed (`ROLE_*`); permission catalog synced (`PERMISSION_CATALOG_SYNCED`).
 - Employee created or updated.
 - Contract reviewed, approved, signed, executed, closed, renewed.
 - Meeting completed.

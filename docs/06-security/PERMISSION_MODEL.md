@@ -1,31 +1,36 @@
 # Permission Model
 
-> **Status:** Approved (catalog may grow with modules)
-> **Last updated:** 2026-08-06
+> **Status:** Approved (catalog may grow with modules). Sprint 006 RBAC **specification** locks architecture; seeding is implementation-pending.
+> **Last updated:** 2026-08-08
 
 ## Purpose
 
-Define the granular permission naming model and the master permission catalog. Module docs list their own slice in `PERMISSIONS.md` under [docs/09-modules/](../09-modules/).
+Define the granular permission naming model and the master permission catalog. Module docs list their own slice in `PERMISSIONS.md` under [docs/09-modules/](../09-modules/). Binding Sprint 006 rules: [02-users-and-authorization/](../09-modules/02-users-and-authorization/).
 
 ## Model
 
-- Permissions are named **`module.action`** (e.g. `contracts.approve`).
-- Roles are **dynamic**: a role is a named set of permissions; personas in [USERS_AND_PERSONAS.md](../01-business/USERS_AND_PERSONAS.md) are default templates only.
-- Enforcement is backend-side via **Policies and Gates**. Frontend permission checks are UX only.
+- Permissions are named **`module.action`** (e.g. `contracts.approve`). Machine `name` is **immutable** and globally unique.
+- Permissions are a **platform-global catalog** (no `tenant_id`). Roles are **tenant-owned**. Links: `role_permissions`, `user_roles`. **No direct user↔permission grants** in MVP.
+- Roles are **dynamic**; personas in [USERS_AND_PERSONAS.md](../01-business/USERS_AND_PERSONAS.md) are default **templates** only.
+- Multiple roles per user; effective permissions = **union** of active roles.
+- Enforcement is backend-side via **Policies and Gates**. Frontend `can()` is UX only.
+- **Seed only permissions for modules that exist in code.** The master catalog below is the long-term vocabulary; Sprint 006 seeds the slice in [02-users-and-authorization/PERMISSIONS.md](../09-modules/02-users-and-authorization/PERMISSIONS.md).
 
 ## Rules
 
 - **The Tenant Owner must not bypass authorization automatically.** All users pass Policies or Gates.
 - Exceptional access (e.g. Platform Super Admin into tenant data) must be explicit, permission-controlled, and **audited**.
 - Sensitive data access has its own permission (e.g. `employees.view_sensitive_data`).
-- Permission changes are audited.
+- Permission and role assignment changes are audited.
+- Platform permissions use existing Tenancy names: **`platform_tenants.*`** — never assignable to tenant roles. See [00-tenancy/PERMISSIONS.md](../09-modules/00-tenancy/PERMISSIONS.md).
 
-## Master Catalog
+## Master Catalog (documentation target)
 
 | Module | Permissions |
 |---|---|
-| Users | `users.view` `users.create` `users.update` `users.disable` `users.delete` |
+| Users | `users.view` `users.create` `users.update` `users.disable` `users.assign_roles` · `users.delete` (reserved; **not seeded** in Sprint 006 — disable replaces hard delete) |
 | Roles | `roles.view` `roles.create` `roles.update` `roles.delete` `roles.assign_permissions` |
+| Permissions (catalog read) | `permissions.view` |
 | Departments | `departments.view` `departments.create` `departments.update` `departments.delete` |
 | Employees | `employees.view` `employees.create` `employees.update` `employees.delete` `employees.view_sensitive_data` |
 | Contracts | `contracts.view` `contracts.create` `contracts.update` `contracts.review` `contracts.approve` `contracts.sign` `contracts.execute` `contracts.close` `contracts.renew` `contracts.delete` |
@@ -39,10 +44,13 @@ Define the granular permission naming model and the master permission catalog. M
 | Audit logs | `audit_logs.view` `audit_logs.export` |
 | Dashboard | `dashboard.view` |
 | Tenant settings | `tenant_settings.view` `tenant_settings.update` |
+| Platform (tenants) | `platform_tenants.view` `platform_tenants.create` `platform_tenants.update` `platform_tenants.activate` `platform_tenants.suspend` `platform_tenants.archive` `platform_tenants.access_data` |
+
+## Default role templates
+
+Seeded system role codes and Sprint 006 permission mapping: [02-users-and-authorization/PERMISSIONS.md](../09-modules/02-users-and-authorization/PERMISSIONS.md) and [BUSINESS_RULES.md](../09-modules/02-users-and-authorization/BUSINESS_RULES.md).
 
 ## TBD
 
-- Custody-specific permissions beyond `assets.assign`/`assets.return` (e.g. custody correction permission): TBD.
+- Custody-specific permissions beyond `assets.assign`/`assets.return`: TBD.
 - Notification-related permissions: TBD.
-- Platform-level (Super Admin) permission names for tenant lifecycle management: TBD.
-- Default role templates → permission mapping: TBD.

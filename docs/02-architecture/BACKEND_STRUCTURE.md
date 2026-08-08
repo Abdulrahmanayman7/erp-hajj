@@ -1,6 +1,6 @@
 # Backend Structure
 
-> **Status:** Approved — backend scaffolded; Tenant Foundation core implemented (Sprint 004); Authentication specified for Sprint 005 — **not implemented**
+> **Status:** Approved — Tenant Foundation (004) + Authentication (005) implemented; Users & Authorization RBAC **specified** for Sprint 006 (not implemented)
 > **Last updated:** 2026-08-08
 
 ## Purpose
@@ -18,13 +18,14 @@ app/
 ├── Core/
 │   ├── Tenancy/        # tenant resolution, automatic scoping, tenant context for jobs/cache (Sprint 004)
 │   ├── Auth/           # Sanctum SPA session auth, login/logout/me/password-reset Actions (Sprint 005)
+│   ├── Authorization/  # Sprint 006: effective permissions, Gates helpers, catalog sync (hand-rolled; no Spatie)
 │   ├── Audit/          # audit recording used by all modules (minimal recorder may ship with auth)
 │   ├── Shared/         # base classes, standardized API response envelope
 │   └── Support/        # helpers, cross-cutting utilities
 ├── Modules/
 │   ├── Organizations/          # tenant management (platform level)
-│   ├── Users/
-│   ├── Authorization/          # roles, permissions
+│   ├── Users/                  # Sprint 006: tenant user administration
+│   ├── Authorization/          # Sprint 006: tenant roles + role_permissions (module surface)
 │   ├── OrganizationStructure/
 │   ├── Employees/              # includes supervisor classification
 │   ├── Contracts/
@@ -81,3 +82,9 @@ Controllers must not:
 - HTTP surface: `/api/v1/auth/*` (see [01-authentication/API.md](../09-modules/01-authentication/API.md)).
 - Prefer `App\Core\Auth\` for session/login Actions, middleware (`EnsureUserIsActive`), Resources, and Form Requests — authentication is platform plumbing, not a tenant business module.
 - Reuse `Core\Tenancy` for tenant gates; do not duplicate tenant resolution inside login beyond the documented login-time checks.
+
+### Users & Authorization placement (Sprint 006 — specified)
+
+- HTTP: `/api/v1/users`, `/api/v1/roles`, `/api/v1/permissions` — see [02-users-and-authorization/API.md](../09-modules/02-users-and-authorization/API.md).
+- Prefer `App\Core\Authorization\` for permission catalog sync, `hasPermission` helpers, and TenantCache invalidation; `App\Modules\Users\` and `App\Modules\Authorization\` for HTTP/Actions/Policies/Models.
+- Hand-rolled RBAC only — do not add Spatie. Extend `/auth/me` additively with `roles` + `permissions` when RBAC ships.

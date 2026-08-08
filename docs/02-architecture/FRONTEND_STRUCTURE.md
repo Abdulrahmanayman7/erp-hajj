@@ -1,6 +1,6 @@
 # Frontend Structure
 
-> **Status:** Approved — frontend scaffolded (app shell, `modules/system`, and `shared/api` exist; auth module specified for Sprint 005 — **not implemented**)
+> **Status:** Approved — Auth module (Sprint 005) implemented; Users/Roles RBAC UI **specified** for Sprint 006 (not implemented)
 > **Last updated:** 2026-08-08
 
 ## Purpose
@@ -50,11 +50,20 @@ src/
 
 A module may contain: pages, components, api, queries, mutations, types, validation, routes, permissions, tests.
 
-### Auth module (Sprint 005 — planned)
+### Auth module (Sprint 005 — implemented)
 
 `src/modules/auth/` owns login/forgot/reset pages, auth API client, TanStack Query current-user query + auth mutations, and auth routes. Route guards live under `src/app/guards/`.
 
 **State rule:** current user = TanStack Query server state; avoid a duplicated global Pinia auth store unless guards need a thin coordination flag (documented in [01-authentication/UI.md](../09-modules/01-authentication/UI.md)).
+
+### Users & Roles (Sprint 006 — specified)
+
+- `src/modules/users/` — list, drawer create/edit, role assignment UI.
+- `src/modules/roles/` — role list + permission matrix (catalog read-only).
+- Shared `can()` / `PermissionGuard` from current-user query permissions (no Pinia permission store).
+- Sidebar: إدارة النظام → المستخدمون / الأدوار والصلاحيات (permission-aware).
+- Authenticated but unauthorized → `/app/403` (not login).
+- Full UI contract: [02-users-and-authorization/UI.md](../09-modules/02-users-and-authorization/UI.md).
 
 ## Rules
 
@@ -72,7 +81,7 @@ A module may contain: pages, components, api, queries, mutations, types, validat
 - **Sanctum mode:** SPA cookie session (HttpOnly cookie + CSRF); the shared API client sends `credentials: 'include'`.
 - **Path alias:** `@/` → `src/`.
 
-## Auth UI decisions (Sprint 005 — specification)
+## Auth UI decisions (Sprint 005 — implemented)
 
 - Guest routes: `/login`, `/forgot-password`, `/reset-password`.
 - Authenticated shell after login: temporary welcome / system status — **no fake dashboard KPIs**.
@@ -82,4 +91,3 @@ A module may contain: pages, components, api, queries, mutations, types, validat
 ## TBD
 
 - Notifications UI placement (header bell vs. page): TBD.
-- Exact home path naming (`/` vs `/app`): finalize at implementation within auth UI spec.

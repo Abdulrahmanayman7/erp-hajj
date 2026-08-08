@@ -1,11 +1,13 @@
 # Architecture
 
 > **Status:** Approved
-> **Last updated:** 2026-08-06
+> **Last updated:** 2026-08-08
 
 ## Purpose
 
 Define the overall architecture and the mandatory layering rules for the platform.
+
+Hand-rolled tenant RBAC (Sprint 006 specification): global `permissions` catalog, tenant-owned `roles`, pivots `user_roles` / `role_permissions` — see [02-users-and-authorization/](../09-modules/02-users-and-authorization/). Do not add Spatie without an ADR.
 
 ## Style
 

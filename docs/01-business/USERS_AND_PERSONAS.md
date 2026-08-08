@@ -1,7 +1,7 @@
 # Users and Personas
 
-> **Status:** Approved (default templates)
-> **Last updated:** 2026-08-06
+> **Status:** Approved (default templates). Sprint 006 locks which templates seed as system roles — see [02-users-and-authorization/BUSINESS_RULES.md](../09-modules/02-users-and-authorization/BUSINESS_RULES.md).
+> **Last updated:** 2026-08-08
 
 ## Purpose
 
@@ -13,13 +13,15 @@ Describe the default user personas of the platform. **These personas are default
 
 **Responsibilities:** Tenant lifecycle management, security oversight, technical administration, monitoring, platform configuration.
 
+**Authorization:** Separate **platform** permission layer (`platform_tenants.*`). Platform users are not assigned tenant roles and do not appear in tenant user lists.
+
 ## 2. Tenant Owner (مالك المنشأة)
 
 **Scope:** Highest authority inside one tenant. Manages users, roles, permissions, and organization settings. Views the executive dashboard. Handles major approvals based on assigned permissions.
 
 **Responsibilities:** Executive oversight, governance, final approvals, user and role governance, audit review.
 
-**Important:** The Tenant Owner does **not** bypass authorization automatically — all actions pass Policies/Gates.
+**Important:** The Tenant Owner does **not** bypass authorization automatically — all actions pass Policies/Gates. System role `code`: `tenant_owner`. Multiple owners allowed; last-owner protection applies.
 
 ## 3. General Manager (المدير العام)
 
@@ -27,11 +29,15 @@ Describe the default user personas of the platform. **These personas are default
 
 **Responsibilities:** Operational leadership, decision-making, follow-up, performance review, cross-department coordination.
 
+**System role `code`:** `general_manager`.
+
 ## 4. Department Manager (مدير الإدارة)
 
 **Scope:** Manages assigned organizational units. Views employees and tasks within authorized departments. Creates meetings, decisions, and tasks where permitted. Reviews department performance.
 
 **Responsibilities:** Department planning, task assignment, employee supervision, approval workflows, reporting.
+
+**System role `code`:** `department_manager`. Org-structure permissions added when that module ships.
 
 ## 5. Supervisor (المشرف)
 
@@ -39,11 +45,15 @@ Describe the default user personas of the platform. **These personas are default
 
 **Responsibilities:** Supervision, execution follow-up, reporting, team coordination.
 
+**System role `code`:** `supervisor`.
+
 ## 6. Employee (الموظف)
 
 **Scope:** Views and updates assigned tasks. Accesses permitted documents. Participates in meetings. Views own profile and assigned custodies.
 
 **Responsibilities:** Task execution, status updates, document access, meeting participation, custody responsibility.
+
+**System role `code`:** `employee`.
 
 ## 7. Reviewer / Auditor (المراجع / المدقق)
 
@@ -51,16 +61,19 @@ Describe the default user personas of the platform. **These personas are default
 
 **Responsibilities:** Compliance review, audit inspection, data verification, governance reporting.
 
+**System role `code`:** `auditor`.
+
 ## 8. Read-only User / Visitor (مستخدم اطلاع فقط)
 
 **Scope:** Views only authorized information. Cannot create, edit, approve, delete, or export sensitive data unless explicitly granted.
 
+**System role `code`:** `read_only`.
+
 ## Rules
 
-- Roles and permissions are **dynamic** (see [PERMISSION_MODEL.md](../06-security/PERMISSION_MODEL.md)); these personas seed default role templates only.
+- Roles and permissions are **dynamic** (see [PERMISSION_MODEL.md](../06-security/PERMISSION_MODEL.md)); these personas seed default **system** role templates only. Tenants may create **custom** roles.
+- A user may hold **multiple roles**; effective permissions are the union of active roles.
+- Permissions come **only through roles** (no direct user permissions in MVP).
 - Every user passes Policies/Gates — no persona bypasses authorization.
 - Each tenant user belongs to **one tenant** in the MVP; multi-organization membership is future scope unless approved later.
-
-## TBD
-
-- Which personas ship as seeded default roles and their exact default permission sets: TBD.
+- Exact Sprint 006 default permission sets: [02-users-and-authorization/PERMISSIONS.md](../09-modules/02-users-and-authorization/PERMISSIONS.md).
