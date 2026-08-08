@@ -46,7 +46,7 @@ Each control below names the attack it prevents. Implementation details are spec
 - No persona bypasses authorization; exceptional access is explicit and audited.
 - Permission and role changes are audited.
 - Never rely on frontend permission hiding — backend authorization is mandatory.
-- Sprint 006 RBAC (specified): multiple roles; permissions via roles only; global permission catalog; tenant-owned roles; self-escalation and last-Owner protections — [02-users-and-authorization/BUSINESS_RULES.md](../09-modules/02-users-and-authorization/BUSINESS_RULES.md). **Not implemented until Sprint 006 code lands.**
+- Sprint 006 RBAC (**implemented**): multiple roles; permissions via roles only; global permission catalog; tenant-owned roles; self-escalation and last-Owner protections — [02-users-and-authorization/BUSINESS_RULES.md](../09-modules/02-users-and-authorization/BUSINESS_RULES.md).
 
 ### Input, output, and data
 

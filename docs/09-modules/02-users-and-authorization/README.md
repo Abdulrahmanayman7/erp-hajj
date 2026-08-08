@@ -1,6 +1,6 @@
 # Module: Users and Authorization (المستخدمون والأدوار والصلاحيات)
 
-> **Status:** Specification complete — implementation pending (Sprint 006). **RBAC is not implemented.**
+> **Status:** Implemented (Sprint 006). Backend API + SPA UI + Pest/Vitest green. **RBAC is live.**
 > **Last updated:** 2026-08-08
 > **Sprint:** 006
 
@@ -54,6 +54,14 @@ Provide tenant-scoped **user administration** and a **dynamic RBAC** system (rol
 7. Frontend modules + sidebar + PermissionGuard + `/app/403`.
 8. Provisioning for `rafee` (default role templates + first Owner) without lockout.
 9. Full Pest/Vitest matrices.
+
+## Operational: bootstrap Tenant Owner
+
+CLI only — `php artisan tenant:bootstrap-owner` (`App\Core\Authorization\Console\BootstrapTenantOwnerCommand`).
+
+Reuses `PermissionCatalogSynchronizer` + `ProvisionDefaultTenantRoles`. Creates or assigns an active `tenant_owner` for any tenant (example default prompt: `rafee`). No HTTP/UI surface. No default or committed credentials. See root [README.md](../../../README.md) § Bootstrap first Tenant Owner.
+
+`RBAC_INITIAL_OWNER_EMAIL` (optional seeder hint) remains supported for assigning Owner when that user already exists; it cannot create users.
 
 ## Package decision (final)
 

@@ -140,3 +140,24 @@ export async function apiPost<TData>(
 
   return request<TData>('POST', path, body)
 }
+
+export async function apiPut<TData>(
+  path: string,
+  body?: unknown,
+): Promise<ApiSuccess<TData>> {
+  await ensureCsrfCookie()
+  return request<TData>('PUT', path, body)
+}
+
+export async function apiPatch<TData>(
+  path: string,
+  body?: unknown,
+): Promise<ApiSuccess<TData>> {
+  await ensureCsrfCookie()
+  return request<TData>('PATCH', path, body)
+}
+
+export async function apiDelete<TData = null>(path: string): Promise<ApiSuccess<TData>> {
+  await ensureCsrfCookie()
+  return request<TData>('DELETE', path)
+}

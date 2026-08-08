@@ -1,6 +1,6 @@
 # Users and Authorization — Data Model
 
-> **Status:** Conceptual — implementation pending (Sprint 006). Auth User fields already exist.
+> **Status:** **Implemented** (Sprint 006). Auth User fields already exist.
 > **Last updated:** 2026-08-08
 
 ## Classification

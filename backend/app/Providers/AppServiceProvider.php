@@ -4,10 +4,17 @@ namespace App\Providers;
 
 use App\Core\Auth\Events\AuthSecurityEvent;
 use App\Core\Auth\Listeners\LogAuthSecurityEvent;
+use App\Core\Authorization\Events\AuthorizationSecurityEvent;
+use App\Core\Authorization\Listeners\LogAuthorizationSecurityEvent;
 use App\Core\Shared\CorrelationId;
 use App\Models\User;
+use App\Modules\Authorization\Models\Role;
+use App\Modules\Authorization\Policies\RolePolicy;
+use App\Modules\Users\Policies\UserPolicy;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -32,5 +39,22 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Event::listen(AuthSecurityEvent::class, LogAuthSecurityEvent::class);
+        Event::listen(AuthorizationSecurityEvent::class, LogAuthorizationSecurityEvent::class);
+
+        Gate::policy(User::class, UserPolicy::class);
+        Gate::policy(Role::class, RolePolicy::class);
+
+        Route::bind('user', function (string $value): User {
+            $actor = auth()->user();
+
+            if ($actor === null || $actor->tenant_id === null) {
+                abort(404);
+            }
+
+            return User::query()
+                ->whereKey($value)
+                ->where('tenant_id', $actor->tenant_id)
+                ->firstOrFail();
+        });
     }
 }

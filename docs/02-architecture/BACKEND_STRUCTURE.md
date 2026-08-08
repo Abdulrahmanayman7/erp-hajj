@@ -1,6 +1,6 @@
 # Backend Structure
 
-> **Status:** Approved — Tenant Foundation (004) + Authentication (005) implemented; Users & Authorization RBAC **specified** for Sprint 006 (not implemented)
+> **Status:** Approved — Tenant Foundation (004) + Authentication (005) + Users/RBAC (006) implemented
 > **Last updated:** 2026-08-08
 
 ## Purpose

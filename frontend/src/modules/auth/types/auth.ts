@@ -11,6 +11,12 @@ export interface AuthTenant {
   timezone: string
 }
 
+export interface AuthRole {
+  id: number
+  code: string
+  name: string
+}
+
 export interface AuthUser {
   id: number
   name: string
@@ -18,6 +24,8 @@ export interface AuthUser {
   status: UserStatus
   is_platform_user: boolean
   tenant: AuthTenant | null
+  roles: AuthRole[]
+  permissions: string[]
 }
 
 export interface LoginPayload {

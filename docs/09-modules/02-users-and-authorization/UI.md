@@ -1,6 +1,6 @@
 # Users and Authorization — UI
 
-> **Status:** Specification complete — implementation pending (Sprint 006)
+> **Status:** **Implemented** (Sprint 006)
 > **Last updated:** 2026-08-08
 > **Locale:** Arabic RTL first
 
