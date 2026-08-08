@@ -1,7 +1,7 @@
 # Audit Trail
 
-> **Status:** Approved requirement (correlation ID design finalized); storage design TBD
-> **Last updated:** 2026-08-06
+> **Status:** Approved requirement (correlation ID design finalized; auth event names aligned with Sprint 005); storage design TBD
+> **Last updated:** 2026-08-08
 
 ## Purpose
 
@@ -49,7 +49,8 @@ Every incoming request receives a **correlation ID** assigned by early middlewar
 - Asset assigned or returned (custody events).
 - Tenant settings changed.
 - Tenant lifecycle transitions (created/activated/suspended/reactivated/archived) with actor, old/new status, reason, correlation ID, context type.
-- Login success; security-relevant login failure (including rejections due to tenant status).
+- Login success; security-relevant login failure (including rejections due to tenant status or disabled account).
+- Logout; password-reset requested; password-reset completed (Authentication module — see [01-authentication/BUSINESS_RULES.md](../09-modules/01-authentication/BUSINESS_RULES.md) for event names: `LOGIN_SUCCESS`, `LOGIN_FAILED`, `LOGOUT`, `PASSWORD_RESET_REQUESTED`, `PASSWORD_RESET_COMPLETED`, `ACCOUNT_DISABLED_ACCESS_ATTEMPT`, `TENANT_BLOCKED_ACCESS_ATTEMPT`).
 - Platform Super Admin access to tenant data (always) — recorded with the **target** tenant's id.
 - Unauthorized attempts to enter `PlatformContext`.
 

@@ -1,7 +1,7 @@
 # Testing Strategy
 
-> **Status:** Approved (principles binding; tooling partially TBD)
-> **Last updated:** 2026-08-06
+> **Status:** Approved (principles binding; Pest/Vitest decided; E2E tooling still TBD)
+> **Last updated:** 2026-08-08
 
 ## Purpose
 
@@ -58,7 +58,11 @@ Define what must be tested and to what standard. Per-module test plans live in e
 - **Frontend: Vitest** (installed; `npm run test`).
 - **CI:** `.github/workflows/ci.yml` runs both suites on push/PR to `develop` and `main`.
 
+## Auth testing (Sprint 005)
+
+Full Pest and Vitest matrices live in [01-authentication/TEST_PLAN.md](../09-modules/01-authentication/TEST_PLAN.md). Mandatory themes: generic credential errors (no enumeration), rate limiting, account disabled, tenant lifecycle login blocks, session regeneration/invalidation, password-reset outward equivalence, secrets never in audit payloads, CSRF/session SPA flow, and frontend route-guard behavior without retry storms.
+
 ## TBD
 
-- **E2E tooling** (Playwright proposed): unresolved because no user-facing flows exist yet. **Recommended:** Playwright, introduced with the authentication module. **Impact:** new CI job; no effect on unit/feature suites.
-- **Coverage thresholds**: unresolved because a numeric gate before real modules exist would measure scaffolding. **Recommended:** enforce category completeness (the lists above) now; add a line-coverage floor after the first two business modules. **Impact:** CI configuration only.
+- **E2E tooling** (Playwright proposed): still unresolved for full product E2E. **Recommended:** introduce Playwright after Authentication is implemented, covering login → shell → logout. **Impact:** new CI job; no effect on unit/feature suites.
+- **Coverage thresholds**: unresolved because a numeric gate before several modules exist would measure scaffolding. **Recommended:** enforce category completeness now; add a line-coverage floor after Authentication + RBAC. **Impact:** CI configuration only.

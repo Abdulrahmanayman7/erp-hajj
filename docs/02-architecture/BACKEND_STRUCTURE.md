@@ -1,7 +1,7 @@
 # Backend Structure
 
-> **Status:** Approved — backend scaffolded (Laravel 12 installed; `Core/Shared` and `Core/Health` exist, business modules not implemented)
-> **Last updated:** 2026-08-06
+> **Status:** Approved — backend scaffolded; Tenant Foundation core implemented (Sprint 004); Authentication specified for Sprint 005 — **not implemented**
+> **Last updated:** 2026-08-08
 
 ## Purpose
 
@@ -16,9 +16,9 @@ PHP 8.2+, Laravel 12, Sanctum, MySQL, Redis when required, Laravel Queue, REST A
 ```text
 app/
 ├── Core/
-│   ├── Tenancy/        # tenant resolution, automatic scoping, tenant context for jobs/cache
-│   ├── Auth/           # Sanctum setup, authentication plumbing
-│   ├── Audit/          # audit recording used by all modules
+│   ├── Tenancy/        # tenant resolution, automatic scoping, tenant context for jobs/cache (Sprint 004)
+│   ├── Auth/           # Sanctum SPA session auth, login/logout/me/password-reset Actions (Sprint 005)
+│   ├── Audit/          # audit recording used by all modules (minimal recorder may ship with auth)
 │   ├── Shared/         # base classes, standardized API response envelope
 │   └── Support/        # helpers, cross-cutting utilities
 ├── Modules/
@@ -75,3 +75,9 @@ Controllers must not:
 - **PSR-4:** everything lives under the default `App\` namespace — `App\Core\...` and `App\Modules\...` (e.g. `App\Core\Shared\ApiResponse`, `App\Core\Health\HealthController`). No extra service-provider wiring until a module needs it.
 - **Testing:** Pest replaces PHPUnit-style classes (`tests/Pest.php` binds `Tests\TestCase` to `tests/Feature`).
 - **Sanctum:** SPA cookie authentication — `statefulApi()` middleware enabled in `bootstrap/app.php`; `FRONTEND_URL` + `SANCTUM_STATEFUL_DOMAINS` configured; CORS allows only the SPA origin with credentials.
+
+### Auth module placement (Sprint 005)
+
+- HTTP surface: `/api/v1/auth/*` (see [01-authentication/API.md](../09-modules/01-authentication/API.md)).
+- Prefer `App\Core\Auth\` for session/login Actions, middleware (`EnsureUserIsActive`), Resources, and Form Requests — authentication is platform plumbing, not a tenant business module.
+- Reuse `Core\Tenancy` for tenant gates; do not duplicate tenant resolution inside login beyond the documented login-time checks.

@@ -1,7 +1,7 @@
 # ERP Hajj
 
-> **Status:** Scaffolding phase — Laravel 12 and Vue 3 are installed with a health endpoint, RTL app shell, tests, and CI. **No business modules, authentication flow, or multi-tenancy logic are implemented yet.**
-> **Last updated:** 2026-08-06
+> **Status:** Tenant Foundation core implemented (Sprint 004). Authentication **specification complete — implementation pending** (Sprint 005). No RBAC or business modules yet.
+> **Last updated:** 2026-08-08
 
 ## Project Purpose
 
