@@ -1,14 +1,14 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { ApiError, apiGet } from './http'
+import { ApiError, apiGet, apiPost, ensureCsrfCookie, resetCsrfBootstrap } from './http'
 
-function mockFetchResponse(status: number, body: unknown): void {
+function mockFetchResponse(status: number, body: unknown, headers?: HeadersInit): void {
   vi.stubGlobal(
     'fetch',
     vi.fn().mockResolvedValue(
       new Response(JSON.stringify(body), {
         status,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...headers },
       }),
     ),
   )
@@ -17,6 +17,8 @@ function mockFetchResponse(status: number, body: unknown): void {
 describe('apiGet', () => {
   afterEach(() => {
     vi.unstubAllGlobals()
+    resetCsrfBootstrap()
+    document.cookie = 'XSRF-TOKEN=; Max-Age=0; path=/'
   })
 
   it('returns the envelope when the API responds with success', async () => {
@@ -56,5 +58,62 @@ describe('apiGet', () => {
 
     expect(error).toBeInstanceOf(ApiError)
     expect((error as ApiError).status).toBe(0)
+  })
+})
+
+describe('CSRF and apiPost', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    resetCsrfBootstrap()
+    document.cookie = 'XSRF-TOKEN=; Max-Age=0; path=/'
+  })
+
+  it('bootstraps the CSRF cookie before posting', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response('', { status: 204 }))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ success: true, message: 'ok', data: { id: 1 } }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      )
+
+    vi.stubGlobal('fetch', fetchMock)
+    document.cookie = 'XSRF-TOKEN=test-token; path=/'
+
+    await ensureCsrfCookie()
+    await apiPost('/api/v1/auth/login', { email: 'a@b.com', password: 'x' }, { csrf: false })
+
+    expect(fetchMock).toHaveBeenCalled()
+    expect(String(fetchMock.mock.calls[0][0])).toContain('/sanctum/csrf-cookie')
+  })
+
+  it('retries once on 419 after refreshing CSRF', async () => {
+    document.cookie = 'XSRF-TOKEN=old; path=/'
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response('', { status: 204 }))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ success: false, message: 'CSRF', code: 'CSRF' }), {
+          status: 419,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      )
+      .mockResolvedValueOnce(new Response('', { status: 204 }))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ success: true, message: 'ok', data: null }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      )
+
+    vi.stubGlobal('fetch', fetchMock)
+
+    const result = await apiPost('/api/v1/auth/logout')
+
+    expect(result.success).toBe(true)
+    expect(fetchMock.mock.calls.length).toBeGreaterThanOrEqual(3)
   })
 })

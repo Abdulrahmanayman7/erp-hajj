@@ -1,6 +1,6 @@
 # Authentication — UI
 
-> **Status:** Approved UI specification — **no pages implemented yet**
+> **Status:** Implemented (Sprint 005) — pages, guards, CSRF client, `/app` shell
 > **Last updated:** 2026-08-08
 
 Follow [DESIGN_GUIDELINES.md](../../05-ui-ux/DESIGN_GUIDELINES.md): Arabic RTL first, light theme, deep green primary, gold accent restrained, desktop-first responsive, no dark mode.

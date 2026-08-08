@@ -19,7 +19,7 @@ The 21 modules and four core workflows defined in [MVP_SCOPE.md](MVP_SCOPE.md), 
 | Module-level documentation under `docs/09-modules/` | Done (living docs) |
 | Backend + frontend scaffolding (health, RTL shell, CI) | Done |
 | Sprint 004 — Tenant Foundation (data + core scoping/isolation) | Done (implementation) |
-| Sprint 005 — Authentication (API + SPA UI) | **Specification complete — implementation pending** |
+| Sprint 005 — Authentication (API + SPA UI) | **Done** (RBAC still pending) |
 | Users / roles / permissions (RBAC) | Next after Authentication |
 | Organizational structure → remaining MVP modules | After RBAC |
 

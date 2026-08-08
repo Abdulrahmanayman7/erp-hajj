@@ -1,6 +1,6 @@
 # ERP Hajj
 
-> **Status:** Tenant Foundation core implemented (Sprint 004). Authentication **specification complete — implementation pending** (Sprint 005). No RBAC or business modules yet.
+> **Status:** Tenant Foundation (Sprint 004) and Authentication vertical slice (Sprint 005) implemented. No RBAC or business modules yet.
 > **Last updated:** 2026-08-08
 
 ## Project Purpose

@@ -1,6 +1,6 @@
 # Authentication — Data Model
 
-> **Status:** Approved for Sprint 005 — migrations **not** created in this specification task
+> **Status:** Implemented — `users.status` migration shipped in Sprint 005
 > **Last updated:** 2026-08-08
 
 Authentication builds on the hybrid **User** model (Tenant Foundation already added `users.tenant_id`) and Laravel’s existing auth tables from the default migration.
@@ -34,27 +34,23 @@ SPA cookie mode does **not** require personal access tokens for the web app. `pe
 
 ---
 
-## Required migration for Sprint 005 (document only — do not create now)
+## Migration shipped (Sprint 005)
 
-### Add `users.status`
+### `users.status`
 
 | Column | Type | Default | Notes |
 |---|---|---|---|
-| `status` | `VARCHAR(20)` (or string enum) | `active` | Values: `active`, `disabled`. Indexed for admin filters later |
+| `status` | `VARCHAR(20)` | `active` | Values: `active`, `disabled`. No index (single-row checks after auth) |
 
-**PHP enum (conceptual):** `App\Core\Auth\UserStatus` or `App\Models\Enums\UserStatus` — `Active`, `Disabled`.
+**PHP enum:** `App\Core\Auth\UserStatus` (`Active`, `Disabled`).
 
 **Rules:**
 
 - Not mass-assignable from public auth endpoints.
-- Cast on `User` model.
-- Helper: `isActive(): bool` / `isDisabled(): bool`.
-- Do **not** add employee lifecycle fields, roles, permissions, or soft deletes in this migration.
-- Do **not** redesign `users`.
+- Cast on `User` model; helper `isActive()`.
+- No employee lifecycle fields, roles, permissions, or soft deletes in this migration.
 
-Suggested migration name (implementation time):
-
-`YYYY_MM_DD_HHMMSS_add_status_to_users_table.php`
+Migration file: `2026_08_08_160000_add_status_to_users_table.php`
 
 ---
 

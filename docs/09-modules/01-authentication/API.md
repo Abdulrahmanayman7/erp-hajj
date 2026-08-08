@@ -1,6 +1,6 @@
 # Authentication — API (contract)
 
-> **Status:** Approved contract — **no endpoints implemented yet**
+> **Status:** Implemented (Sprint 005) — endpoints live under `/api/v1/auth`
 > **Last updated:** 2026-08-08
 
 All responses use the standardized envelope in [API_STANDARDS.md](../../04-api/API_STANDARDS.md). Authentication for the SPA is **session cookie + CSRF**, not Bearer tokens.

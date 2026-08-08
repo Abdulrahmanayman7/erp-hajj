@@ -5,7 +5,7 @@ import { createI18n } from 'vue-i18n'
 
 import { ar } from '@/locales/ar'
 
-import { router } from '../router'
+import { queryClient, router } from '../router'
 
 export const i18n = createI18n({
   legacy: false,
@@ -17,6 +17,6 @@ export const i18n = createI18n({
 export function installProviders(app: App): void {
   app.use(createPinia())
   app.use(router)
-  app.use(VueQueryPlugin)
+  app.use(VueQueryPlugin, { queryClient })
   app.use(i18n)
 }

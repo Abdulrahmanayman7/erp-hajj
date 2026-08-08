@@ -3,7 +3,9 @@
 use App\Core\Tenancy\Models\Tenant;
 use App\Core\Tenancy\TenantContext;
 use App\Models\User;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
 /*
@@ -43,4 +45,37 @@ function tenantUser(Tenant $tenant, array $attributes = []): User
 function platformUser(array $attributes = []): User
 {
     return User::factory()->create($attributes);
+}
+
+/**
+ * Sanctum SPA cookie requests need a first-party Origin so stateful
+ * session middleware starts. CSRF is disabled in Feature tests — the
+ * SPA CSRF flow is covered by frontend Vitest.
+ *
+ * @param  array<string, mixed>  $data
+ * @param  array<string, string>  $headers
+ */
+function spaPostJson(string $uri, array $data = [], array $headers = []): TestResponse
+{
+    return test()
+        ->withoutMiddleware(ValidateCsrfToken::class)
+        ->withHeaders(array_merge([
+            'Origin' => 'http://localhost:5173',
+            'Referer' => 'http://localhost:5173/',
+        ], $headers))
+        ->postJson($uri, $data);
+}
+
+/**
+ * @param  array<string, string>  $headers
+ */
+function spaGetJson(string $uri, array $headers = []): TestResponse
+{
+    return test()
+        ->withoutMiddleware(ValidateCsrfToken::class)
+        ->withHeaders(array_merge([
+            'Origin' => 'http://localhost:5173',
+            'Referer' => 'http://localhost:5173/',
+        ], $headers))
+        ->getJson($uri);
 }

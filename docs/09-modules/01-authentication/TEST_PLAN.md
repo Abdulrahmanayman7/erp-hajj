@@ -1,6 +1,6 @@
 # Authentication — Test Plan
 
-> **Status:** Approved matrix — tests **not** implemented in this specification task
+> **Status:** Implemented — Pest Feature/Auth + Vitest auth/guard/http suites green (Sprint 005)
 > **Last updated:** 2026-08-08
 
 Tooling: **Pest** (backend), **Vitest** (frontend). Security-relevant failures block merge.

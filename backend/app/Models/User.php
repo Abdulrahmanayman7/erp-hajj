@@ -2,9 +2,10 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Core\Auth\UserStatus;
 use App\Core\Tenancy\Models\Tenant;
 use Database\Factories\UserFactory;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -14,8 +15,7 @@ use Laravel\Sanctum\HasApiTokens;
 /**
  * Hybrid model (docs/03-database/DATABASE_PRINCIPLES.md):
  * tenant_id NULL = platform user; NOT NULL = tenant user.
- * tenant_id is deliberately NOT mass assignable — it is set only by
- * server-side provisioning code, never from request payloads.
+ * tenant_id and status are deliberately NOT mass assignable from public auth.
  */
 class User extends Authenticatable
 {
@@ -23,8 +23,6 @@ class User extends Authenticatable
     use HasApiTokens, HasFactory, Notifiable;
 
     /**
-     * The attributes that are mass assignable.
-     *
      * @var list<string>
      */
     protected $fillable = [
@@ -34,8 +32,6 @@ class User extends Authenticatable
     ];
 
     /**
-     * The attributes that should be hidden for serialization.
-     *
      * @var list<string>
      */
     protected $hidden = [
@@ -44,8 +40,6 @@ class User extends Authenticatable
     ];
 
     /**
-     * Get the attributes that should be cast.
-     *
      * @return array<string, string>
      */
     protected function casts(): array
@@ -53,7 +47,15 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'status' => UserStatus::class,
         ];
+    }
+
+    protected function email(): Attribute
+    {
+        return Attribute::make(
+            set: fn (string $value): string => mb_strtolower(trim($value)),
+        );
     }
 
     public function tenant(): BelongsTo
@@ -64,5 +66,10 @@ class User extends Authenticatable
     public function isPlatformUser(): bool
     {
         return $this->tenant_id === null;
+    }
+
+    public function isActive(): bool
+    {
+        return $this->status === UserStatus::Active;
     }
 }
