@@ -1,7 +1,7 @@
 # Users and Personas
 
-> **Status:** Approved (default templates). Sprint 006 locks which templates seed as system roles — see [02-users-and-authorization/BUSINESS_RULES.md](../09-modules/02-users-and-authorization/BUSINESS_RULES.md).
-> **Last updated:** 2026-08-08
+> **Status:** Approved (default templates). Sprint 006 locks which templates seed as system roles — see [02-users-and-authorization/BUSINESS_RULES.md](../09-modules/02-users-and-authorization/BUSINESS_RULES.md). Sprint 007 specifies organization units ([03-organization-structure/](../09-modules/03-organization-structure/)).
+> **Last updated:** 2026-08-09
 
 ## Purpose
 
@@ -37,7 +37,7 @@ Describe the default user personas of the platform. **These personas are default
 
 **Responsibilities:** Department planning, task assignment, employee supervision, approval workflows, reporting.
 
-**System role `code`:** `department_manager`. Org-structure permissions added when that module ships.
+**System role `code`:** `department_manager`. Sprint 007 seeds `organization_units.*` into role templates per [03-organization-structure/PERMISSIONS.md](../09-modules/03-organization-structure/PERMISSIONS.md); **row-level “only my units” scope is out of Sprint 007** (permission-wide within tenant). Unit **manager** (`manager_user_id`) means the user responsible for managing that organizational unit — **not** an employee direct/HR line supervisor and **not** an RBAC grant.
 
 ## 5. Supervisor (المشرف)
 

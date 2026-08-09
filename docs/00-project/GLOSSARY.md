@@ -17,7 +17,7 @@ Define the shared vocabulary of the project in English with the Arabic business 
 | Department | إدارة / قسم رئيسي | Top-level organizational unit type. |
 | Section | قسم | Mid-level organizational unit type. |
 | Unit | وحدة | Lower-level organizational unit type. |
-| Position / Job title | منصب / مسمى وظيفي | The job title held by an employee. |
+| Position / Job title | منصب / مسمى وظيفي | The job title held by an employee. Catalog deferred to the Employees module (not Sprint 007 org units). |
 | Employee | موظف | The primary staff entity. |
 | Supervisor | مشرف | An employee with supervisory classification and permissions (not a separate identity record). |
 | Contract | عقد | A formal agreement managed through the controlled contract lifecycle. |

@@ -1,7 +1,7 @@
 # Design Guidelines
 
 > **Status:** Approved direction; detailed tokens TBD
-> **Last updated:** 2026-08-08
+> **Last updated:** 2026-08-09
 
 ## Purpose
 
@@ -26,7 +26,7 @@ Define the UI/UX rules for the web platform. One design language for all modules
 
 ## Shared Components (build once in `shared/components/`)
 
-App Shell · Right Sidebar · Header · Breadcrumbs · Page Header · KPI Card · Data Table · Filters Bar · Search Input · Status Badge · Empty State · Loading State · Error State · Form Field · Date Picker · User Selector · Department Selector · Permission Guard · Confirmation Dialog · Drawer · Modal · File Upload · Timeline · Audit History Panel
+App Shell · Right Sidebar · Header · Breadcrumbs · Page Header · KPI Card · Data Table · Filters Bar · Search Input · Status Badge · Empty State · Loading State · Error State · Form Field · Date Picker · User Selector · Organization Unit Selector · Permission Guard · Confirmation Dialog · Drawer · Modal · File Upload · Timeline · Audit History Panel
 
 Rules:
 
@@ -34,7 +34,7 @@ Rules:
 - Every list page uses Data Table + Filters Bar + pagination; every destructive action uses Confirmation Dialog.
 - Status Badge colors are consistent across modules (same status semantics → same color).
 - Permission Guard hides/disables unauthorized UI — **UX only**; backend authorization remains mandatory.
-- Prefer **Drawer** for straightforward create/edit forms (e.g. user account); use full pages for dense matrices (e.g. role permission matrix). See [02-users-and-authorization/UI.md](../09-modules/02-users-and-authorization/UI.md).
+- Prefer **Drawer** for straightforward create/edit forms (e.g. user account, organization unit); use full pages for dense matrices (e.g. role permission matrix). See [02-users-and-authorization/UI.md](../09-modules/02-users-and-authorization/UI.md) and [03-organization-structure/UI.md](../09-modules/03-organization-structure/UI.md).
 - Authenticated but unauthorized routes: dedicated **403 / access denied** page — do not send users back to login.
 
 ## Accessibility

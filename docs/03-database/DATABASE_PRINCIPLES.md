@@ -1,7 +1,7 @@
 # Database Principles
 
-> **Status:** Approved — includes the binding tenancy database strategy; business migrations do not exist yet
-> **Last updated:** 2026-08-06
+> **Status:** Approved — includes the binding tenancy database strategy; business migrations do not exist yet (Sprint 007 org units specified)
+> **Last updated:** 2026-08-09
 
 ## Purpose
 
@@ -44,7 +44,7 @@ Any new platform table must be justified the same way in its module's `DATA_MODE
 - Carry `tenant_id BIGINT UNSIGNED NOT NULL`, FK → `tenants.id` `ON DELETE RESTRICT`; **`tenant_id` is immutable after record creation**.
 - Model implements the `TenantOwned` contract and uses the `UsesTenantScope` trait — no exceptions.
 - First tenant-owned table: `tenant_settings` (see [00-tenancy/DATA_MODEL.md](../09-modules/00-tenancy/DATA_MODEL.md)).
-- **Planned tenant-owned tables** (each specified in its module's `DATA_MODEL.md` when designed): `roles`, `user_roles`, `role_permissions` (Sprint 006 — see [02-users-and-authorization/DATA_MODEL.md](../09-modules/02-users-and-authorization/DATA_MODEL.md)), `organizational_units`, `positions`, `employees`, `contracts`, `meetings`, `decisions`, `tasks`, `documents`, `warehouses`, `inventory_items`, `inventory_transactions`, `assets`, `custodies`, `notifications`, `tenant_settings`.
+- **Planned tenant-owned tables** (each specified in its module's `DATA_MODEL.md` when designed): `roles`, `user_roles`, `role_permissions` (Sprint 006 — see [02-users-and-authorization/DATA_MODEL.md](../09-modules/02-users-and-authorization/DATA_MODEL.md)), `organization_units` (Sprint 007 — see [03-organization-structure/DATA_MODEL.md](../09-modules/03-organization-structure/DATA_MODEL.md); ADR-0004), `positions` (deferred with Employees), `employees`, `contracts`, `meetings`, `decisions`, `tasks`, `documents`, `warehouses`, `inventory_items`, `inventory_transactions`, `assets`, `custodies`, `notifications`, `tenant_settings`.
 - **Platform catalog (Sprint 006):** `permissions` — global, no `tenant_id`; justified because capabilities are code-defined and must not drift per tenant.
 
 ### Indexes on tenant-owned tables

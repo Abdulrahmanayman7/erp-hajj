@@ -1,7 +1,7 @@
 # Frontend Structure
 
-> **Status:** Approved — Auth (005) + Users/Roles RBAC UI (006) implemented
-> **Last updated:** 2026-08-08
+> **Status:** Approved — Auth (005) + Users/Roles RBAC UI (006) implemented; Organization UI specified (007)
+> **Last updated:** 2026-08-09
 
 ## Purpose
 
@@ -25,7 +25,7 @@ src/
 │   ├── dashboard/
 │   ├── users/
 │   ├── roles/
-│   ├── organization-structure/
+│   ├── organization/             # Sprint 007 — specified; not implemented
 │   ├── employees/
 │   ├── contracts/
 │   ├── meetings/
@@ -56,7 +56,7 @@ A module may contain: pages, components, api, queries, mutations, types, validat
 
 **State rule:** current user = TanStack Query server state; avoid a duplicated global Pinia auth store unless guards need a thin coordination flag (documented in [01-authentication/UI.md](../09-modules/01-authentication/UI.md)).
 
-### Users & Roles (Sprint 006 — specified)
+### Users & Roles (Sprint 006 — implemented)
 
 - `src/modules/users/` — list, drawer create/edit, role assignment UI.
 - `src/modules/roles/` — role list + permission matrix (catalog read-only).
@@ -64,6 +64,12 @@ A module may contain: pages, components, api, queries, mutations, types, validat
 - Sidebar: إدارة النظام → المستخدمون / الأدوار والصلاحيات (permission-aware).
 - Authenticated but unauthorized → `/app/403` (not login).
 - Full UI contract: [02-users-and-authorization/UI.md](../09-modules/02-users-and-authorization/UI.md).
+
+### Organization (Sprint 007 — specified, not implemented)
+
+- `src/modules/organization/` — route `/app/organization`; sidebar **الهيكل التنظيمي** (`organization_units.view`).
+- Tree + details panel; create/edit Drawer; confirmations for move/deactivate/delete via `AppConfirmDialog`.
+- Full UI contract: [03-organization-structure/UI.md](../09-modules/03-organization-structure/UI.md).
 
 ## Rules
 

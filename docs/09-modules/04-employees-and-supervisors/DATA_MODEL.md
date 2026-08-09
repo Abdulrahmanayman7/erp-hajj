@@ -1,9 +1,11 @@
 # Employees and Supervisors — Data Model (conceptual)
 
 > **Status:** Conceptual — no migrations exist
-> **Last updated:** 2026-08-06
+> **Last updated:** 2026-08-09
 
 All tables carry `tenant_id`; employee number unique per tenant.
+
+**Depends on:** Sprint 007 `organization_units` (primary unit FK). **Owns:** `positions` catalog (deferred from Organization Structure).
 
 ## Employee
 
@@ -14,9 +16,9 @@ All tables carry `tenant_id`; employee number unique per tenant.
 | National ID | **Sensitive** |
 | Mobile number | Sensitivity TBD |
 | Email | |
-| Organizational unit | One primary unit |
-| Position | One position |
-| Direct manager | One employee reference (MVP) |
+| Organizational unit | One primary unit → `organization_units.id` (membership / placement) |
+| Position | One position → `positions` (this module) |
+| Direct manager | One **employee** reference (MVP line/reporting manager) — **not** `organization_units.manager_user_id` |
 | Employment date | |
 | Status | List TBD |
 | Attachments | Via documents module (polymorphic) |
