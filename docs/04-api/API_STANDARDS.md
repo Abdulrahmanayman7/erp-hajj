@@ -3,7 +3,7 @@
 > **Status:** Approved
 > **Last updated:** 2026-08-09
 
-Domain error codes for Organization Structure (`ORGANIZATION_UNIT_*`) and Employees (`EMPLOYEE_*`, `POSITION_*`) are listed in their module `API.md` files.
+Domain error codes for Organization Structure (`ORGANIZATION_UNIT_*`), Employees (`EMPLOYEE_*`, `POSITION_*`), and Contracts (`CONTRACT_*` including `CONTRACT_ALREADY_RENEWED` — specified Sprint 009) are listed in their module `API.md` files.
 
 ## Purpose
 

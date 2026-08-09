@@ -27,7 +27,7 @@ src/
 │   ├── roles/
 │   ├── organization/             # Sprint 007 — implemented
 │   ├── employees/                # Sprint 008 — specified; not implemented
-│   ├── contracts/
+│   ├── contracts/                # Sprint 009 — specified; not implemented
 │   ├── meetings/
 │   ├── decisions/
 │   ├── tasks/
@@ -76,6 +76,12 @@ A module may contain: pages, components, api, queries, mutations, types, validat
 - `src/modules/employees/` — route `/app/employees`; sidebar **الموظفون** (`employees.view`).
 - List + drawer; supervisor/user-link actions; positions catalog UX.
 - Full UI contract: [04-employees-and-supervisors/UI.md](../09-modules/04-employees-and-supervisors/UI.md).
+
+### Contracts (Sprint 009 — specified, not implemented)
+
+- `src/modules/contracts/` — route `/app/contracts` (+ details `/app/contracts/:id`); sidebar **العقود** (`contracts.view`).
+- List + drawer; lifecycle confirms; categories drawer; transition timeline on details.
+- Full UI contract: [05-contracts/UI.md](../09-modules/05-contracts/UI.md).
 
 ## Rules
 
