@@ -1,6 +1,6 @@
 # Module: Contracts (العقود)
 
-> **Status:** Specified (Sprint 009) — **not implemented**
+> **Status:** Implemented (Sprint 009)
 > **Last updated:** 2026-08-09
 
 ## Purpose

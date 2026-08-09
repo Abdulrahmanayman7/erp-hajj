@@ -1,6 +1,6 @@
 # Contracts — API
 
-> **Status:** Specified (Sprint 009) — **no endpoints yet**
+> **Status:** Implemented (Sprint 009) — endpoints live under `/api/v1`
 > **Last updated:** 2026-08-09
 
 Envelope: [API_STANDARDS.md](../../04-api/API_STANDARDS.md). Auth + tenant middleware as existing modules.

@@ -1,6 +1,6 @@
 # Contracts — Acceptance Criteria
 
-> **Status:** Specified (Sprint 009)
+> **Status:** Implemented (Sprint 009) — acceptance verified via Pest/Vitest
 > **Last updated:** 2026-08-09
 
 ## Functional

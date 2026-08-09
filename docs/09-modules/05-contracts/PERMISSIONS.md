@@ -1,6 +1,6 @@
 # Contracts — Permissions
 
-> **Status:** Specified (Sprint 009)
+> **Status:** Implemented (Sprint 009) — seeded
 > **Last updated:** 2026-08-09
 
 ## Seeded with Sprint 009 implementation

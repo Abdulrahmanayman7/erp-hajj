@@ -79,6 +79,18 @@ export const router = createRouter({
       meta: { requiresAuth: true, layout: 'app', permission: 'employees.view' },
     },
     {
+      path: '/app/contracts',
+      name: 'contracts',
+      component: () => import('@/modules/contracts/pages/ContractsPage.vue'),
+      meta: { requiresAuth: true, layout: 'app', permission: 'contracts.view' },
+    },
+    {
+      path: '/app/contracts/:id',
+      name: 'contract-details',
+      component: () => import('@/modules/contracts/pages/ContractDetailsPage.vue'),
+      meta: { requiresAuth: true, layout: 'app', permission: 'contracts.view' },
+    },
+    {
       path: '/app/roles/:id/permissions',
       name: 'role-permissions',
       component: () => import('@/modules/roles/pages/RolePermissionsPage.vue'),

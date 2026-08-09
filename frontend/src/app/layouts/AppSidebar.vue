@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { RouterLink, useRoute } from 'vue-router'
 import {
   ChevronDown,
+  FileText,
   Home,
   LogOut,
   IdCard,
@@ -123,6 +124,16 @@ const navGroups = computed<NavGroup[]>(() => {
       to: '/app/employees',
       icon: IdCard,
       permission: 'employees.view',
+      match: 'prefix',
+    })
+  }
+  if (can('contracts.view')) {
+    organizationItems.push({
+      key: 'contracts',
+      labelKey: 'nav.contracts',
+      to: '/app/contracts',
+      icon: FileText,
+      permission: 'contracts.view',
       match: 'prefix',
     })
   }

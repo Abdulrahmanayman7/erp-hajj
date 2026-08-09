@@ -1,6 +1,6 @@
 # Contracts — Test Plan
 
-> **Status:** Specified for Sprint 009 implementation
+> **Status:** Implemented (Sprint 009) — covered by Pest/Vitest
 > **Last updated:** 2026-08-09
 
 Tooling: **Pest** (backend), **Vitest** (frontend). Cross-tenant / policy failures block merge.

@@ -149,9 +149,13 @@ test('permissions catalog is grouped and read-only', function (): void {
         ->flatMap(fn ($m) => collect($m['permissions'])->pluck('name'))
         ->all();
 
+    sort($names);
+    $catalog = PermissionCatalog::allNames();
+    sort($catalog);
+
     expect($names)->toContain('users.view')
-        ->and($names)->not->toContain('contracts.view')
-        ->and(count($names))->toBe(count(PermissionCatalog::allNames()));
+        ->and($names)->toContain('contracts.view')
+        ->and($names)->toBe($catalog);
 });
 
 test('cross-tenant role access returns 404', function (): void {

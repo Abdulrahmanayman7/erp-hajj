@@ -22,9 +22,9 @@ The 21 modules and four core workflows defined in [MVP_SCOPE.md](MVP_SCOPE.md), 
 | Sprint 005 — Authentication (API + SPA UI) | **Done** |
 | Sprint 006 — Users / roles / permissions (RBAC) | **Done** (implementation) |
 | Sprint 007 — Organization Structure | **Done** (implementation) |
-| Sprint 008 — Employees + Supervisors                           | **Done** (implementation)                                       |
-| Sprint 009 — Contracts                                         | **Specification complete** — implementation pending             |
-| Remaining MVP modules                                          | After Sprint 009 Contracts implementation                        |
+| Sprint 008 — Employees + Supervisors | **Done** (implementation) |
+| Sprint 009 — Contracts | **Done** (implementation) |
+| Remaining MVP modules | Next after Contracts |
 
 Natural dependency order remains: **tenancy → authentication → users/roles/permissions → organizational structure → employees → contracts → remaining modules**.
 
