@@ -28,7 +28,7 @@ src/
 │   ├── organization/             # Sprint 007 — implemented
 │   ├── employees/                # Sprint 008 — implemented
 │   ├── contracts/                # Sprint 009 — implemented
-│   ├── meetings/
+│   ├── meetings/                 # Sprint 010 — specified (not implemented)
 │   ├── decisions/
 │   ├── tasks/
 │   ├── documents/
@@ -82,6 +82,11 @@ A module may contain: pages, components, api, queries, mutations, types, validat
 - `src/modules/contracts/` — route `/app/contracts` (+ details `/app/contracts/:id`); sidebar **العقود** (`contracts.view`).
 - List + drawer; lifecycle confirms; categories drawer; transition timeline on details.
 - Full UI contract: [05-contracts/UI.md](../09-modules/05-contracts/UI.md).
+
+### Meetings (Sprint 010 — specified)
+
+- Planned: `src/modules/meetings/` — routes `/app/meetings` (+ `/app/meetings/:id`); sidebar **الاجتماعات** (`meetings.view`).
+- Spec: [06-meetings/UI.md](../09-modules/06-meetings/UI.md). **Not implemented.**
 
 ## Rules
 

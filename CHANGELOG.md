@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Sprint 010 — Meetings specification** (documentation only): Workflow 1 entry (`Meeting → Recommendation → Decision…`); tenant-owned `meetings` + `MTG-######` sequences; append-only `meeting_status_transitions`; employee-only attendees + attendance statuses; structured `meeting_agenda_items`; `minutes_body` text; first-class `meeting_recommendations` (`draft`/`final`, ADR-0007); lifecycle action endpoints (schedule/reschedule/start/complete/cancel); draft-only hard delete; Documents/Notifications/Decisions/Tasks deferred; API/UI/Pest/Vitest matrices. **No application code.**
+
 - **Sprint 009 — Contracts vertical slice:** tenant-owned `contract_categories` (ADR-0006, active/inactive) + `contracts` (+ `contract_number_sequences`) + authoritative append-only `contract_status_transitions` (correlation ID); concurrency-safe `CTR-######` via `SELECT … FOR UPDATE`; counterparty free-text + optional employee/org links; Workflow 2 lifecycle action endpoints; **manual sign attestation** (not e-sign); **one-child transactional renew** (`CONTRACT_ALREADY_RENEWED`); expiry command + expiring-soon filter; draft-only hard delete; informational value/SAR; attachments deferred; notification hooks only; Policies + `contracts.*` catalog + role templates; APIs under `/api/v1/contracts` and `/api/v1/contract-categories`; Vue `contracts` module (list, drawer, lifecycle actions, categories manager, details timeline); sidebar العقود; Pest + Vitest green.
 
 - **Sprint 009 — Contracts specification** (superseded by implementation above).

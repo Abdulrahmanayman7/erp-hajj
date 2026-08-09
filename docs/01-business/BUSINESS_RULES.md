@@ -50,7 +50,7 @@ Collect the cross-module business rules that are explicitly agreed. Module-speci
 
 ## TBD (not yet defined — do not assume)
 
-- Numbering/reference schemes for **decisions, meetings, tasks**: TBD. (Contracts numbering locked: `CTR-######`.)
+- Numbering/reference schemes for **decisions, tasks**: TBD. (Contracts numbering locked: `CTR-######`. Meetings numbering locked Sprint 010: `MTG-######` — see [06-meetings/](../09-modules/06-meetings/).)
 - Approval hierarchies and delegation rules: TBD.
 - Backup Supervisor behavior: future vision, TBD unless explicitly approved for the MVP.
 - Recurring-task automation details: TBD.

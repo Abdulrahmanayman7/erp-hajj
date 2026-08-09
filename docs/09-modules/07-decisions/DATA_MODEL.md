@@ -27,5 +27,5 @@ All tables carry `tenant_id`; decision number unique per tenant.
 
 ## TBD
 
-- Link to originating recommendation (vs. meeting only): TBD with meetings data model.
+- Link to originating recommendation: Sprint 010 locks recommendations as first-class `meeting_recommendations` ([ADR-0007](../../10-decisions/ADR-0007-MEETING-AGENDA-AND-RECOMMENDATIONS.md)). Decisions module may add optional `meeting_recommendation_id` and/or keep optional `meeting_id` at Sprint 011 — **owned by Decisions**, not Meetings.
 - "Required task" marking on task relations: TBD.
