@@ -1,6 +1,6 @@
 # Users and Personas
 
-> **Status:** Approved (default templates). Sprint 006 locks which templates seed as system roles — see [02-users-and-authorization/BUSINESS_RULES.md](../09-modules/02-users-and-authorization/BUSINESS_RULES.md). Sprint 007 specifies organization units ([03-organization-structure/](../09-modules/03-organization-structure/)).
+> **Status:** Approved (default templates). Sprint 006 locks which templates seed as system roles — see [02-users-and-authorization/BUSINESS_RULES.md](../09-modules/02-users-and-authorization/BUSINESS_RULES.md). Sprint 007 organization units implemented. Sprint 008 Employees + Supervisors **specified**.
 > **Last updated:** 2026-08-09
 
 ## Purpose
@@ -45,7 +45,7 @@ Describe the default user personas of the platform. **These personas are default
 
 **Responsibilities:** Supervision, execution follow-up, reporting, team coordination.
 
-**System role `code`:** `supervisor`.
+**System role `code`:** `supervisor`. Sprint 008 personnel reporting uses `employees.supervisor_id` (employee→employee) — distinct from this RBAC role and from `organization_units.manager_user_id`. Suggested default grant when Employees ships: `employees.view` (see [04-employees-and-supervisors/PERMISSIONS.md](../09-modules/04-employees-and-supervisors/PERMISSIONS.md)).
 
 ## 6. Employee (الموظف)
 
@@ -53,7 +53,7 @@ Describe the default user personas of the platform. **These personas are default
 
 **Responsibilities:** Task execution, status updates, document access, meeting participation, custody responsibility.
 
-**System role `code`:** `employee`.
+**System role `code`:** `employee`. Personnel **Employee** records are specified in Sprint 008; a login User may exist without an Employee and vice versa.
 
 ## 7. Reviewer / Auditor (المراجع / المدقق)
 

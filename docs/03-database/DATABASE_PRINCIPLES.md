@@ -45,7 +45,7 @@ Any new platform table must be justified the same way in its module's `DATA_MODE
 - Model implements the `TenantOwned` contract and uses the `UsesTenantScope` trait — no exceptions.
 - First tenant-owned table: `tenant_settings` (see [00-tenancy/DATA_MODEL.md](../09-modules/00-tenancy/DATA_MODEL.md)).
 - **Implemented tenant-owned tables:** `roles`, `user_roles`, `role_permissions` (Sprint 006); `organization_units` (Sprint 007 — see [03-organization-structure/DATA_MODEL.md](../09-modules/03-organization-structure/DATA_MODEL.md); ADR-0004).
-- **Planned tenant-owned tables** (each specified in its module's `DATA_MODEL.md` when designed): `positions` (deferred with Employees), `employees`, `contracts`, `meetings`, `decisions`, `tasks`, `documents`, `warehouses`, `inventory_items`, `inventory_transactions`, `assets`, `custodies`, `notifications`, `tenant_settings`.
+- **Planned tenant-owned tables** (each specified in its module's `DATA_MODEL.md` when designed): `positions`, `employees` (Sprint 008 — see [04-employees-and-supervisors/DATA_MODEL.md](../09-modules/04-employees-and-supervisors/DATA_MODEL.md); ADR-0005), `contracts`, `meetings`, `decisions`, `tasks`, `documents`, `warehouses`, `inventory_items`, `inventory_transactions`, `assets`, `custodies`, `notifications`, `tenant_settings`.
 - **Platform catalog (Sprint 006):** `permissions` — global, no `tenant_id`; justified because capabilities are code-defined and must not drift per tenant.
 
 ### Indexes on tenant-owned tables

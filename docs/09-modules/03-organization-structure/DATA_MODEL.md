@@ -94,7 +94,7 @@ Consuming modules **must** reference `organization_units.id` with ON DELETE **RE
 
 | Future consumer | Expected behavior |
 |---|---|
-| `employees.primary_organization_unit_id` | ON DELETE **RESTRICT** → delete blocked; use deactivate |
+| `employees.organization_unit_id` (Sprint 008) | ON DELETE **RESTRICT** → delete blocked; use deactivate |
 | Tasks / meetings / warehouses / documents (when linked) | Same: RESTRICT or app reject with `ORGANIZATION_UNIT_IN_USE` (or module-specific code) |
 | Auditable business history requiring preservation | Once present, hard delete rejected; deactivate only |
 

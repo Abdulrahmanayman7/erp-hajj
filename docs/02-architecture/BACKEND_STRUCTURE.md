@@ -27,7 +27,7 @@ app/
 │   ├── Users/                  # Sprint 006: tenant user administration
 │   ├── Authorization/          # Sprint 006: tenant roles + role_permissions (module surface)
 │   ├── OrganizationStructure/    # Sprint 007 — implemented (`organization_units`)
-│   ├── Employees/              # includes supervisor classification
+│   ├── Employees/                # Sprint 008 — specified; not implemented (includes supervisor reporting)
 │   ├── Contracts/
 │   ├── Meetings/
 │   ├── Decisions/

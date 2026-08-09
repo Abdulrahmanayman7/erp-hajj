@@ -1,7 +1,7 @@
 # Glossary
 
 > **Status:** Draft
-> **Last updated:** 2026-08-06
+> **Last updated:** 2026-08-09
 
 ## Purpose
 
@@ -17,9 +17,10 @@ Define the shared vocabulary of the project in English with the Arabic business 
 | Department | إدارة / قسم رئيسي | Top-level organizational unit type. |
 | Section | قسم | Mid-level organizational unit type. |
 | Unit | وحدة | Lower-level organizational unit type. |
-| Position / Job title | منصب / مسمى وظيفي | The job title held by an employee. Catalog deferred to the Employees module (not Sprint 007 org units). |
-| Employee | موظف | The primary staff entity. |
-| Supervisor | مشرف | An employee with supervisory classification and permissions (not a separate identity record). |
+| Position / Job title | منصب / مسمى وظيفي | Tenant-owned `positions` catalog (Sprint 008 spec; ADR-0005); optional on Employee. |
+| Employee | موظف | Primary personnel record (optional User link; required org unit; optional direct supervisor). |
+| Supervisor | مشرف | Reporting via `employees.supervisor_id`. RBAC role `supervisor` is separate. Not unit manager. |
+| Employee number | الرقم الوظيفي | Tenant-unique server-generated id (e.g. `EMP-000001`); not an auth input. |
 | Contract | عقد | A formal agreement managed through the controlled contract lifecycle. |
 | Meeting | اجتماع | A formal administrative meeting with agenda, attendees, and minutes. |
 | Minutes | محضر الاجتماع | The formal record of a meeting. |
