@@ -29,7 +29,7 @@ app/
 │   ├── OrganizationStructure/    # Sprint 007 — implemented (`organization_units`)
 │   ├── Employees/                # Sprint 008 — implemented
 │   ├── Contracts/                # Sprint 009 — implemented
-│   ├── Meetings/
+│   ├── Meetings/                 # Sprint 010 — specified (not implemented)
 │   ├── Decisions/
 │   ├── Tasks/
 │   ├── Documents/

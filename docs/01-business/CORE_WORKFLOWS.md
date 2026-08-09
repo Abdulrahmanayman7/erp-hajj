@@ -34,6 +34,13 @@ flowchart RL
 - Completing one task must **not** automatically close the decision unless all required tasks are completed.
 - Every important transition must be audited.
 
+### Sprint 010 locked decisions (see [06-meetings/](../09-modules/06-meetings/))
+
+- Meetings module owns meeting lifecycle, attendees (employees only), structured agenda items, minutes text, and **first-class recommendations** (not Decisions) — [ADR-0007](../10-decisions/ADR-0007-MEETING-AGENDA-AND-RECOMMENDATIONS.md).
+- Numbering: `MTG-######`, tenant sequence, immutable.
+- Hard delete only for never-advanced drafts; otherwise cancel.
+- Decision conversion and Tasks remain out of Sprint 010.
+
 ## Workflow 2: Contract lifecycle (دورة حياة العقد)
 
 Contract Draft → Review → Approval → Signature → Execution → Closure or Renewal
