@@ -10,6 +10,8 @@ use App\Core\Shared\CorrelationId;
 use App\Models\User;
 use App\Modules\Authorization\Models\Role;
 use App\Modules\Authorization\Policies\RolePolicy;
+use App\Modules\OrganizationStructure\Models\OrganizationUnit;
+use App\Modules\OrganizationStructure\Policies\OrganizationUnitPolicy;
 use App\Modules\Users\Policies\UserPolicy;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -62,6 +64,7 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::policy(User::class, UserPolicy::class);
         Gate::policy(Role::class, RolePolicy::class);
+        Gate::policy(OrganizationUnit::class, OrganizationUnitPolicy::class);
 
         Route::bind('user', function (string $value): User {
             $actor = auth()->user();

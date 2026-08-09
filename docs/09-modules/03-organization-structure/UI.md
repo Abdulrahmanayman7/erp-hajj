@@ -1,6 +1,6 @@
 # Organizational Structure — UI
 
-> **Status:** Specified (Sprint 007) — **no pages yet**
+> **Status:** **Implemented** (Sprint 007)
 > **Last updated:** 2026-08-09
 
 ## Module folder & route

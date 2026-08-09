@@ -9,7 +9,7 @@ Define the overall architecture and the mandatory layering rules for the platfor
 
 Hand-rolled tenant RBAC (Sprint 006 — **implemented**): global `permissions` catalog, tenant-owned `roles`, pivots `user_roles` / `role_permissions` — see [02-users-and-authorization/](../09-modules/02-users-and-authorization/). Do not add Spatie without an ADR.
 
-Tenant-internal hierarchy (Sprint 007 — **specified**): single adjacency-list `organization_units` table — see [03-organization-structure/](../09-modules/03-organization-structure/) and [ADR-0004](../10-decisions/ADR-0004-ORGANIZATION-UNITS-HIERARCHY.md). Not multi-tenancy; not RBAC.
+Tenant-internal hierarchy (Sprint 007 — **implemented**): single adjacency-list `organization_units` table — see [03-organization-structure/](../09-modules/03-organization-structure/) and [ADR-0004](../10-decisions/ADR-0004-ORGANIZATION-UNITS-HIERARCHY.md). Not multi-tenancy; not RBAC.
 
 ## Style
 

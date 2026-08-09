@@ -1,6 +1,6 @@
 # Module: Organizational Structure (الهيكل التنظيمي)
 
-> **Status:** Specified (Sprint 007) — **not implemented**
+> **Status:** **Implemented** (Sprint 007)
 > **Last updated:** 2026-08-09
 
 ## Purpose
@@ -9,7 +9,7 @@ Provide the **tenant-internal** organizational hierarchy foundation: departments
 
 This module is **not** multi-tenancy. A **tenant** is the customer/company boundary. **Organization structure** is the hierarchy *inside* that tenant.
 
-## Sprint 007 scope (specification complete; implementation pending)
+## Sprint 007 scope (implemented)
 
 | In scope | Out of scope (this sprint) |
 |---|---|
@@ -33,6 +33,7 @@ This module is **not** multi-tenancy. A **tenant** is the customer/company bound
 | App route | `/app/organization` |
 | Sidebar | الهيكل التنظيمي (permission `organization_units.view`) |
 | API | `/api/v1/organization-units` |
+| Config | `backend/config/organization.php` (`max_depth`, default 8) |
 
 ## Personas
 
@@ -49,7 +50,12 @@ Unit manager (`manager_user_id`) ≠ employee direct manager (Employees module).
 
 - **Requires:** Tenancy, Authentication, Users & Authorization (implemented).
 - **Consumed later by:** Employees (primary unit + positions + employee reporting), Contracts, Meetings, Tasks, Documents, Warehouses, etc.
-- **Does not require:** Employees module to ship first — units stand alone; employee counts appear when Employees exists.
+- **Does not require:** Employees module — units stand alone; employee counts appear when Employees exists.
+
+## Implementation notes
+
+- After deploy: run migrations, then sync permission catalog / reprovision system roles (`RbacSeeder` or equivalent) so existing tenants receive `organization_units.*`.
+- Max depth is application-level via `config('organization.max_depth')` — not a DB constraint.
 
 ## References
 

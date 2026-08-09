@@ -1,6 +1,6 @@
 # Organizational Structure — Acceptance Criteria
 
-> **Status:** Approved for Sprint 007 specification
+> **Status:** **Implemented** (Sprint 007) — acceptance verified by Pest/Vitest quality gates
 > **Last updated:** 2026-08-09
 
 ## Hierarchy & entities

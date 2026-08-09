@@ -1,6 +1,6 @@
 # Organizational Structure — Test Plan
 
-> **Status:** Specified for Sprint 007 implementation
+> **Status:** **Implemented** (Sprint 007) — Pest feature suite + Vitest API/utils coverage
 > **Last updated:** 2026-08-09
 
 Tooling: **Pest** (backend), **Vitest** (frontend). Failing cross-tenant / policy tests block merge.
