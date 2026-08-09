@@ -5,6 +5,8 @@ use App\Core\Auth\Middleware\EnsureUserIsActive;
 use App\Core\Health\HealthController;
 use App\Modules\Authorization\Controllers\PermissionController;
 use App\Modules\Authorization\Controllers\RoleController;
+use App\Modules\Contracts\Controllers\ContractCategoryController;
+use App\Modules\Contracts\Controllers\ContractController;
 use App\Modules\Employees\Controllers\EmployeeController;
 use App\Modules\Employees\Controllers\PositionController;
 use App\Modules\OrganizationStructure\Controllers\OrganizationUnitController;
@@ -73,5 +75,27 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::post('/positions/{position}/activate', [PositionController::class, 'activate'])->name('positions.activate');
         Route::post('/positions/{position}/deactivate', [PositionController::class, 'deactivate'])->name('positions.deactivate');
         Route::delete('/positions/{position}', [PositionController::class, 'destroy'])->name('positions.destroy');
+
+        Route::get('/contracts', [ContractController::class, 'index'])->name('contracts.index');
+        Route::post('/contracts', [ContractController::class, 'store'])->name('contracts.store');
+        Route::get('/contracts/{contract}', [ContractController::class, 'show'])->name('contracts.show');
+        Route::patch('/contracts/{contract}', [ContractController::class, 'update'])->name('contracts.update');
+        Route::delete('/contracts/{contract}', [ContractController::class, 'destroy'])->name('contracts.destroy');
+        Route::post('/contracts/{contract}/submit-review', [ContractController::class, 'submitReview'])->name('contracts.submit-review');
+        Route::post('/contracts/{contract}/return-draft', [ContractController::class, 'returnDraft'])->name('contracts.return-draft');
+        Route::post('/contracts/{contract}/approve', [ContractController::class, 'approve'])->name('contracts.approve');
+        Route::post('/contracts/{contract}/sign', [ContractController::class, 'sign'])->name('contracts.sign');
+        Route::post('/contracts/{contract}/execute', [ContractController::class, 'execute'])->name('contracts.execute');
+        Route::post('/contracts/{contract}/close', [ContractController::class, 'close'])->name('contracts.close');
+        Route::post('/contracts/{contract}/cancel', [ContractController::class, 'cancel'])->name('contracts.cancel');
+        Route::post('/contracts/{contract}/renew', [ContractController::class, 'renew'])->name('contracts.renew');
+
+        Route::get('/contract-categories', [ContractCategoryController::class, 'index'])->name('contract-categories.index');
+        Route::post('/contract-categories', [ContractCategoryController::class, 'store'])->name('contract-categories.store');
+        Route::get('/contract-categories/{contract_category}', [ContractCategoryController::class, 'show'])->name('contract-categories.show');
+        Route::patch('/contract-categories/{contract_category}', [ContractCategoryController::class, 'update'])->name('contract-categories.update');
+        Route::post('/contract-categories/{contract_category}/activate', [ContractCategoryController::class, 'activate'])->name('contract-categories.activate');
+        Route::post('/contract-categories/{contract_category}/deactivate', [ContractCategoryController::class, 'deactivate'])->name('contract-categories.deactivate');
+        Route::delete('/contract-categories/{contract_category}', [ContractCategoryController::class, 'destroy'])->name('contract-categories.destroy');
     });
 });

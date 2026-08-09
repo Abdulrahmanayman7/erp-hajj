@@ -1,6 +1,6 @@
 # Contracts — Business Rules
 
-> **Status:** Specified (Sprint 009) — approved for implementation
+> **Status:** Implemented (Sprint 009)
 > **Last updated:** 2026-08-09
 
 Binding workflow: [CORE_WORKFLOWS.md](../../01-business/CORE_WORKFLOWS.md) Workflow 2.

@@ -1,6 +1,6 @@
 # Frontend Structure
 
-> **Status:** Approved — Auth (005) + Users/Roles RBAC UI (006) + Organization UI (007) implemented
+> **Status:** Approved — Auth (005) + Users/Roles RBAC UI (006) + Organization UI (007) + Employees (008) + Contracts (009) implemented
 > **Last updated:** 2026-08-09
 
 ## Purpose
@@ -26,8 +26,8 @@ src/
 │   ├── users/
 │   ├── roles/
 │   ├── organization/             # Sprint 007 — implemented
-│   ├── employees/                # Sprint 008 — specified; not implemented
-│   ├── contracts/                # Sprint 009 — specified; not implemented
+│   ├── employees/                # Sprint 008 — implemented
+│   ├── contracts/                # Sprint 009 — implemented
 │   ├── meetings/
 │   ├── decisions/
 │   ├── tasks/
@@ -71,13 +71,13 @@ A module may contain: pages, components, api, queries, mutations, types, validat
 - Tree + details panel; create/edit Drawer; confirmations for move/deactivate/delete via `AppConfirmDialog`.
 - Full UI contract: [03-organization-structure/UI.md](../09-modules/03-organization-structure/UI.md).
 
-### Employees (Sprint 008 — specified, not implemented)
+### Employees (Sprint 008 — implemented)
 
 - `src/modules/employees/` — route `/app/employees`; sidebar **الموظفون** (`employees.view`).
 - List + drawer; supervisor/user-link actions; positions catalog UX.
 - Full UI contract: [04-employees-and-supervisors/UI.md](../09-modules/04-employees-and-supervisors/UI.md).
 
-### Contracts (Sprint 009 — specified, not implemented)
+### Contracts (Sprint 009 — implemented)
 
 - `src/modules/contracts/` — route `/app/contracts` (+ details `/app/contracts/:id`); sidebar **العقود** (`contracts.view`).
 - List + drawer; lifecycle confirms; categories drawer; transition timeline on details.

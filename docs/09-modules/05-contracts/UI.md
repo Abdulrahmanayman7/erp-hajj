@@ -1,6 +1,6 @@
 # Contracts — UI
 
-> **Status:** Specified (Sprint 009) — **no pages yet**
+> **Status:** Implemented (Sprint 009) — pages live
 > **Last updated:** 2026-08-09
 
 ## Module & navigation

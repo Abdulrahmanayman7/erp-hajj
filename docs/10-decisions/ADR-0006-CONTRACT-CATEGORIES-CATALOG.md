@@ -2,7 +2,7 @@
 
 > **Status:** Accepted  
 > **Date:** 2026-08-09  
-> **Sprint:** 009 — Contracts (specification)
+> **Sprint:** 009 — Contracts (implemented)
 
 ## Context
 

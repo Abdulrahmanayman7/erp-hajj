@@ -1,11 +1,11 @@
 # Contracts — Data Model
 
-> **Status:** Specified (Sprint 009) — **no migrations yet**
+> **Status:** Implemented (Sprint 009) — migrations applied
 > **Last updated:** 2026-08-09
 
 Binding: [DATABASE_PRINCIPLES.md](../../03-database/DATABASE_PRINCIPLES.md), [MULTI_TENANCY.md](../../02-architecture/MULTI_TENANCY.md), [ADR-0006](../../10-decisions/ADR-0006-CONTRACT-CATEGORIES-CATALOG.md).
 
-## Migration order (future implementation)
+## Migration order (implemented)
 
 1. `contract_categories`
 2. `contract_number_sequences`
