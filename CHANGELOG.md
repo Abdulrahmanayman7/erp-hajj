@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Sprint 008 — Employees + Supervisors specification** (documentation only): `employees` + minimal `positions` catalog (ADR-0005); optional 1:1 User link; required primary `organization_unit_id`; `supervisor_id` with cycle prevention; server-generated `EMP-######` numbers; status active/inactive (no DELETE API); permissions `employees.*` / `positions.*`; API + Arabic RTL UI plan; Pest/Vitest matrices. No payroll/HR/national ID. **No application code.**
+
 - **Sprint 007 — Organization Structure vertical slice:** tenant-owned `organization_units` (adjacency list; ADR-0004); types `department|section|unit`; status active/inactive; immutable tenant-scoped codes; optional unit manager (`manager_user_id`); app max depth via `config/organization.php`; cycle/depth validation; Actions + Policy + APIs (`/api/v1/organization-units` tree/flat, move, activate/deactivate, delete); `organization_units.*` catalog + role templates; Vue `organization` module (tree + details, drawer, move/lifecycle confirms); sidebar الهيكل التنظيمي; Pest + Vitest green. No Employees/positions/user membership; no soft deletes.
 
 - **Sprint 007 — Organization Structure specification** (superseded by implementation above).

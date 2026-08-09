@@ -26,7 +26,7 @@ src/
 │   ├── users/
 │   ├── roles/
 │   ├── organization/             # Sprint 007 — implemented
-│   ├── employees/
+│   ├── employees/                # Sprint 008 — specified; not implemented
 │   ├── contracts/
 │   ├── meetings/
 │   ├── decisions/
@@ -70,6 +70,12 @@ A module may contain: pages, components, api, queries, mutations, types, validat
 - `src/modules/organization/` — route `/app/organization`; sidebar **الهيكل التنظيمي** (`organization_units.view`).
 - Tree + details panel; create/edit Drawer; confirmations for move/deactivate/delete via `AppConfirmDialog`.
 - Full UI contract: [03-organization-structure/UI.md](../09-modules/03-organization-structure/UI.md).
+
+### Employees (Sprint 008 — specified, not implemented)
+
+- `src/modules/employees/` — route `/app/employees`; sidebar **الموظفون** (`employees.view`).
+- List + drawer; supervisor/user-link actions; positions catalog UX.
+- Full UI contract: [04-employees-and-supervisors/UI.md](../09-modules/04-employees-and-supervisors/UI.md).
 
 ## Rules
 

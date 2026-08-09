@@ -39,7 +39,6 @@ Every incoming request receives a **correlation ID** assigned by early middlewar
 
 - User created, updated, enabled, disabled; user roles changed (`USER_*` — see Users & Authorization).
 - Role created/updated/activated/deactivated/deleted; role permissions changed (`ROLE_*`); permission catalog synced (`PERMISSION_CATALOG_SYNCED`).
-- Employee created or updated.
 - Contract reviewed, approved, signed, executed, closed, renewed.
 - Meeting completed.
 - Decision approved or closed.
@@ -52,6 +51,7 @@ Every incoming request receives a **correlation ID** assigned by early middlewar
 - Login success; security-relevant login failure (including rejections due to tenant status or disabled account).
 - Logout; password-reset requested; password-reset completed (Authentication module — see [01-authentication/BUSINESS_RULES.md](../09-modules/01-authentication/BUSINESS_RULES.md) for event names: `LOGIN_SUCCESS`, `LOGIN_FAILED`, `LOGOUT`, `PASSWORD_RESET_REQUESTED`, `PASSWORD_RESET_COMPLETED`, `ACCOUNT_DISABLED_ACCESS_ATTEMPT`, `TENANT_BLOCKED_ACCESS_ATTEMPT`).
 - Organization unit created/updated/moved/activated/deactivated/deleted; manager assigned (`ORGANIZATION_UNIT_*`, `ORGANIZATION_MANAGER_ASSIGNED` — see [03-organization-structure/BUSINESS_RULES.md](../09-modules/03-organization-structure/BUSINESS_RULES.md)).
+- Employee created/updated/activated/deactivated; supervisor changed; organization changed; user linked/unlinked (`EMPLOYEE_*` — see [04-employees-and-supervisors/BUSINESS_RULES.md](../09-modules/04-employees-and-supervisors/BUSINESS_RULES.md)); position lifecycle (`POSITION_*`).
 - Platform Super Admin access to tenant data (always) — recorded with the **target** tenant's id.
 - Unauthorized attempts to enter `PlatformContext`.
 

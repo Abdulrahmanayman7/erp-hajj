@@ -11,6 +11,8 @@ Hand-rolled tenant RBAC (Sprint 006 — **implemented**): global `permissions` c
 
 Tenant-internal hierarchy (Sprint 007 — **implemented**): single adjacency-list `organization_units` table — see [03-organization-structure/](../09-modules/03-organization-structure/) and [ADR-0004](../10-decisions/ADR-0004-ORGANIZATION-UNITS-HIERARCHY.md). Not multi-tenancy; not RBAC.
 
+Personnel (Sprint 008 — **specified**): `employees` + `positions` — see [04-employees-and-supervisors/](../09-modules/04-employees-and-supervisors/) and [ADR-0005](../10-decisions/ADR-0005-EMPLOYEE-POSITIONS-CATALOG.md). User ≠ Employee; unit manager ≠ employee supervisor.
+
 ## Style
 
 - **Modular monolith**: one deployable Laravel 12 application organized into a `Core/` layer and business `Modules/`. See [ADR-0002](../10-decisions/ADR-0002-MODULAR-MONOLITH.md) and [BACKEND_STRUCTURE.md](BACKEND_STRUCTURE.md).

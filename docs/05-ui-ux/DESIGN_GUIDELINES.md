@@ -34,7 +34,7 @@ Rules:
 - Every list page uses Data Table + Filters Bar + pagination; every destructive action uses Confirmation Dialog.
 - Status Badge colors are consistent across modules (same status semantics → same color).
 - Permission Guard hides/disables unauthorized UI — **UX only**; backend authorization remains mandatory.
-- Prefer **Drawer** for straightforward create/edit forms (e.g. user account, organization unit); use full pages for dense matrices (e.g. role permission matrix). See [02-users-and-authorization/UI.md](../09-modules/02-users-and-authorization/UI.md) and [03-organization-structure/UI.md](../09-modules/03-organization-structure/UI.md).
+- Prefer **Drawer** for straightforward create/edit forms (e.g. user account, organization unit, employee); use full pages for dense matrices (e.g. role permission matrix). See [02-users-and-authorization/UI.md](../09-modules/02-users-and-authorization/UI.md), [03-organization-structure/UI.md](../09-modules/03-organization-structure/UI.md), and [04-employees-and-supervisors/UI.md](../09-modules/04-employees-and-supervisors/UI.md).
 - Authenticated but unauthorized routes: dedicated **403 / access denied** page — do not send users back to login.
 
 ## Accessibility

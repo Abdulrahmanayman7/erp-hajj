@@ -3,7 +3,7 @@
 > **Status:** Approved
 > **Last updated:** 2026-08-09
 
-Domain error codes for Organization Structure (`ORGANIZATION_UNIT_*`, `ORGANIZATION_MANAGER_*`) are listed in [03-organization-structure/API.md](../09-modules/03-organization-structure/API.md).
+Domain error codes for Organization Structure (`ORGANIZATION_UNIT_*`) and Employees (`EMPLOYEE_*`, `POSITION_*`) are listed in their module `API.md` files.
 
 ## Purpose
 

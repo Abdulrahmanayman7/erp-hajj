@@ -1,6 +1,6 @@
 # Permission Model
 
-> **Status:** Approved (catalog may grow with modules). Sprint 006 RBAC **implemented**; Sprint 007 `organization_units.*` **seeded**.
+> **Status:** Approved (catalog may grow with modules). Sprint 006–007 permissions seeded as implemented; Sprint 008 employees/positions named here but **not seeded until implementation**.
 > **Last updated:** 2026-08-09
 
 ## Purpose
@@ -32,7 +32,8 @@ Define the granular permission naming model and the master permission catalog. M
 | Roles | `roles.view` `roles.create` `roles.update` `roles.delete` `roles.assign_permissions` |
 | Permissions (catalog read) | `permissions.view` |
 | Organization units | `organization_units.view` `organization_units.create` `organization_units.update` `organization_units.delete` — covers types department/section/unit; **seeded** with Sprint 007 ([03-organization-structure/PERMISSIONS.md](../09-modules/03-organization-structure/PERMISSIONS.md)). Obsolete draft names `departments.*` must not be seeded. |
-| Employees | `employees.view` `employees.create` `employees.update` `employees.delete` `employees.view_sensitive_data` |
+| Employees | `employees.view` `employees.create` `employees.update` `employees.deactivate` `employees.assign_supervisor` — seeded when Sprint 008 implements ([04-employees-and-supervisors/PERMISSIONS.md](../09-modules/04-employees-and-supervisors/PERMISSIONS.md)). `employees.delete` / `employees.view_sensitive_data` reserved (not seeded in Sprint 008) |
+| Positions | `positions.view` `positions.create` `positions.update` `positions.delete` — with Employees module |
 | Contracts | `contracts.view` `contracts.create` `contracts.update` `contracts.review` `contracts.approve` `contracts.sign` `contracts.execute` `contracts.close` `contracts.renew` `contracts.delete` |
 | Meetings | `meetings.view` `meetings.create` `meetings.update` `meetings.cancel` `meetings.manage_attendees` `meetings.manage_minutes` |
 | Decisions | `decisions.view` `decisions.create` `decisions.update` `decisions.approve` `decisions.close` `decisions.delete` |

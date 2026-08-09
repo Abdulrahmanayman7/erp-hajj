@@ -12,7 +12,7 @@ Collect the cross-module business rules that are explicitly agreed. Module-speci
 - **Decisions are a separate business entity** — never merged into Tasks.
 - **Assets and Custodies are separate entities**: an Asset is a physical or registered resource; a Custody is the handover of an asset to an employee or supervisor.
 - **Inventory Items and Assets are separate concepts**: inventory is quantity-tracked via transactions; assets are individually tracked.
-- **Employee and Supervisor share one identity record**: a supervisor is an employee with supervisory classification and permissions — no duplicate records.
+- **Employee and Supervisor share one identity record**: operational reporting uses `employees.supervisor_id`; RBAC role `supervisor` is separate; unit manager (`organization_units.manager_user_id`) is separate. No duplicate personnel records. See [04-employees-and-supervisors/](../09-modules/04-employees-and-supervisors/).
 
 ## Tenancy
 
