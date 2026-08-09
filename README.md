@@ -1,6 +1,10 @@
 # ERP Hajj
 
-> **Status:** Tenant Foundation (004), Authentication (005), Users & Authorization / RBAC (006), Organization Structure (007), and Employees + Supervisors (008) implemented.
+# ERP Hajj
+
+> **Status:** Tenant Foundation (004), Authentication (005), Users & Authorization / RBAC (006), Organization Structure (007), and Employees + Supervisors (008) implemented. Sprint 009 Contracts is **specified** (documentation only) — not implemented yet.
+>
+> **Last updated:** 2026-08-09
 > **Last updated:** 2026-08-09
 
 ## Project Purpose

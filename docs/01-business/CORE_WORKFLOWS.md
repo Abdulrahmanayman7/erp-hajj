@@ -54,9 +54,16 @@ flowchart RL
 
 - Contract status transitions must be controlled (explicit action endpoints, policy-gated).
 - Each transition must record actor, timestamp, and optional comments.
-- Attachments must be preserved.
-- Contract expiry notifications must be supported.
-- Unauthorized users must not review, approve, sign, execute, close, or renew contracts.
+- Attachments must be preserved (**Documents module** — deferred relative to Contracts Sprint 009 API/UI; Contracts must remain attachable later).
+- Contract expiry notifications must be supported (**Notifications module** delivers; Contracts emits expiry state + documented hooks).
+- Unauthorized users must not review, approve, sign, execute, close, renew, or cancel contracts.
+
+### Sprint 009 locked decisions (see [05-contracts/](../09-modules/05-contracts/))
+
+- Renewal creates a **new** contract record; source becomes `renewed`.
+- Return-to-draft allowed from `in_review` with required comment.
+- Hard delete only for never-advanced drafts; otherwise cancel/close/expire/renew.
+- Numbering: `CTR-######`, tenant sequence, immutable.
 
 ## Workflow 3: Asset and custody lifecycle (دورة الأصل والعهدة)
 
@@ -98,7 +105,7 @@ flowchart RL
 
 ## TBD
 
-- Role-to-transition mapping for each workflow: defaults TBD (permissions catalog exists in [PERMISSION_MODEL.md](../06-security/PERMISSION_MODEL.md)).
-- Rejection/return-to-previous-stage behavior in contract and decision flows: TBD.
+- Role-to-transition mapping for each workflow: defaults TBD (permissions catalog exists in [PERMISSION_MODEL.md](../06-security/PERMISSION_MODEL.md); Contracts suggested grants in [05-contracts/PERMISSIONS.md](../09-modules/05-contracts/PERMISSIONS.md)).
+- Rejection/return-to-previous-stage behavior in **decision** flows: TBD. (Contracts: return `in_review` → `draft` locked in Sprint 009 spec.)
 - Measurement criteria/KPIs for task execution: TBD.
-- Renewal behavior (new contract record vs. extension of the same record): TBD.
+- Renewal behavior for contracts: **locked** in Sprint 009 (new record + `renewed_from_contract_id`) — see [05-contracts/BUSINESS_RULES.md](../09-modules/05-contracts/BUSINESS_RULES.md).

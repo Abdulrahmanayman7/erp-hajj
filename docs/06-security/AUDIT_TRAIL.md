@@ -1,6 +1,6 @@
 # Audit Trail
 
-> **Status:** Approved requirement (correlation ID design finalized; auth + RBAC + org event names aligned with Sprint 005/006/007 specs); storage design TBD
+> **Status:** Approved requirement (correlation ID design finalized; auth + RBAC + org + employees + contracts event names aligned through Sprint 009 spec); storage design TBD
 > **Last updated:** 2026-08-09
 
 ## Purpose
@@ -39,7 +39,7 @@ Every incoming request receives a **correlation ID** assigned by early middlewar
 
 - User created, updated, enabled, disabled; user roles changed (`USER_*` — see Users & Authorization).
 - Role created/updated/activated/deactivated/deleted; role permissions changed (`ROLE_*`); permission catalog synced (`PERMISSION_CATALOG_SYNCED`).
-- Contract reviewed, approved, signed, executed, closed, renewed.
+- Contract created/updated/deleted; lifecycle transitions (`CONTRACT_CREATED`, `CONTRACT_UPDATED`, `CONTRACT_DELETED`, `CONTRACT_SUBMITTED_REVIEW`, `CONTRACT_RETURNED_DRAFT`, `CONTRACT_APPROVED`, `CONTRACT_SIGNED` — **manual attestation only**, `CONTRACT_EXECUTED`, `CONTRACT_CLOSED`, `CONTRACT_CANCELLED`, `CONTRACT_RENEWED`, `CONTRACT_EXPIRED` — see [05-contracts/](../09-modules/05-contracts/)). Authoritative per-contract history remains `contract_status_transitions` (correlation ID when available).
 - Meeting completed.
 - Decision approved or closed.
 - Task assigned or completed.

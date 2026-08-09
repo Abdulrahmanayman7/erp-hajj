@@ -28,8 +28,9 @@ Collect the cross-module business rules that are explicitly agreed. Module-speci
 ## Contracts (Workflow 2)
 
 - Status transitions are controlled and each records actor, timestamp, and optional comments.
-- Deleting an approved or executed contract is restricted; prefer soft deletion where appropriate.
-- Contract expiry notifications must be supported.
+- Deleting an approved or executed contract is restricted; Sprint 009: hard delete **draft-only**; otherwise cancel/close/expire/renew (no SoftDeletes dual model).
+- Contract expiry notifications must be supported (delivery in Notifications sprint; Contracts owns expiry status + hooks).
+- Numbering: `CTR-######` tenant sequence (see [05-contracts/](../09-modules/05-contracts/)).
 
 ## Assets and Custodies (Workflow 3)
 
@@ -49,7 +50,7 @@ Collect the cross-module business rules that are explicitly agreed. Module-speci
 
 ## TBD (not yet defined — do not assume)
 
-- Numbering/reference schemes for contracts, decisions, meetings, tasks: TBD.
+- Numbering/reference schemes for **decisions, meetings, tasks**: TBD. (Contracts numbering locked: `CTR-######`.)
 - Approval hierarchies and delegation rules: TBD.
 - Backup Supervisor behavior: future vision, TBD unless explicitly approved for the MVP.
 - Recurring-task automation details: TBD.
