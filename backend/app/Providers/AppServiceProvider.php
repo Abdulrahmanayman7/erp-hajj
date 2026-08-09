@@ -18,6 +18,8 @@ use App\Modules\Employees\Models\Employee;
 use App\Modules\Employees\Models\Position;
 use App\Modules\Employees\Policies\EmployeePolicy;
 use App\Modules\Employees\Policies\PositionPolicy;
+use App\Modules\Meetings\Models\Meeting;
+use App\Modules\Meetings\Policies\MeetingPolicy;
 use App\Modules\OrganizationStructure\Models\OrganizationUnit;
 use App\Modules\OrganizationStructure\Policies\OrganizationUnitPolicy;
 use App\Modules\Users\Policies\UserPolicy;
@@ -77,6 +79,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Position::class, PositionPolicy::class);
         Gate::policy(Contract::class, ContractPolicy::class);
         Gate::policy(ContractCategory::class, ContractCategoryPolicy::class);
+        Gate::policy(Meeting::class, MeetingPolicy::class);
 
         Route::bind('user', function (string $value): User {
             $actor = auth()->user();

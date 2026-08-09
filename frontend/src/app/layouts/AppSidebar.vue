@@ -3,6 +3,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRoute } from 'vue-router'
 import {
+  CalendarDays,
   ChevronDown,
   FileText,
   Home,
@@ -134,6 +135,16 @@ const navGroups = computed<NavGroup[]>(() => {
       to: '/app/contracts',
       icon: FileText,
       permission: 'contracts.view',
+      match: 'prefix',
+    })
+  }
+  if (can('meetings.view')) {
+    organizationItems.push({
+      key: 'meetings',
+      labelKey: 'nav.meetings',
+      to: '/app/meetings',
+      icon: CalendarDays,
+      permission: 'meetings.view',
       match: 'prefix',
     })
   }

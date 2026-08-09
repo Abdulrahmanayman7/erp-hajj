@@ -17,6 +17,7 @@ final class PermissionCatalog
         'employees' => 'الموظفون',
         'positions' => 'المسميات الوظيفية',
         'contracts' => 'العقود',
+        'meetings' => 'الاجتماعات',
         'dashboard' => 'لوحة التحكم',
         'tenant_settings' => 'إعدادات المنشأة',
     ];
@@ -68,6 +69,13 @@ final class PermissionCatalog
             ['name' => 'contracts.renew', 'display_name' => 'تجديد عقد', 'module' => 'contracts', 'description' => 'Renew executing contracts'],
             ['name' => 'contracts.cancel', 'display_name' => 'إلغاء عقد', 'module' => 'contracts', 'description' => 'Cancel pre-signature contracts'],
             ['name' => 'contracts.delete', 'display_name' => 'حذف عقد', 'module' => 'contracts', 'description' => 'Hard-delete eligible draft contracts'],
+
+            ['name' => 'meetings.view', 'display_name' => 'عرض الاجتماعات', 'module' => 'meetings', 'description' => 'List and view meetings, attendees, agenda, minutes, recommendations'],
+            ['name' => 'meetings.create', 'display_name' => 'إنشاء اجتماع', 'module' => 'meetings', 'description' => 'Create draft meetings'],
+            ['name' => 'meetings.update', 'display_name' => 'تحديث اجتماع', 'module' => 'meetings', 'description' => 'Update meetings, schedule/start/complete, manage agenda, delete eligible drafts'],
+            ['name' => 'meetings.cancel', 'display_name' => 'إلغاء اجتماع', 'module' => 'meetings', 'description' => 'Cancel draft, scheduled, or in-progress meetings'],
+            ['name' => 'meetings.manage_attendees', 'display_name' => 'إدارة حضور الاجتماع', 'module' => 'meetings', 'description' => 'Add/remove attendees and update attendance status'],
+            ['name' => 'meetings.manage_minutes', 'display_name' => 'إدارة محضر الاجتماع', 'module' => 'meetings', 'description' => 'Update minutes and manage recommendations'],
 
             ['name' => 'dashboard.view', 'display_name' => 'عرض لوحة التحكم', 'module' => 'dashboard', 'description' => 'Access authenticated home'],
             ['name' => 'tenant_settings.view', 'display_name' => 'عرض إعدادات المنشأة', 'module' => 'tenant_settings', 'description' => 'View tenant settings'],
@@ -131,6 +139,12 @@ final class PermissionCatalog
                     'contracts.renew',
                     'contracts.cancel',
                     'contracts.delete',
+                    'meetings.view',
+                    'meetings.create',
+                    'meetings.update',
+                    'meetings.cancel',
+                    'meetings.manage_attendees',
+                    'meetings.manage_minutes',
                 ],
             ],
             'department_manager' => [
@@ -148,6 +162,11 @@ final class PermissionCatalog
                     'contracts.create',
                     'contracts.update',
                     'contracts.review',
+                    'meetings.view',
+                    'meetings.create',
+                    'meetings.update',
+                    'meetings.manage_attendees',
+                    'meetings.manage_minutes',
                 ],
             ],
             'supervisor' => [
@@ -174,6 +193,7 @@ final class PermissionCatalog
                     'employees.view',
                     'positions.view',
                     'contracts.view',
+                    'meetings.view',
                 ],
             ],
             'read_only' => [

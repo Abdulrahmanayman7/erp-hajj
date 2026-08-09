@@ -91,6 +91,18 @@ export const router = createRouter({
       meta: { requiresAuth: true, layout: 'app', permission: 'contracts.view' },
     },
     {
+      path: '/app/meetings',
+      name: 'meetings',
+      component: () => import('@/modules/meetings/pages/MeetingsPage.vue'),
+      meta: { requiresAuth: true, layout: 'app', permission: 'meetings.view' },
+    },
+    {
+      path: '/app/meetings/:id',
+      name: 'meeting-details',
+      component: () => import('@/modules/meetings/pages/MeetingDetailsPage.vue'),
+      meta: { requiresAuth: true, layout: 'app', permission: 'meetings.view' },
+    },
+    {
       path: '/app/roles/:id/permissions',
       name: 'role-permissions',
       component: () => import('@/modules/roles/pages/RolePermissionsPage.vue'),

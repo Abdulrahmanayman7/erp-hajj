@@ -8,6 +8,7 @@ use App\Core\Tenancy\TenantContext;
 use App\Models\User;
 use App\Modules\Contracts\Models\Contract;
 use App\Modules\Employees\Models\Employee;
+use App\Modules\Meetings\Models\Meeting;
 use App\Modules\OrganizationStructure\Exceptions\OrganizationDomainException;
 use App\Modules\OrganizationStructure\Models\OrganizationUnit;
 use Illuminate\Http\Request;
@@ -36,6 +37,10 @@ final class DeleteOrganizationUnit
             }
 
             if (Contract::query()->where('organization_unit_id', $locked->id)->exists()) {
+                throw OrganizationDomainException::inUse();
+            }
+
+            if (Meeting::query()->where('organization_unit_id', $locked->id)->exists()) {
                 throw OrganizationDomainException::inUse();
             }
 

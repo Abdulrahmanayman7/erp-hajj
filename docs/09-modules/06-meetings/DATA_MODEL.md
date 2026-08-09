@@ -1,7 +1,7 @@
 # Meetings — Data Model
 
-> **Status:** Specified (Sprint 010) — **no migrations yet**
-> **Last updated:** 2026-08-09
+> **Status:** Implemented (Sprint 010) — migrations applied
+> **Last updated:** 2026-08-10
 
 All tenant-owned tables carry `tenant_id`. Models use `TenantOwned` + `UsesTenantScope`. No SoftDeletes.
 

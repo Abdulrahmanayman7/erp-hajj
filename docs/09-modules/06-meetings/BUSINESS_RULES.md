@@ -1,7 +1,7 @@
 # Meetings — Business Rules
 
-> **Status:** Specified (Sprint 010) — approved for implementation
-> **Last updated:** 2026-08-09
+> **Status:** Implemented (Sprint 010)
+> **Last updated:** 2026-08-10
 
 Binding Workflow 1: [CORE_WORKFLOWS.md](../../01-business/CORE_WORKFLOWS.md). Domain separations: [README.md](README.md).
 

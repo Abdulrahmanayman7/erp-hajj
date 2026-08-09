@@ -1,7 +1,7 @@
 # Frontend Structure
 
-> **Status:** Approved — Auth (005) + Users/Roles RBAC UI (006) + Organization UI (007) + Employees (008) + Contracts (009) implemented
-> **Last updated:** 2026-08-09
+> **Status:** Approved — Auth (005) + Users/Roles RBAC UI (006) + Organization UI (007) + Employees (008) + Contracts (009) + Meetings (010) implemented
+> **Last updated:** 2026-08-10
 
 ## Purpose
 
@@ -28,7 +28,7 @@ src/
 │   ├── organization/             # Sprint 007 — implemented
 │   ├── employees/                # Sprint 008 — implemented
 │   ├── contracts/                # Sprint 009 — implemented
-│   ├── meetings/                 # Sprint 010 — specified (not implemented)
+│   ├── meetings/                 # Sprint 010 — implemented
 │   ├── decisions/
 │   ├── tasks/
 │   ├── documents/
@@ -83,10 +83,11 @@ A module may contain: pages, components, api, queries, mutations, types, validat
 - List + drawer; lifecycle confirms; categories drawer; transition timeline on details.
 - Full UI contract: [05-contracts/UI.md](../09-modules/05-contracts/UI.md).
 
-### Meetings (Sprint 010 — specified)
+### Meetings (Sprint 010 — implemented)
 
-- Planned: `src/modules/meetings/` — routes `/app/meetings` (+ `/app/meetings/:id`); sidebar **الاجتماعات** (`meetings.view`).
-- Spec: [06-meetings/UI.md](../09-modules/06-meetings/UI.md). **Not implemented.**
+- `src/modules/meetings/` — routes `/app/meetings` (+ `/app/meetings/:id`); sidebar **الاجتماعات** (`meetings.view`).
+- List + drawer; details with lifecycle, attendees, agenda, minutes, recommendations; transition timeline.
+- Full UI contract: [06-meetings/UI.md](../09-modules/06-meetings/UI.md).
 
 ## Rules
 

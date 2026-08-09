@@ -1,8 +1,8 @@
 # Permission Model
 
-> **Status:** Approved (catalog may grow with modules). Sprint 006–009 permissions are seeded as implemented; Sprint 010 meetings permissions are named in catalog docs — **not seeded until Meetings is implemented**.
+> **Status:** Approved (catalog may grow with modules). Sprint 006–010 permissions are seeded as implemented.
 >
-> **Last updated:** 2026-08-09
+> **Last updated:** 2026-08-10
 
 ## Purpose
 
@@ -36,7 +36,7 @@ Define the granular permission naming model and the master permission catalog. M
 | Employees | `employees.view` `employees.create` `employees.update` `employees.deactivate` `employees.assign_supervisor` — **seeded with Sprint 008** ([04-employees-and-supervisors/PERMISSIONS.md](../09-modules/04-employees-and-supervisors/PERMISSIONS.md)). `employees.delete` / `employees.view_sensitive_data` reserved (**not seeded**). |
 | Positions | `positions.view` `positions.create` `positions.update` `positions.delete` — **seeded with Sprint 008** ([04-employees-and-supervisors/PERMISSIONS.md](../09-modules/04-employees-and-supervisors/PERMISSIONS.md)). |
 | Contracts | `contracts.view` `contracts.create` `contracts.update` `contracts.review` `contracts.approve` `contracts.sign` `contracts.execute` `contracts.close` `contracts.renew` `contracts.cancel` `contracts.delete` — **seeded with Sprint 009** ([05-contracts/PERMISSIONS.md](../09-modules/05-contracts/PERMISSIONS.md)) |
-| Meetings | `meetings.view` `meetings.create` `meetings.update` `meetings.cancel` `meetings.manage_attendees` `meetings.manage_minutes` — specified Sprint 010 ([06-meetings/PERMISSIONS.md](../09-modules/06-meetings/PERMISSIONS.md)); seeded at implementation |
+| Meetings | `meetings.view` `meetings.create` `meetings.update` `meetings.cancel` `meetings.manage_attendees` `meetings.manage_minutes` — **seeded with Sprint 010** ([06-meetings/PERMISSIONS.md](../09-modules/06-meetings/PERMISSIONS.md)) |
 | Decisions | `decisions.view` `decisions.create` `decisions.update` `decisions.approve` `decisions.close` `decisions.delete` |
 | Tasks | `tasks.view` `tasks.create` `tasks.update` `tasks.assign` `tasks.change_status` `tasks.complete` `tasks.delete` |
 | Documents | `documents.view` `documents.upload` `documents.download` `documents.update` `documents.delete` `documents.manage_categories` |

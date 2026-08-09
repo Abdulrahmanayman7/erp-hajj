@@ -1,8 +1,8 @@
 # ERP Hajj
 
-> **Status:** Tenant Foundation (004), Authentication (005), Users & Authorization / RBAC (006), Organization Structure (007), Employees + Supervisors (008), and Contracts (009) implemented. Sprint 010 Meetings is **specified** (documentation only) — not implemented yet.
+> **Status:** Tenant Foundation (004), Authentication (005), Users & Authorization / RBAC (006), Organization Structure (007), Employees + Supervisors (008), Contracts (009), and Meetings (010) implemented.
 >
-> **Last updated:** 2026-08-09
+> **Last updated:** 2026-08-10
 
 ## Project Purpose
 

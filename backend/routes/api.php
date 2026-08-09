@@ -9,6 +9,10 @@ use App\Modules\Contracts\Controllers\ContractCategoryController;
 use App\Modules\Contracts\Controllers\ContractController;
 use App\Modules\Employees\Controllers\EmployeeController;
 use App\Modules\Employees\Controllers\PositionController;
+use App\Modules\Meetings\Controllers\MeetingAgendaItemController;
+use App\Modules\Meetings\Controllers\MeetingAttendeeController;
+use App\Modules\Meetings\Controllers\MeetingController;
+use App\Modules\Meetings\Controllers\MeetingRecommendationController;
 use App\Modules\OrganizationStructure\Controllers\OrganizationUnitController;
 use App\Modules\Users\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -97,5 +101,34 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::post('/contract-categories/{contract_category}/activate', [ContractCategoryController::class, 'activate'])->name('contract-categories.activate');
         Route::post('/contract-categories/{contract_category}/deactivate', [ContractCategoryController::class, 'deactivate'])->name('contract-categories.deactivate');
         Route::delete('/contract-categories/{contract_category}', [ContractCategoryController::class, 'destroy'])->name('contract-categories.destroy');
+
+        Route::get('/meetings', [MeetingController::class, 'index'])->name('meetings.index');
+        Route::post('/meetings', [MeetingController::class, 'store'])->name('meetings.store');
+        Route::get('/meetings/{meeting}', [MeetingController::class, 'show'])->name('meetings.show');
+        Route::patch('/meetings/{meeting}', [MeetingController::class, 'update'])->name('meetings.update');
+        Route::delete('/meetings/{meeting}', [MeetingController::class, 'destroy'])->name('meetings.destroy');
+        Route::post('/meetings/{meeting}/schedule', [MeetingController::class, 'schedule'])->name('meetings.schedule');
+        Route::post('/meetings/{meeting}/reschedule', [MeetingController::class, 'reschedule'])->name('meetings.reschedule');
+        Route::post('/meetings/{meeting}/start', [MeetingController::class, 'start'])->name('meetings.start');
+        Route::post('/meetings/{meeting}/complete', [MeetingController::class, 'complete'])->name('meetings.complete');
+        Route::post('/meetings/{meeting}/cancel', [MeetingController::class, 'cancel'])->name('meetings.cancel');
+        Route::put('/meetings/{meeting}/minutes', [MeetingController::class, 'updateMinutes'])->name('meetings.minutes');
+
+        Route::scopeBindings()->group(function (): void {
+            Route::get('/meetings/{meeting}/attendees', [MeetingAttendeeController::class, 'index'])->name('meetings.attendees.index');
+            Route::post('/meetings/{meeting}/attendees', [MeetingAttendeeController::class, 'store'])->name('meetings.attendees.store');
+            Route::patch('/meetings/{meeting}/attendees/{attendee}', [MeetingAttendeeController::class, 'update'])->name('meetings.attendees.update');
+            Route::delete('/meetings/{meeting}/attendees/{attendee}', [MeetingAttendeeController::class, 'destroy'])->name('meetings.attendees.destroy');
+
+            Route::get('/meetings/{meeting}/agenda-items', [MeetingAgendaItemController::class, 'index'])->name('meetings.agenda-items.index');
+            Route::post('/meetings/{meeting}/agenda-items', [MeetingAgendaItemController::class, 'store'])->name('meetings.agenda-items.store');
+            Route::patch('/meetings/{meeting}/agenda-items/{agenda_item}', [MeetingAgendaItemController::class, 'update'])->name('meetings.agenda-items.update');
+            Route::delete('/meetings/{meeting}/agenda-items/{agenda_item}', [MeetingAgendaItemController::class, 'destroy'])->name('meetings.agenda-items.destroy');
+
+            Route::get('/meetings/{meeting}/recommendations', [MeetingRecommendationController::class, 'index'])->name('meetings.recommendations.index');
+            Route::post('/meetings/{meeting}/recommendations', [MeetingRecommendationController::class, 'store'])->name('meetings.recommendations.store');
+            Route::patch('/meetings/{meeting}/recommendations/{recommendation}', [MeetingRecommendationController::class, 'update'])->name('meetings.recommendations.update');
+            Route::delete('/meetings/{meeting}/recommendations/{recommendation}', [MeetingRecommendationController::class, 'destroy'])->name('meetings.recommendations.destroy');
+        });
     });
 });

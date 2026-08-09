@@ -1,7 +1,7 @@
 # Module: Meetings (الاجتماعات)
 
-> **Status:** Specified (Sprint 010) — **not implemented**
-> **Last updated:** 2026-08-09
+> **Status:** Implemented (Sprint 010)
+> **Last updated:** 2026-08-10
 
 ## Purpose
 

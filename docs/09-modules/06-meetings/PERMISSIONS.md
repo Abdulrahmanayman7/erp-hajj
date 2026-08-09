@@ -1,9 +1,9 @@
 # Meetings — Permissions
 
-> **Status:** Specified (Sprint 010) — **not seeded until implementation**
-> **Last updated:** 2026-08-09
+> **Status:** Implemented (Sprint 010) — seeded
+> **Last updated:** 2026-08-10
 
-## Catalog (seed with Sprint 010 implementation)
+## Seeded with Sprint 010 implementation
 
 | Permission | Purpose |
 |---|---|

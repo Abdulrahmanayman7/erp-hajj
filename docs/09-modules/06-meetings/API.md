@@ -1,7 +1,7 @@
 # Meetings — API
 
-> **Status:** Specified (Sprint 010) — **no endpoints yet**
-> **Last updated:** 2026-08-09
+> **Status:** Implemented (Sprint 010) — endpoints live under `/api/v1`
+> **Last updated:** 2026-08-10
 
 Base: `/api/v1`. Auth: Sanctum SPA + active user + active tenant. Envelope: [API_STANDARDS.md](../../04-api/API_STANDARDS.md).
 
