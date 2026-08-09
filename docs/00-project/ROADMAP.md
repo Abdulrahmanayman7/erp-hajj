@@ -1,7 +1,7 @@
 # Roadmap
 
 > **Status:** Draft (delivery order aligned to completed / next sprints)
-> **Last updated:** 2026-08-09
+> **Last updated:** 2026-08-10
 
 ## Purpose
 
@@ -24,9 +24,8 @@ The 21 modules and four core workflows defined in [MVP_SCOPE.md](MVP_SCOPE.md), 
 | Sprint 007 — Organization Structure | **Done** (implementation) |
 | Sprint 008 — Employees + Supervisors | **Done** (implementation) |
 | Sprint 009 — Contracts | **Done** (implementation) |
-| Sprint 010 — Meetings | **Specification complete** — implementation pending |
-| Remaining MVP modules | After Meetings implementation (Decisions → Tasks → …) |
-
+| Sprint 010 — Meetings | **Done** (implementation) |
+| Remaining MVP modules | Next after Meetings |
 Natural dependency order remains: **tenancy → authentication → users/roles/permissions → organizational structure → employees → contracts → meetings → decisions → tasks → remaining modules**.
 
 ## Later — Future Vision (NOT part of the MVP, all TBD)

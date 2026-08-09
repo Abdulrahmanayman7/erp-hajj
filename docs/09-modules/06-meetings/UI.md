@@ -1,7 +1,7 @@
 # Meetings — UI
 
-> **Status:** Specified (Sprint 010) — **no pages yet**
-> **Last updated:** 2026-08-09
+> **Status:** Implemented (Sprint 010) — pages live
+> **Last updated:** 2026-08-10
 
 Arabic RTL first. Reuse AppSidebar, Drawer, AppSelect, AppConfirmDialog, AppToastHost, PermissionGuard, TanStack Query. Do not redesign the shell.
 

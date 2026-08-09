@@ -9,7 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Sprint 010 — Meetings specification** (documentation only): Workflow 1 entry (`Meeting → Recommendation → Decision…`); tenant-owned `meetings` + `MTG-######` sequences; append-only `meeting_status_transitions`; employee-only attendees + attendance statuses; structured `meeting_agenda_items`; `minutes_body` text; first-class `meeting_recommendations` (`draft`/`final`, ADR-0007); lifecycle action endpoints (schedule/reschedule/start/complete/cancel); draft-only hard delete; Documents/Notifications/Decisions/Tasks deferred; API/UI/Pest/Vitest matrices. **No application code.**
+- **Sprint 010 — Meetings vertical slice:** tenant-owned `meetings` (+ `meeting_number_sequences`) + append-only `meeting_status_transitions` (correlation ID); concurrency-safe `MTG-######` via `SELECT … FOR UPDATE`; employee-only attendees + attendance statuses; structured `meeting_agenda_items`; `minutes_body` text; first-class `meeting_recommendations` (`draft`/`final`, ADR-0007); Workflow 1 lifecycle action endpoints (schedule/reschedule/start/complete/cancel); draft-only hard delete; Documents/Notifications/Decisions/Tasks deferred; Policies + `meetings.*` catalog + role templates; APIs under `/api/v1/meetings` (+ attendees/agenda/recommendations nested); Vue `meetings` module (list, drawer, details, lifecycle/minutes/attendees/agenda/recommendations UX); sidebar الاجتماعات; Pest + Vitest green.
+
+- **Sprint 010 — Meetings specification** (superseded by implementation above).
 
 - **Sprint 009 — Contracts vertical slice:** tenant-owned `contract_categories` (ADR-0006, active/inactive) + `contracts` (+ `contract_number_sequences`) + authoritative append-only `contract_status_transitions` (correlation ID); concurrency-safe `CTR-######` via `SELECT … FOR UPDATE`; counterparty free-text + optional employee/org links; Workflow 2 lifecycle action endpoints; **manual sign attestation** (not e-sign); **one-child transactional renew** (`CONTRACT_ALREADY_RENEWED`); expiry command + expiring-soon filter; draft-only hard delete; informational value/SAR; attachments deferred; notification hooks only; Policies + `contracts.*` catalog + role templates; APIs under `/api/v1/contracts` and `/api/v1/contract-categories`; Vue `contracts` module (list, drawer, lifecycle actions, categories manager, details timeline); sidebar العقود; Pest + Vitest green.
 
@@ -19,7 +21,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Sprint 008 — Employees + Supervisors specification** (superseded by implementation above).
 
-- **Sprint 007 — Organization Structure vertical slice:** tenant-owned `organization_units` (adjacency list; ADR-0004); types `department|section|unit`; status active/inactive; immutable tenant-scoped codes; optional unit manager (`manager_user_id`); app max depth via `config/organization.php`; cycle/depth validation; Actions + Policy + APIs (`/api/v1/organization-units` tree/flat, move, activate/deactivate, delete); `organization_units.*` catalog + role templates; Vue `organization` module (tree + details, drawer, move/lifecycle confirms); sidebar الهيكل التنظيمي; Pest + Vitest green. No Employees/positions/user membership; no soft deletes.
 - **Sprint 007 — Organization Structure vertical slice:** tenant-owned `organization_units` (adjacency list; ADR-0004); types `department|section|unit`; status active/inactive; immutable tenant-scoped codes; optional unit manager (`manager_user_id`); app max depth via `config/organization.php`; cycle/depth validation; Actions + Policy + APIs (`/api/v1/organization-units` tree/flat, move, activate/deactivate, delete); `organization_units.*` catalog + role templates; Vue `organization` module (tree + details, drawer, move/lifecycle confirms); sidebar الهيكل التنظيمي; Pest + Vitest green. No Employees/positions/user membership; no soft deletes.
 
 - **Sprint 007 — Organization Structure specification** (superseded by implementation above).
@@ -64,4 +65,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub pull request template and issue templates (Feature, Bug, Technical Task, Change Request).
 - Root `README.md`, `CHANGELOG.md`, and `.editorconfig`.
 
-> Note: Tenant Foundation (004), Authentication (005), Users & Authorization / RBAC (006), Organization Structure (007), and Employees + Supervisors (008) are implemented.
+> Note: Tenant Foundation (004), Authentication (005), Users & Authorization / RBAC (006), Organization Structure (007), Employees + Supervisors (008), Contracts (009), and Meetings (010) are implemented.

@@ -2,7 +2,8 @@
 
 > **Status:** Accepted
 > **Date:** 2026-08-09
-> **Sprint:** 010 (Meetings specification)
+> **Sprint:** 010 (Meetings — implemented)
+> **Note:** Sprint 010 Meetings vertical slice implemented 2026-08-10.
 
 ## Context
 

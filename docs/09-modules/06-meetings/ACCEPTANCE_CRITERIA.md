@@ -1,7 +1,7 @@
 # Meetings — Acceptance Criteria
 
-> **Status:** Specified (Sprint 010)
-> **Last updated:** 2026-08-09
+> **Status:** Implemented (Sprint 010) — acceptance verified via Pest/Vitest
+> **Last updated:** 2026-08-10
 
 A Meetings implementation is done only when all items below are true and [DEFINITION_OF_DONE.md](../../00-project/DEFINITION_OF_DONE.md) is satisfied.
 

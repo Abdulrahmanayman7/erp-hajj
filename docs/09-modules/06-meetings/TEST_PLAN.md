@@ -1,7 +1,7 @@
 # Meetings — Test Plan
 
-> **Status:** Specified for Sprint 010 implementation
-> **Last updated:** 2026-08-09
+> **Status:** Implemented (Sprint 010) — covered by Pest/Vitest
+> **Last updated:** 2026-08-10
 
 Tooling: **Pest** (backend), **Vitest** (frontend). Failing security tests block merge.
 
