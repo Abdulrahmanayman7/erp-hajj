@@ -12,6 +12,7 @@ use App\Modules\Authorization\Models\Role;
 use App\Modules\Authorization\Policies\RolePolicy;
 use App\Modules\Users\Policies\UserPolicy;
 use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
@@ -36,6 +37,24 @@ class AppServiceProvider extends ServiceProvider
                 'token' => $token,
                 'email' => $user->email,
             ]);
+        });
+
+        ResetPassword::toMailUsing(function (User $user, string $token): MailMessage {
+            $frontend = rtrim((string) config('app.frontend_url', env('FRONTEND_URL', 'http://localhost:5173')), '/');
+            $url = $frontend.'/reset-password?'.http_build_query([
+                'token' => $token,
+                'email' => $user->email,
+            ]);
+
+            return (new MailMessage)
+                ->subject('تعيين كلمة المرور — رفيع')
+                ->greeting('مرحبًا '.$user->name)
+                ->line('تم إنشاء حسابك أو طلب إعادة تعيين كلمة المرور في منصة رفيع.')
+                ->line('اضغط الزر أدناه لتعيين كلمة مرور جديدة.')
+                ->action('تعيين كلمة المرور', $url)
+                ->line('رابط التعيين صالح لمدة 60 دقيقة.')
+                ->line('إذا لم تطلب ذلك، يمكنك تجاهل هذه الرسالة.')
+                ->salutation('مع التحية، فريق رفيع');
         });
 
         Event::listen(AuthSecurityEvent::class, LogAuthSecurityEvent::class);

@@ -2,6 +2,7 @@
 
 namespace App\Modules\Users\Actions;
 
+use App\Core\Auth\AvatarGroup;
 use App\Core\Auth\UserStatus;
 use App\Core\Authorization\EffectivePermissions;
 use App\Core\Authorization\Events\AuthorizationSecurityEvent;
@@ -13,6 +14,7 @@ use App\Modules\Authorization\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 
@@ -26,7 +28,7 @@ final class CreateUser
     ) {}
 
     /**
-     * @param  array{name: string, email: string, role_ids?: list<int>, send_invite?: bool, temporary_password?: string|null}  $data
+     * @param  array{name: string, email: string, role_ids?: list<int>, send_invite?: bool, temporary_password?: string|null, avatar_group?: string}  $data
      * @return array{user: User, password_provisioned: bool}
      */
     public function execute(User $actor, array $data, Request $request): array
@@ -35,6 +37,8 @@ final class CreateUser
         $roleIds = array_values(array_unique(array_map('intval', $data['role_ids'] ?? [])));
         $sendInvite = $data['send_invite'] ?? true;
         $temporaryPassword = $data['temporary_password'] ?? null;
+        $avatarGroup = AvatarGroup::tryFrom((string) ($data['avatar_group'] ?? AvatarGroup::Neutral->value))
+            ?? AvatarGroup::Neutral;
 
         $roles = collect();
         if ($roleIds !== []) {
@@ -58,7 +62,7 @@ final class CreateUser
             $passwordProvisioned = true;
         }
 
-        $user = DB::transaction(function () use ($actor, $data, $tenant, $roles, $plainPassword, $request, $sendInvite): User {
+        $user = DB::transaction(function () use ($actor, $data, $tenant, $roles, $plainPassword, $request, $sendInvite, $avatarGroup): User {
             $user = new User;
             $user->forceFill([
                 'name' => $data['name'],
@@ -66,6 +70,7 @@ final class CreateUser
                 'password' => Hash::make($plainPassword),
                 'tenant_id' => $tenant->id,
                 'status' => UserStatus::Active,
+                'avatar_group' => $avatarGroup,
             ]);
             $user->save();
 
@@ -103,7 +108,16 @@ final class CreateUser
         });
 
         if ($sendInvite) {
-            Password::broker()->sendResetLink(['email' => $user->email]);
+            $status = Password::broker()->sendResetLink(['email' => $user->email]);
+
+            if ($status !== Password::RESET_LINK_SENT) {
+                Log::warning('User invite reset link was not sent.', [
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                    'status' => $status,
+                    'mailer' => config('mail.default'),
+                ]);
+            }
         }
 
         $this->effectivePermissions->forgetUser($user);

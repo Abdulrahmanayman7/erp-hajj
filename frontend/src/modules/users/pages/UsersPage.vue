@@ -1,12 +1,27 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import {
+  ChevronLeft,
+  ChevronRight,
+  Pencil,
+  Plus,
+  Search,
+  UserCheck,
+  UserX,
+} from 'lucide-vue-next'
 
 import { ApiError } from '@/shared/api/http'
+import AppSelect from '@/shared/components/AppSelect.vue'
+import AppTooltip from '@/shared/components/AppTooltip.vue'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
+import UserAvatar from '@/shared/components/UserAvatar.vue'
+import { useConfirm } from '@/shared/composables/useConfirm'
 import { usePermissions } from '@/shared/composables/usePermissions'
+import { useToast } from '@/shared/composables/useToast'
 import { useRolesQuery } from '@/modules/roles/queries/useRolesQuery'
 
+import UserFormDrawer from '../components/UserFormDrawer.vue'
 import {
   useCreateUserMutation,
   useDisableUserMutation,
@@ -15,10 +30,12 @@ import {
   useUpdateUserMutation,
 } from '../mutations/useUserMutations'
 import { useUsersQuery } from '../queries/useUsersQuery'
-import type { TenantUser } from '../types/users'
+import type { AvatarGroup, TenantUser } from '../types/users'
 
 const { t } = useI18n()
 const { can } = usePermissions()
+const toast = useToast()
+const { confirm } = useConfirm()
 
 const filters = reactive({
   search: '',
@@ -50,11 +67,30 @@ const form = reactive({
   send_invite: true,
   temporary_password: '',
   temporary_password_confirmation: '',
+  avatar_group: 'neutral' as AvatarGroup,
 })
 
 const users = computed(() => data.value?.data ?? [])
 const meta = computed(() => data.value?.meta)
 const roles = computed(() => rolesData.value?.data ?? [])
+
+const statusOptions = computed(() => [
+  { value: '', label: t('users.filters.allStatuses') },
+  { value: 'active', label: t('users.status.active') },
+  { value: 'disabled', label: t('users.status.disabled') },
+])
+
+const roleOptions = computed(() => [
+  { value: '', label: t('users.filters.allRoles') },
+  ...roles.value.map((role) => ({ value: role.id, label: role.name })),
+])
+
+const isSubmitting = computed(
+  () =>
+    createMutation.isPending.value ||
+    updateMutation.isPending.value ||
+    syncRolesMutation.isPending.value,
+)
 
 watch(
   () => [filters.search, filters.status, filters.role_id],
@@ -71,6 +107,7 @@ function openCreate(): void {
   form.send_invite = true
   form.temporary_password = ''
   form.temporary_password_confirmation = ''
+  form.avatar_group = 'neutral'
   formError.value = ''
   drawerOpen.value = true
 }
@@ -80,6 +117,7 @@ function openEdit(user: TenantUser): void {
   form.name = user.name
   form.email = user.email
   form.role_ids = user.roles.map((role) => role.id)
+  form.avatar_group = user.avatar_group ?? 'neutral'
   formError.value = ''
   drawerOpen.value = true
 }
@@ -94,7 +132,11 @@ async function submitForm(): Promise<void> {
     if (editing.value) {
       await updateMutation.mutateAsync({
         id: editing.value.id,
-        payload: { name: form.name, email: form.email },
+        payload: {
+          name: form.name,
+          email: form.email,
+          avatar_group: form.avatar_group,
+        },
       })
       if (can('users.assign_roles')) {
         await syncRolesMutation.mutateAsync({
@@ -102,19 +144,31 @@ async function submitForm(): Promise<void> {
           roleIds: form.role_ids,
         })
       }
-    } else {
-      await createMutation.mutateAsync({
-        name: form.name,
-        email: form.email,
-        role_ids: form.role_ids,
-        send_invite: form.send_invite,
-        temporary_password: form.send_invite ? undefined : form.temporary_password,
-        temporary_password_confirmation: form.send_invite
-          ? undefined
-          : form.temporary_password_confirmation,
-      })
+      closeDrawer()
+      toast.success(t('users.successUpdate'))
+      return
     }
+
+    const sendInvite = form.send_invite
+    await createMutation.mutateAsync({
+      name: form.name,
+      email: form.email,
+      role_ids: form.role_ids,
+      send_invite: sendInvite,
+      temporary_password: sendInvite ? undefined : form.temporary_password,
+      temporary_password_confirmation: sendInvite
+        ? undefined
+        : form.temporary_password_confirmation,
+      avatar_group: form.avatar_group,
+    })
     closeDrawer()
+    if (!sendInvite) {
+      toast.success(t('users.successCreate'))
+    } else if (import.meta.env.DEV) {
+      toast.info(t('users.successCreateInviteLocal'), 6500)
+    } else {
+      toast.success(t('users.successCreateInvite'))
+    }
   } catch (error) {
     formError.value =
       error instanceof ApiError
@@ -124,21 +178,27 @@ async function submitForm(): Promise<void> {
 }
 
 async function toggleStatus(user: TenantUser): Promise<void> {
-  const confirmMessage =
-    user.status === 'active' ? t('users.confirmDisable') : t('users.confirmEnable')
-  if (!window.confirm(confirmMessage)) {
+  const disabling = user.status === 'active'
+  const confirmed = await confirm({
+    title: disabling ? t('users.confirmDisableTitle') : t('users.confirmEnableTitle'),
+    message: disabling ? t('users.confirmDisableBody') : t('users.confirmEnableBody'),
+    confirmLabel: disabling ? t('users.confirmDisableCta') : t('users.confirmEnableCta'),
+    cancelLabel: t('users.cancel'),
+    variant: disabling ? 'warning' : 'primary',
+  })
+  if (!confirmed) {
     return
   }
   try {
-    if (user.status === 'active') {
+    if (disabling) {
       await disableMutation.mutateAsync(user.id)
+      toast.success(t('users.successDisable'))
     } else {
       await enableMutation.mutateAsync(user.id)
+      toast.success(t('users.successEnable'))
     }
   } catch (error) {
-    window.alert(
-      error instanceof ApiError ? error.message : t('users.errors.generic'),
-    )
+    toast.error(error instanceof ApiError ? error.message : t('users.errors.generic'))
   }
 }
 
@@ -148,189 +208,255 @@ function formatDate(value: string | null): string {
   }
   return new Date(value).toLocaleDateString('ar-SA')
 }
+
 </script>
 
 <template>
   <div class="space-y-6">
-    <div class="flex flex-wrap items-center justify-between gap-3">
-      <div>
-        <h2 class="text-2xl font-semibold text-neutral-900">{{ t('users.title') }}</h2>
-        <p v-if="meta" class="mt-1 text-sm text-neutral-500">
-          {{ t('users.total', { count: meta.total }) }}
+    <div class="flex flex-wrap items-end justify-between gap-4">
+      <div class="min-w-0">
+        <h2 class="text-[1.75rem] font-bold leading-tight text-brand-text">
+          {{ t('users.title') }}
+        </h2>
+        <p v-if="meta" class="mt-1.5 text-sm text-brand-text-secondary">
+          <span
+            class="inline-flex items-center rounded-full bg-brand-primary-soft px-2.5 py-0.5 text-xs font-semibold text-brand-primary-dark"
+          >
+            {{ t('users.total', { count: meta.total }) }}
+          </span>
         </p>
       </div>
       <PermissionGuard permission="users.create">
         <button
           type="button"
-          class="rounded-md bg-emerald-800 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+          class="inline-flex h-11 items-center gap-2 rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white transition hover:bg-brand-primary"
           @click="openCreate"
         >
-          {{ t('users.add') }}
+          <Plus class="h-4 w-4" :stroke-width="2.25" />
+          <span>{{ t('users.add') }}</span>
         </button>
       </PermissionGuard>
     </div>
 
-    <div class="flex flex-wrap gap-3 rounded-xl border border-neutral-200 bg-white p-4">
-      <input
-        v-model="filters.search"
-        type="search"
-        class="min-w-48 flex-1 rounded-md border border-neutral-300 px-3 py-2 text-sm"
-        :placeholder="t('users.searchPlaceholder')"
-      />
-      <select v-model="filters.status" class="rounded-md border border-neutral-300 px-3 py-2 text-sm">
-        <option value="">{{ t('users.filters.allStatuses') }}</option>
-        <option value="active">{{ t('users.status.active') }}</option>
-        <option value="disabled">{{ t('users.status.disabled') }}</option>
-      </select>
-      <select v-model="filters.role_id" class="rounded-md border border-neutral-300 px-3 py-2 text-sm">
-        <option value="">{{ t('users.filters.allRoles') }}</option>
-        <option v-for="role in roles" :key="role.id" :value="role.id">{{ role.name }}</option>
-      </select>
+    <div
+      class="flex flex-wrap items-center gap-3 rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)]"
+    >
+      <div class="relative min-w-48 flex-1">
+        <Search
+          class="pointer-events-none absolute inset-s-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text-muted"
+          :stroke-width="1.75"
+          aria-hidden="true"
+        />
+        <input
+          v-model="filters.search"
+          type="search"
+          class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface pe-3 ps-10 text-sm text-brand-text outline-none transition placeholder:text-brand-text-muted focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+          :placeholder="t('users.searchPlaceholder')"
+        />
+      </div>
+      <AppSelect v-model="filters.status" :options="statusOptions" />
+      <AppSelect v-model="filters.role_id" :options="roleOptions" />
     </div>
 
-    <div v-if="isLoading" class="rounded-xl border border-neutral-200 bg-white p-8 text-center text-sm text-neutral-500">
+    <div
+      v-if="isLoading"
+      class="rounded-2xl border border-brand-border bg-brand-surface p-10 text-center text-sm text-brand-text-muted"
+    >
       {{ t('users.loading') }}
     </div>
-    <div v-else-if="isError" class="rounded-xl border border-red-200 bg-red-50 p-8 text-center">
+    <div v-else-if="isError" class="rounded-2xl border border-red-200 bg-red-50 p-10 text-center">
       <p class="text-sm text-red-700">{{ t('users.errors.load') }}</p>
-      <button type="button" class="mt-3 text-sm text-emerald-800 underline" @click="() => refetch()">
+      <button
+        type="button"
+        class="mt-3 text-sm font-semibold text-brand-primary-dark underline"
+        @click="() => refetch()"
+      >
         {{ t('users.retry') }}
       </button>
     </div>
-    <div v-else-if="users.length === 0" class="rounded-xl border border-neutral-200 bg-white p-8 text-center text-sm text-neutral-500">
+    <div
+      v-else-if="users.length === 0"
+      class="rounded-2xl border border-brand-border bg-brand-surface p-10 text-center text-sm text-brand-text-muted"
+    >
       {{ t('users.empty') }}
     </div>
-    <div v-else class="overflow-x-auto rounded-xl border border-neutral-200 bg-white">
-      <table class="min-w-full text-sm">
-        <thead class="bg-neutral-50 text-neutral-600">
-          <tr>
-            <th class="px-4 py-3 text-start font-medium">{{ t('users.columns.name') }}</th>
-            <th class="px-4 py-3 text-start font-medium">{{ t('users.columns.email') }}</th>
-            <th class="px-4 py-3 text-start font-medium">{{ t('users.columns.roles') }}</th>
-            <th class="px-4 py-3 text-start font-medium">{{ t('users.columns.status') }}</th>
-            <th class="px-4 py-3 text-start font-medium">{{ t('users.columns.created') }}</th>
-            <th class="px-4 py-3 text-start font-medium">{{ t('users.columns.actions') }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="user in users" :key="user.id" class="border-t border-neutral-100">
-            <td class="px-4 py-3">{{ user.name }}</td>
-            <td class="px-4 py-3">{{ user.email }}</td>
-            <td class="px-4 py-3">
-              <span
-                v-for="role in user.roles"
-                :key="role.id"
-                class="me-1 inline-block rounded bg-emerald-50 px-2 py-0.5 text-xs text-emerald-900"
+    <div
+      v-else
+      class="overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-[0_1px_2px_rgba(23,32,29,0.03)]"
+    >
+      <div class="overflow-x-auto">
+        <table class="min-w-full border-separate border-spacing-0 text-sm">
+          <thead>
+            <tr class="bg-[#F4F6F5]">
+              <th
+                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-start text-xs font-bold tracking-wide text-brand-text-muted"
               >
-                {{ role.name }}
-              </span>
-              <span v-if="user.roles.length === 0">—</span>
-            </td>
-            <td class="px-4 py-3">
-              <span
-                class="rounded-full px-2 py-0.5 text-xs"
-                :class="user.status === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-neutral-200 text-neutral-700'"
+                {{ t('users.columns.name') }}
+              </th>
+              <th
+                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
               >
-                {{ t(`users.status.${user.status}`) }}
-              </span>
-            </td>
-            <td class="px-4 py-3">{{ formatDate(user.created_at) }}</td>
-            <td class="px-4 py-3">
-              <div class="flex flex-wrap gap-2">
-                <PermissionGuard permission="users.update">
-                  <button type="button" class="text-emerald-800 hover:underline" @click="openEdit(user)">
-                    {{ t('users.actions.edit') }}
-                  </button>
-                </PermissionGuard>
-                <PermissionGuard permission="users.disable">
-                  <button type="button" class="text-neutral-700 hover:underline" @click="toggleStatus(user)">
-                    {{ user.status === 'active' ? t('users.actions.disable') : t('users.actions.enable') }}
-                  </button>
-                </PermissionGuard>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <div v-if="meta && meta.last_page > 1" class="flex items-center justify-between border-t border-neutral-100 px-4 py-3 text-sm">
+                {{ t('users.columns.email') }}
+              </th>
+              <th
+                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
+              >
+                {{ t('users.columns.roles') }}
+              </th>
+              <th
+                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
+              >
+                {{ t('users.columns.status') }}
+              </th>
+              <th
+                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
+              >
+                {{ t('users.columns.created') }}
+              </th>
+              <th
+                class="w-28 whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
+              >
+                {{ t('users.columns.actions') }}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="(user, index) in users"
+              :key="user.id"
+              class="group transition-colors duration-150"
+              :class="index % 2 === 1 ? 'bg-[#FAFBFA]' : 'bg-brand-surface'"
+            >
+              <td class="border-b border-brand-border/80 px-5 py-3.5 group-hover:bg-[#EEF2F0]">
+                <div class="flex min-w-0 items-center gap-2.5">
+                  <UserAvatar :user="user" size="md" />
+                  <span class="truncate font-semibold text-brand-text">{{ user.name }}</span>
+                </div>
+              </td>
+              <td
+                class="border-b border-brand-border/80 px-5 py-3.5 text-center text-brand-text-secondary group-hover:bg-[#EEF2F0]"
+                dir="ltr"
+              >
+                {{ user.email }}
+              </td>
+              <td class="border-b border-brand-border/80 px-5 py-3.5 text-center group-hover:bg-[#EEF2F0]">
+                <div class="flex flex-wrap items-center justify-center gap-1.5">
+                  <span
+                    v-for="role in user.roles"
+                    :key="role.id"
+                    class="inline-flex items-center rounded-lg bg-brand-primary-soft px-2 py-0.5 text-xs font-semibold text-brand-primary-dark ring-1 ring-brand-primary/10"
+                  >
+                    {{ role.name }}
+                  </span>
+                  <span v-if="user.roles.length === 0" class="text-brand-text-muted">—</span>
+                </div>
+              </td>
+              <td class="border-b border-brand-border/80 px-5 py-3.5 text-center group-hover:bg-[#EEF2F0]">
+                <div class="flex justify-center">
+                  <span
+                    class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
+                    :class="
+                      user.status === 'active'
+                        ? 'bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200/70'
+                        : 'bg-neutral-100 text-neutral-600 ring-1 ring-neutral-200/80'
+                    "
+                  >
+                    <span
+                      class="h-1.5 w-1.5 rounded-full"
+                      :class="user.status === 'active' ? 'bg-emerald-500' : 'bg-neutral-400'"
+                    />
+                    {{ t(`users.status.${user.status}`) }}
+                  </span>
+                </div>
+              </td>
+              <td
+                class="whitespace-nowrap border-b border-brand-border/80 px-5 py-3.5 text-center text-brand-text-secondary group-hover:bg-[#EEF2F0]"
+              >
+                {{ formatDate(user.created_at) }}
+              </td>
+              <td class="border-b border-brand-border/80 px-5 py-3.5 text-center group-hover:bg-[#EEF2F0]">
+                <div class="inline-flex items-center justify-center gap-1">
+                  <PermissionGuard permission="users.update">
+                    <AppTooltip :text="t('users.actions.edit')">
+                      <button
+                        type="button"
+                        class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-brand-primary-dark transition hover:bg-brand-primary-soft"
+                        :aria-label="t('users.actions.edit')"
+                        @click="openEdit(user)"
+                      >
+                        <Pencil class="h-4 w-4" :stroke-width="2" />
+                      </button>
+                    </AppTooltip>
+                  </PermissionGuard>
+                  <PermissionGuard permission="users.disable">
+                    <AppTooltip
+                      v-if="user.status === 'active'"
+                      :text="t('users.actions.disable')"
+                    >
+                      <button
+                        type="button"
+                        class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-amber-700 transition hover:bg-amber-50"
+                        :aria-label="t('users.actions.disable')"
+                        @click="toggleStatus(user)"
+                      >
+                        <UserX class="h-4 w-4" :stroke-width="2" />
+                      </button>
+                    </AppTooltip>
+                    <AppTooltip v-else :text="t('users.actions.enable')">
+                      <button
+                        type="button"
+                        class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-emerald-700 transition hover:bg-emerald-50"
+                        :aria-label="t('users.actions.enable')"
+                        @click="toggleStatus(user)"
+                      >
+                        <UserCheck class="h-4 w-4" :stroke-width="2" />
+                      </button>
+                    </AppTooltip>
+                  </PermissionGuard>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div
+        v-if="meta && meta.last_page > 1"
+        class="flex items-center justify-between gap-3 border-t border-brand-border bg-[#F7F8F6] px-5 py-3 text-sm"
+      >
         <button
           type="button"
-          class="disabled:opacity-40"
+          class="inline-flex h-9 items-center gap-1 rounded-lg border border-brand-border bg-brand-surface px-3 font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
           :disabled="filters.page <= 1 || isFetching"
           @click="filters.page -= 1"
         >
-          {{ t('users.prev') }}
+          <ChevronRight class="h-4 w-4" :stroke-width="2" />
+          <span>{{ t('users.prev') }}</span>
         </button>
-        <span>{{ filters.page }} / {{ meta.last_page }}</span>
+        <span class="text-xs font-semibold text-brand-text-muted">
+          {{ filters.page }} / {{ meta.last_page }}
+        </span>
         <button
           type="button"
-          class="disabled:opacity-40"
+          class="inline-flex h-9 items-center gap-1 rounded-lg border border-brand-border bg-brand-surface px-3 font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
           :disabled="filters.page >= meta.last_page || isFetching"
           @click="filters.page += 1"
         >
-          {{ t('users.next') }}
+          <span>{{ t('users.next') }}</span>
+          <ChevronLeft class="h-4 w-4" :stroke-width="2" />
         </button>
       </div>
     </div>
 
-    <div
-      v-if="drawerOpen"
-      class="fixed inset-0 z-40 flex justify-start bg-black/30"
-      @click.self="closeDrawer"
-    >
-      <aside class="flex h-full w-full max-w-md flex-col bg-white shadow-xl">
-        <header class="border-b border-neutral-200 px-5 py-4">
-          <h3 class="text-lg font-semibold">
-            {{ editing ? t('users.editTitle') : t('users.createTitle') }}
-          </h3>
-        </header>
-        <form class="flex flex-1 flex-col gap-4 overflow-y-auto p-5" @submit.prevent="submitForm">
-          <label class="block text-sm">
-            <span class="mb-1 block text-neutral-700">{{ t('users.fields.name') }}</span>
-            <input v-model="form.name" required class="w-full rounded-md border border-neutral-300 px-3 py-2" />
-          </label>
-          <label class="block text-sm">
-            <span class="mb-1 block text-neutral-700">{{ t('users.fields.email') }}</span>
-            <input v-model="form.email" type="email" required class="w-full rounded-md border border-neutral-300 px-3 py-2" />
-          </label>
-          <PermissionGuard permission="users.assign_roles">
-            <fieldset class="text-sm">
-              <legend class="mb-2 text-neutral-700">{{ t('users.fields.roles') }}</legend>
-              <label v-for="role in roles" :key="role.id" class="mb-1 flex items-center gap-2">
-                <input v-model="form.role_ids" type="checkbox" :value="role.id" :disabled="!role.is_active && !form.role_ids.includes(role.id)" />
-                <span>{{ role.name }}</span>
-              </label>
-            </fieldset>
-          </PermissionGuard>
-          <label v-if="!editing" class="flex items-center gap-2 text-sm">
-            <input v-model="form.send_invite" type="checkbox" />
-            <span>{{ t('users.fields.sendInvite') }}</span>
-          </label>
-          <template v-if="!editing && !form.send_invite">
-            <label class="block text-sm">
-              <span class="mb-1 block text-neutral-700">{{ t('users.fields.temporaryPassword') }}</span>
-              <input v-model="form.temporary_password" type="password" class="w-full rounded-md border border-neutral-300 px-3 py-2" />
-            </label>
-            <label class="block text-sm">
-              <span class="mb-1 block text-neutral-700">{{ t('users.fields.confirmPassword') }}</span>
-              <input v-model="form.temporary_password_confirmation" type="password" class="w-full rounded-md border border-neutral-300 px-3 py-2" />
-            </label>
-          </template>
-          <p v-if="formError" class="text-sm text-red-600">{{ formError }}</p>
-          <div class="mt-auto flex gap-2 pt-4">
-            <button
-              type="submit"
-              class="rounded-md bg-emerald-800 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
-              :disabled="createMutation.isPending.value || updateMutation.isPending.value || syncRolesMutation.isPending.value"
-            >
-              {{ t('users.save') }}
-            </button>
-            <button type="button" class="rounded-md border border-neutral-300 px-4 py-2 text-sm" @click="closeDrawer">
-              {{ t('users.cancel') }}
-            </button>
-          </div>
-        </form>
-      </aside>
-    </div>
+    <UserFormDrawer
+      :open="drawerOpen"
+      :editing="editing"
+      :form="form"
+      :roles="roles"
+      :form-error="formError"
+      :submitting="isSubmitting"
+      :can-assign-roles="can('users.assign_roles')"
+      @close="closeDrawer"
+      @submit="submitForm"
+    />
   </div>
 </template>

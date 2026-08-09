@@ -2,6 +2,7 @@
 
 namespace App\Modules\Users\Requests;
 
+use App\Core\Auth\AvatarGroup;
 use App\Core\Auth\Support\EmailNormalizer;
 use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
@@ -40,6 +41,7 @@ class UpdateUserRequest extends FormRequest
                 'max:255',
                 Rule::unique('users', 'email')->ignore($user->id),
             ],
+            'avatar_group' => ['sometimes', Rule::enum(AvatarGroup::class)],
         ];
     }
 }

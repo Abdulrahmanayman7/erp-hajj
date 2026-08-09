@@ -1,5 +1,7 @@
 export type UserStatus = 'active' | 'disabled'
 
+export type AvatarGroup = 'male' | 'female' | 'neutral'
+
 export interface UserRoleSummary {
   id: number
   code: string
@@ -11,6 +13,7 @@ export interface TenantUser {
   name: string
   email: string
   status: UserStatus
+  avatar_group: AvatarGroup
   roles: UserRoleSummary[]
   created_at: string | null
   updated_at: string | null
@@ -31,9 +34,11 @@ export interface CreateUserPayload {
   send_invite?: boolean
   temporary_password?: string
   temporary_password_confirmation?: string
+  avatar_group?: AvatarGroup
 }
 
 export interface UpdateUserPayload {
   name?: string
   email?: string
+  avatar_group?: AvatarGroup
 }

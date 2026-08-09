@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Core\Auth\AvatarGroup;
 use App\Core\Auth\UserStatus;
 use App\Core\Authorization\EffectivePermissions;
 use App\Core\Tenancy\Models\Tenant;
@@ -51,6 +52,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'status' => UserStatus::class,
+            'avatar_group' => AvatarGroup::class,
         ];
     }
 

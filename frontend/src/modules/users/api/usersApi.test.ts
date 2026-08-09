@@ -39,6 +39,7 @@ describe('usersApi', () => {
         name: 'New',
         email: 'n@example.com',
         status: 'active',
+        avatar_group: 'neutral',
         roles: [],
         created_at: null,
         updated_at: null,
@@ -48,6 +49,7 @@ describe('usersApi', () => {
     const user = await usersApi.createUser({
       name: 'New',
       email: 'n@example.com',
+      avatar_group: 'neutral',
       send_invite: true,
     })
 
@@ -55,6 +57,7 @@ describe('usersApi', () => {
     expect(apiPost).toHaveBeenCalledWith('/api/v1/users', {
       name: 'New',
       email: 'n@example.com',
+      avatar_group: 'neutral',
       send_invite: true,
     })
   })

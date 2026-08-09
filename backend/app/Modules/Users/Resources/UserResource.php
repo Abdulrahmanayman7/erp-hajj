@@ -28,6 +28,7 @@ class UserResource extends JsonResource
             'name' => $user->name,
             'email' => $user->email,
             'status' => $user->status->value,
+            'avatar_group' => $user->avatar_group?->value ?? 'neutral',
             'roles' => $roles->map(fn ($role): array => [
                 'id' => $role->id,
                 'code' => $role->code,

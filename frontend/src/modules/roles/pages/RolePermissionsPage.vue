@@ -2,9 +2,11 @@
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
+import { ArrowRight, Check, Loader2, Search, ShieldAlert } from 'lucide-vue-next'
 
 import { ApiError } from '@/shared/api/http'
 import { usePermissions } from '@/shared/composables/usePermissions'
+import { useToast } from '@/shared/composables/useToast'
 
 import { useSyncRolePermissionsMutation } from '../mutations/useRoleMutations'
 import { usePermissionsCatalogQuery, useRoleQuery } from '../queries/useRolesQuery'
@@ -13,6 +15,7 @@ const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const { can } = usePermissions()
+const toast = useToast()
 
 const roleId = computed(() => Number(route.params.id))
 const search = ref('')
@@ -23,7 +26,6 @@ const syncMutation = useSyncRolePermissionsMutation()
 
 const selected = ref<number[]>([])
 const errorMessage = ref('')
-const successMessage = ref('')
 
 watch(
   role,
@@ -47,24 +49,44 @@ watch(
   { immediate: true },
 )
 
-watch(
-  modules,
-  (groups) => {
-    if (!role.value?.permissions || !groups) {
-      return
-    }
-    const names = new Set(role.value.permissions)
-    selected.value = groups
-      .flatMap((group) => group.permissions)
-      .filter((permission) => names.has(permission.name))
-      .map((permission) => permission.id)
-  },
-)
+watch(modules, (groups) => {
+  if (!role.value?.permissions || !groups) {
+    return
+  }
+  const names = new Set(role.value.permissions)
+  selected.value = groups
+    .flatMap((group) => group.permissions)
+    .filter((permission) => names.has(permission.name))
+    .map((permission) => permission.id)
+})
 
 const selectedCount = computed(() => selected.value.length)
 const canSave = computed(() => can('roles.assign_permissions'))
+const isSaving = computed(() => syncMutation.isPending.value)
+const hasModules = computed(() => (modules.value?.length ?? 0) > 0)
+
+function isSelected(id: number): boolean {
+  return selected.value.includes(id)
+}
+
+function moduleStats(moduleName: string): { selected: number; total: number; allSelected: boolean } {
+  const group = (modules.value ?? []).find((item) => item.module === moduleName)
+  if (!group) {
+    return { selected: 0, total: 0, allSelected: false }
+  }
+  const ids = group.permissions.map((permission) => permission.id)
+  const count = ids.filter((id) => selected.value.includes(id)).length
+  return {
+    selected: count,
+    total: ids.length,
+    allSelected: ids.length > 0 && count === ids.length,
+  }
+}
 
 function togglePermission(id: number): void {
+  if (!canSave.value) {
+    return
+  }
   if (selected.value.includes(id)) {
     selected.value = selected.value.filter((item) => item !== id)
   } else {
@@ -73,6 +95,9 @@ function togglePermission(id: number): void {
 }
 
 function toggleModule(moduleName: string): void {
+  if (!canSave.value) {
+    return
+  }
   const group = (modules.value ?? []).find((item) => item.module === moduleName)
   if (!group) {
     return
@@ -88,97 +113,219 @@ function toggleModule(moduleName: string): void {
 
 async function save(): Promise<void> {
   errorMessage.value = ''
-  successMessage.value = ''
   try {
     await syncMutation.mutateAsync({
       id: roleId.value,
       permissionIds: selected.value,
     })
-    successMessage.value = t('roles.matrix.saved')
+    toast.success(t('roles.matrix.saved'))
   } catch (error) {
     errorMessage.value = error instanceof ApiError ? error.message : t('roles.errors.generic')
+    toast.error(errorMessage.value)
   }
 }
 </script>
 
 <template>
   <div class="space-y-6">
-    <div class="flex flex-wrap items-center justify-between gap-3">
-      <div>
-        <button type="button" class="text-sm text-emerald-800 hover:underline" @click="router.push('/app/roles')">
-          ← {{ t('roles.backToList') }}
-        </button>
-        <h2 class="mt-2 text-2xl font-semibold text-neutral-900">
+    <div class="flex flex-wrap items-end justify-between gap-4">
+      <div class="min-w-0">
+        <h2 class="text-[1.75rem] font-bold leading-tight text-brand-text">
           {{ t('roles.matrix.title') }}
-          <span v-if="role" class="text-neutral-500">— {{ role.name }}</span>
         </h2>
-        <p class="mt-1 text-sm text-neutral-500">
-          {{ t('roles.matrix.selected', { count: selectedCount }) }}
+        <p class="mt-1.5 text-sm text-brand-text-secondary">
+          {{ t('roles.matrix.subtitle') }}
         </p>
+
+        <div class="mt-3 flex flex-wrap items-center gap-2">
+          <span
+            v-if="role"
+            class="inline-flex items-center rounded-full bg-brand-primary-soft px-2.5 py-0.5 text-xs font-semibold text-brand-primary-dark"
+          >
+            {{ role.name }}
+          </span>
+          <span
+            class="inline-flex items-center rounded-full bg-brand-bg px-2.5 py-0.5 text-xs font-semibold text-brand-text-secondary ring-1 ring-brand-border"
+          >
+            {{ t('roles.matrix.selected', { count: selectedCount }) }}
+          </span>
+        </div>
       </div>
-      <button
-        v-if="canSave"
-        type="button"
-        class="rounded-md bg-emerald-800 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
-        :disabled="syncMutation.isPending.value"
-        @click="save"
-      >
-        {{ t('roles.matrix.save') }}
-      </button>
+
+      <div class="flex flex-wrap items-center gap-2.5">
+        <button
+          type="button"
+          class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-brand-border bg-brand-surface px-4 text-sm font-semibold text-brand-text transition hover:bg-brand-bg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/20"
+          @click="router.push('/app/roles')"
+        >
+          <ArrowRight class="h-4 w-4" :stroke-width="2" />
+          <span>{{ t('roles.backToList') }}</span>
+        </button>
+
+        <button
+          v-if="canSave"
+          type="button"
+          class="inline-flex h-11 min-w-[9rem] items-center justify-center gap-2 rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white transition hover:bg-brand-primary disabled:cursor-not-allowed disabled:opacity-60"
+          :disabled="isSaving"
+          @click="save"
+        >
+          <Loader2
+            v-if="isSaving"
+            class="h-4 w-4 animate-spin"
+            :stroke-width="2.25"
+            aria-hidden="true"
+          />
+          <span>{{ isSaving ? t('roles.matrix.saving') : t('roles.matrix.save') }}</span>
+        </button>
+      </div>
     </div>
 
-    <input
-      v-model="search"
-      type="search"
-      class="w-full max-w-md rounded-md border border-neutral-300 px-3 py-2 text-sm"
-      :placeholder="t('roles.matrix.search')"
-    />
+    <div
+      class="flex flex-wrap items-center gap-3 rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)]"
+    >
+      <div class="relative min-w-48 flex-1">
+        <Search
+          class="pointer-events-none absolute inset-s-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text-muted"
+          :stroke-width="1.75"
+          aria-hidden="true"
+        />
+        <input
+          v-model="search"
+          type="search"
+          class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface pe-3 ps-10 text-sm text-brand-text outline-none transition placeholder:text-brand-text-muted focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+          :placeholder="t('roles.matrix.search')"
+        />
+      </div>
+      <p
+        v-if="!canSave"
+        class="w-full text-xs font-semibold text-brand-text-muted sm:w-auto"
+      >
+        {{ t('roles.matrix.readOnlyHint') }}
+      </p>
+    </div>
 
-    <p v-if="errorMessage" class="text-sm text-red-600">{{ errorMessage }}</p>
-    <p v-if="successMessage" class="text-sm text-emerald-700">{{ successMessage }}</p>
+    <p
+      v-if="errorMessage"
+      class="rounded-[11px] border border-red-200 bg-red-50 px-3.5 py-3 text-sm text-red-700"
+      role="alert"
+    >
+      {{ errorMessage }}
+    </p>
 
-    <div v-if="roleLoading || catalogLoading" class="rounded-xl border border-neutral-200 bg-white p-8 text-center text-sm text-neutral-500">
+    <div
+      v-if="roleLoading || catalogLoading"
+      class="rounded-2xl border border-brand-border bg-brand-surface p-10 text-center text-sm text-brand-text-muted"
+    >
       {{ t('roles.loading') }}
     </div>
-    <div v-else-if="roleError" class="rounded-xl border border-red-200 bg-red-50 p-8 text-center text-sm text-red-700">
+    <div
+      v-else-if="roleError"
+      class="rounded-2xl border border-red-200 bg-red-50 p-10 text-center text-sm text-red-700"
+    >
       {{ t('roles.errors.load') }}
+    </div>
+    <div
+      v-else-if="!hasModules"
+      class="rounded-2xl border border-brand-border bg-brand-surface p-10 text-center text-sm text-brand-text-muted"
+    >
+      {{ t('roles.matrix.empty') }}
     </div>
     <div v-else class="space-y-4">
       <section
         v-for="group in modules ?? []"
         :key="group.module"
-        class="rounded-xl border border-neutral-200 bg-white p-4"
+        class="overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-[0_1px_2px_rgba(23,32,29,0.03)]"
       >
-        <div class="mb-3 flex items-center justify-between gap-3">
-          <h3 class="font-semibold text-neutral-900">{{ group.display_name }}</h3>
+        <div
+          class="flex flex-wrap items-center justify-between gap-3 border-b border-brand-border bg-[#F7F8F6] px-5 py-4"
+        >
+          <div class="min-w-0">
+            <h3 class="text-[15px] font-bold text-brand-text">
+              {{ group.display_name }}
+            </h3>
+            <p class="mt-1 text-xs font-semibold text-brand-text-muted">
+              {{
+                t('roles.matrix.moduleSelected', {
+                  count: moduleStats(group.module).selected,
+                  total: moduleStats(group.module).total,
+                })
+              }}
+            </p>
+          </div>
           <button
             v-if="canSave"
             type="button"
-            class="text-xs text-emerald-800 hover:underline"
+            class="inline-flex h-9 items-center rounded-lg border border-brand-border bg-brand-surface px-3 text-xs font-semibold text-brand-primary-dark transition hover:bg-brand-primary-soft"
             @click="toggleModule(group.module)"
           >
-            {{ t('roles.matrix.toggleModule') }}
+            {{
+              moduleStats(group.module).allSelected
+                ? t('roles.matrix.clearAll')
+                : t('roles.matrix.selectAll')
+            }}
           </button>
         </div>
-        <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          <label
+
+        <div class="grid gap-2.5 p-4 sm:grid-cols-2 xl:grid-cols-3">
+          <button
             v-for="permission in group.permissions"
             :key="permission.id"
-            class="flex items-start gap-2 rounded-md border border-neutral-100 px-3 py-2 text-sm"
+            type="button"
+            class="flex min-h-[64px] items-start gap-3 rounded-[11px] border px-3.5 py-3 text-start transition duration-[160ms] ease-out"
+            :class="[
+              !canSave ? 'cursor-default' : 'cursor-pointer',
+              isSelected(permission.id)
+                ? permission.high_risk
+                  ? 'border-brand-gold/55 bg-brand-gold-soft'
+                  : 'border-brand-primary bg-brand-primary-soft'
+                : permission.high_risk
+                  ? 'border-brand-gold/30 bg-brand-surface hover:bg-brand-gold-soft/45'
+                  : 'border-brand-border bg-brand-surface hover:border-brand-primary/25 hover:bg-brand-primary-soft/50',
+              !canSave && !isSelected(permission.id) ? 'opacity-80' : '',
+            ]"
+            :disabled="!canSave"
             :title="permission.name"
+            @click="togglePermission(permission.id)"
           >
-            <input
-              type="checkbox"
-              class="mt-1"
-              :checked="selected.includes(permission.id)"
-              :disabled="!canSave"
-              @change="togglePermission(permission.id)"
-            />
-            <span>
-              <span class="block font-medium">{{ permission.display_name }}</span>
-              <span v-if="permission.high_risk" class="text-xs text-amber-700">{{ t('roles.matrix.highRisk') }}</span>
+            <span
+              class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border transition"
+              :class="
+                isSelected(permission.id)
+                  ? permission.high_risk
+                    ? 'border-brand-gold bg-brand-gold text-white'
+                    : 'border-brand-primary bg-brand-primary text-white'
+                  : 'border-brand-border bg-brand-surface'
+              "
+              aria-hidden="true"
+            >
+              <Check
+                v-if="isSelected(permission.id)"
+                class="h-3 w-3"
+                :stroke-width="3"
+              />
             </span>
-          </label>
+
+            <span class="min-w-0 flex-1">
+              <span class="flex flex-wrap items-center gap-2">
+                <span class="text-sm font-semibold text-brand-text">
+                  {{ permission.display_name }}
+                </span>
+                <span
+                  v-if="permission.high_risk"
+                  class="inline-flex items-center gap-1 rounded-md bg-brand-gold-soft px-1.5 py-0.5 text-[11px] font-semibold text-[#8A6A2E] ring-1 ring-brand-gold/35"
+                >
+                  <ShieldAlert class="h-3 w-3" :stroke-width="2" />
+                  {{ t('roles.matrix.highRisk') }}
+                </span>
+              </span>
+              <span
+                v-if="permission.description"
+                class="mt-1 block text-[12px] leading-relaxed text-brand-text-secondary"
+              >
+                {{ permission.description }}
+              </span>
+            </span>
+          </button>
         </div>
       </section>
     </div>

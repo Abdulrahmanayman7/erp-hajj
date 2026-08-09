@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Core\Auth\AvatarGroup;
 use App\Core\Auth\UserStatus;
 use App\Core\Tenancy\Models\Tenant;
 use App\Models\User;
@@ -27,6 +28,7 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'status' => UserStatus::Active,
+            'avatar_group' => AvatarGroup::Neutral,
             'remember_token' => Str::random(10),
         ];
     }

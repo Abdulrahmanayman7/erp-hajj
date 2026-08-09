@@ -2,6 +2,7 @@
 
 namespace App\Modules\Users\Actions;
 
+use App\Core\Auth\AvatarGroup;
 use App\Core\Authorization\Events\AuthorizationSecurityEvent;
 use App\Core\Authorization\Support\AuthorizationSecurity;
 use App\Models\User;
@@ -12,16 +13,29 @@ final class UpdateUser
     public function __construct(private readonly AuthorizationSecurity $security) {}
 
     /**
-     * @param  array{name?: string, email?: string}  $data
+     * @param  array{name?: string, email?: string, avatar_group?: string}  $data
      */
     public function execute(User $actor, User $user, array $data, Request $request): User
     {
         $before = [
             'name' => $user->name,
             'email' => $user->email,
+            'avatar_group' => $user->avatar_group instanceof AvatarGroup
+                ? $user->avatar_group->value
+                : AvatarGroup::Neutral->value,
         ];
 
-        $user->fill(array_intersect_key($data, array_flip(['name', 'email'])));
+        $fillable = array_intersect_key($data, array_flip(['name', 'email']));
+        if ($fillable !== []) {
+            $user->fill($fillable);
+        }
+
+        if (array_key_exists('avatar_group', $data)) {
+            $user->forceFill([
+                'avatar_group' => AvatarGroup::from((string) $data['avatar_group']),
+            ]);
+        }
+
         $user->save();
 
         $this->security->record(AuthorizationSecurityEvent::USER_UPDATED, [
@@ -32,6 +46,9 @@ final class UpdateUser
             'after' => [
                 'name' => $user->name,
                 'email' => $user->email,
+                'avatar_group' => $user->avatar_group instanceof AvatarGroup
+                    ? $user->avatar_group->value
+                    : AvatarGroup::Neutral->value,
             ],
         ], $request);
 

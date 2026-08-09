@@ -58,6 +58,7 @@ class AuthUserResource extends JsonResource
             'name' => $user->name,
             'email' => $user->email,
             'status' => $user->status->value,
+            'avatar_group' => $user->avatar_group?->value ?? 'neutral',
             'is_platform_user' => $user->isPlatformUser(),
             'tenant' => $tenant === null ? null : [
                 'id' => $tenant->id,

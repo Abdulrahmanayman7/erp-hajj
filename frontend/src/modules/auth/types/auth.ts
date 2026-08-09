@@ -1,5 +1,7 @@
 export type UserStatus = 'active' | 'disabled'
 
+export type AvatarGroup = 'male' | 'female' | 'neutral'
+
 export type TenantStatus = 'pending' | 'active' | 'suspended' | 'archived'
 
 export interface AuthTenant {
@@ -22,6 +24,7 @@ export interface AuthUser {
   name: string
   email: string
   status: UserStatus
+  avatar_group?: AvatarGroup
   is_platform_user: boolean
   tenant: AuthTenant | null
   roles: AuthRole[]

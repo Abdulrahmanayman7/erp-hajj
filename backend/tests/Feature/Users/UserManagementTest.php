@@ -1,10 +1,12 @@
 <?php
 
+use App\Core\Auth\AvatarGroup;
 use App\Core\Auth\UserStatus;
 use App\Core\Authorization\Events\AuthorizationSecurityEvent;
 use App\Core\Authorization\PermissionCatalogSynchronizer;
 use App\Core\Authorization\ProvisionDefaultTenantRoles;
 use App\Core\Tenancy\Models\Tenant;
+use App\Models\User;
 use App\Modules\Authorization\Models\Permission;
 use App\Modules\Authorization\Models\Role;
 use Illuminate\Support\Facades\Event;
@@ -175,10 +177,90 @@ test('cross-tenant user access returns 404', function (): void {
 
     spaGetJson("/api/v1/users/{$userB->id}")->assertNotFound();
     spaPatchJson("/api/v1/users/{$userB->id}", ['name' => 'Hack'])->assertNotFound();
+    spaPatchJson("/api/v1/users/{$userB->id}", ['avatar_group' => 'male'])->assertNotFound();
     spaPostJson("/api/v1/users/{$userB->id}/disable")->assertNotFound();
 
     $roleB = withTenant($tenantB, fn () => Role::query()->where('code', 'employee')->value('id'));
     spaPutJson("/api/v1/users/{$ownerA->id}/roles", ['role_ids' => [$roleB]])->assertNotFound();
+});
+
+test('create user defaults avatar_group to neutral', function (): void {
+    $owner = actingAsTenantOwner();
+
+    spaPostJson('/api/v1/users', [
+        'name' => 'Neutral Avatar User',
+        'email' => 'neutral-avatar@example.com',
+        'send_invite' => true,
+    ])
+        ->assertCreated()
+        ->assertJsonPath('data.avatar_group', 'neutral');
+
+    expect(
+        User::query()
+            ->where('email', 'neutral-avatar@example.com')
+            ->where('avatar_group', AvatarGroup::Neutral->value)
+            ->exists(),
+    )->toBeTrue();
+});
+
+test('create user accepts male and female avatar_group values', function (): void {
+    $owner = actingAsTenantOwner();
+
+    spaPostJson('/api/v1/users', [
+        'name' => 'Male Avatar User',
+        'email' => 'male-avatar@example.com',
+        'send_invite' => true,
+        'avatar_group' => 'male',
+    ])
+        ->assertCreated()
+        ->assertJsonPath('data.avatar_group', 'male');
+
+    spaPostJson('/api/v1/users', [
+        'name' => 'Female Avatar User',
+        'email' => 'female-avatar@example.com',
+        'send_invite' => true,
+        'avatar_group' => 'female',
+    ])
+        ->assertCreated()
+        ->assertJsonPath('data.avatar_group', 'female');
+});
+
+test('invalid avatar_group is rejected on create and update', function (): void {
+    $owner = actingAsTenantOwner();
+    $target = tenantUser($owner->tenant, ['email' => 'avatar-target@example.com']);
+
+    spaPostJson('/api/v1/users', [
+        'name' => 'Bad Avatar',
+        'email' => 'bad-avatar@example.com',
+        'send_invite' => true,
+        'avatar_group' => 'unknown',
+    ])->assertStatus(422);
+
+    spaPatchJson("/api/v1/users/{$target->id}", [
+        'avatar_group' => 'unknown',
+    ])->assertStatus(422);
+});
+
+test('update user can change avatar_group', function (): void {
+    $owner = actingAsTenantOwner();
+    $target = tenantUser($owner->tenant, [
+        'email' => 'avatar-update@example.com',
+        'avatar_group' => AvatarGroup::Neutral,
+    ]);
+
+    spaPatchJson("/api/v1/users/{$target->id}", [
+        'avatar_group' => 'female',
+    ])
+        ->assertOk()
+        ->assertJsonPath('data.avatar_group', 'female');
+
+    expect($target->fresh()->avatar_group)->toBe(AvatarGroup::Female);
+
+    spaPatchJson("/api/v1/users/{$target->id}", [
+        'avatar_group' => 'male',
+    ])
+        ->assertOk()
+        ->assertJsonPath('data.avatar_group', 'male');
 });
 
 test('non-owner cannot assign tenant_owner role', function (): void {
