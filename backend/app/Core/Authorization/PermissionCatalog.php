@@ -14,6 +14,8 @@ final class PermissionCatalog
         'roles' => 'الأدوار',
         'permissions' => 'الصلاحيات',
         'organization_units' => 'الهيكل التنظيمي',
+        'employees' => 'الموظفون',
+        'positions' => 'المسميات الوظيفية',
         'dashboard' => 'لوحة التحكم',
         'tenant_settings' => 'إعدادات المنشأة',
     ];
@@ -42,6 +44,17 @@ final class PermissionCatalog
             ['name' => 'organization_units.create', 'display_name' => 'إنشاء وحدة تنظيمية', 'module' => 'organization_units', 'description' => 'Create organization units'],
             ['name' => 'organization_units.update', 'display_name' => 'تحديث وحدة تنظيمية', 'module' => 'organization_units', 'description' => 'Update, move, activate/deactivate units and assign unit manager'],
             ['name' => 'organization_units.delete', 'display_name' => 'حذف وحدة تنظيمية', 'module' => 'organization_units', 'description' => 'Hard-delete leaf organization units when allowed'],
+
+            ['name' => 'employees.view', 'display_name' => 'عرض الموظفين', 'module' => 'employees', 'description' => 'List and view employees'],
+            ['name' => 'employees.create', 'display_name' => 'إنشاء موظف', 'module' => 'employees', 'description' => 'Create employees'],
+            ['name' => 'employees.update', 'display_name' => 'تحديث موظف', 'module' => 'employees', 'description' => 'Update profile, activate, link/unlink user'],
+            ['name' => 'employees.deactivate', 'display_name' => 'تعطيل موظف', 'module' => 'employees', 'description' => 'Deactivate employees'],
+            ['name' => 'employees.assign_supervisor', 'display_name' => 'تعيين المشرف المباشر', 'module' => 'employees', 'description' => 'Assign or clear employee supervisor'],
+
+            ['name' => 'positions.view', 'display_name' => 'عرض المسميات الوظيفية', 'module' => 'positions', 'description' => 'List and view positions'],
+            ['name' => 'positions.create', 'display_name' => 'إنشاء مسمى وظيفي', 'module' => 'positions', 'description' => 'Create positions'],
+            ['name' => 'positions.update', 'display_name' => 'تحديث مسمى وظيفي', 'module' => 'positions', 'description' => 'Update / activate / deactivate positions'],
+            ['name' => 'positions.delete', 'display_name' => 'حذف مسمى وظيفي', 'module' => 'positions', 'description' => 'Hard-delete unused positions'],
 
             ['name' => 'dashboard.view', 'display_name' => 'عرض لوحة التحكم', 'module' => 'dashboard', 'description' => 'Access authenticated home'],
             ['name' => 'tenant_settings.view', 'display_name' => 'عرض إعدادات المنشأة', 'module' => 'tenant_settings', 'description' => 'View tenant settings'],
@@ -85,6 +98,15 @@ final class PermissionCatalog
                     'organization_units.create',
                     'organization_units.update',
                     'organization_units.delete',
+                    'employees.view',
+                    'employees.create',
+                    'employees.update',
+                    'employees.deactivate',
+                    'employees.assign_supervisor',
+                    'positions.view',
+                    'positions.create',
+                    'positions.update',
+                    'positions.delete',
                 ],
             ],
             'department_manager' => [
@@ -94,12 +116,19 @@ final class PermissionCatalog
                     'dashboard.view',
                     'users.view',
                     'organization_units.view',
+                    'employees.view',
+                    'employees.update',
+                    'employees.assign_supervisor',
+                    'positions.view',
                 ],
             ],
             'supervisor' => [
                 'name' => 'المشرف',
                 'description' => null,
-                'permissions' => ['dashboard.view'],
+                'permissions' => [
+                    'dashboard.view',
+                    'employees.view',
+                ],
             ],
             'employee' => [
                 'name' => 'الموظف',
@@ -114,6 +143,8 @@ final class PermissionCatalog
                     'users.view',
                     'roles.view',
                     'permissions.view',
+                    'employees.view',
+                    'positions.view',
                 ],
             ],
             'read_only' => [

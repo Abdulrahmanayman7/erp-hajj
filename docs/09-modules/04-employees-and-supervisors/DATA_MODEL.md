@@ -1,6 +1,6 @@
 # Employees and Supervisors — Data Model
 
-> **Status:** Specified (Sprint 008) — **no migrations yet**
+> **Status:** Implemented (Sprint 008)
 > **Last updated:** 2026-08-09
 
 Binding: [DATABASE_PRINCIPLES.md](../../03-database/DATABASE_PRINCIPLES.md), [MULTI_TENANCY.md](../../02-architecture/MULTI_TENANCY.md).

@@ -6,6 +6,7 @@ use App\Core\Authorization\Events\AuthorizationSecurityEvent;
 use App\Core\Authorization\Support\AuthorizationSecurity;
 use App\Core\Tenancy\TenantContext;
 use App\Models\User;
+use App\Modules\Employees\Models\Employee;
 use App\Modules\OrganizationStructure\Exceptions\OrganizationDomainException;
 use App\Modules\OrganizationStructure\Models\OrganizationUnit;
 use Illuminate\Http\Request;
@@ -29,8 +30,9 @@ final class DeleteOrganizationUnit
                 throw OrganizationDomainException::hasChildren();
             }
 
-            // Sprint 007 baseline: no employees/business FKs yet. Future consumers
-            // add RESTRICT FKs / app checks; do not invent fake reference tables.
+            if (Employee::query()->where('organization_unit_id', $locked->id)->exists()) {
+                throw OrganizationDomainException::inUse();
+            }
 
             $snapshot = [
                 'id' => $locked->id,

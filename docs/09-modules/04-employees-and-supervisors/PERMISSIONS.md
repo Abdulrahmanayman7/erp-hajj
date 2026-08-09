@@ -1,6 +1,6 @@
 # Employees and Supervisors — Permissions
 
-> **Status:** Approved for Sprint 008
+> **Status:** Implemented (Sprint 008)
 > **Last updated:** 2026-08-09
 
 ## Seeded with Sprint 008 implementation

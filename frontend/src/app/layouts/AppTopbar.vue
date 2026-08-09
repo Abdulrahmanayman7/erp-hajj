@@ -31,6 +31,10 @@ const breadcrumbs = computed(() => {
       crumbs[crumbs.length - 1] = { label: t('nav.rolesShort'), to: '/app/roles' }
       crumbs.push({ label: t('roles.actions.permissions'), to: null })
     }
+  } else if (path.startsWith('/app/organization')) {
+    crumbs.push({ label: t('nav.organization'), to: null })
+  } else if (path.startsWith('/app/employees')) {
+    crumbs.push({ label: t('nav.employees'), to: null })
   } else if (path === '/app' || path === '/app/') {
     crumbs.push({ label: t('nav.dashboard'), to: null })
   }

@@ -10,6 +10,10 @@ use App\Core\Shared\CorrelationId;
 use App\Models\User;
 use App\Modules\Authorization\Models\Role;
 use App\Modules\Authorization\Policies\RolePolicy;
+use App\Modules\Employees\Models\Employee;
+use App\Modules\Employees\Models\Position;
+use App\Modules\Employees\Policies\EmployeePolicy;
+use App\Modules\Employees\Policies\PositionPolicy;
 use App\Modules\OrganizationStructure\Models\OrganizationUnit;
 use App\Modules\OrganizationStructure\Policies\OrganizationUnitPolicy;
 use App\Modules\Users\Policies\UserPolicy;
@@ -65,6 +69,8 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(User::class, UserPolicy::class);
         Gate::policy(Role::class, RolePolicy::class);
         Gate::policy(OrganizationUnit::class, OrganizationUnitPolicy::class);
+        Gate::policy(Employee::class, EmployeePolicy::class);
+        Gate::policy(Position::class, PositionPolicy::class);
 
         Route::bind('user', function (string $value): User {
             $actor = auth()->user();

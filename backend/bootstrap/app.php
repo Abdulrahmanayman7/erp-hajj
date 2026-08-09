@@ -7,6 +7,7 @@ use App\Core\Shared\ApiResponse;
 use App\Core\Shared\Middleware\AssignCorrelationId;
 use App\Core\Tenancy\Middleware\EnsureTenantIsActive;
 use App\Core\Tenancy\Middleware\ResolveTenantContext;
+use App\Modules\Employees\Exceptions\EmployeeDomainException;
 use App\Modules\OrganizationStructure\Exceptions\OrganizationDomainException;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
@@ -79,6 +80,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(fn (AuthException $e): JsonResponse => $e->render());
         $exceptions->render(fn (AuthorizationDomainException $e): JsonResponse => $e->render());
         $exceptions->render(fn (OrganizationDomainException $e): JsonResponse => $e->render());
+        $exceptions->render(fn (EmployeeDomainException $e): JsonResponse => $e->render());
 
         $exceptions->render(function (AuthorizationException $e, Request $request): ?JsonResponse {
             if (! $request->is('api/*')) {

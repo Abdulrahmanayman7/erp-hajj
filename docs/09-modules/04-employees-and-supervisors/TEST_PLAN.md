@@ -1,6 +1,6 @@
 # Employees and Supervisors — Test Plan
 
-> **Status:** Specified for Sprint 008 implementation
+> **Status:** Implemented (Sprint 008) — covered by Pest/Vitest
 > **Last updated:** 2026-08-09
 
 Tooling: **Pest** (backend), **Vitest** (frontend). Cross-tenant / policy failures block merge.

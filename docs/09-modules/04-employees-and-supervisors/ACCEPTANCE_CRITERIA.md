@@ -1,6 +1,6 @@
 # Employees and Supervisors — Acceptance Criteria
 
-> **Status:** Approved for Sprint 008 specification
+> **Status:** Implemented (Sprint 008) — acceptance verified via Pest/Vitest
 > **Last updated:** 2026-08-09
 
 ## Entity & relationships
