@@ -1,6 +1,6 @@
 # Module: Employees and Supervisors (الموظفون والمشرفون)
 
-> **Status:** Specified (Sprint 008) — **not implemented**
+> **Status:** Implemented (Sprint 008)
 > **Last updated:** 2026-08-09
 
 ## Purpose

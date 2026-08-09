@@ -1,6 +1,6 @@
 # Employees and Supervisors — UI
 
-> **Status:** Specified (Sprint 008) — **no pages yet**
+> **Status:** Implemented (Sprint 008)
 > **Last updated:** 2026-08-09
 
 ## Module & navigation

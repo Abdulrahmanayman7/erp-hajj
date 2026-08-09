@@ -1,6 +1,6 @@
 # Employees and Supervisors — API
 
-> **Status:** Specified (Sprint 008) — **no endpoints yet**
+> **Status:** Implemented (Sprint 008)
 > **Last updated:** 2026-08-09
 
 Envelope: [API_STANDARDS.md](../../04-api/API_STANDARDS.md). Auth + tenant middleware as existing modules.

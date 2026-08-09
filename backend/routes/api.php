@@ -5,6 +5,8 @@ use App\Core\Auth\Middleware\EnsureUserIsActive;
 use App\Core\Health\HealthController;
 use App\Modules\Authorization\Controllers\PermissionController;
 use App\Modules\Authorization\Controllers\RoleController;
+use App\Modules\Employees\Controllers\EmployeeController;
+use App\Modules\Employees\Controllers\PositionController;
 use App\Modules\OrganizationStructure\Controllers\OrganizationUnitController;
 use App\Modules\Users\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -54,5 +56,22 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::post('/organization-units/{organization_unit}/activate', [OrganizationUnitController::class, 'activate'])->name('organization-units.activate');
         Route::post('/organization-units/{organization_unit}/deactivate', [OrganizationUnitController::class, 'deactivate'])->name('organization-units.deactivate');
         Route::delete('/organization-units/{organization_unit}', [OrganizationUnitController::class, 'destroy'])->name('organization-units.destroy');
+
+        Route::get('/employees', [EmployeeController::class, 'index'])->name('employees.index');
+        Route::post('/employees', [EmployeeController::class, 'store'])->name('employees.store');
+        Route::get('/employees/{employee}', [EmployeeController::class, 'show'])->name('employees.show');
+        Route::patch('/employees/{employee}', [EmployeeController::class, 'update'])->name('employees.update');
+        Route::post('/employees/{employee}/activate', [EmployeeController::class, 'activate'])->name('employees.activate');
+        Route::post('/employees/{employee}/deactivate', [EmployeeController::class, 'deactivate'])->name('employees.deactivate');
+        Route::put('/employees/{employee}/supervisor', [EmployeeController::class, 'assignSupervisor'])->name('employees.supervisor');
+        Route::put('/employees/{employee}/user', [EmployeeController::class, 'linkUser'])->name('employees.user');
+
+        Route::get('/positions', [PositionController::class, 'index'])->name('positions.index');
+        Route::post('/positions', [PositionController::class, 'store'])->name('positions.store');
+        Route::get('/positions/{position}', [PositionController::class, 'show'])->name('positions.show');
+        Route::patch('/positions/{position}', [PositionController::class, 'update'])->name('positions.update');
+        Route::post('/positions/{position}/activate', [PositionController::class, 'activate'])->name('positions.activate');
+        Route::post('/positions/{position}/deactivate', [PositionController::class, 'deactivate'])->name('positions.deactivate');
+        Route::delete('/positions/{position}', [PositionController::class, 'destroy'])->name('positions.destroy');
     });
 });

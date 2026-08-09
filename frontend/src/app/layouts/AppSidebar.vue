@@ -6,6 +6,7 @@ import {
   ChevronDown,
   Home,
   LogOut,
+  IdCard,
   Network,
   PanelRightClose,
   PanelRightOpen,
@@ -46,7 +47,11 @@ const { can } = usePermissions()
 const { mutate: logout, isPending: isLoggingOut } = useLogoutMutation()
 
 const collapsed = ref(false)
-const openGroups = ref<Record<string, boolean>>({ home: true, system: true, organization: true })
+const openGroups = ref<Record<string, boolean>>({
+  home: true,
+  system: true,
+  organization: true,
+})
 const accountOpen = ref(false)
 const accountRoot = ref<HTMLElement | null>(null)
 
@@ -100,20 +105,33 @@ const navGroups = computed<NavGroup[]>(() => {
     })
   }
 
+  const organizationItems: NavItem[] = []
   if (can('organization_units.view')) {
+    organizationItems.push({
+      key: 'organization-structure',
+      labelKey: 'nav.organization',
+      to: '/app/organization',
+      icon: Network,
+      permission: 'organization_units.view',
+      match: 'prefix',
+    })
+  }
+  if (can('employees.view')) {
+    organizationItems.push({
+      key: 'employees',
+      labelKey: 'nav.employees',
+      to: '/app/employees',
+      icon: IdCard,
+      permission: 'employees.view',
+      match: 'prefix',
+    })
+  }
+
+  if (organizationItems.length > 0) {
     groups.push({
       key: 'organization',
       labelKey: 'nav.organization',
-      items: [
-        {
-          key: 'organization-structure',
-          labelKey: 'nav.organization',
-          to: '/app/organization',
-          icon: Network,
-          permission: 'organization_units.view',
-          match: 'prefix',
-        },
-      ],
+      items: organizationItems,
     })
   }
 

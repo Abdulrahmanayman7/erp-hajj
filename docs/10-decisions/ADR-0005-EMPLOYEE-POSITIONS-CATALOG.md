@@ -2,7 +2,7 @@
 
 > **Status:** Accepted  
 > **Date:** 2026-08-09  
-> **Sprint:** 008 — Employees + Supervisors (specification)
+> **Sprint:** 008 — Employees + Supervisors (implemented)
 
 ## Context
 

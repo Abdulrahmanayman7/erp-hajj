@@ -45,6 +45,28 @@ final class AuthorizationSecurityEvent
 
     public const ORGANIZATION_MANAGER_ASSIGNED = 'ORGANIZATION_MANAGER_ASSIGNED';
 
+    public const EMPLOYEE_CREATED = 'EMPLOYEE_CREATED';
+
+    public const EMPLOYEE_UPDATED = 'EMPLOYEE_UPDATED';
+
+    public const EMPLOYEE_ACTIVATED = 'EMPLOYEE_ACTIVATED';
+
+    public const EMPLOYEE_DEACTIVATED = 'EMPLOYEE_DEACTIVATED';
+
+    public const EMPLOYEE_SUPERVISOR_CHANGED = 'EMPLOYEE_SUPERVISOR_CHANGED';
+
+    public const EMPLOYEE_ORGANIZATION_CHANGED = 'EMPLOYEE_ORGANIZATION_CHANGED';
+
+    public const EMPLOYEE_USER_LINKED = 'EMPLOYEE_USER_LINKED';
+
+    public const EMPLOYEE_USER_UNLINKED = 'EMPLOYEE_USER_UNLINKED';
+
+    public const POSITION_CREATED = 'POSITION_CREATED';
+
+    public const POSITION_UPDATED = 'POSITION_UPDATED';
+
+    public const POSITION_DELETED = 'POSITION_DELETED';
+
     /**
      * @param  array<string, mixed>  $context
      */

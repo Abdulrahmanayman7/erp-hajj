@@ -1,6 +1,6 @@
 # Employees and Supervisors — Business Rules
 
-> **Status:** Approved for Sprint 008 (specification)
+> **Status:** Implemented (Sprint 008)
 > **Last updated:** 2026-08-09
 
 ## 1. Identity model
