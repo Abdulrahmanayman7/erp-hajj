@@ -1,6 +1,6 @@
 # ERP Hajj
 
-> **Status:** Tenant Foundation (004), Authentication (005), and Users & Authorization / RBAC (006) implemented. No other business modules yet.
+> **Status:** Tenant Foundation (004), Authentication (005), and Users & Authorization / RBAC (006) implemented. Sprint 007 Organization Structure is **specified** (docs only) — not implemented yet.
 > **Last updated:** 2026-08-08
 
 ## Project Purpose

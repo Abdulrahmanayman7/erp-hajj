@@ -1,7 +1,9 @@
 # API Standards
 
 > **Status:** Approved
-> **Last updated:** 2026-08-08
+> **Last updated:** 2026-08-09
+
+Domain error codes for Organization Structure (`ORGANIZATION_UNIT_*`, `ORGANIZATION_MANAGER_*`) are listed in [03-organization-structure/API.md](../09-modules/03-organization-structure/API.md).
 
 ## Purpose
 

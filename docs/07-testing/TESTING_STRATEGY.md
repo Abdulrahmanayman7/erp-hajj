@@ -1,7 +1,7 @@
 # Testing Strategy
 
 > **Status:** Approved (principles binding; Pest/Vitest decided; E2E tooling still TBD)
-> **Last updated:** 2026-08-08
+> **Last updated:** 2026-08-09
 
 ## Purpose
 
@@ -15,8 +15,9 @@ Define what must be tested and to what standard. Per-module test plans live in e
 
 - **Unit tests** — actions/services with non-trivial logic.
 - **Feature API tests** — per endpoint: success, validation failure (`422`), unauthenticated (`401`), unauthorized (`403`), cross-tenant (`404`).
-- **Policy tests** — permission-gated actions per the permission catalog; RBAC matrices in [02-users-and-authorization/TEST_PLAN.md](../09-modules/02-users-and-authorization/TEST_PLAN.md) (Sprint 006 — implementation pending).
-- **Privilege-escalation / last-owner / self-disable tests** — mandatory when Users & Authorization ships.
+- **Policy tests** — permission-gated actions per the permission catalog; RBAC matrices in [02-users-and-authorization/TEST_PLAN.md](../09-modules/02-users-and-authorization/TEST_PLAN.md) (Sprint 006 — implemented). Organization unit matrices in [03-organization-structure/TEST_PLAN.md](../09-modules/03-organization-structure/TEST_PLAN.md) (Sprint 007 — specified).
+- **Privilege-escalation / last-owner / self-disable tests** — mandatory for Users & Authorization.
+- **Hierarchy / circular-reference tests** — mandatory for Organization Structure when implemented.
 - **Validation tests** — Form Request rules.
 - **Workflow transition tests** — valid and invalid transitions for all four core workflows.
 - **Audit tests** — critical operations produce the expected audit records; secrets never appear in audit values.

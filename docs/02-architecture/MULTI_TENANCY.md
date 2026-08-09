@@ -203,7 +203,7 @@ Shared rule builders in `Core/Tenancy` (conceptual names; final class names fixe
 
 Rules: validation never accepts `tenant_id` from payload (not declared in any Form Request; silently ignored and force-overwritten by the trait — two independent layers); business modules never hand-write `exists:`/`unique:` strings against tenant-owned tables.
 
-**Conceptual example (not code):** creating a task with `assignee_id` and `unit_id` validates both through `TenantExists` against `employees`/`organizational_units`; a valid-looking id belonging to tenant B fails validation exactly as a random nonexistent id would.
+**Conceptual example (not code):** creating a task with `assignee_id` and `unit_id` validates both through `TenantExists` against `employees`/`organization_units`; a valid-looking id belonging to tenant B fails validation exactly as a random nonexistent id would.
 
 ## 9. Queues, Scheduler, Console, and Workers
 

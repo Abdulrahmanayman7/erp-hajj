@@ -1,7 +1,7 @@
 # Roadmap
 
 > **Status:** Draft (delivery order aligned to completed / next sprints)
-> **Last updated:** 2026-08-08
+> **Last updated:** 2026-08-09
 
 ## Purpose
 
@@ -21,9 +21,10 @@ The 21 modules and four core workflows defined in [MVP_SCOPE.md](MVP_SCOPE.md), 
 | Sprint 004 — Tenant Foundation (data + core scoping/isolation) | Done (implementation) |
 | Sprint 005 — Authentication (API + SPA UI) | **Done** |
 | Sprint 006 — Users / roles / permissions (RBAC) | **Done** (implementation) |
-| Organizational structure → remaining MVP modules | Next after RBAC |
+| Sprint 007 — Organization Structure | **Specification complete** — implementation pending |
+| Remaining MVP modules (employees → …) | After Sprint 007 implementation |
 
-Natural dependency order remains: **tenancy → authentication → users/roles/permissions → organizational structure → remaining modules**.
+Natural dependency order remains: **tenancy → authentication → users/roles/permissions → organizational structure → employees → remaining modules**.
 
 ## Later — Future Vision (NOT part of the MVP, all TBD)
 
