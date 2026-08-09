@@ -1,6 +1,6 @@
 # Permission Model
 
-> **Status:** Approved (catalog may grow with modules). Sprint 006 RBAC **implemented**; Sprint 007 org permissions named here but **not seeded until implementation**.
+> **Status:** Approved (catalog may grow with modules). Sprint 006 RBAC **implemented**; Sprint 007 `organization_units.*` **seeded**.
 > **Last updated:** 2026-08-09
 
 ## Purpose
@@ -31,7 +31,7 @@ Define the granular permission naming model and the master permission catalog. M
 | Users | `users.view` `users.create` `users.update` `users.disable` `users.assign_roles` · `users.delete` (reserved; **not seeded** in Sprint 006 — disable replaces hard delete) |
 | Roles | `roles.view` `roles.create` `roles.update` `roles.delete` `roles.assign_permissions` |
 | Permissions (catalog read) | `permissions.view` |
-| Organization units | `organization_units.view` `organization_units.create` `organization_units.update` `organization_units.delete` — covers types department/section/unit; seeded when Sprint 007 implements ([03-organization-structure/PERMISSIONS.md](../09-modules/03-organization-structure/PERMISSIONS.md)). Obsolete draft names `departments.*` must not be seeded. |
+| Organization units | `organization_units.view` `organization_units.create` `organization_units.update` `organization_units.delete` — covers types department/section/unit; **seeded** with Sprint 007 ([03-organization-structure/PERMISSIONS.md](../09-modules/03-organization-structure/PERMISSIONS.md)). Obsolete draft names `departments.*` must not be seeded. |
 | Employees | `employees.view` `employees.create` `employees.update` `employees.delete` `employees.view_sensitive_data` |
 | Contracts | `contracts.view` `contracts.create` `contracts.update` `contracts.review` `contracts.approve` `contracts.sign` `contracts.execute` `contracts.close` `contracts.renew` `contracts.delete` |
 | Meetings | `meetings.view` `meetings.create` `meetings.update` `meetings.cancel` `meetings.manage_attendees` `meetings.manage_minutes` |

@@ -1,6 +1,6 @@
 # Organizational Structure — API
 
-> **Status:** Specified (Sprint 007) — **no endpoints yet**
+> **Status:** **Implemented** (Sprint 007)
 > **Last updated:** 2026-08-09
 
 All endpoints under `/api/v1`, authenticated Sanctum session, tenant middleware chain as existing modules. Envelope per [API_STANDARDS.md](../../04-api/API_STANDARDS.md).

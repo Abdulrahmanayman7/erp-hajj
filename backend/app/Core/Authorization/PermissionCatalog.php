@@ -13,6 +13,7 @@ final class PermissionCatalog
         'users' => 'المستخدمون',
         'roles' => 'الأدوار',
         'permissions' => 'الصلاحيات',
+        'organization_units' => 'الهيكل التنظيمي',
         'dashboard' => 'لوحة التحكم',
         'tenant_settings' => 'إعدادات المنشأة',
     ];
@@ -36,6 +37,11 @@ final class PermissionCatalog
             ['name' => 'roles.assign_permissions', 'display_name' => 'تعيين صلاحيات الدور', 'module' => 'roles', 'description' => 'Replace a role’s permission set'],
 
             ['name' => 'permissions.view', 'display_name' => 'عرض كتالوج الصلاحيات', 'module' => 'permissions', 'description' => 'Read global permission catalog'],
+
+            ['name' => 'organization_units.view', 'display_name' => 'عرض الهيكل التنظيمي', 'module' => 'organization_units', 'description' => 'View organization units tree and details'],
+            ['name' => 'organization_units.create', 'display_name' => 'إنشاء وحدة تنظيمية', 'module' => 'organization_units', 'description' => 'Create organization units'],
+            ['name' => 'organization_units.update', 'display_name' => 'تحديث وحدة تنظيمية', 'module' => 'organization_units', 'description' => 'Update, move, activate/deactivate units and assign unit manager'],
+            ['name' => 'organization_units.delete', 'display_name' => 'حذف وحدة تنظيمية', 'module' => 'organization_units', 'description' => 'Hard-delete leaf organization units when allowed'],
 
             ['name' => 'dashboard.view', 'display_name' => 'عرض لوحة التحكم', 'module' => 'dashboard', 'description' => 'Access authenticated home'],
             ['name' => 'tenant_settings.view', 'display_name' => 'عرض إعدادات المنشأة', 'module' => 'tenant_settings', 'description' => 'View tenant settings'],
@@ -75,12 +81,20 @@ final class PermissionCatalog
                     'roles.view',
                     'permissions.view',
                     'tenant_settings.view',
+                    'organization_units.view',
+                    'organization_units.create',
+                    'organization_units.update',
+                    'organization_units.delete',
                 ],
             ],
             'department_manager' => [
                 'name' => 'مدير الإدارة',
                 'description' => null,
-                'permissions' => ['dashboard.view', 'users.view'],
+                'permissions' => [
+                    'dashboard.view',
+                    'users.view',
+                    'organization_units.view',
+                ],
             ],
             'supervisor' => [
                 'name' => 'المشرف',

@@ -1,9 +1,9 @@
 # Organizational Structure — Data Model
 
-> **Status:** Specified (Sprint 007) — **no migrations yet**
+> **Status:** **Implemented** (Sprint 007)
 > **Last updated:** 2026-08-09
 
-All columns and constraints below are the **implementation target**. Binding tenancy rules: [MULTI_TENANCY.md](../../02-architecture/MULTI_TENANCY.md), [DATABASE_PRINCIPLES.md](../../03-database/DATABASE_PRINCIPLES.md).
+All columns and constraints below match the live migration `2026_08_09_200000_create_organization_units_table`. Binding tenancy rules: [MULTI_TENANCY.md](../../02-architecture/MULTI_TENANCY.md), [DATABASE_PRINCIPLES.md](../../03-database/DATABASE_PRINCIPLES.md).
 
 ## Tables in Sprint 007
 

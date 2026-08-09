@@ -9,7 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Sprint 007 — Organization Structure specification** (documentation only): generic hierarchical `organization_units` (adjacency list; ADR-0004); fixed types department/section/unit; optional unit manager (`manager_user_id` = unit accountability, not employee line supervisor); prefer deactivate / strict hard-delete policy; MVP app max depth 8 (centralized; not a DB limit); `organization_units.*` permissions (replaces obsolete draft `departments.*`); API `/api/v1/organization-units` (tree/flat, move, activate/deactivate); Arabic RTL tree+details UI plan; positions and user membership deferred to Employees; no `/auth/me` org fields; Pest/Vitest matrices. **No application code.**
+- **Sprint 007 — Organization Structure vertical slice:** tenant-owned `organization_units` (adjacency list; ADR-0004); types `department|section|unit`; status active/inactive; immutable tenant-scoped codes; optional unit manager (`manager_user_id`); app max depth via `config/organization.php`; cycle/depth validation; Actions + Policy + APIs (`/api/v1/organization-units` tree/flat, move, activate/deactivate, delete); `organization_units.*` catalog + role templates; Vue `organization` module (tree + details, drawer, move/lifecycle confirms); sidebar الهيكل التنظيمي; Pest + Vitest green. No Employees/positions/user membership; no soft deletes.
+
+- **Sprint 007 — Organization Structure specification** (superseded by implementation above).
 
 - **Sprint 006 hardening:** operational `php artisan tenant:bootstrap-owner` (interactive, no password argv, reuses catalog sync + role provisioning, last-owner verification); `AUTHORIZATION_DENIED` maps only Policy/`AuthorizationException` denials (no longer collapses unrelated 403s); Pest coverage for bootstrap + 403 mapping regressions.
 

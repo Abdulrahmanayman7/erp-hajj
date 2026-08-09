@@ -5,6 +5,7 @@ use App\Core\Auth\Middleware\EnsureUserIsActive;
 use App\Core\Health\HealthController;
 use App\Modules\Authorization\Controllers\PermissionController;
 use App\Modules\Authorization\Controllers\RoleController;
+use App\Modules\OrganizationStructure\Controllers\OrganizationUnitController;
 use App\Modules\Users\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -44,5 +45,14 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::delete('/roles/{role}', [RoleController::class, 'destroy'])->name('roles.destroy');
 
         Route::get('/permissions', [PermissionController::class, 'index'])->name('permissions.index');
+
+        Route::get('/organization-units', [OrganizationUnitController::class, 'index'])->name('organization-units.index');
+        Route::post('/organization-units', [OrganizationUnitController::class, 'store'])->name('organization-units.store');
+        Route::get('/organization-units/{organization_unit}', [OrganizationUnitController::class, 'show'])->name('organization-units.show');
+        Route::patch('/organization-units/{organization_unit}', [OrganizationUnitController::class, 'update'])->name('organization-units.update');
+        Route::post('/organization-units/{organization_unit}/move', [OrganizationUnitController::class, 'move'])->name('organization-units.move');
+        Route::post('/organization-units/{organization_unit}/activate', [OrganizationUnitController::class, 'activate'])->name('organization-units.activate');
+        Route::post('/organization-units/{organization_unit}/deactivate', [OrganizationUnitController::class, 'deactivate'])->name('organization-units.deactivate');
+        Route::delete('/organization-units/{organization_unit}', [OrganizationUnitController::class, 'destroy'])->name('organization-units.destroy');
     });
 });

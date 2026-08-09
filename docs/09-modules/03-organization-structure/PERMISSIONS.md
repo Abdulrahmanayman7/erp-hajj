@@ -1,6 +1,6 @@
 # Organizational Structure — Permissions
 
-> **Status:** Approved for Sprint 007
+> **Status:** Approved for Sprint 007 — **seeded with implementation**
 > **Last updated:** 2026-08-09
 
 ## Seeded with Sprint 007 implementation

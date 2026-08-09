@@ -1,6 +1,6 @@
 # Frontend Structure
 
-> **Status:** Approved — Auth (005) + Users/Roles RBAC UI (006) implemented; Organization UI specified (007)
+> **Status:** Approved — Auth (005) + Users/Roles RBAC UI (006) + Organization UI (007) implemented
 > **Last updated:** 2026-08-09
 
 ## Purpose
@@ -25,7 +25,7 @@ src/
 │   ├── dashboard/
 │   ├── users/
 │   ├── roles/
-│   ├── organization/             # Sprint 007 — specified; not implemented
+│   ├── organization/             # Sprint 007 — implemented
 │   ├── employees/
 │   ├── contracts/
 │   ├── meetings/
@@ -65,7 +65,7 @@ A module may contain: pages, components, api, queries, mutations, types, validat
 - Authenticated but unauthorized → `/app/403` (not login).
 - Full UI contract: [02-users-and-authorization/UI.md](../09-modules/02-users-and-authorization/UI.md).
 
-### Organization (Sprint 007 — specified, not implemented)
+### Organization (Sprint 007 — implemented)
 
 - `src/modules/organization/` — route `/app/organization`; sidebar **الهيكل التنظيمي** (`organization_units.view`).
 - Tree + details panel; create/edit Drawer; confirmations for move/deactivate/delete via `AppConfirmDialog`.
