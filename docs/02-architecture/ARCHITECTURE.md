@@ -13,6 +13,8 @@ Tenant-internal hierarchy (Sprint 007 — **implemented**): single adjacency-lis
 
 Personnel (Sprint 008 — **specified**): `employees` + `positions` — see [04-employees-and-supervisors/](../09-modules/04-employees-and-supervisors/) and [ADR-0005](../10-decisions/ADR-0005-EMPLOYEE-POSITIONS-CATALOG.md). User ≠ Employee; unit manager ≠ employee supervisor.
 
+Contracts (Sprint 009 — **specified**): `contract_categories` + `contracts` + transition history — see [05-contracts/](../09-modules/05-contracts/) and [ADR-0006](../10-decisions/ADR-0006-CONTRACT-CATEGORIES-CATALOG.md). Contract ≠ Document ≠ Supplier.
+
 ## Style
 
 - **Modular monolith**: one deployable Laravel 12 application organized into a `Core/` layer and business `Modules/`. See [ADR-0002](../10-decisions/ADR-0002-MODULAR-MONOLITH.md) and [BACKEND_STRUCTURE.md](BACKEND_STRUCTURE.md).

@@ -1,6 +1,6 @@
 # Backend Structure
 
-> **Status:** Approved — Tenant Foundation (004) + Authentication (005) + Users/RBAC (006) + OrganizationStructure (007) implemented
+> **Status:** Approved — Tenant Foundation (004) + Authentication (005) + Users/RBAC (006) + OrganizationStructure (007) implemented; Employees (008) + Contracts (009) specified
 > **Last updated:** 2026-08-09
 
 ## Purpose
@@ -27,8 +27,8 @@ app/
 │   ├── Users/                  # Sprint 006: tenant user administration
 │   ├── Authorization/          # Sprint 006: tenant roles + role_permissions (module surface)
 │   ├── OrganizationStructure/    # Sprint 007 — implemented (`organization_units`)
-│   ├── Employees/                # Sprint 008 — specified; not implemented (includes supervisor reporting)
-│   ├── Contracts/
+│   ├── Employees/                # Sprint 008 — specified; not implemented
+│   ├── Contracts/                # Sprint 009 — specified; not implemented
 │   ├── Meetings/
 │   ├── Decisions/
 │   ├── Tasks/

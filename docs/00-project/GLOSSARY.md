@@ -21,7 +21,8 @@ Define the shared vocabulary of the project in English with the Arabic business 
 | Employee | موظف | Primary personnel record (optional User link; required org unit; optional direct supervisor). |
 | Supervisor | مشرف | Reporting via `employees.supervisor_id`. RBAC role `supervisor` is separate. Not unit manager. |
 | Employee number | الرقم الوظيفي | Tenant-unique server-generated id (e.g. `EMP-000001`); not an auth input. |
-| Contract | عقد | A formal agreement managed through the controlled contract lifecycle. |
+| Contract | عقد | A formal agreement managed through the controlled contract lifecycle (Draft→…→Closure/Renewal). Numbered `CTR-######` per tenant (Sprint 009). |
+| Contract category | تصنيف العقد | Tenant-owned catalog entry classifying a contract (ADR-0006). |
 | Meeting | اجتماع | A formal administrative meeting with agenda, attendees, and minutes. |
 | Minutes | محضر الاجتماع | The formal record of a meeting. |
 | Recommendation | توصية | A meeting outcome that may become a decision. |
