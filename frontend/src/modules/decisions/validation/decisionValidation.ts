@@ -17,7 +17,7 @@ export function availableLifecycleActions(status: DecisionStatus): { action: Dec
   return status === 'approved' ? [{ action: 'close', permission: 'decisions.close' }] : []
 }
 export function mapDecisionErrorCode(code: string | undefined): string {
-  return ['DECISION_INVALID_STATUS_TRANSITION', 'DECISION_COMMENT_REQUIRED', 'DECISION_NOT_EDITABLE', 'DECISION_DELETE_FORBIDDEN', 'DECISION_ALREADY_CREATED_FROM_RECOMMENDATION'].includes(code ?? '') ? code! : 'generic'
+  return ['DECISION_INVALID_STATUS_TRANSITION', 'DECISION_COMMENT_REQUIRED', 'DECISION_NOT_EDITABLE', 'DECISION_DELETE_FORBIDDEN', 'DECISION_ALREADY_CREATED_FROM_RECOMMENDATION', 'DECISION_CLOSE_NOT_ALLOWED'].includes(code ?? '') ? code! : 'generic'
 }
 export function resolveDecisionsListState(options: { isLoading: boolean; isError: boolean; count: number }): 'loading' | 'error' | 'empty' | 'ready' {
   if (options.isLoading) return 'loading'

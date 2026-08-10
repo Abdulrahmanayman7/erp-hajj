@@ -8,6 +8,7 @@ import {
   ChevronDown,
   FileText,
   Home,
+  ListTodo,
   LogOut,
   IdCard,
   Network,
@@ -156,6 +157,16 @@ const navGroups = computed<NavGroup[]>(() => {
       to: '/app/decisions',
       icon: Gavel,
       permission: 'decisions.view',
+      match: 'prefix',
+    })
+  }
+  if (can('tasks.view')) {
+    organizationItems.push({
+      key: 'tasks',
+      labelKey: 'nav.tasks',
+      to: '/app/tasks',
+      icon: ListTodo,
+      permission: 'tasks.view',
       match: 'prefix',
     })
   }

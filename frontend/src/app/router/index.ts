@@ -115,6 +115,18 @@ export const router = createRouter({
       meta: { requiresAuth: true, layout: 'app', permission: 'decisions.view' },
     },
     {
+      path: '/app/tasks',
+      name: 'tasks',
+      component: () => import('@/modules/tasks/pages/TasksPage.vue'),
+      meta: { requiresAuth: true, layout: 'app', permission: 'tasks.view' },
+    },
+    {
+      path: '/app/tasks/:id',
+      name: 'task-details',
+      component: () => import('@/modules/tasks/pages/TaskDetailsPage.vue'),
+      meta: { requiresAuth: true, layout: 'app', permission: 'tasks.view' },
+    },
+    {
       path: '/app/roles/:id/permissions',
       name: 'role-permissions',
       component: () => import('@/modules/roles/pages/RolePermissionsPage.vue'),

@@ -82,3 +82,7 @@ Early Tasks stubs claimed individual **and group** assignments, progress %, and 
 - [ADR-0008](ADR-0008-DECISION-RECOMMENDATION-AND-APPROVAL.md)
 - [CORE_WORKFLOWS.md](../01-business/CORE_WORKFLOWS.md)
 - [USERS_AND_PERSONAS.md](../01-business/USERS_AND_PERSONAS.md)
+
+## Implementation note (Sprint 012)
+
+Implemented in application code: `TaskPolicy` assigneeSelf path; Auth `/me` `employee_id`; `CloseDecision` open-Task gate → `DECISION_CLOSE_NOT_ALLOWED`; Decision `tasks()` + `tasks_summary`; Tasks module API/UI. Critical Pest suites (tenancy, self-service, close gate, lifecycle, RBAC) green.

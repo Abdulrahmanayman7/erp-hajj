@@ -15,6 +15,7 @@ use App\Modules\Meetings\Controllers\MeetingAttendeeController;
 use App\Modules\Meetings\Controllers\MeetingController;
 use App\Modules\Meetings\Controllers\MeetingRecommendationController;
 use App\Modules\OrganizationStructure\Controllers\OrganizationUnitController;
+use App\Modules\Tasks\Controllers\TaskController;
 use App\Modules\Users\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -141,6 +142,17 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
             Route::post('/decisions/{decision}/approve', [DecisionController::class, 'approve'])->name('decisions.approve');
             Route::post('/decisions/{decision}/cancel', [DecisionController::class, 'cancel'])->name('decisions.cancel');
             Route::post('/decisions/{decision}/close', [DecisionController::class, 'close'])->name('decisions.close');
+
+            Route::get('/tasks', [TaskController::class, 'index'])->name('tasks.index');
+            Route::post('/tasks', [TaskController::class, 'store'])->name('tasks.store');
+            Route::get('/tasks/{task}', [TaskController::class, 'show'])->name('tasks.show');
+            Route::patch('/tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');
+            Route::delete('/tasks/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
+            Route::put('/tasks/{task}/assignee', [TaskController::class, 'assign'])->name('tasks.assign');
+            Route::post('/tasks/{task}/start', [TaskController::class, 'start'])->name('tasks.start');
+            Route::put('/tasks/{task}/progress', [TaskController::class, 'progress'])->name('tasks.progress');
+            Route::post('/tasks/{task}/complete', [TaskController::class, 'complete'])->name('tasks.complete');
+            Route::post('/tasks/{task}/cancel', [TaskController::class, 'cancel'])->name('tasks.cancel');
         });
     });
 });

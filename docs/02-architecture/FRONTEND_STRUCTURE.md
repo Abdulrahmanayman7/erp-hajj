@@ -30,7 +30,7 @@ src/
 │   ├── contracts/                # Sprint 009 — implemented
 │   ├── meetings/                 # Sprint 010 — implemented
 │   ├── decisions/                # Sprint 011 — implemented
-│   ├── tasks/
+│   ├── tasks/                    # Sprint 012 — implemented
 │   ├── documents/
 │   ├── warehouses/
 │   ├── inventory/
@@ -97,10 +97,11 @@ A module may contain: pages, components, api, queries, mutations, types, validat
 - Full UI contract: [07-decisions/UI.md](../09-modules/07-decisions/UI.md).
 - Sprint 012 adds Decision details **المهام المرتبطة** + إنشاء مهمة + close-gate UX — see [08-tasks/UI.md](../09-modules/08-tasks/UI.md).
 
-### Tasks (Sprint 012 — specified)
+### Tasks (Sprint 012 — implemented)
 
-- Planned: `src/modules/tasks/` — routes `/app/tasks` (+ `/app/tasks/:id`); sidebar **المهام** (`tasks.view`).
+- `src/modules/tasks/` — routes `/app/tasks` (+ `/app/tasks/:id`); sidebar **المهام** (`tasks.view`).
 - List + drawer; مهامي filter; overdue badge; lifecycle/assign/complete; Decision-linked create.
+- Auth `/me` exposes optional `employee_id` for assignee self-service UX (ADR-0009).
 - Full UI contract: [08-tasks/UI.md](../09-modules/08-tasks/UI.md).
 
 ## Rules

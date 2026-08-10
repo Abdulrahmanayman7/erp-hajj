@@ -1,6 +1,6 @@
 # Tasks — Business Rules
 
-> **Status:** Specified (Sprint 012) — **not implemented**  
+> **Status:** Implemented (Sprint 012)
 > **Last updated:** 2026-08-10
 
 Binding product rules for the Tasks module. Implementation must not invent fields, statuses, multi-assignee pivots, or Documents/notification delivery.

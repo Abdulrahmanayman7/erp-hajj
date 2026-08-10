@@ -24,6 +24,8 @@ use App\Modules\Meetings\Models\Meeting;
 use App\Modules\Meetings\Policies\MeetingPolicy;
 use App\Modules\OrganizationStructure\Models\OrganizationUnit;
 use App\Modules\OrganizationStructure\Policies\OrganizationUnitPolicy;
+use App\Modules\Tasks\Models\Task;
+use App\Modules\Tasks\Policies\TaskPolicy;
 use App\Modules\Users\Policies\UserPolicy;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -83,6 +85,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(ContractCategory::class, ContractCategoryPolicy::class);
         Gate::policy(Meeting::class, MeetingPolicy::class);
         Gate::policy(Decision::class, DecisionPolicy::class);
+        Gate::policy(Task::class, TaskPolicy::class);
 
         Route::bind('user', function (string $value): User {
             $actor = auth()->user();

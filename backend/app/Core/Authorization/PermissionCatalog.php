@@ -19,6 +19,7 @@ final class PermissionCatalog
         'contracts' => 'العقود',
         'meetings' => 'الاجتماعات',
         'decisions' => 'القرارات',
+        'tasks' => 'المهام',
         'dashboard' => 'لوحة التحكم',
         'tenant_settings' => 'إعدادات المنشأة',
     ];
@@ -84,6 +85,14 @@ final class PermissionCatalog
             ['name' => 'decisions.approve', 'display_name' => 'اعتماد قرار', 'module' => 'decisions', 'description' => 'Approve or return decisions to draft'],
             ['name' => 'decisions.close', 'display_name' => 'إغلاق قرار', 'module' => 'decisions', 'description' => 'Close approved decisions'],
             ['name' => 'decisions.delete', 'display_name' => 'حذف قرار', 'module' => 'decisions', 'description' => 'Hard-delete untouched draft decisions'],
+
+            ['name' => 'tasks.view', 'display_name' => 'عرض المهام', 'module' => 'tasks', 'description' => 'List and view tasks and history'],
+            ['name' => 'tasks.create', 'display_name' => 'إنشاء مهمة', 'module' => 'tasks', 'description' => 'Create standalone or decision-linked tasks'],
+            ['name' => 'tasks.update', 'display_name' => 'تحديث مهمة', 'module' => 'tasks', 'description' => 'Edit task content in draft or assigned'],
+            ['name' => 'tasks.assign', 'display_name' => 'تعيين مهمة', 'module' => 'tasks', 'description' => 'Assign or reassign task executor'],
+            ['name' => 'tasks.change_status', 'display_name' => 'تغيير حالة المهمة', 'module' => 'tasks', 'description' => 'Start, cancel, and update task progress'],
+            ['name' => 'tasks.complete', 'display_name' => 'إكمال مهمة', 'module' => 'tasks', 'description' => 'Complete tasks with completion notes'],
+            ['name' => 'tasks.delete', 'display_name' => 'حذف مهمة', 'module' => 'tasks', 'description' => 'Hard-delete untouched draft tasks'],
 
             ['name' => 'dashboard.view', 'display_name' => 'عرض لوحة التحكم', 'module' => 'dashboard', 'description' => 'Access authenticated home'],
             ['name' => 'tenant_settings.view', 'display_name' => 'عرض إعدادات المنشأة', 'module' => 'tenant_settings', 'description' => 'View tenant settings'],
@@ -159,6 +168,13 @@ final class PermissionCatalog
                     'decisions.approve',
                     'decisions.close',
                     'decisions.delete',
+                    'tasks.view',
+                    'tasks.create',
+                    'tasks.update',
+                    'tasks.assign',
+                    'tasks.change_status',
+                    'tasks.complete',
+                    'tasks.delete',
                 ],
             ],
             'department_manager' => [
@@ -185,6 +201,13 @@ final class PermissionCatalog
                     'decisions.create',
                     'decisions.update',
                     'decisions.delete',
+                    'tasks.view',
+                    'tasks.create',
+                    'tasks.update',
+                    'tasks.assign',
+                    'tasks.change_status',
+                    'tasks.complete',
+                    'tasks.delete',
                 ],
             ],
             'supervisor' => [
@@ -193,12 +216,16 @@ final class PermissionCatalog
                 'permissions' => [
                     'dashboard.view',
                     'employees.view',
+                    'tasks.view',
                 ],
             ],
             'employee' => [
                 'name' => 'الموظف',
                 'description' => null,
-                'permissions' => ['dashboard.view'],
+                'permissions' => [
+                    'dashboard.view',
+                    'tasks.view',
+                ],
             ],
             'auditor' => [
                 'name' => 'المراجع / المدقق',
@@ -213,6 +240,7 @@ final class PermissionCatalog
                     'contracts.view',
                     'meetings.view',
                     'decisions.view',
+                    'tasks.view',
                 ],
             ],
             'read_only' => [

@@ -11,6 +11,7 @@ use App\Modules\Decisions\Support\DecisionNumberGenerator;
 use App\Modules\Employees\Models\Employee;
 use App\Modules\Meetings\Models\MeetingRecommendation;
 use App\Modules\OrganizationStructure\Models\OrganizationUnit;
+use App\Modules\Tasks\Models\Task;
 use Database\Factories\DecisionFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -132,5 +133,10 @@ class Decision extends Model implements TenantOwned
     public function statusTransitions(): HasMany
     {
         return $this->hasMany(DecisionStatusTransition::class)->orderBy('created_at')->orderBy('id');
+    }
+
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(Task::class);
     }
 }

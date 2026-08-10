@@ -1,6 +1,6 @@
 # Tasks — Permissions
 
-> **Status:** Specified (Sprint 012) — **not implemented** (named in catalog; seed at implementation)  
+> **Status:** Implemented (Sprint 012)
 > **Last updated:** 2026-08-10
 
 Capabilities use `module.action` vocabulary. Policies check capabilities and (where approved) assignee self-service rules — never role names. Frontend gates are UX-only; backend is authoritative.

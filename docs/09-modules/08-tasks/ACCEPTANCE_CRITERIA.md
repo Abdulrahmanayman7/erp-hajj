@@ -1,6 +1,6 @@
 # Tasks — Acceptance Criteria
 
-> **Status:** Specified (Sprint 012) — **not implemented**  
+> **Status:** Implemented (Sprint 012)
 > **Last updated:** 2026-08-10
 
 A Sprint 012 implementation is done only when all items below pass and match [DEFINITION_OF_DONE.md](../../00-project/DEFINITION_OF_DONE.md).
