@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Sprint 012 — Tasks & Assignments specification** (documentation only — no application code): Task entity with `TSK-######` sequences; nullable `decision_id` (Tasks own FK; standalone allowed); single Employee assignee + assignment history; lifecycle `draft` → `assigned` → `in_progress` → `completed` (+ cancel); derived overdue; progress % + required completion_notes; Decision close gate when open linked Tasks exist; limited assignee self-service via User↔Employee; permissions `tasks.*`; Decision details Tasks section UX; ADR-0009; full module docs under `docs/09-modules/08-tasks/`.
+
 - **Sprint 011 — Decisions vertical slice:** tenant-owned `decisions` (+ `decision_number_sequences`) + append-only `decision_status_transitions` (correlation ID); concurrency-safe `DEC-######` via `SELECT … FOR UPDATE`; standalone and final-recommendation conversion decisions (unique `source_recommendation_id`); controlled draft → pending approval → approved → closed lifecycle, with early cancel and return-to-draft; draft-only hard delete; Policies + seeded `decisions.*` catalog + role templates; APIs under `/api/v1/decisions`; Vue `decisions` module (list, drawer, details, lifecycle timeline/actions); Meetings **إنشاء قرار** conversion affordance; Pest + Vitest coverage.
 
 - **Sprint 011 — Decisions specification** (superseded by implementation above).

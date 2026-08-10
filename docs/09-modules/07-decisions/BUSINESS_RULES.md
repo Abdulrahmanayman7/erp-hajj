@@ -119,12 +119,13 @@ Statuses:
 
 - **`approved` means official immediately.** No separate `active` status. No activation scheduler. `effective_date` is informational metadata only.
 
-### Closure (Sprint 011)
+### Closure (Sprint 011 → Sprint 012)
 
 1. Closing means **administrative confirmation** that the Decision is finished as a governance record.
-2. Closing does **not** mean Tasks are complete (Tasks do not exist yet).
-3. Sprint 011 **supports** `approved → closed` now so governance can finish without waiting for Sprint 012.
-4. Future Tasks sprint **may** add a gate (e.g. required open tasks block close) — that gate is **out of scope** here and must not be faked with progress fields.
+2. Completing Tasks never auto-closes a Decision.
+3. **Sprint 012 close gate (ADR-0009):** `approved → closed` is **rejected** while any linked Task (`tasks.decision_id`) has status in `{draft, assigned, in_progress}` — error `DECISION_CLOSE_NOT_ALLOWED`.
+4. Cancelled and completed Tasks do not block close; Decisions with zero linked Tasks may still close.
+5. New Tasks may be created only while Decision is **`approved`** (not closed).
 
 ## 10. Editing rules
 
@@ -155,12 +156,13 @@ Future notification keys (no delivery in Sprint 011):
 - `DECISION_CLOSED`
 - `DECISION_CANCELLED`
 
-## 14. Future Tasks integration
+## 14. Future / linked Tasks integration (Sprint 012)
 
-1. Sprint 012 Tasks will own nullable `decision_id` → `decisions.id`.
-2. Do **not** add `task_ids`, counters, or JSON arrays on Decision now.
+1. Tasks own nullable `decision_id` → `decisions.id` ([08-tasks/](../08-tasks/), ADR-0009).
+2. Do **not** add `task_ids` or JSON arrays on Decision.
 3. Do **not** auto-create Tasks on approve/close.
-4. Decision details UI omits a Tasks section until Tasks is implemented.
+4. Decision details UI (Sprint 012): show linked Tasks section + إنشاء مهمة when approved; omit until Tasks is implemented.
+5. Close gate: see Closure rules above (`DECISION_CLOSE_NOT_ALLOWED`).
 
 ## 15. Tenancy and security
 

@@ -72,10 +72,10 @@ Exact default role grants: [PERMISSIONS.md](PERMISSIONS.md).
 | Type/category | **Omitted** in MVP | [BUSINESS_RULES.md](BUSINESS_RULES.md) |
 | Lifecycle | `draft` → `pending_approval` → `approved` → `closed`; cancel early; return-to-draft | [BUSINESS_RULES.md](BUSINESS_RULES.md) |
 | Approval | Single-step capability `decisions.approve` | [ADR-0008](../../10-decisions/ADR-0008-DECISION-RECOMMENDATION-AND-APPROVAL.md) |
-| Close without Tasks | Manual administrative close in Sprint 011; Tasks may gate later | [BUSINESS_RULES.md](BUSINESS_RULES.md) |
+| Close without Tasks | Superseded by Sprint 012 close gate (ADR-0009) | [BUSINESS_RULES.md](BUSINESS_RULES.md) · [08-tasks/](../08-tasks/) |
 | Priority | **Omitted** in MVP | [BUSINESS_RULES.md](BUSINESS_RULES.md) |
 | Delete | Hard delete **draft-only** (never left draft) | [BUSINESS_RULES.md](BUSINESS_RULES.md) |
-| Future Tasks | Task will own `decision_id` nullable | [BUSINESS_RULES.md](BUSINESS_RULES.md) |
+| Future Tasks | Tasks own `decision_id`; linked Tasks UI at Sprint 012 | [08-tasks/](../08-tasks/) |
 
 ## References
 

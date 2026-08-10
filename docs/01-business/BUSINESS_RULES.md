@@ -22,10 +22,11 @@ Collect the cross-module business rules that are explicitly agreed. Module-speci
 ## Governance (Workflow 1)
 
 - A meeting may create one or more decisions (typically one Decision per final recommendation); a decision may also exist independently of any meeting.
-- Recommendation ≠ Decision ≠ Task — see [07-decisions/](../09-modules/07-decisions/) and [ADR-0008](../10-decisions/ADR-0008-DECISION-RECOMMENDATION-AND-APPROVAL.md).
-- A decision may generate one or more tasks; tasks must have responsible users/employees (Tasks module later).
-- Completing one task does not close the decision unless all required tasks are completed (future Tasks gate; Sprint 011 allows administrative close without Tasks).
-- Decision numbering: `DEC-######` tenant sequence.
+- Recommendation ≠ Decision ≠ Task — see [07-decisions/](../09-modules/07-decisions/), [08-tasks/](../09-modules/08-tasks/), [ADR-0008](../10-decisions/ADR-0008-DECISION-RECOMMENDATION-AND-APPROVAL.md), [ADR-0009](../10-decisions/ADR-0009-TASK-ASSIGNEE-AND-DECISION-GATE.md).
+- A decision may generate one or more tasks; Tasks own nullable `decision_id`; standalone Tasks allowed.
+- Task assignee is a single **Employee**; Decision `responsible_employee_id` is governance follow-up only.
+- Completing one task does not close the decision; Decision close is blocked while open linked Tasks exist (Sprint 012).
+- Decision numbering: `DEC-######`. Task numbering: `TSK-######`.
 
 ## Contracts (Workflow 2)
 
@@ -52,10 +53,10 @@ Collect the cross-module business rules that are explicitly agreed. Module-speci
 
 ## TBD (not yet defined — do not assume)
 
-- Numbering/reference schemes for **decisions, tasks**: TBD. (Contracts numbering locked: `CTR-######`. Meetings numbering locked Sprint 010: `MTG-######` — see [06-meetings/](../09-modules/06-meetings/).)
+- Numbering/reference schemes: Contracts `CTR-######`, Meetings `MTG-######`, Decisions `DEC-######`, Tasks `TSK-######` (Sprint 012 spec). Remaining modules TBD.
 - Approval hierarchies and delegation rules: TBD.
 - Backup Supervisor behavior: future vision, TBD unless explicitly approved for the MVP.
-- Recurring-task automation details: TBD.
+- Recurring-task automation details: TBD — multi-assignee/group Task assignment deferred (ADR-0009).
 - Document retention periods and confidentiality-level definitions: TBD.
-- Task deadline/SLA rules: TBD.
+- Task SLA / due-soon notification jobs: TBD (overdue is derived in Sprint 012; no delivery).
 - Negative-stock configuration mechanism: TBD.
