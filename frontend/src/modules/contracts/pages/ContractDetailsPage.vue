@@ -5,6 +5,7 @@ import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { ArrowRight, Pencil } from 'lucide-vue-next'
 
 import { useEmployeesQuery } from '@/modules/employees/queries/useEmployeesQuery'
+import EntityDocumentsSection from '@/modules/documents/components/EntityDocumentsSection.vue'
 import { useOrganizationUnitsFlatQuery } from '@/modules/organization/queries/useOrganizationUnitsQuery'
 import { ApiError } from '@/shared/api/http'
 import type { AppSelectOption } from '@/shared/components/AppSelect.vue'
@@ -402,11 +403,11 @@ async function onLifecycleRefreshed(): Promise<void> {
 
       <ContractTimeline :transitions="contract.transitions ?? []" />
 
-      <div
-        class="rounded-2xl border border-dashed border-brand-border bg-[#F7F8F6] p-5 text-sm text-brand-text-muted"
-      >
-        {{ t('contracts.attachmentsPlaceholder') }}
-      </div>
+      <EntityDocumentsSection
+        linkable-type="contract"
+        :linkable-id="contract.id"
+        :link-label="`${contract.contract_number} — ${contract.title}`"
+      />
     </template>
 
     <ContractFormDrawer

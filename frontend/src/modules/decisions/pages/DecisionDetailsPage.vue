@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { ArrowRight, Pencil, Plus } from 'lucide-vue-next'
 import { useEmployeesQuery } from '@/modules/employees/queries/useEmployeesQuery'
+import EntityDocumentsSection from '@/modules/documents/components/EntityDocumentsSection.vue'
 import { useOrganizationUnitsFlatQuery } from '@/modules/organization/queries/useOrganizationUnitsQuery'
 import TaskFormDrawer from '@/modules/tasks/components/TaskFormDrawer.vue'
 import { useCreateTaskMutation } from '@/modules/tasks/mutations/useTaskMutations'
@@ -69,4 +70,5 @@ async function saveTask() { Object.keys(taskFieldErrors).forEach(x => delete tas
     </table>
   </div>
 </section>
+<EntityDocumentsSection linkable-type="decision" :linkable-id="decision.id" :link-label="`${decision.decision_number} — ${decision.title}`" />
 </template><DecisionFormDrawer :open="open" :editing="decision" :form="form" :form-error="error" :field-errors="errors" :submitting="update.isPending.value" :employee-options="employeeOptions" :org-unit-options="orgOptions" @close="open = false" @submit="save" @update:form="Object.assign(form, $event)" /><TaskFormDrawer :open="taskDrawerOpen" :editing="null" :form="taskForm" :form-error="taskError" :field-errors="taskFieldErrors" :submitting="createTask.isPending.value" :employee-options="taskEmployeeOptions" :org-unit-options="orgOptions" :decision-options="taskDecisionOptions" :locked-decision-id="decision?.id ?? null" @close="taskDrawerOpen = false" @submit="saveTask" @update:form="Object.assign(taskForm, $event)" /></div></template>

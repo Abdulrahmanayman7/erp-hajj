@@ -1,9 +1,9 @@
 # Documents — Data Model
 
-> **Status:** Specified (Sprint 013) — **not implemented** (no migrations in this sprint)  
+> **Status:** Implemented (Sprint 013) — migrations applied  
 > **Last updated:** 2026-08-10
 
-## Tables (future migration order)
+## Tables (migration order)
 
 1. `document_number_sequences`
 2. `document_categories`
@@ -113,7 +113,7 @@ Document 0..1──morph──> Contract|Meeting|Decision|Task|Employee|Organiza
 
 Host models may add `morphMany(Document::class, 'linkable')` at implementation (no persisted arrays on hosts).
 
-## 5. Config (future)
+## 5. Config
 
 `config/documents.php`:
 
@@ -125,6 +125,6 @@ Host models may add `morphMany(Document::class, 'linkable')` at implementation (
 
 ## 6. Migration notes
 
-- Do **not** run in Sprint 013 specification.
+- Migrations applied in Sprint 013 implementation.
 - Depends on: tenants, users, and optionally existing entity tables for FK-less morph (no DB FK to morph targets).
 - Category FK is real; morph is application-enforced same-tenant existence.

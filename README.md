@@ -1,6 +1,6 @@
 # ERP Hajj
 
-> **Status:** Tenant Foundation (004) through Tasks & Assignments (012) implemented. Sprint 013 Documents & Archiving **specified** (implementation pending).
+> **Status:** Tenant Foundation (004) through Documents & Archiving (013) implemented.
 >
 > **Last updated:** 2026-08-10
 

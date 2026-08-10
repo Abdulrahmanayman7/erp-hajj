@@ -8,6 +8,8 @@ use App\Core\Tenancy\TenantContext;
 use App\Models\User;
 use App\Modules\Decisions\Models\Decision;
 use App\Modules\Decisions\Support\DecisionReferenceValidator;
+use App\Modules\Documents\Enums\DocumentLinkableType;
+use App\Modules\Documents\Support\DocumentReferenceValidator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -16,6 +18,7 @@ final class DeleteDecision
     public function __construct(
         private readonly TenantContext $tenantContext,
         private readonly DecisionReferenceValidator $references,
+        private readonly DocumentReferenceValidator $documents,
         private readonly AuthorizationSecurity $security,
     ) {}
 
@@ -26,6 +29,7 @@ final class DeleteDecision
         DB::transaction(function () use ($actor, $decision, $request, $tenant): void {
             $locked = Decision::query()->whereKey($decision->id)->lockForUpdate()->firstOrFail();
             $this->references->assertDeletableDraft($locked);
+            $this->documents->assertNoDocumentsLinked(DocumentLinkableType::Decision, (int) $locked->id);
 
             $snapshot = [
                 'id' => $locked->id,

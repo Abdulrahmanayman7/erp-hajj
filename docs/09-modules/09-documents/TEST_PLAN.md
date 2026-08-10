@@ -1,6 +1,6 @@
 # Documents — Test Plan
 
-> **Status:** Specified (Sprint 013) — **not implemented**  
+> **Status:** Implemented (Sprint 013) — Pest/Vitest coverage added  
 > **Last updated:** 2026-08-10  
 > Tooling: **Pest** (backend) · **Vitest** (frontend)
 

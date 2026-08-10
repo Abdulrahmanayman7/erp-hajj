@@ -2,8 +2,12 @@
 
 - **Status:** Accepted
 - **Date:** 2026-08-10
-- **Sprint:** 013 (Documents & Archiving specification)
+- **Sprint:** 013 (Documents & Archiving)
 - **Deciders:** ERP Hajj product / engineering (documentation lock)
+
+## Implementation note (2026-08-10)
+
+Shipped as vertical slice: migrations (`document_number_sequences`, `document_categories`, `documents`), `Document`/`DocumentCategory` models, `DocumentNumberGenerator` (`FOR UPDATE`), private `TenantStorage::DOCUMENTS` paths with UUID filenames, finfo MIME allow-list + 20 MiB, SHA-256 checksum, streamed download, archive/restore/hard-delete, morph aliases + host delete guards, `documents.*` permissions, Pest `DocumentTest`, Vue module + host **المستندات** sections. No versioning, no multi-link pivot, no public URLs.
 
 ## Context
 

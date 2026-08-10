@@ -1,6 +1,6 @@
 # Documents — Permissions
 
-> **Status:** Specified (Sprint 013) — **not implemented** (named for catalog; seed at implementation)  
+> **Status:** Implemented (Sprint 013) — catalog and role templates seeded  
 > **Last updated:** 2026-08-10
 
 Capabilities use `module.action`. Policies never check role names. Frontend gates are UX-only.

@@ -14,6 +14,7 @@ import {
 } from 'lucide-vue-next'
 
 import { listUsers } from '@/modules/users/api/usersApi'
+import EntityDocumentsSection from '@/modules/documents/components/EntityDocumentsSection.vue'
 import { ApiError } from '@/shared/api/http'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
@@ -519,6 +520,12 @@ const parentName = computed(() => {
               </button>
             </PermissionGuard>
           </div>
+
+          <EntityDocumentsSection
+            linkable-type="organization_unit"
+            :linkable-id="selected.id"
+            :link-label="`${selected.code} — ${selected.name}`"
+          />
         </div>
       </section>
     </div>

@@ -171,6 +171,28 @@ final class AuthorizationSecurityEvent
 
     public const TASK_DELETED = 'TASK_DELETED';
 
+    public const DOCUMENT_UPLOADED = 'DOCUMENT_UPLOADED';
+
+    public const DOCUMENT_UPDATED = 'DOCUMENT_UPDATED';
+
+    public const DOCUMENT_LINKED = 'DOCUMENT_LINKED';
+
+    public const DOCUMENT_UNLINKED = 'DOCUMENT_UNLINKED';
+
+    public const DOCUMENT_DOWNLOADED = 'DOCUMENT_DOWNLOADED';
+
+    public const DOCUMENT_ARCHIVED = 'DOCUMENT_ARCHIVED';
+
+    public const DOCUMENT_RESTORED = 'DOCUMENT_RESTORED';
+
+    public const DOCUMENT_DELETED = 'DOCUMENT_DELETED';
+
+    public const DOCUMENT_CATEGORY_CREATED = 'DOCUMENT_CATEGORY_CREATED';
+
+    public const DOCUMENT_CATEGORY_UPDATED = 'DOCUMENT_CATEGORY_UPDATED';
+
+    public const DOCUMENT_CATEGORY_DELETED = 'DOCUMENT_CATEGORY_DELETED';
+
     /**
      * @param  array<string, mixed>  $context
      */

@@ -1,6 +1,6 @@
 # Documents — Business Rules
 
-> **Status:** Specified (Sprint 013) — **not implemented**  
+> **Status:** Implemented (Sprint 013)  
 > **Last updated:** 2026-08-10  
 > ADR: [ADR-0010](../../10-decisions/ADR-0010-DOCUMENT-STORAGE-AND-ENTITY-LINKS.md)
 

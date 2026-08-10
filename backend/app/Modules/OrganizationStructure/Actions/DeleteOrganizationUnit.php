@@ -8,6 +8,8 @@ use App\Core\Tenancy\TenantContext;
 use App\Models\User;
 use App\Modules\Contracts\Models\Contract;
 use App\Modules\Decisions\Models\Decision;
+use App\Modules\Documents\Enums\DocumentLinkableType;
+use App\Modules\Documents\Support\DocumentReferenceValidator;
 use App\Modules\Employees\Models\Employee;
 use App\Modules\Meetings\Models\Meeting;
 use App\Modules\OrganizationStructure\Exceptions\OrganizationDomainException;
@@ -20,6 +22,7 @@ final class DeleteOrganizationUnit
 {
     public function __construct(
         private readonly TenantContext $tenantContext,
+        private readonly DocumentReferenceValidator $documents,
         private readonly AuthorizationSecurity $security,
     ) {}
 
@@ -53,6 +56,8 @@ final class DeleteOrganizationUnit
             if (Task::query()->where('organization_unit_id', $locked->id)->exists()) {
                 throw OrganizationDomainException::inUse();
             }
+
+            $this->documents->assertNoDocumentsLinked(DocumentLinkableType::OrganizationUnit, (int) $locked->id);
 
             $snapshot = [
                 'id' => $locked->id,

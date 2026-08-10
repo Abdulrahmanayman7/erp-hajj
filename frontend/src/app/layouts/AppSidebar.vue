@@ -11,6 +11,7 @@ import {
   ListTodo,
   LogOut,
   IdCard,
+  Archive,
   Network,
   PanelRightClose,
   PanelRightOpen,
@@ -167,6 +168,16 @@ const navGroups = computed<NavGroup[]>(() => {
       to: '/app/tasks',
       icon: ListTodo,
       permission: 'tasks.view',
+      match: 'prefix',
+    })
+  }
+  if (can('documents.view')) {
+    organizationItems.push({
+      key: 'documents',
+      labelKey: 'nav.documents',
+      to: '/app/documents',
+      icon: Archive,
+      permission: 'documents.view',
       match: 'prefix',
     })
   }

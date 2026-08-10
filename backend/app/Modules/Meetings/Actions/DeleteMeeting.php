@@ -6,6 +6,8 @@ use App\Core\Authorization\Events\AuthorizationSecurityEvent;
 use App\Core\Authorization\Support\AuthorizationSecurity;
 use App\Core\Tenancy\TenantContext;
 use App\Models\User;
+use App\Modules\Documents\Enums\DocumentLinkableType;
+use App\Modules\Documents\Support\DocumentReferenceValidator;
 use App\Modules\Meetings\Models\Meeting;
 use App\Modules\Meetings\Models\MeetingAgendaItem;
 use App\Modules\Meetings\Models\MeetingAttendee;
@@ -20,6 +22,7 @@ final class DeleteMeeting
     public function __construct(
         private readonly TenantContext $tenantContext,
         private readonly MeetingReferenceValidator $references,
+        private readonly DocumentReferenceValidator $documents,
         private readonly AuthorizationSecurity $security,
     ) {}
 
@@ -30,6 +33,7 @@ final class DeleteMeeting
         DB::transaction(function () use ($actor, $meeting, $request, $tenant): void {
             $locked = Meeting::query()->whereKey($meeting->id)->lockForUpdate()->firstOrFail();
             $this->references->assertDeletableDraft($locked);
+            $this->documents->assertNoDocumentsLinked(DocumentLinkableType::Meeting, (int) $locked->id);
 
             $snapshot = [
                 'id' => $locked->id,

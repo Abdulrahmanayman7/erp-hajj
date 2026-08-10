@@ -16,6 +16,10 @@ use App\Modules\Contracts\Policies\ContractCategoryPolicy;
 use App\Modules\Contracts\Policies\ContractPolicy;
 use App\Modules\Decisions\Models\Decision;
 use App\Modules\Decisions\Policies\DecisionPolicy;
+use App\Modules\Documents\Models\Document;
+use App\Modules\Documents\Models\DocumentCategory;
+use App\Modules\Documents\Policies\DocumentCategoryPolicy;
+use App\Modules\Documents\Policies\DocumentPolicy;
 use App\Modules\Employees\Models\Employee;
 use App\Modules\Employees\Models\Position;
 use App\Modules\Employees\Policies\EmployeePolicy;
@@ -28,6 +32,7 @@ use App\Modules\Tasks\Models\Task;
 use App\Modules\Tasks\Policies\TaskPolicy;
 use App\Modules\Users\Policies\UserPolicy;
 use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
@@ -86,6 +91,17 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Meeting::class, MeetingPolicy::class);
         Gate::policy(Decision::class, DecisionPolicy::class);
         Gate::policy(Task::class, TaskPolicy::class);
+        Gate::policy(Document::class, DocumentPolicy::class);
+        Gate::policy(DocumentCategory::class, DocumentCategoryPolicy::class);
+
+        Relation::enforceMorphMap([
+            'contract' => Contract::class,
+            'meeting' => Meeting::class,
+            'decision' => Decision::class,
+            'task' => Task::class,
+            'employee' => Employee::class,
+            'organization_unit' => OrganizationUnit::class,
+        ]);
 
         Route::bind('user', function (string $value): User {
             $actor = auth()->user();
