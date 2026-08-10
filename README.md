@@ -1,6 +1,6 @@
 # ERP Hajj
 
-> **Status:** Tenant Foundation (004), Authentication (005), Users & Authorization / RBAC (006), Organization Structure (007), Employees + Supervisors (008), Contracts (009), Meetings (010), Decisions (011), and Tasks & Assignments (012) implemented.
+> **Status:** Tenant Foundation (004) through Tasks & Assignments (012) implemented. Sprint 013 Documents & Archiving **specified** (implementation pending).
 >
 > **Last updated:** 2026-08-10
 

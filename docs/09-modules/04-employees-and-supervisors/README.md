@@ -55,7 +55,7 @@ Manage each tenant’s **personnel records**: employees as the primary staff ent
 
 - **Requires:** Tenancy, Auth, Users/RBAC, Organization Structure (implemented).
 - **Integrates:** `organization_units` (RESTRICT FK); optional `users` (SET NULL).
-- **Later consumers:** Contracts, Tasks, Custodies, Documents, Assets.
+- **Later consumers:** Contracts, Tasks, Custodies, Documents (Sprint 013 — specified; morph alias `employee`; ADR-0010), Assets.
 
 ## Architectural note
 

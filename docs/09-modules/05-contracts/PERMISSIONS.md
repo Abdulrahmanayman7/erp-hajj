@@ -23,7 +23,7 @@
 
 | Permission | Reason |
 |---|---|
-| `contracts.attach_documents` | Documents sprint |
+| `contracts.attach_documents` | **Not seeded** — superseded by Sprint 013 `documents.upload` + link (ADR-0010) |
 | `contract_categories.*` | Folded into `contracts.view` / `contracts.update` for MVP |
 
 **Historical catalog note:** Master [PERMISSION_MODEL.md](../../06-security/PERMISSION_MODEL.md) already listed transition permissions; Sprint 009 adds `contracts.cancel` and clarifies `contracts.delete` semantics. Remove obsolete assumptions that every post-approve delete is soft-delete-only — hard delete is draft-only.

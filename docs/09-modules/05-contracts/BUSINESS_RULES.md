@@ -221,9 +221,11 @@ Notifications: **not delivered in Sprint 009**. Emit/document future hooks for N
 
 ## 10. Documents / attachments
 
-- Sprint 009 **does not** store files, MIME validation, or download routes.
-- CORE_WORKFLOWS requirement “attachments must be preserved” is satisfied when **Documents** module links files to `contracts` (polymorphic or `documentables`) in a later sprint — design must not block that.
-- UI may show an empty “المرفقات — قريباً” panel; no upload control.
+- Sprint 009 did not store files.
+- **Sprint 013 owns** document/file infrastructure ([09-documents/](../09-documents/), ADR-0010): private storage, `DOC-######`, optional single polymorphic link `linkable_type=contract`.
+- Do **not** seed `contracts.attach_documents` — use `documents.upload` + link.
+- At Documents implementation: replace placeholder panel with **المستندات** widget; until then UI may keep “المرفقات — قريباً”.
+- CORE_WORKFLOWS “attachments must be preserved” is satisfied by Documents linking (not by deleting blobs when Contracts archive/close).
 
 ---
 

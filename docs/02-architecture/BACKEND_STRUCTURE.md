@@ -1,6 +1,6 @@
 # Backend Structure
 
-> **Status:** Approved — Tenant Foundation (004) + Authentication (005) + Users/RBAC (006) + OrganizationStructure (007) + Employees (008) + Contracts (009) + Meetings (010) + Decisions (011) + Tasks (012) implemented
+> **Status:** Approved — Tenant Foundation (004) + Authentication (005) + Users/RBAC (006) + OrganizationStructure (007) + Employees (008) + Contracts (009) + Meetings (010) + Decisions (011) + Tasks (012) implemented; Documents (013) specified
 > **Last updated:** 2026-08-10
 
 ## Purpose
@@ -32,7 +32,7 @@ app/
 │   ├── Meetings/                 # Sprint 010 — implemented
 │   ├── Decisions/                # Sprint 011 — implemented
 │   ├── Tasks/                    # Sprint 012 — implemented
-│   ├── Documents/
+│   ├── Documents/                # Sprint 013 — specified (not implemented)
 │   ├── Warehouses/
 │   ├── Inventory/
 │   ├── Assets/

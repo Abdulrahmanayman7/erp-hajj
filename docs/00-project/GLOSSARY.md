@@ -29,8 +29,8 @@ Define the shared vocabulary of the project in English with the Arabic business 
 | Decision | قرار | Formal governance entity (`DEC-######`); may link to at most one final recommendation via `source_recommendation_id`, or exist standalone; may later generate tasks (Tasks own `decision_id`). |
 | Task | مهمة | Execution work item (`TSK-######`); optional link to Decision via `decision_id`; single Employee assignee; progress + completion notes for measurement (Sprint 012 spec). |
 | Responsible person | الشخص المسؤول | Do not conflate: Decision `responsible_employee_id` (governance follow-up) vs Task `assigned_to_employee_id` (execution assignee). |
-| Document | وثيقة / مستند | A file managed by the central document center, linkable to business entities. |
-| Archiving | أرشفة | Retention and organized storage of documents (archive/soft delete). |
+| Document | وثيقة / مستند | A single uploaded file plus metadata in the central document center (`DOC-######`), optionally linked to one business entity (ADR-0010). |
+| Archiving | أرشفة | Document status transition to `archived` (file retained); distinct from hard delete. |
 | Warehouse | مستودع | A physical or logical storage location. |
 | Inventory item | صنف مخزون | A stock-tracked item; quantities derive from transactions. |
 | Inventory transaction | حركة مخزون | A movement affecting quantity: addition, issue, return, transfer, adjustment. |
