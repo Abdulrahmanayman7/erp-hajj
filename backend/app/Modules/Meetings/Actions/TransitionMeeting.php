@@ -83,6 +83,7 @@ final class TransitionMeeting
             'agendaItems',
             'recommendations.owner',
             'recommendations.createdBy',
+            'recommendations.decision',
             'statusTransitions.actor',
         ]);
     }

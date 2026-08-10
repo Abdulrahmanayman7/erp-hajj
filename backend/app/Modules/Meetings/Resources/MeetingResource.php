@@ -162,6 +162,15 @@ class MeetingResource extends JsonResource
      */
     private function recommendationPayload(MeetingRecommendation $row): array
     {
+        $linked = null;
+        if ($row->relationLoaded('decision') && $row->decision !== null) {
+            $linked = [
+                'id' => $row->decision->id,
+                'decision_number' => $row->decision->decision_number,
+                'status' => $row->decision->status->value,
+            ];
+        }
+
         return [
             'id' => $row->id,
             'title' => $row->title,
@@ -173,6 +182,7 @@ class MeetingResource extends JsonResource
             'created_by' => ($row->relationLoaded('createdBy') && $row->createdBy !== null)
                 ? ['id' => $row->createdBy->id, 'name' => $row->createdBy->name]
                 : null,
+            'linked_decision' => $linked,
         ];
     }
 

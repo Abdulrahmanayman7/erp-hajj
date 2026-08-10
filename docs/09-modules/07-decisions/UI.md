@@ -1,6 +1,6 @@
 # Decisions — UI
 
-> **Status:** Specified (Sprint 011) — **not implemented**  
+> **Status:** Implemented (Sprint 011)
 > **Last updated:** 2026-08-10  
 > Shell: existing AppSidebar / RTL layout — **do not redesign**.
 

@@ -1,6 +1,6 @@
 # Decisions — Permissions
 
-> **Status:** Specified (Sprint 011) — **not implemented** (named in catalog; seed at implementation)  
+> **Status:** Implemented (Sprint 011) — catalog and role templates seeded
 > **Last updated:** 2026-08-10
 
 Capabilities use `module.action` vocabulary. Policies check capabilities only — never role names. Frontend gates are UX-only; backend is authoritative.
@@ -58,7 +58,7 @@ No persona bypass — including Tenant Owner (must hold the capability via role 
 
 \*Department Manager: draft delete of own or any untouched draft under `decisions.delete` if granted — **grant delete** for Department Manager templates so they can remove mistaken drafts they create. **Do not** grant `approve` or `close` by default (approval authority stays narrow).
 
-Exact seed values follow this table at implementation; custom tenant roles may diverge.
+Seed values follow this table; custom tenant roles may diverge.
 
 ## Meetings UI affordance
 

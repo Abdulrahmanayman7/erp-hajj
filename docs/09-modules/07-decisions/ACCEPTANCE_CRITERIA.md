@@ -1,6 +1,6 @@
 # Decisions — Acceptance Criteria
 
-> **Status:** Specified (Sprint 011) — **not implemented**  
+> **Status:** Implemented (Sprint 011) — acceptance verified via Pest/Vitest
 > **Last updated:** 2026-08-10
 
 A Sprint 011 implementation is done only when all items below pass and match [DEFINITION_OF_DONE.md](../../00-project/DEFINITION_OF_DONE.md).

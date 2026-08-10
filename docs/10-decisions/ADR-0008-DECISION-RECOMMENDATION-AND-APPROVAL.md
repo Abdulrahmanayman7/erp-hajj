@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-08-10
-- **Sprint:** 011 (Decisions specification)
+- **Sprint:** 011 (Decisions implementation)
 - **Deciders:** ERP Hajj product / engineering (documentation lock)
 
 ## Context
@@ -14,6 +14,8 @@ Sprint 010 introduced first-class `MeetingRecommendation` rows and deliberately 
 2. Whether Decisions may exist without a meeting
 3. Cardinality of recommendation → Decision
 4. A minimal approval lifecycle without Tasks or multi-stage chains
+
+> **Implementation note (2026-08-10):** Sprint 011 implemented this ADR through the Decisions vertical slice, including the tenant-owned Decision model, lifecycle APIs, permission seed, audit events, and the Meetings **إنشاء قرار** conversion affordance.
 
 ## Decision
 

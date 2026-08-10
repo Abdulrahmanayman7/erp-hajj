@@ -15,7 +15,7 @@ A Meetings implementation is done only when all items below are true and [DEFINI
 - [ ] Recommendations are first-class; auto-finalized on complete; immutable after complete/cancel
 - [ ] Draft-only hard delete for never-advanced drafts
 - [ ] Arabic RTL list + details UX with permission-aware controls
-- [ ] Documents/Notifications/Decisions/Tasks not implemented as functional features
+- [ ] Documents/Notifications/Tasks not implemented as functional features; linked Decision conversion is implemented through Sprint 011
 
 ## Security / tenancy
 

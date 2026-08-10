@@ -1,6 +1,6 @@
 # Users and Personas
 
-> **Status:** Approved (default templates). Sprint 006 locks which templates seed as system roles — see [02-users-and-authorization/BUSINESS_RULES.md](../09-modules/02-users-and-authorization/BUSINESS_RULES.md). Sprint 007–010 implemented. Sprint 011 Decisions **specified** — default Decision grants in [07-decisions/PERMISSIONS.md](../09-modules/07-decisions/PERMISSIONS.md).
+> **Status:** Approved (default templates). Sprint 006 locks which templates seed as system roles — see [02-users-and-authorization/BUSINESS_RULES.md](../09-modules/02-users-and-authorization/BUSINESS_RULES.md). Sprint 007–011 implemented. Default Decision grants: [07-decisions/PERMISSIONS.md](../09-modules/07-decisions/PERMISSIONS.md).
 > **Last updated:** 2026-08-10
 
 ## Purpose

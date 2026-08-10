@@ -1,6 +1,6 @@
 # Decisions — Data Model
 
-> **Status:** Specified (Sprint 011) — **not implemented**  
+> **Status:** Implemented (Sprint 011)
 > **Last updated:** 2026-08-10
 
 ## Tables (future migration order)
@@ -138,7 +138,7 @@ Derived (not stored): `Decision → source_recommendation → meeting`.
 
 ---
 
-## 6. Migration notes (do not run in Sprint 011 spec)
+## 6. Migration notes
 
 - Create sequence table before `decisions`.
 - `meeting_recommendations` must already exist (Sprint 010).

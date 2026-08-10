@@ -137,6 +137,22 @@ final class AuthorizationSecurityEvent
 
     public const MEETING_RECOMMENDATION_DELETED = 'MEETING_RECOMMENDATION_DELETED';
 
+    public const DECISION_CREATED = 'DECISION_CREATED';
+
+    public const DECISION_UPDATED = 'DECISION_UPDATED';
+
+    public const DECISION_DELETED = 'DECISION_DELETED';
+
+    public const DECISION_SUBMITTED = 'DECISION_SUBMITTED';
+
+    public const DECISION_RETURNED_TO_DRAFT = 'DECISION_RETURNED_TO_DRAFT';
+
+    public const DECISION_APPROVED = 'DECISION_APPROVED';
+
+    public const DECISION_CANCELLED = 'DECISION_CANCELLED';
+
+    public const DECISION_CLOSED = 'DECISION_CLOSED';
+
     /**
      * @param  array<string, mixed>  $context
      */

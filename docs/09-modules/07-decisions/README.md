@@ -1,6 +1,6 @@
 # Module: Decisions (القرارات)
 
-> **Status:** Specified (Sprint 011) — **not implemented**
+> **Status:** Implemented (Sprint 011)
 > **Last updated:** 2026-08-10
 
 ## Purpose
@@ -9,7 +9,7 @@ Manage each tenant’s **formal governance decisions** as a **separate business 
 
 **Meeting → Recommendation → Decision → Task(s) → Responsible → Execution → Measurement → Closure**
 
-Sprint 011 specifies **Decisions only**. Tasks remain a future module. A Decision may be created **from a final Meeting Recommendation** or **independently** (no meeting).
+Sprint 011 implements **Decisions only**. Tasks remain a future module. A Decision may be created **from a final Meeting Recommendation** or **independently** (no meeting).
 
 ## Domain separation (non-negotiable)
 
@@ -37,7 +37,7 @@ Do **not** treat a recommendation as automatically approved. Do **not** create T
 | Append-only `decision_status_transitions` | Fake task progress / KPI measurement |
 | Optional org unit + issuer + responsible employees | Documents upload/download |
 | Create-from-recommendation conversion (Decisions-owned) | E-signature / finance fields |
-| Policies + `decisions.*` permissions (seed at implementation) | SoftDeletes; free PATCH of `status` |
+| Policies + seeded `decisions.*` permissions | SoftDeletes; free PATCH of `status` |
 | Arabic RTL list + details + Meetings “إنشاء قرار” affordance | Notification delivery |
 | Audit events + Pest/Vitest matrices | Dashboard KPI widgets |
 
