@@ -26,6 +26,8 @@ export interface AuthUser {
   status: UserStatus
   avatar_group?: AvatarGroup
   is_platform_user: boolean
+  /** Linked Employee id when User↔Employee is set; null/omitted otherwise. */
+  employee_id?: number | null
   tenant: AuthTenant | null
   roles: AuthRole[]
   permissions: string[]

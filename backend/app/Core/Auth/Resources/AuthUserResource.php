@@ -6,6 +6,7 @@ use App\Core\Authorization\EffectivePermissions;
 use App\Core\Tenancy\Models\Tenant;
 use App\Core\Tenancy\TenantContext;
 use App\Models\User;
+use App\Modules\Employees\Models\Employee;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -30,6 +31,7 @@ class AuthUserResource extends JsonResource
 
         $roles = [];
         $permissions = [];
+        $employeeId = null;
 
         if (! $user->isPlatformUser() && $user->tenant_id !== null) {
             $tenantModel = $tenant instanceof Tenant
@@ -37,16 +39,21 @@ class AuthUserResource extends JsonResource
                 : Tenant::query()->find($user->tenant_id);
 
             if ($tenantModel !== null) {
-                [$roles, $permissions] = app(TenantContext::class)->runAsTenant(
+                [$roles, $permissions, $employeeId] = app(TenantContext::class)->runAsTenant(
                     $tenantModel,
                     function () use ($user, $effective): array {
                         if (! $user->relationLoaded('roles')) {
                             $user->load(['roles' => fn ($q) => $q->where('roles.is_active', true)]);
                         }
 
+                        $linkedEmployeeId = Employee::query()
+                            ->where('user_id', $user->id)
+                            ->value('id');
+
                         return [
                             $effective->activeRolesPayload($user),
                             $effective->forUser($user),
+                            $linkedEmployeeId !== null ? (int) $linkedEmployeeId : null,
                         ];
                     },
                 );
@@ -60,6 +67,7 @@ class AuthUserResource extends JsonResource
             'status' => $user->status->value,
             'avatar_group' => $user->avatar_group?->value ?? 'neutral',
             'is_platform_user' => $user->isPlatformUser(),
+            'employee_id' => $employeeId,
             'tenant' => $tenant === null ? null : [
                 'id' => $tenant->id,
                 'tenant_code' => $tenant->tenant_code,

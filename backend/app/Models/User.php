@@ -7,11 +7,13 @@ use App\Core\Auth\UserStatus;
 use App\Core\Authorization\EffectivePermissions;
 use App\Core\Tenancy\Models\Tenant;
 use App\Modules\Authorization\Models\Role;
+use App\Modules\Employees\Models\Employee;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -72,6 +74,11 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Role::class, 'user_roles')
             ->withPivot(['tenant_id', 'assigned_by', 'created_at']);
+    }
+
+    public function employee(): HasOne
+    {
+        return $this->hasOne(Employee::class);
     }
 
     public function isPlatformUser(): bool

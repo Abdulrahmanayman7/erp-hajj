@@ -153,6 +153,24 @@ final class AuthorizationSecurityEvent
 
     public const DECISION_CLOSED = 'DECISION_CLOSED';
 
+    public const TASK_CREATED = 'TASK_CREATED';
+
+    public const TASK_UPDATED = 'TASK_UPDATED';
+
+    public const TASK_ASSIGNED = 'TASK_ASSIGNED';
+
+    public const TASK_REASSIGNED = 'TASK_REASSIGNED';
+
+    public const TASK_STARTED = 'TASK_STARTED';
+
+    public const TASK_PROGRESS_UPDATED = 'TASK_PROGRESS_UPDATED';
+
+    public const TASK_COMPLETED = 'TASK_COMPLETED';
+
+    public const TASK_CANCELLED = 'TASK_CANCELLED';
+
+    public const TASK_DELETED = 'TASK_DELETED';
+
     /**
      * @param  array<string, mixed>  $context
      */

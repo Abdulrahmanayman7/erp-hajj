@@ -18,9 +18,12 @@ use App\Modules\Decisions\Requests\DecisionCommentRequest;
 use App\Modules\Decisions\Requests\ReturnDecisionToDraftRequest;
 use App\Modules\Decisions\Requests\UpdateDecisionRequest;
 use App\Modules\Decisions\Resources\DecisionResource;
+use App\Modules\Tasks\Enums\TaskStatus;
+use App\Modules\Tasks\Models\Task;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class DecisionController
 {
@@ -84,6 +87,8 @@ class DecisionController
             'sourceRecommendation.meeting',
             'statusTransitions.performer',
         ]);
+
+        $decision->tasks_summary = $this->tasksSummaryFor($decision);
 
         return ApiResponse::success(data: (new DecisionResource($decision))->resolve());
     }
@@ -213,5 +218,31 @@ class DecisionController
             data: (new DecisionResource($decision))->resolve(),
             message: 'تم إغلاق القرار',
         );
+    }
+
+    /**
+     * @return array{total: int, open: int, completed: int, cancelled: int}
+     */
+    private function tasksSummaryFor(Decision $decision): array
+    {
+        $rows = Task::query()
+            ->where('decision_id', $decision->id)
+            ->select('status', DB::raw('COUNT(*) as aggregate'))
+            ->groupBy('status')
+            ->pluck('aggregate', 'status');
+
+        $completed = (int) ($rows[TaskStatus::Completed->value] ?? 0);
+        $cancelled = (int) ($rows[TaskStatus::Cancelled->value] ?? 0);
+        $open = 0;
+        foreach (TaskStatus::openStatuses() as $status) {
+            $open += (int) ($rows[$status->value] ?? 0);
+        }
+
+        return [
+            'total' => $open + $completed + $cancelled,
+            'open' => $open,
+            'completed' => $completed,
+            'cancelled' => $cancelled,
+        ];
     }
 }

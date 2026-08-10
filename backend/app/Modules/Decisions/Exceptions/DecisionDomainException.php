@@ -84,4 +84,13 @@ class DecisionDomainException extends RuntimeException
     {
         return new self('لا يمكن حذف هذا القرار.', 'DECISION_IMMUTABLE', 422);
     }
+
+    public static function closeNotAllowed(): self
+    {
+        return new self(
+            'لا يمكن إغلاق القرار لوجود مهام مرتبطة غير مكتملة أو غير ملغاة.',
+            'DECISION_CLOSE_NOT_ALLOWED',
+            422,
+        );
+    }
 }

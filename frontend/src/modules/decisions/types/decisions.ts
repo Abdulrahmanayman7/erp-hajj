@@ -14,6 +14,7 @@ export interface DecisionTransition {
   correlation_id: string | null
   created_at: string | null
 }
+export interface DecisionTasksSummary { total: number; open: number; completed: number; cancelled: number }
 export interface Decision {
   id: number; decision_number: string; title: string; body: string; notes: string | null
   status: DecisionStatus; source_recommendation_id: number | null
@@ -22,7 +23,8 @@ export interface Decision {
   organization_unit: DecisionOrgUnitSummary | null; issued_by_employee: DecisionEmployeeSummary | null
   responsible_employee: DecisionEmployeeSummary | null; created_by: DecisionActorSummary | null
   source_recommendation: DecisionSourceRecommendation | null; source_meeting: DecisionSourceMeeting | null
-  status_transitions?: DecisionTransition[]; created_at: string | null; updated_at: string | null
+  status_transitions?: DecisionTransition[]; tasks_summary?: DecisionTasksSummary
+  created_at: string | null; updated_at: string | null
 }
 export interface DecisionsListMeta { current_page: number; per_page: number; total: number; last_page: number }
 export interface ListDecisionsParams {

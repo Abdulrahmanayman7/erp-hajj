@@ -12,6 +12,7 @@ use App\Modules\Decisions\Exceptions\DecisionDomainException;
 use App\Modules\Employees\Exceptions\EmployeeDomainException;
 use App\Modules\Meetings\Exceptions\MeetingDomainException;
 use App\Modules\OrganizationStructure\Exceptions\OrganizationDomainException;
+use App\Modules\Tasks\Exceptions\TaskDomainException;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -88,6 +89,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(fn (ContractDomainException $e): JsonResponse => $e->render());
         $exceptions->render(fn (MeetingDomainException $e): JsonResponse => $e->render());
         $exceptions->render(fn (DecisionDomainException $e): JsonResponse => $e->render());
+        $exceptions->render(fn (TaskDomainException $e): JsonResponse => $e->render());
 
         $exceptions->render(function (AuthorizationException $e, Request $request): ?JsonResponse {
             if (! $request->is('api/*')) {

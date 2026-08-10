@@ -1,6 +1,6 @@
 # Tasks — API
 
-> **Status:** Specified (Sprint 012) — **not implemented**  
+> **Status:** Implemented (Sprint 012)
 > **Last updated:** 2026-08-10  
 > Base: `/api/v1` · Auth: Sanctum SPA · Envelope: [API_STANDARDS.md](../../04-api/API_STANDARDS.md)
 

@@ -103,10 +103,10 @@ Do not embed Decision editing inside the Meeting screen beyond this CTA.
 
 1. **نظرة عامة** — number, title, body, notes, status, dates, org, issuer, responsible  
 2. **المصدر** — compact recommendation + derived meeting with link to `/app/meetings/:id` when present  
-3. **المهام المرتبطة** — Sprint 012: linked Tasks list/summary + إنشاء مهمة when `approved` and `tasks.create` ([08-tasks/UI.md](../08-tasks/UI.md)); until Tasks ships, omit this section  
+3. **المهام المرتبطة** — linked Tasks list/summary + إنشاء مهمة when `approved` and `tasks.create` ([08-tasks/UI.md](../08-tasks/UI.md))  
 4. **سجل الحالة** — append-only timeline  
 
-Close action: when Sprint 012 is implemented, surface `DECISION_CLOSE_NOT_ALLOWED` if open Tasks exist.
+Close action: surfaces `DECISION_CLOSE_NOT_ALLOWED` when open linked Tasks exist (Sprint 012 gate).
 
 ## Lifecycle UX
 

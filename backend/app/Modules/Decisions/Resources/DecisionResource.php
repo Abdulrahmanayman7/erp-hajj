@@ -54,6 +54,10 @@ class DecisionResource extends JsonResource
                 ->all();
         }
 
+        if (isset($decision->tasks_summary) && is_array($decision->tasks_summary)) {
+            $payload['tasks_summary'] = $decision->tasks_summary;
+        }
+
         return $payload;
     }
 

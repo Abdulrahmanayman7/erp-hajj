@@ -1,6 +1,6 @@
 # Tasks — Data Model
 
-> **Status:** Specified (Sprint 012) — **not implemented**  
+> **Status:** Implemented (Sprint 012)
 > **Last updated:** 2026-08-10
 
 ## Tables (future migration order)
