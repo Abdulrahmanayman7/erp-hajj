@@ -19,14 +19,14 @@ Sprint 010 must keep Decisions and Tasks out of scope while remaining future-com
 
 1. **Agenda** is modeled as structured `meeting_agenda_items` (title, optional description, `sort_order`) — not a single agenda blob only. Meeting `description` remains an optional overview field.
 2. **Minutes** are stored as a single `meetings.minutes_body` TEXT field (textarea UX; no rich-text package; no revision table in MVP).
-3. **Recommendations** are first-class `meeting_recommendations` rows with `draft` \| `final` status only. They are **not** Decisions and carry **no `decision_id`** in Sprint 010.
-4. Future Decisions module may add an optional link (`meeting_id` and/or `meeting_recommendation_id`) when converting — conversion is owned by Decisions, not Meetings.
+3. **Recommendations** are first-class `meeting_recommendations` rows with `draft` \| `final` status only. They are **not** Decisions and carry **no `decision_id`**.
+4. Decisions module owns conversion via nullable unique `source_recommendation_id` ([ADR-0008](ADR-0008-DECISION-RECOMMENDATION-AND-APPROVAL.md)). Sprint 011 may add Meetings UI **إنشاء قرار**; Meetings still does not write Decision rows except via the Decisions API.
 
 ## Consequences
 
 - Workflow 1 has identifiable recommendation records without inventing Decision rows early.
 - Completing a meeting can finalize draft recommendations atomically without decision approval semantics.
-- UI must not expose a functional “create decision” control in Sprint 010.
+- UI must not invent Decision records inside the Meetings module; the Create Decision affordance (Sprint 011) calls Decisions APIs only.
 - Structured agenda enables optional linkage recommendation → agenda item without forcing 1:1.
 
 ## Alternatives considered

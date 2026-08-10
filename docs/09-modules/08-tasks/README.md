@@ -12,7 +12,7 @@ Manage measurable units of work assigned to responsible users or employees, trac
 - **Individual and group assignments** (MVP requirement).
 - Task types: Individual, Group, Seasonal, Recurring — advanced recurring-task automation is **TBD**.
 - Priorities (High/Medium/Low), statuses, progress percentage, comments, attachments, completion evidence.
-- Links to related entities (notably decisions).
+- Links to related entities (notably decisions): future Tasks own nullable `decision_id` → `decisions.id` ([07-decisions/](../07-decisions/), ADR-0008). Do not put task arrays on Decision.
 
 ## Out of scope
 

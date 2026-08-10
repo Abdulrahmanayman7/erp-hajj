@@ -130,7 +130,7 @@ Index: `(tenant_id, meeting_id, sort_order)`.
 
 Indexes: `(tenant_id, meeting_id)`, `(tenant_id, status)`, `(tenant_id, owner_employee_id)`.
 
-**No `decision_id`.** Future Decisions may reference `meeting_recommendations.id` additively.
+**No `decision_id`.** Decisions own nullable unique `source_recommendation_id` (ADR-0008 / Sprint 011).
 
 ## Config (`config/meetings.php`)
 

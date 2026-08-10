@@ -68,7 +68,7 @@ Sections (stack on mobile; tabs optional if design system already uses tabs — 
 | Recommendations | التوصيات | List CRUD |
 | Attachments | المرفقات | Placeholder only: المرفقات ستتوفر مع وحدة المستندات |
 
-**Do not** show fake “إنشاء قرار” or Tasks tabs.
+**Do not** show fake Tasks tabs. Sprint 011 adds **إنشاء قرار** for eligible final recommendations (see [07-decisions/UI.md](../07-decisions/UI.md)) — not a fake control: real `decisions.create` conversion.
 
 ## Lifecycle actions UX
 
@@ -102,7 +102,7 @@ Use `AppConfirmDialog` — never `window.confirm`.
 
 - Card/list rows: title, description, owner, status (مسودة / نهائية)
 - Create/edit/delete while meeting open
-- **No** “Create Decision” button in Sprint 010
+- **Sprint 011:** for `final` recommendations on a **completed** meeting with no linked Decision yet, show **إنشاء قرار** when the user has `decisions.create` (POST `/api/v1/decisions` with `source_recommendation_id`; navigate to Decision draft). See [07-decisions/UI.md](../07-decisions/UI.md).
 
 ## Timeline UX
 

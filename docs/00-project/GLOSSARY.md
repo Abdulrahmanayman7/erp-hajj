@@ -1,7 +1,7 @@
 # Glossary
 
 > **Status:** Draft
-> **Last updated:** 2026-08-09
+> **Last updated:** 2026-08-10
 
 ## Purpose
 
@@ -23,12 +23,12 @@ Define the shared vocabulary of the project in English with the Arabic business 
 | Employee number | الرقم الوظيفي | Tenant-unique server-generated id (e.g. `EMP-000001`); not an auth input. |
 | Contract | عقد | A formal agreement managed through the controlled contract lifecycle (Draft→…→Closure/Renewal). Numbered `CTR-######` per tenant (Sprint 009). |
 | Contract category | تصنيف العقد | Tenant-owned catalog entry classifying a contract (ADR-0006). |
-| Meeting | اجتماع | A formal administrative meeting with agenda, attendees, and minutes. |
-| Minutes | محضر الاجتماع | The formal record of a meeting. |
-| Recommendation | توصية | A meeting outcome that may become a decision. |
-| Decision | قرار | A separate business entity; may originate from a meeting or exist independently, and may generate tasks. |
-| Task | مهمة | A unit of work assigned to responsible users/employees, tracked to execution and measurement. |
-| Responsible person | الشخص المسؤول | The person accountable for executing a task or decision. |
+| Meeting | اجتماع | A formal administrative meeting with agenda, attendees, and minutes. Numbered `MTG-######` per tenant (Sprint 010). |
+| Minutes | محضر الاجتماع | The formal record of a meeting (`minutes_body` text on the meeting). |
+| Recommendation | توصية | A first-class meeting outcome (`meeting_recommendations`) that may become a Decision; statuses `draft` \| `final` only — not a Decision workflow. |
+| Decision | قرار | Formal governance entity (`DEC-######`); may link to at most one final recommendation via `source_recommendation_id`, or exist standalone; may later generate tasks (Tasks own `decision_id`). |
+| Task | مهمة | A unit of work assigned to responsible users/employees, tracked to execution and measurement (Sprint 012+). |
+| Responsible person | الشخص المسؤول | Oversight/accountability: Decision responsible employee (follow-up) vs future Task assignee — do not conflate. |
 | Document | وثيقة / مستند | A file managed by the central document center, linkable to business entities. |
 | Archiving | أرشفة | Retention and organized storage of documents (archive/soft delete). |
 | Warehouse | مستودع | A physical or logical storage location. |

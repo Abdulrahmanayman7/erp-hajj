@@ -41,7 +41,7 @@ Every incoming request receives a **correlation ID** assigned by early middlewar
 - Role created/updated/activated/deactivated/deleted; role permissions changed (`ROLE_*`); permission catalog synced (`PERMISSION_CATALOG_SYNCED`).
 - Contract created/updated/deleted; lifecycle transitions (`CONTRACT_CREATED`, `CONTRACT_UPDATED`, `CONTRACT_DELETED`, `CONTRACT_SUBMITTED_REVIEW`, `CONTRACT_RETURNED_DRAFT`, `CONTRACT_APPROVED`, `CONTRACT_SIGNED` — **manual attestation only**, `CONTRACT_EXECUTED`, `CONTRACT_CLOSED`, `CONTRACT_CANCELLED`, `CONTRACT_RENEWED`, `CONTRACT_EXPIRED` — see [05-contracts/](../09-modules/05-contracts/)). Authoritative per-contract history remains `contract_status_transitions` (correlation ID when available).
 - Meeting lifecycle and related records (`MEETING_CREATED`, `MEETING_UPDATED`, `MEETING_DELETED`, `MEETING_SCHEDULED`, `MEETING_RESCHEDULED`, `MEETING_STARTED`, `MEETING_COMPLETED`, `MEETING_CANCELLED`, attendee/minutes/agenda/recommendation events — specified Sprint 010; see [06-meetings/API.md](../09-modules/06-meetings/API.md)). Authoritative per-meeting status history: `meeting_status_transitions`.
-- Decision approved or closed.
+- Decision lifecycle (`DECISION_CREATED`, `DECISION_UPDATED`, `DECISION_SUBMITTED`, `DECISION_RETURNED_TO_DRAFT`, `DECISION_APPROVED`, `DECISION_CANCELLED`, `DECISION_CLOSED`, `DECISION_DELETED` — specified Sprint 011; see [07-decisions/API.md](../09-modules/07-decisions/API.md)). Authoritative per-decision status history: `decision_status_transitions`.
 - Task assigned or completed.
 - Sensitive document downloaded; document uploaded or deleted.
 - Inventory transaction created.
