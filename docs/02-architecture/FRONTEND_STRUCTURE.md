@@ -1,6 +1,6 @@
 # Frontend Structure
 
-> **Status:** Approved — Auth (005) + Users/Roles RBAC UI (006) + Organization UI (007) + Employees (008) + Contracts (009) + Meetings (010) + Decisions (011) implemented
+> **Status:** Approved — Auth (005) + Users/Roles RBAC UI (006) + Organization UI (007) + Employees (008) + Contracts (009) + Meetings (010) + Decisions (011) implemented; Tasks (012) specified
 > **Last updated:** 2026-08-10
 
 ## Purpose
@@ -95,6 +95,13 @@ A module may contain: pages, components, api, queries, mutations, types, validat
 - `src/modules/decisions/` — routes `/app/decisions` (+ `/app/decisions/:id`); sidebar **القرارات** (`decisions.view`).
 - List + drawer; details with source recommendation/meeting + status timeline; lifecycle confirms.
 - Full UI contract: [07-decisions/UI.md](../09-modules/07-decisions/UI.md).
+- Sprint 012 adds Decision details **المهام المرتبطة** + إنشاء مهمة + close-gate UX — see [08-tasks/UI.md](../09-modules/08-tasks/UI.md).
+
+### Tasks (Sprint 012 — specified)
+
+- Planned: `src/modules/tasks/` — routes `/app/tasks` (+ `/app/tasks/:id`); sidebar **المهام** (`tasks.view`).
+- List + drawer; مهامي filter; overdue badge; lifecycle/assign/complete; Decision-linked create.
+- Full UI contract: [08-tasks/UI.md](../09-modules/08-tasks/UI.md).
 
 ## Rules
 

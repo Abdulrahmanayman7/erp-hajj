@@ -42,10 +42,10 @@ Sprint 010 introduced first-class `MeetingRecommendation` rows and deliberately 
 - **`approved` is official immediately** — no separate `active` status and no activation scheduler.
 - Permissions reuse catalog verbs (`update` / `approve` / `close`) — no micro-permissions for submit/reject.
 
-### 5. Closure without Tasks
+### 5. Closure without Tasks → with Tasks gate
 
-- Sprint 011 allows administrative `approved → closed` without Task completion checks.
-- Future Tasks module may add a close gate; Decision does not store task arrays or fake progress now.
+- Sprint 011 allowed administrative `approved → closed` without Task completion checks.
+- **Sprint 012 (ADR-0009)** adds the close gate: open linked Tasks block close via `DECISION_CLOSE_NOT_ALLOWED`.
 - Future Tasks own `decision_id` (Decision does not own task FKs).
 
 ## Consequences

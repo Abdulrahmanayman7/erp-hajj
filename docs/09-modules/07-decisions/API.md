@@ -160,7 +160,7 @@ Resource includes:
 | `DECISION_ORGANIZATION_INVALID` | Org foreign or inactive on assign |
 | `DECISION_INVALID_DATE_RANGE` | `due_date < effective_date` |
 | `DECISION_IMMUTABLE` | Edit / delete / wrong field on locked Decision |
-| `DECISION_CLOSE_NOT_ALLOWED` | Reserved for future Tasks gate; unused in Sprint 011 close path except documentation |
+| `DECISION_CLOSE_NOT_ALLOWED` | Close blocked while open linked Tasks exist (Sprint 012 gate; ADR-0009) |
 
 Use standard validation envelope for field errors (`422`). Unauthorized → `403`. Unauthenticated → `401`.
 

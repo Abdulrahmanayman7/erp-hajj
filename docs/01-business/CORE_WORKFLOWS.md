@@ -45,8 +45,16 @@ flowchart RL
 - Decisions own nullable unique `source_recommendation_id` (one final recommendation → at most one Decision); no `decision_id` on recommendations; meeting derived when sourced.
 - Standalone Decisions allowed; numbering `DEC-######`.
 - Lifecycle: `draft` → `pending_approval` → `approved` → `closed`; early cancel; return-to-draft (no separate rejected/active statuses).
-- Single-step approval via `decisions.approve`; administrative close without Tasks in Sprint 011.
-- Tasks remain out of Sprint 011 (future Tasks own `decision_id`).
+- Single-step approval via `decisions.approve`.
+
+### Sprint 012 locked decisions (see [08-tasks/](../09-modules/08-tasks/) · [ADR-0009](../10-decisions/ADR-0009-TASK-ASSIGNEE-AND-DECISION-GATE.md))
+
+- Tasks own nullable `decision_id`; standalone Tasks allowed; numbering `TSK-######`.
+- Single Employee assignee; group/multi-assignee deferred.
+- Lifecycle: `draft` → `assigned` → `in_progress` → `completed`; cancel early; overdue derived.
+- Measurement: required `completion_notes` on complete + `progress_percent`.
+- Decision close gated while open linked Tasks exist (`DECISION_CLOSE_NOT_ALLOWED`); completing Tasks never auto-closes Decision.
+- Limited assignee self-service via User↔Employee link.
 
 ## Workflow 2: Contract lifecycle (دورة حياة العقد)
 

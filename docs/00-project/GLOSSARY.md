@@ -27,8 +27,8 @@ Define the shared vocabulary of the project in English with the Arabic business 
 | Minutes | محضر الاجتماع | The formal record of a meeting (`minutes_body` text on the meeting). |
 | Recommendation | توصية | A first-class meeting outcome (`meeting_recommendations`) that may become a Decision; statuses `draft` \| `final` only — not a Decision workflow. |
 | Decision | قرار | Formal governance entity (`DEC-######`); may link to at most one final recommendation via `source_recommendation_id`, or exist standalone; may later generate tasks (Tasks own `decision_id`). |
-| Task | مهمة | A unit of work assigned to responsible users/employees, tracked to execution and measurement (Sprint 012+). |
-| Responsible person | الشخص المسؤول | Oversight/accountability: Decision responsible employee (follow-up) vs future Task assignee — do not conflate. |
+| Task | مهمة | Execution work item (`TSK-######`); optional link to Decision via `decision_id`; single Employee assignee; progress + completion notes for measurement (Sprint 012 spec). |
+| Responsible person | الشخص المسؤول | Do not conflate: Decision `responsible_employee_id` (governance follow-up) vs Task `assigned_to_employee_id` (execution assignee). |
 | Document | وثيقة / مستند | A file managed by the central document center, linkable to business entities. |
 | Archiving | أرشفة | Retention and organized storage of documents (archive/soft delete). |
 | Warehouse | مستودع | A physical or logical storage location. |

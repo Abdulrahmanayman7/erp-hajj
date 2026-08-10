@@ -19,6 +19,8 @@ Meetings (Sprint 010 — **implemented**): `meetings` + agenda/attendees/recomme
 
 Decisions (Sprint 011 — **implemented**): `decisions` + `decision_status_transitions` + `DEC-######` sequences — see [07-decisions/](../09-modules/07-decisions/) and [ADR-0008](../10-decisions/ADR-0008-DECISION-RECOMMENDATION-AND-APPROVAL.md). Decision ≠ Task.
 
+Tasks (Sprint 012 — **specified**): `tasks` + status/assignment histories + `TSK-######` sequences — see [08-tasks/](../09-modules/08-tasks/) and [ADR-0009](../10-decisions/ADR-0009-TASK-ASSIGNEE-AND-DECISION-GATE.md). Single Employee assignee; Decision close gated by open Tasks.
+
 ## Style
 
 - **Modular monolith**: one deployable Laravel 12 application organized into a `Core/` layer and business `Modules/`. See [ADR-0002](../10-decisions/ADR-0002-MODULAR-MONOLITH.md) and [BACKEND_STRUCTURE.md](BACKEND_STRUCTURE.md).
