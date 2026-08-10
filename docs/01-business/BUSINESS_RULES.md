@@ -1,7 +1,7 @@
 # Business Rules
 
 > **Status:** Approved (stated rules only; the rest TBD)
-> **Last updated:** 2026-08-06
+> **Last updated:** 2026-08-10
 
 ## Purpose
 
@@ -21,9 +21,11 @@ Collect the cross-module business rules that are explicitly agreed. Module-speci
 
 ## Governance (Workflow 1)
 
-- A meeting may create one or more decisions; a decision may also exist independently of any meeting.
-- A decision may generate one or more tasks; tasks must have responsible users/employees.
-- Completing one task does not close the decision unless all required tasks are completed.
+- A meeting may create one or more decisions (typically one Decision per final recommendation); a decision may also exist independently of any meeting.
+- Recommendation ≠ Decision ≠ Task — see [07-decisions/](../09-modules/07-decisions/) and [ADR-0008](../10-decisions/ADR-0008-DECISION-RECOMMENDATION-AND-APPROVAL.md).
+- A decision may generate one or more tasks; tasks must have responsible users/employees (Tasks module later).
+- Completing one task does not close the decision unless all required tasks are completed (future Tasks gate; Sprint 011 allows administrative close without Tasks).
+- Decision numbering: `DEC-######` tenant sequence.
 
 ## Contracts (Workflow 2)
 

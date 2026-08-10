@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Sprint 011 — Decisions specification** (documentation only — no application code): Decision entity with `DEC-######` tenant sequences; nullable unique `source_recommendation_id` (Decisions own the link; one final recommendation → at most one Decision); standalone Decisions allowed; no redundant `source_meeting_id`; omit type/category/priority; lifecycle `draft` → `pending_approval` → `approved` → `closed` (+ early cancel, return-to-draft); single-step `decisions.approve`; administrative close without Tasks; append-only `decision_status_transitions`; Meetings UX affordance إنشاء قرار; future Tasks own `decision_id`; ADR-0008; full module docs under `docs/09-modules/07-decisions/`.
+
 - **Sprint 010 — Meetings vertical slice:** tenant-owned `meetings` (+ `meeting_number_sequences`) + append-only `meeting_status_transitions` (correlation ID); concurrency-safe `MTG-######` via `SELECT … FOR UPDATE`; employee-only attendees + attendance statuses; structured `meeting_agenda_items`; `minutes_body` text; first-class `meeting_recommendations` (`draft`/`final`, ADR-0007); Workflow 1 lifecycle action endpoints (schedule/reschedule/start/complete/cancel); draft-only hard delete; Documents/Notifications/Decisions/Tasks deferred; Policies + `meetings.*` catalog + role templates; APIs under `/api/v1/meetings` (+ attendees/agenda/recommendations nested); Vue `meetings` module (list, drawer, details, lifecycle/minutes/attendees/agenda/recommendations UX); sidebar الاجتماعات; Pest + Vitest green.
 
 - **Sprint 010 — Meetings specification** (superseded by implementation above).

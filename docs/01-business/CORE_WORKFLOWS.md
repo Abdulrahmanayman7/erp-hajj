@@ -1,7 +1,7 @@
 # Core Workflows
 
 > **Status:** Approved (stages fixed; open details marked TBD)
-> **Last updated:** 2026-08-06
+> **Last updated:** 2026-08-10
 
 ## Purpose
 
@@ -26,7 +26,7 @@ flowchart RL
 
 ### Rules
 
-- A meeting may create one or more decisions.
+- A meeting may create one or more decisions (via one or more recommendations).
 - A decision may originate from a meeting **or exist independently**.
 - A decision may generate one or more tasks.
 - Tasks must have responsible users or employees.
@@ -39,7 +39,14 @@ flowchart RL
 - Meetings module owns meeting lifecycle, attendees (employees only), structured agenda items, minutes text, and **first-class recommendations** (not Decisions) — [ADR-0007](../10-decisions/ADR-0007-MEETING-AGENDA-AND-RECOMMENDATIONS.md).
 - Numbering: `MTG-######`, tenant sequence, immutable.
 - Hard delete only for never-advanced drafts; otherwise cancel.
-- Decision conversion and Tasks remain out of Sprint 010.
+
+### Sprint 011 locked decisions (see [07-decisions/](../09-modules/07-decisions/) · [ADR-0008](../10-decisions/ADR-0008-DECISION-RECOMMENDATION-AND-APPROVAL.md))
+
+- Decisions own nullable unique `source_recommendation_id` (one final recommendation → at most one Decision); no `decision_id` on recommendations; meeting derived when sourced.
+- Standalone Decisions allowed; numbering `DEC-######`.
+- Lifecycle: `draft` → `pending_approval` → `approved` → `closed`; early cancel; return-to-draft (no separate rejected/active statuses).
+- Single-step approval via `decisions.approve`; administrative close without Tasks in Sprint 011.
+- Tasks remain out of Sprint 011 (future Tasks own `decision_id`).
 
 ## Workflow 2: Contract lifecycle (دورة حياة العقد)
 

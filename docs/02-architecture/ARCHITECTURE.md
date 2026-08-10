@@ -1,7 +1,7 @@
 # Architecture
 
 > **Status:** Approved
-> **Last updated:** 2026-08-09
+> **Last updated:** 2026-08-10
 
 ## Purpose
 
@@ -13,7 +13,11 @@ Tenant-internal hierarchy (Sprint 007 — **implemented**): single adjacency-lis
 
 Personnel (Sprint 008 — **specified**): `employees` + `positions` — see [04-employees-and-supervisors/](../09-modules/04-employees-and-supervisors/) and [ADR-0005](../10-decisions/ADR-0005-EMPLOYEE-POSITIONS-CATALOG.md). User ≠ Employee; unit manager ≠ employee supervisor.
 
-Contracts (Sprint 009 — **specified**): `contract_categories` + `contracts` + transition history — see [05-contracts/](../09-modules/05-contracts/) and [ADR-0006](../10-decisions/ADR-0006-CONTRACT-CATEGORIES-CATALOG.md). Contract ≠ Document ≠ Supplier.
+Contracts (Sprint 009 — **implemented**): `contract_categories` + `contracts` + transition history — see [05-contracts/](../09-modules/05-contracts/) and [ADR-0006](../10-decisions/ADR-0006-CONTRACT-CATEGORIES-CATALOG.md). Contract ≠ Document ≠ Supplier.
+
+Meetings (Sprint 010 — **implemented**): `meetings` + agenda/attendees/recommendations + transition history — see [06-meetings/](../09-modules/06-meetings/) and [ADR-0007](../10-decisions/ADR-0007-MEETING-AGENDA-AND-RECOMMENDATIONS.md). Recommendation ≠ Decision.
+
+Decisions (Sprint 011 — **specified**): `decisions` + `decision_status_transitions` + `DEC-######` sequences — see [07-decisions/](../09-modules/07-decisions/) and [ADR-0008](../10-decisions/ADR-0008-DECISION-RECOMMENDATION-AND-APPROVAL.md). Decision ≠ Task.
 
 ## Style
 

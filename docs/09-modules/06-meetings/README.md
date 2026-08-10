@@ -76,7 +76,7 @@ Exact default role grants: [PERMISSIONS.md](PERMISSIONS.md).
 | Transition history | `meeting_status_transitions` append-only (+ correlation ID) | [DATA_MODEL.md](DATA_MODEL.md) |
 | Agenda | Structured `meeting_agenda_items` (ordered) | [ADR-0007](../../10-decisions/ADR-0007-MEETING-AGENDA-AND-RECOMMENDATIONS.md) |
 | Minutes | Single `minutes_body` TEXT on `meetings` (textarea UX) | [ADR-0007](../../10-decisions/ADR-0007-MEETING-AGENDA-AND-RECOMMENDATIONS.md) |
-| Recommendations | First-class table; **not** Decisions; no `decision_id` in Sprint 010 | [ADR-0007](../../10-decisions/ADR-0007-MEETING-AGENDA-AND-RECOMMENDATIONS.md) |
+| Recommendations | First-class table; **not** Decisions; no `decision_id` (Decisions own `source_recommendation_id`, ADR-0008) | [ADR-0007](../../10-decisions/ADR-0007-MEETING-AGENDA-AND-RECOMMENDATIONS.md) · [07-decisions/](../07-decisions/) |
 | Attendees | Tenant **employees only**; external names deferred | [BUSINESS_RULES.md](BUSINESS_RULES.md) |
 | Attachments | Deferred to Documents; UI placeholder only | [UI.md](UI.md) |
 | Notifications | Hooks named only; no delivery | [BUSINESS_RULES.md](BUSINESS_RULES.md) |

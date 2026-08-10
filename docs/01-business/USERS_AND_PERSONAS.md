@@ -1,7 +1,7 @@
 # Users and Personas
 
-> **Status:** Approved (default templates). Sprint 006 locks which templates seed as system roles — see [02-users-and-authorization/BUSINESS_RULES.md](../09-modules/02-users-and-authorization/BUSINESS_RULES.md). Sprint 007 organization units implemented. Sprint 008 Employees + Supervisors **specified**.
-> **Last updated:** 2026-08-09
+> **Status:** Approved (default templates). Sprint 006 locks which templates seed as system roles — see [02-users-and-authorization/BUSINESS_RULES.md](../09-modules/02-users-and-authorization/BUSINESS_RULES.md). Sprint 007–010 implemented. Sprint 011 Decisions **specified** — default Decision grants in [07-decisions/PERMISSIONS.md](../09-modules/07-decisions/PERMISSIONS.md).
+> **Last updated:** 2026-08-10
 
 ## Purpose
 
@@ -25,7 +25,7 @@ Describe the default user personas of the platform. **These personas are default
 
 ## 3. General Manager (المدير العام)
 
-**Scope:** Oversees tenant operations. Reviews departments, contracts, meetings, decisions, and tasks. Receives administrative reports and alerts. May approve selected operations according to permissions.
+**Scope:** Oversees tenant operations. Reviews departments, contracts, meetings, decisions, and tasks. Receives administrative reports and alerts. May approve selected operations according to permissions (Sprint 011 default: full `decisions.*` for General Manager template).
 
 **Responsibilities:** Operational leadership, decision-making, follow-up, performance review, cross-department coordination.
 
