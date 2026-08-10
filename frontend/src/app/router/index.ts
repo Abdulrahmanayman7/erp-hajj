@@ -103,6 +103,18 @@ export const router = createRouter({
       meta: { requiresAuth: true, layout: 'app', permission: 'meetings.view' },
     },
     {
+      path: '/app/decisions',
+      name: 'decisions',
+      component: () => import('@/modules/decisions/pages/DecisionsPage.vue'),
+      meta: { requiresAuth: true, layout: 'app', permission: 'decisions.view' },
+    },
+    {
+      path: '/app/decisions/:id',
+      name: 'decision-details',
+      component: () => import('@/modules/decisions/pages/DecisionDetailsPage.vue'),
+      meta: { requiresAuth: true, layout: 'app', permission: 'decisions.view' },
+    },
+    {
       path: '/app/roles/:id/permissions',
       name: 'role-permissions',
       component: () => import('@/modules/roles/pages/RolePermissionsPage.vue'),

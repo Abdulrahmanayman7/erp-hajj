@@ -1,6 +1,6 @@
 # Decisions — Business Rules
 
-> **Status:** Specified (Sprint 011) — **not implemented**  
+> **Status:** Implemented (Sprint 011)
 > **Last updated:** 2026-08-10
 
 Binding product rules for the Decisions module. Implementation must not invent fields, statuses, or automatic Task creation.

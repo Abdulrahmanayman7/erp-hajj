@@ -100,6 +100,11 @@ class MeetingDomainException extends RuntimeException
         return new self('التوصية غير موجودة.', 'MEETING_RECOMMENDATION_NOT_FOUND', 404);
     }
 
+    public static function recommendationInUse(): self
+    {
+        return new self('لا يمكن حذف التوصية لارتباطها بقرار.', 'MEETING_RECOMMENDATION_IN_USE', 422);
+    }
+
     public static function agendaItemInvalid(): self
     {
         return new self('بند جدول الأعمال غير صالح لهذا الاجتماع.', 'MEETING_AGENDA_ITEM_INVALID', 422);

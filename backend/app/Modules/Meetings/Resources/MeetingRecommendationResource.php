@@ -36,6 +36,15 @@ class MeetingRecommendationResource extends JsonResource
             ];
         }
 
+        $linked = null;
+        if ($row->relationLoaded('decision') && $row->decision !== null) {
+            $linked = [
+                'id' => $row->decision->id,
+                'decision_number' => $row->decision->decision_number,
+                'status' => $row->decision->status->value,
+            ];
+        }
+
         return [
             'id' => $row->id,
             'title' => $row->title,
@@ -45,6 +54,7 @@ class MeetingRecommendationResource extends JsonResource
             'agenda_item_id' => $row->agenda_item_id,
             'owner' => $owner,
             'created_by' => $createdBy,
+            'linked_decision' => $linked,
         ];
     }
 }

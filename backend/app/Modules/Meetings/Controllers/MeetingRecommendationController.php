@@ -23,7 +23,7 @@ class MeetingRecommendationController
         $this->authorize('view', $meeting);
 
         $items = $meeting->recommendations()
-            ->with(['owner', 'createdBy'])
+            ->with(['owner', 'createdBy', 'decision'])
             ->orderBy('sort_order')
             ->orderBy('id')
             ->get();

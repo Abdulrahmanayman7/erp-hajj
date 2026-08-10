@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { RouterLink, useRouter } from 'vue-router'
 import { Loader2, Pencil, Plus, Trash2 } from 'lucide-vue-next'
 
 import { ApiError } from '@/shared/api/http'
@@ -9,6 +10,8 @@ import PermissionGuard from '@/shared/components/PermissionGuard.vue'
 import { useConfirm } from '@/shared/composables/useConfirm'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import { useToast } from '@/shared/composables/useToast'
+import { createDecision } from '@/modules/decisions/api/decisionsApi'
+import { canCreateDecisionFromRecommendation } from '@/modules/decisions/validation/decisionValidation'
 
 import {
   useCreateRecommendationMutation,
@@ -40,6 +43,7 @@ const { t } = useI18n()
 const toast = useToast()
 const { confirm } = useConfirm()
 const { can } = usePermissions()
+const router = useRouter()
 
 const createMutation = useCreateRecommendationMutation()
 const updateMutation = useUpdateRecommendationMutation()
@@ -186,6 +190,24 @@ function recommendationStatusClass(status: RecommendationStatus): string {
   return status === 'final'
     ? 'bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200/70'
     : 'bg-neutral-100 text-neutral-700 ring-1 ring-neutral-200/80'
+}
+
+async function createDecisionFromRecommendation(item: MeetingRecommendation): Promise<void> {
+  try {
+    const decision = await createDecision({ source_recommendation_id: item.id })
+    await router.push(`/app/decisions/${decision.id}`)
+  } catch (error) {
+    toast.error(apiMessage(error))
+  }
+}
+
+function canCreateLinkedDecision(item: MeetingRecommendation): boolean {
+  return canCreateDecisionFromRecommendation({
+    recommendationStatus: item.status,
+    meetingStatus: props.meeting.status,
+    hasLinkedDecision: item.linked_decision != null,
+    permissions: can('decisions.create') ? ['decisions.create'] : [],
+  })
 }
 </script>
 
@@ -345,6 +367,26 @@ function recommendationStatusClass(status: RecommendationStatus): string {
               @click="removeItem(item)"
             >
               <Trash2 class="h-4 w-4" />
+            </button>
+          </div>
+          <div
+            v-if="item.status === 'final' && meeting.status === 'completed'"
+            class="flex items-center gap-2"
+          >
+            <RouterLink
+              v-if="item.linked_decision"
+              :to="`/app/decisions/${item.linked_decision.id}`"
+              class="rounded-lg border border-brand-border px-3 py-2 text-sm font-semibold text-brand-primary-dark"
+            >
+              {{ t('meetings.actions.viewDecision') }}
+            </RouterLink>
+            <button
+            v-else-if="canCreateLinkedDecision(item)"
+              type="button"
+              class="rounded-lg border border-brand-border px-3 py-2 text-sm font-semibold text-brand-primary-dark"
+              @click="createDecisionFromRecommendation(item)"
+            >
+              {{ t('meetings.actions.createDecision') }}
             </button>
           </div>
         </div>

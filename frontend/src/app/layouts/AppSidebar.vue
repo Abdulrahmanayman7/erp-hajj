@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { RouterLink, useRoute } from 'vue-router'
 import {
   CalendarDays,
+  Gavel,
   ChevronDown,
   FileText,
   Home,
@@ -145,6 +146,16 @@ const navGroups = computed<NavGroup[]>(() => {
       to: '/app/meetings',
       icon: CalendarDays,
       permission: 'meetings.view',
+      match: 'prefix',
+    })
+  }
+  if (can('decisions.view')) {
+    organizationItems.push({
+      key: 'decisions',
+      labelKey: 'nav.decisions',
+      to: '/app/decisions',
+      icon: Gavel,
+      permission: 'decisions.view',
       match: 'prefix',
     })
   }

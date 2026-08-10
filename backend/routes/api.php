@@ -7,6 +7,7 @@ use App\Modules\Authorization\Controllers\PermissionController;
 use App\Modules\Authorization\Controllers\RoleController;
 use App\Modules\Contracts\Controllers\ContractCategoryController;
 use App\Modules\Contracts\Controllers\ContractController;
+use App\Modules\Decisions\Controllers\DecisionController;
 use App\Modules\Employees\Controllers\EmployeeController;
 use App\Modules\Employees\Controllers\PositionController;
 use App\Modules\Meetings\Controllers\MeetingAgendaItemController;
@@ -129,6 +130,17 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
             Route::post('/meetings/{meeting}/recommendations', [MeetingRecommendationController::class, 'store'])->name('meetings.recommendations.store');
             Route::patch('/meetings/{meeting}/recommendations/{recommendation}', [MeetingRecommendationController::class, 'update'])->name('meetings.recommendations.update');
             Route::delete('/meetings/{meeting}/recommendations/{recommendation}', [MeetingRecommendationController::class, 'destroy'])->name('meetings.recommendations.destroy');
+
+            Route::get('/decisions', [DecisionController::class, 'index'])->name('decisions.index');
+            Route::post('/decisions', [DecisionController::class, 'store'])->name('decisions.store');
+            Route::get('/decisions/{decision}', [DecisionController::class, 'show'])->name('decisions.show');
+            Route::patch('/decisions/{decision}', [DecisionController::class, 'update'])->name('decisions.update');
+            Route::delete('/decisions/{decision}', [DecisionController::class, 'destroy'])->name('decisions.destroy');
+            Route::post('/decisions/{decision}/submit', [DecisionController::class, 'submit'])->name('decisions.submit');
+            Route::post('/decisions/{decision}/return-draft', [DecisionController::class, 'returnDraft'])->name('decisions.return-draft');
+            Route::post('/decisions/{decision}/approve', [DecisionController::class, 'approve'])->name('decisions.approve');
+            Route::post('/decisions/{decision}/cancel', [DecisionController::class, 'cancel'])->name('decisions.cancel');
+            Route::post('/decisions/{decision}/close', [DecisionController::class, 'close'])->name('decisions.close');
         });
     });
 });

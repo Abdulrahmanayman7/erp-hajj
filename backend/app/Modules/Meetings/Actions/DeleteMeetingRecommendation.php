@@ -6,6 +6,7 @@ use App\Core\Authorization\Events\AuthorizationSecurityEvent;
 use App\Core\Authorization\Support\AuthorizationSecurity;
 use App\Core\Tenancy\TenantContext;
 use App\Models\User;
+use App\Modules\Decisions\Models\Decision;
 use App\Modules\Meetings\Exceptions\MeetingDomainException;
 use App\Modules\Meetings\Models\Meeting;
 use App\Modules\Meetings\Models\MeetingRecommendation;
@@ -40,6 +41,10 @@ final class DeleteMeetingRecommendation
 
             if ($row === null) {
                 throw MeetingDomainException::recommendationNotFound();
+            }
+
+            if (Decision::query()->where('source_recommendation_id', $row->id)->exists()) {
+                throw MeetingDomainException::recommendationInUse();
             }
 
             $snapshot = ['id' => $row->id, 'title' => $row->title];

@@ -6,12 +6,14 @@ use App\Core\Tenancy\Models\Tenant;
 use App\Core\Tenancy\TenantOwned;
 use App\Core\Tenancy\UsesTenantScope;
 use App\Models\User;
+use App\Modules\Decisions\Models\Decision;
 use App\Modules\Employees\Models\Employee;
 use App\Modules\Meetings\Enums\RecommendationStatus;
 use Database\Factories\MeetingRecommendationFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * @property int $id
@@ -82,5 +84,10 @@ class MeetingRecommendation extends Model implements TenantOwned
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function decision(): HasOne
+    {
+        return $this->hasOne(Decision::class, 'source_recommendation_id');
     }
 }

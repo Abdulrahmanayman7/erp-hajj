@@ -17,7 +17,7 @@ Contracts (Sprint 009 — **implemented**): `contract_categories` + `contracts` 
 
 Meetings (Sprint 010 — **implemented**): `meetings` + agenda/attendees/recommendations + transition history — see [06-meetings/](../09-modules/06-meetings/) and [ADR-0007](../10-decisions/ADR-0007-MEETING-AGENDA-AND-RECOMMENDATIONS.md). Recommendation ≠ Decision.
 
-Decisions (Sprint 011 — **specified**): `decisions` + `decision_status_transitions` + `DEC-######` sequences — see [07-decisions/](../09-modules/07-decisions/) and [ADR-0008](../10-decisions/ADR-0008-DECISION-RECOMMENDATION-AND-APPROVAL.md). Decision ≠ Task.
+Decisions (Sprint 011 — **implemented**): `decisions` + `decision_status_transitions` + `DEC-######` sequences — see [07-decisions/](../09-modules/07-decisions/) and [ADR-0008](../10-decisions/ADR-0008-DECISION-RECOMMENDATION-AND-APPROVAL.md). Decision ≠ Task.
 
 ## Style
 

@@ -86,6 +86,7 @@ class MeetingController
             'agendaItems',
             'recommendations.owner',
             'recommendations.createdBy',
+            'recommendations.decision',
             'statusTransitions.actor',
         ]);
 

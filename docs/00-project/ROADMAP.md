@@ -25,8 +25,8 @@ The 21 modules and four core workflows defined in [MVP_SCOPE.md](MVP_SCOPE.md), 
 | Sprint 008 — Employees + Supervisors | **Done** (implementation) |
 | Sprint 009 — Contracts | **Done** (implementation) |
 | Sprint 010 — Meetings | **Done** (implementation) |
-| Sprint 011 — Decisions | **Spec complete** — implementation pending |
-| Remaining MVP modules | Next: Decisions implementation, then Tasks |
+| Sprint 011 — Decisions | **Done** (implementation) |
+| Remaining MVP modules | Next: Tasks |
 Natural dependency order remains: **tenancy → authentication → users/roles/permissions → organizational structure → employees → contracts → meetings → decisions → tasks → remaining modules**.
 
 ## Later — Future Vision (NOT part of the MVP, all TBD)

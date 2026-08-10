@@ -9,7 +9,7 @@ Manage each tenant’s **formal administrative meetings** — agendas, attendees
 
 **Meeting → Recommendation → Decision → Task(s) → Responsible → Execution → Measurement → Closure**
 
-Sprint 010 specifies **Meetings only**. Decisions and Tasks remain separate future modules. Recommendations produced here are **not** Decisions.
+Sprint 010 implements **Meetings**. Decisions remain a separate implemented module; Tasks remain future scope. Recommendations produced here are **not** Decisions.
 
 ## Domain separation (non-negotiable)
 
@@ -19,8 +19,8 @@ Sprint 010 specifies **Meetings only**. Decisions and Tasks remain separate futu
 | **Meeting attendee** | Participant (tenant employee) | This module |
 | **Agenda item** | Ordered discussion topic | This module |
 | **Minutes** | Formal meeting record (محضر) | This module (`minutes_body`) |
-| **Recommendation** | Meeting outcome that *may* become a Decision later | This module |
-| **Decision** | Formal governance record | Decisions (Sprint 011+) |
+| **Recommendation** | Meeting outcome that *may* become a Decision | This module |
+| **Decision** | Formal governance record | Decisions (Sprint 011) |
 | **Task** | Assignable execution work | Tasks (Sprint 012+) |
 | **Employee** | Personnel record (chair / secretary / attendee / recommendation owner) | Employees |
 | **User** | Authenticated account (`created_by`) | Users & Authorization |
@@ -34,13 +34,13 @@ Do **not** conflate Recommendation with Decision. Do **not** convert recommendat
 
 | In scope | Out of scope |
 |---|---|
-| `meetings` + server-generated `MTG-######` | Decisions module / create-decision actions |
+| `meetings` + server-generated `MTG-######` | Decisions module internals |
 | Controlled lifecycle action endpoints | Tasks / automatic task creation |
 | Append-only `meeting_status_transitions` | Calendar sync (Google/Outlook) |
 | Attendees (tenant employees only) | External guests as first-class party master |
 | Structured `meeting_agenda_items` | Video conferencing APIs (Zoom/Teams) |
 | Minutes as `minutes_body` text on meeting | Rich-text editor packages |
-| First-class `meeting_recommendations` | Recommendation → Decision conversion UI |
+| First-class `meeting_recommendations` + linked Decision conversion affordance | Decision lifecycle internals |
 | Optional org unit / chair / secretary (Employee) | Email/SMS invitation delivery |
 | Policies + `meetings.*` permissions (seed at implementation) | Documents upload/download |
 | Arabic RTL list + details UX | SoftDeletes; free PATCH of `status` |

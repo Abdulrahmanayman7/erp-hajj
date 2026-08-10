@@ -18,6 +18,7 @@ final class PermissionCatalog
         'positions' => 'المسميات الوظيفية',
         'contracts' => 'العقود',
         'meetings' => 'الاجتماعات',
+        'decisions' => 'القرارات',
         'dashboard' => 'لوحة التحكم',
         'tenant_settings' => 'إعدادات المنشأة',
     ];
@@ -76,6 +77,13 @@ final class PermissionCatalog
             ['name' => 'meetings.cancel', 'display_name' => 'إلغاء اجتماع', 'module' => 'meetings', 'description' => 'Cancel draft, scheduled, or in-progress meetings'],
             ['name' => 'meetings.manage_attendees', 'display_name' => 'إدارة حضور الاجتماع', 'module' => 'meetings', 'description' => 'Add/remove attendees and update attendance status'],
             ['name' => 'meetings.manage_minutes', 'display_name' => 'إدارة محضر الاجتماع', 'module' => 'meetings', 'description' => 'Update minutes and manage recommendations'],
+
+            ['name' => 'decisions.view', 'display_name' => 'عرض القرارات', 'module' => 'decisions', 'description' => 'List and view decisions and history'],
+            ['name' => 'decisions.create', 'display_name' => 'إنشاء قرار', 'module' => 'decisions', 'description' => 'Create standalone or recommendation-sourced decisions'],
+            ['name' => 'decisions.update', 'display_name' => 'تحديث قرار', 'module' => 'decisions', 'description' => 'Edit draft decisions; submit and cancel'],
+            ['name' => 'decisions.approve', 'display_name' => 'اعتماد قرار', 'module' => 'decisions', 'description' => 'Approve or return decisions to draft'],
+            ['name' => 'decisions.close', 'display_name' => 'إغلاق قرار', 'module' => 'decisions', 'description' => 'Close approved decisions'],
+            ['name' => 'decisions.delete', 'display_name' => 'حذف قرار', 'module' => 'decisions', 'description' => 'Hard-delete untouched draft decisions'],
 
             ['name' => 'dashboard.view', 'display_name' => 'عرض لوحة التحكم', 'module' => 'dashboard', 'description' => 'Access authenticated home'],
             ['name' => 'tenant_settings.view', 'display_name' => 'عرض إعدادات المنشأة', 'module' => 'tenant_settings', 'description' => 'View tenant settings'],
@@ -145,6 +153,12 @@ final class PermissionCatalog
                     'meetings.cancel',
                     'meetings.manage_attendees',
                     'meetings.manage_minutes',
+                    'decisions.view',
+                    'decisions.create',
+                    'decisions.update',
+                    'decisions.approve',
+                    'decisions.close',
+                    'decisions.delete',
                 ],
             ],
             'department_manager' => [
@@ -167,6 +181,10 @@ final class PermissionCatalog
                     'meetings.update',
                     'meetings.manage_attendees',
                     'meetings.manage_minutes',
+                    'decisions.view',
+                    'decisions.create',
+                    'decisions.update',
+                    'decisions.delete',
                 ],
             ],
             'supervisor' => [
@@ -194,6 +212,7 @@ final class PermissionCatalog
                     'positions.view',
                     'contracts.view',
                     'meetings.view',
+                    'decisions.view',
                 ],
             ],
             'read_only' => [

@@ -135,7 +135,7 @@ See [ADR-0007](../../10-decisions/ADR-0007-MEETING-AGENDA-AND-RECOMMENDATIONS.md
 - When meeting becomes `completed` or `cancelled`: recommendations become **immutable**.
 - On **complete**: any remaining `draft` recommendations are automatically set to `final` in the same transaction (so completed meetings expose finalized outcomes).
 - **No `decision_id`** column (Decisions own nullable unique `source_recommendation_id` — ADR-0008).
-- **Sprint 011:** Meetings details may show **إنشاء قرار** for final recommendations on completed meetings when `decisions.create` is held — conversion is owned by Decisions APIs, not Meetings writes.
+- **Sprint 011 implemented:** Meetings details show **إنشاء قرار** for final recommendations on completed meetings when `decisions.create` is held — conversion is owned by Decisions APIs, not Meetings writes.
 
 ## 12. Completion requirements
 
@@ -212,5 +212,5 @@ Every critical action listed in [API.md](API.md) / [TEST_PLAN.md](TEST_PLAN.md) 
 | Exact GM/DeptMgr permission seed map | Safe defaults in [PERMISSIONS.md](PERMISSIONS.md); refine at seed PR |
 | External attendees | Deferred |
 | Minutes amendments after complete | Deferred |
-| Decision conversion UX | Sprint 011 — specified ([07-decisions/UI.md](../07-decisions/UI.md)); Meetings shows إنشاء قرار |
+| Decision conversion UX | Sprint 011 — implemented ([07-decisions/UI.md](../07-decisions/UI.md)); Meetings shows إنشاء قرار |
 | `meeting_starting_soon` job timing | Notifications sprint |

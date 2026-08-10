@@ -1,6 +1,6 @@
 # Frontend Structure
 
-> **Status:** Approved — Auth (005) + Users/Roles RBAC UI (006) + Organization UI (007) + Employees (008) + Contracts (009) + Meetings (010) implemented; Decisions (011) specified
+> **Status:** Approved — Auth (005) + Users/Roles RBAC UI (006) + Organization UI (007) + Employees (008) + Contracts (009) + Meetings (010) + Decisions (011) implemented
 > **Last updated:** 2026-08-10
 
 ## Purpose
@@ -29,7 +29,7 @@ src/
 │   ├── employees/                # Sprint 008 — implemented
 │   ├── contracts/                # Sprint 009 — implemented
 │   ├── meetings/                 # Sprint 010 — implemented
-│   ├── decisions/
+│   ├── decisions/                # Sprint 011 — implemented
 │   ├── tasks/
 │   ├── documents/
 │   ├── warehouses/
@@ -90,9 +90,9 @@ A module may contain: pages, components, api, queries, mutations, types, validat
 - Full UI contract: [06-meetings/UI.md](../09-modules/06-meetings/UI.md).
 - Sprint 011 adds Meetings details CTA **إنشاء قرار** for eligible final recommendations (`decisions.create`) — see [07-decisions/UI.md](../09-modules/07-decisions/UI.md).
 
-### Decisions (Sprint 011 — specified)
+### Decisions (Sprint 011 — implemented)
 
-- Planned: `src/modules/decisions/` — routes `/app/decisions` (+ `/app/decisions/:id`); sidebar **القرارات** (`decisions.view`).
+- `src/modules/decisions/` — routes `/app/decisions` (+ `/app/decisions/:id`); sidebar **القرارات** (`decisions.view`).
 - List + drawer; details with source recommendation/meeting + status timeline; lifecycle confirms.
 - Full UI contract: [07-decisions/UI.md](../09-modules/07-decisions/UI.md).
 

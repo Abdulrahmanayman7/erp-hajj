@@ -45,6 +45,11 @@ export interface MeetingRecommendation {
   agenda_item_id: number | null
   owner: MeetingEmployeeSummary | null
   created_by: MeetingActorSummary | null
+  linked_decision?: {
+    id: number
+    decision_number: string
+    status: string
+  } | null
 }
 
 export interface MeetingTransition {
