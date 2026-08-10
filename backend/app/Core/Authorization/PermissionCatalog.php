@@ -20,6 +20,7 @@ final class PermissionCatalog
         'meetings' => 'الاجتماعات',
         'decisions' => 'القرارات',
         'tasks' => 'المهام',
+        'documents' => 'الوثائق',
         'dashboard' => 'لوحة التحكم',
         'tenant_settings' => 'إعدادات المنشأة',
     ];
@@ -93,6 +94,14 @@ final class PermissionCatalog
             ['name' => 'tasks.change_status', 'display_name' => 'تغيير حالة المهمة', 'module' => 'tasks', 'description' => 'Start, cancel, and update task progress'],
             ['name' => 'tasks.complete', 'display_name' => 'إكمال مهمة', 'module' => 'tasks', 'description' => 'Complete tasks with completion notes'],
             ['name' => 'tasks.delete', 'display_name' => 'حذف مهمة', 'module' => 'tasks', 'description' => 'Hard-delete untouched draft tasks'],
+
+            ['name' => 'documents.view', 'display_name' => 'عرض الوثائق', 'module' => 'documents', 'description' => 'List and view document metadata'],
+            ['name' => 'documents.upload', 'display_name' => 'رفع مستند', 'module' => 'documents', 'description' => 'Upload documents and optional initial link'],
+            ['name' => 'documents.download', 'display_name' => 'تنزيل مستند', 'module' => 'documents', 'description' => 'Download document file bytes'],
+            ['name' => 'documents.update', 'display_name' => 'تحديث مستند', 'module' => 'documents', 'description' => 'Update metadata and link'],
+            ['name' => 'documents.archive', 'display_name' => 'أرشفة/استعادة مستند', 'module' => 'documents', 'description' => 'Archive and restore documents'],
+            ['name' => 'documents.delete', 'display_name' => 'حذف مستند', 'module' => 'documents', 'description' => 'Hard-delete document metadata and file'],
+            ['name' => 'documents.manage_categories', 'display_name' => 'إدارة تصنيفات الوثائق', 'module' => 'documents', 'description' => 'CRUD document categories'],
 
             ['name' => 'dashboard.view', 'display_name' => 'عرض لوحة التحكم', 'module' => 'dashboard', 'description' => 'Access authenticated home'],
             ['name' => 'tenant_settings.view', 'display_name' => 'عرض إعدادات المنشأة', 'module' => 'tenant_settings', 'description' => 'View tenant settings'],
@@ -175,6 +184,13 @@ final class PermissionCatalog
                     'tasks.change_status',
                     'tasks.complete',
                     'tasks.delete',
+                    'documents.view',
+                    'documents.upload',
+                    'documents.download',
+                    'documents.update',
+                    'documents.archive',
+                    'documents.delete',
+                    'documents.manage_categories',
                 ],
             ],
             'department_manager' => [
@@ -208,6 +224,12 @@ final class PermissionCatalog
                     'tasks.change_status',
                     'tasks.complete',
                     'tasks.delete',
+                    'documents.view',
+                    'documents.upload',
+                    'documents.download',
+                    'documents.update',
+                    'documents.archive',
+                    'documents.manage_categories',
                 ],
             ],
             'supervisor' => [
@@ -217,6 +239,8 @@ final class PermissionCatalog
                     'dashboard.view',
                     'employees.view',
                     'tasks.view',
+                    'documents.view',
+                    'documents.download',
                 ],
             ],
             'employee' => [
@@ -225,6 +249,8 @@ final class PermissionCatalog
                 'permissions' => [
                     'dashboard.view',
                     'tasks.view',
+                    'documents.view',
+                    'documents.download',
                 ],
             ],
             'auditor' => [
@@ -241,6 +267,8 @@ final class PermissionCatalog
                     'meetings.view',
                     'decisions.view',
                     'tasks.view',
+                    'documents.view',
+                    'documents.download',
                 ],
             ],
             'read_only' => [

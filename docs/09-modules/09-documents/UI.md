@@ -1,7 +1,7 @@
 # Documents — UI
 
-> **Status:** Specified (Sprint 013) — **not implemented**  
-> **Last updated:** 2026-08-10  
+> **Status:** Implemented (Sprint 013)  
+> **Last updated:** 2026-08-11  
 > Shell: existing AppSidebar / RTL layout — **do not redesign**.
 
 ## Module placement

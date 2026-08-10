@@ -5,6 +5,7 @@ import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { ArrowRight, Pencil } from 'lucide-vue-next'
 import { useCurrentUserQuery } from '@/modules/auth/queries/useCurrentUserQuery'
 import { useDecisionsQuery } from '@/modules/decisions/queries/useDecisionsQuery'
+import EntityDocumentsSection from '@/modules/documents/components/EntityDocumentsSection.vue'
 import { useEmployeesQuery } from '@/modules/employees/queries/useEmployeesQuery'
 import { useOrganizationUnitsFlatQuery } from '@/modules/organization/queries/useOrganizationUnitsQuery'
 import type { AppSelectOption } from '@/shared/components/AppSelect.vue'
@@ -133,6 +134,12 @@ async function save(): Promise<void> {
       </section>
 
       <TaskTimeline :transitions="task.status_transitions ?? []" :assignments="task.assignment_history ?? []" />
+
+      <EntityDocumentsSection
+        linkable-type="task"
+        :linkable-id="task.id"
+        :link-label="`${task.task_number} — ${task.title}`"
+      />
     </template>
 
     <TaskFormDrawer :open="open" :editing="task" :form="form" :form-error="error" :field-errors="errors" :submitting="update.isPending.value" :employee-options="employeeOptions" :org-unit-options="orgOptions" :decision-options="decisionOptions" @close="open = false" @submit="save" @update:form="Object.assign(form, $event)" />

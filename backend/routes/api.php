@@ -8,6 +8,8 @@ use App\Modules\Authorization\Controllers\RoleController;
 use App\Modules\Contracts\Controllers\ContractCategoryController;
 use App\Modules\Contracts\Controllers\ContractController;
 use App\Modules\Decisions\Controllers\DecisionController;
+use App\Modules\Documents\Controllers\DocumentCategoryController;
+use App\Modules\Documents\Controllers\DocumentController;
 use App\Modules\Employees\Controllers\EmployeeController;
 use App\Modules\Employees\Controllers\PositionController;
 use App\Modules\Meetings\Controllers\MeetingAgendaItemController;
@@ -153,6 +155,20 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
             Route::put('/tasks/{task}/progress', [TaskController::class, 'progress'])->name('tasks.progress');
             Route::post('/tasks/{task}/complete', [TaskController::class, 'complete'])->name('tasks.complete');
             Route::post('/tasks/{task}/cancel', [TaskController::class, 'cancel'])->name('tasks.cancel');
+
+            Route::get('/documents', [DocumentController::class, 'index'])->name('documents.index');
+            Route::post('/documents', [DocumentController::class, 'store'])->name('documents.store');
+            Route::get('/documents/{document}', [DocumentController::class, 'show'])->name('documents.show');
+            Route::patch('/documents/{document}', [DocumentController::class, 'update'])->name('documents.update');
+            Route::get('/documents/{document}/download', [DocumentController::class, 'download'])->name('documents.download');
+            Route::post('/documents/{document}/archive', [DocumentController::class, 'archive'])->name('documents.archive');
+            Route::post('/documents/{document}/restore', [DocumentController::class, 'restore'])->name('documents.restore');
+            Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');
+
+            Route::get('/document-categories', [DocumentCategoryController::class, 'index'])->name('document-categories.index');
+            Route::post('/document-categories', [DocumentCategoryController::class, 'store'])->name('document-categories.store');
+            Route::patch('/document-categories/{document_category}', [DocumentCategoryController::class, 'update'])->name('document-categories.update');
+            Route::delete('/document-categories/{document_category}', [DocumentCategoryController::class, 'destroy'])->name('document-categories.destroy');
         });
     });
 });

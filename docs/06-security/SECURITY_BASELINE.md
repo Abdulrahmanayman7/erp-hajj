@@ -87,6 +87,7 @@ No formal compliance certification is claimed. **Saudi PDPL (نظام حماية
 ## TBD
 
 - Production mail provider (password-reset delivery).
-- Malware scanner selection: TBD (Documents Sprint 013 defines validation boundary only — ADR-0010).
+- Malware scanner selection: TBD (Documents Sprint 013 enforces MIME/extension/size + private storage + authz; product scanner deferred — ADR-0010).
+- Private document downloads: authorized streamed API only (`documents.download`); no public disk URLs (Sprint 013 implemented).
 - Secure header set finalization: TBD at deployment.
 - Whether disabled-account login should collapse into generic invalid-credentials for stronger anti-enumeration (current auth spec returns `AUTH_ACCOUNT_DISABLED` after successful password verify) — Change Request only.

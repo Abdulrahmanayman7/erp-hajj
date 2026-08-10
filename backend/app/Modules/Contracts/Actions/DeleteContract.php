@@ -9,6 +9,8 @@ use App\Models\User;
 use App\Modules\Contracts\Models\Contract;
 use App\Modules\Contracts\Models\ContractStatusTransition;
 use App\Modules\Contracts\Support\ContractReferenceValidator;
+use App\Modules\Documents\Enums\DocumentLinkableType;
+use App\Modules\Documents\Support\DocumentReferenceValidator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -17,6 +19,7 @@ final class DeleteContract
     public function __construct(
         private readonly TenantContext $tenantContext,
         private readonly ContractReferenceValidator $references,
+        private readonly DocumentReferenceValidator $documents,
         private readonly AuthorizationSecurity $security,
     ) {}
 
@@ -27,6 +30,7 @@ final class DeleteContract
         DB::transaction(function () use ($actor, $contract, $request, $tenant): void {
             $locked = Contract::query()->whereKey($contract->id)->lockForUpdate()->firstOrFail();
             $this->references->assertDeletableDraft($locked);
+            $this->documents->assertNoDocumentsLinked(DocumentLinkableType::Contract, (int) $locked->id);
 
             $snapshot = [
                 'id' => $locked->id,

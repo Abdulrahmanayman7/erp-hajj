@@ -175,7 +175,7 @@ describe('list column and status labels', () => {
     expect(ar.contracts.categoriesLink).toBe('تصنيفات العقود')
     expect(ar.contracts.expiringSoonBadge).toBe('ينتهي قريبًا')
     expect(ar.contracts.systemActor).toBe('النظام')
-    expect(ar.contracts.attachmentsPlaceholder).toBe('المرفقات ستتوفر مع وحدة المستندات')
+    expect(ar.documents.entitySection.title).toBe('المستندات')
     expect(ar.nav.contracts).toBe('العقود')
   })
 })

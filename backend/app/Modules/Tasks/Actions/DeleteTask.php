@@ -6,6 +6,8 @@ use App\Core\Authorization\Events\AuthorizationSecurityEvent;
 use App\Core\Authorization\Support\AuthorizationSecurity;
 use App\Core\Tenancy\TenantContext;
 use App\Models\User;
+use App\Modules\Documents\Enums\DocumentLinkableType;
+use App\Modules\Documents\Support\DocumentReferenceValidator;
 use App\Modules\Tasks\Models\Task;
 use App\Modules\Tasks\Support\TaskReferenceValidator;
 use Illuminate\Http\Request;
@@ -16,6 +18,7 @@ final class DeleteTask
     public function __construct(
         private readonly TenantContext $tenantContext,
         private readonly TaskReferenceValidator $references,
+        private readonly DocumentReferenceValidator $documents,
         private readonly AuthorizationSecurity $security,
     ) {}
 
@@ -26,6 +29,7 @@ final class DeleteTask
         DB::transaction(function () use ($actor, $task, $request, $tenant): void {
             $locked = Task::query()->whereKey($task->id)->lockForUpdate()->firstOrFail();
             $this->references->assertDeletableDraft($locked);
+            $this->documents->assertNoDocumentsLinked(DocumentLinkableType::Task, (int) $locked->id);
 
             $snapshot = [
                 'id' => $locked->id,

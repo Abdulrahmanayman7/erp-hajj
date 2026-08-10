@@ -186,9 +186,7 @@ describe('list column and status labels', () => {
     expect(ar.meetings.upcomingBadge).toBe('قادم')
     expect(ar.meetings.todayBadge).toBe('اليوم')
     expect(ar.meetings.meetingNumberPlaceholder).toBe('يُولَّد تلقائياً')
-    expect(ar.meetings.attachmentsPlaceholder).toBe(
-      'المرفقات ستتوفر مع وحدة المستندات',
-    )
+    expect(ar.documents.entitySection.title).toBe('المستندات')
     expect(ar.meetings.systemActor).toBe('النظام')
     expect(ar.nav.meetings).toBe('الاجتماعات')
   })
@@ -199,6 +197,5 @@ describe('list column and status labels', () => {
     expect(ar.meetings.sections.agenda).toBe('جدول الأعمال')
     expect(ar.meetings.sections.minutes).toBe('المحضر')
     expect(ar.meetings.sections.recommendations).toBe('التوصيات')
-    expect(ar.meetings.sections.attachments).toBe('المرفقات')
   })
 })

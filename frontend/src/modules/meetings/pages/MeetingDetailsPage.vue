@@ -5,6 +5,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ArrowRight, Pencil } from 'lucide-vue-next'
 
 import { useEmployeesQuery } from '@/modules/employees/queries/useEmployeesQuery'
+import EntityDocumentsSection from '@/modules/documents/components/EntityDocumentsSection.vue'
 import { useOrganizationUnitsFlatQuery } from '@/modules/organization/queries/useOrganizationUnitsQuery'
 import { ApiError } from '@/shared/api/http'
 import type { AppSelectOption } from '@/shared/components/AppSelect.vue'
@@ -373,14 +374,11 @@ async function onRefreshed(): Promise<void> {
         @refreshed="onRefreshed"
       />
 
-      <div
-        class="rounded-2xl border border-dashed border-brand-border bg-[#F7F8F6] p-5 text-sm text-brand-text-muted"
-      >
-        <p class="text-xs font-bold text-brand-text-muted">
-          {{ t('meetings.sections.attachments') }}
-        </p>
-        <p class="mt-1.5">{{ t('meetings.attachmentsPlaceholder') }}</p>
-      </div>
+      <EntityDocumentsSection
+        linkable-type="meeting"
+        :linkable-id="meeting.id"
+        :link-label="`${meeting.meeting_number} — ${meeting.title}`"
+      />
     </template>
 
     <MeetingFormDrawer

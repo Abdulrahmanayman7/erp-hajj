@@ -1,6 +1,6 @@
 # Frontend Structure
 
-> **Status:** Approved — Auth (005) + Users/Roles RBAC UI (006) + Organization UI (007) + Employees (008) + Contracts (009) + Meetings (010) + Decisions (011) implemented; Tasks (012) specified
+> **Status:** Approved — Auth (005) + Users/Roles RBAC UI (006) + Organization UI (007) + Employees (008) + Contracts (009) + Meetings (010) + Decisions (011) + Tasks (012) + Documents (013) implemented
 > **Last updated:** 2026-08-10
 
 ## Purpose
@@ -31,7 +31,7 @@ src/
 │   ├── meetings/                 # Sprint 010 — implemented
 │   ├── decisions/                # Sprint 011 — implemented
 │   ├── tasks/                    # Sprint 012 — implemented
-│   ├── documents/                # Sprint 013 — specified
+│   ├── documents/                # Sprint 013 — implemented
 │   ├── warehouses/
 │   ├── inventory/
 │   ├── assets/
@@ -104,9 +104,9 @@ A module may contain: pages, components, api, queries, mutations, types, validat
 - Auth `/me` exposes optional `employee_id` for assignee self-service UX (ADR-0009).
 - Full UI contract: [08-tasks/UI.md](../09-modules/08-tasks/UI.md).
 
-### Documents (Sprint 013 — specified)
+### Documents (Sprint 013 — implemented)
 
-- Planned: `src/modules/documents/` — routes `/app/documents` (+ `/app/documents/:id`); sidebar **الوثائق** (`documents.view`).
+- `src/modules/documents/` — routes `/app/documents` (+ `/app/documents/:id`); sidebar **الوثائق** (`documents.view`).
 - Upload drawer; categories; entity **المستندات** widgets on Contracts/Meetings/Decisions/Tasks/Employees/Organization Units.
 - Full UI contract: [09-documents/UI.md](../09-modules/09-documents/UI.md); ADR-0010.
 

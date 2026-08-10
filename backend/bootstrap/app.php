@@ -9,6 +9,7 @@ use App\Core\Tenancy\Middleware\EnsureTenantIsActive;
 use App\Core\Tenancy\Middleware\ResolveTenantContext;
 use App\Modules\Contracts\Exceptions\ContractDomainException;
 use App\Modules\Decisions\Exceptions\DecisionDomainException;
+use App\Modules\Documents\Exceptions\DocumentDomainException;
 use App\Modules\Employees\Exceptions\EmployeeDomainException;
 use App\Modules\Meetings\Exceptions\MeetingDomainException;
 use App\Modules\OrganizationStructure\Exceptions\OrganizationDomainException;
@@ -90,6 +91,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(fn (MeetingDomainException $e): JsonResponse => $e->render());
         $exceptions->render(fn (DecisionDomainException $e): JsonResponse => $e->render());
         $exceptions->render(fn (TaskDomainException $e): JsonResponse => $e->render());
+        $exceptions->render(fn (DocumentDomainException $e): JsonResponse => $e->render());
 
         $exceptions->render(function (AuthorizationException $e, Request $request): ?JsonResponse {
             if (! $request->is('api/*')) {

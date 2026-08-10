@@ -5,6 +5,7 @@ import {
   Briefcase,
   ChevronLeft,
   ChevronRight,
+  FileText,
   Link2,
   Pencil,
   Plus,
@@ -14,6 +15,7 @@ import {
   UserX,
 } from 'lucide-vue-next'
 
+import EntityDocumentsSection from '@/modules/documents/components/EntityDocumentsSection.vue'
 import { useOrganizationUnitsFlatQuery } from '@/modules/organization/queries/useOrganizationUnitsQuery'
 import { listUsers } from '@/modules/users/api/usersApi'
 import { ApiError } from '@/shared/api/http'
@@ -107,6 +109,7 @@ const listState = computed(() =>
 
 const drawerOpen = ref(false)
 const editing = ref<Employee | null>(null)
+const docsTarget = ref<Employee | null>(null)
 const formError = ref('')
 const fieldErrors = reactive<Record<string, string>>({})
 const form = reactive<EmployeeFormState>({
@@ -674,6 +677,18 @@ async function unlinkUser(): Promise<void> {
                 class="border-b border-brand-border/80 px-5 py-3.5 text-center group-hover:bg-[#EEF2F0]"
               >
                 <div class="inline-flex items-center justify-center gap-0.5">
+                  <PermissionGuard permission="documents.view">
+                    <AppTooltip :text="t('documents.entitySection.title')">
+                      <button
+                        type="button"
+                        class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-brand-text-secondary transition hover:bg-brand-bg"
+                        :aria-label="t('documents.entitySection.title')"
+                        @click="docsTarget = employee"
+                      >
+                        <FileText class="h-4 w-4" :stroke-width="2" />
+                      </button>
+                    </AppTooltip>
+                  </PermissionGuard>
                   <PermissionGuard permission="employees.update">
                     <AppTooltip :text="t('employees.actions.edit')">
                       <button
@@ -768,6 +783,14 @@ async function unlinkUser(): Promise<void> {
         </button>
       </div>
     </div>
+
+    <EntityDocumentsSection
+      v-if="docsTarget"
+      class="mt-2"
+      linkable-type="employee"
+      :linkable-id="docsTarget.id"
+      :link-label="`${docsTarget.employee_number} — ${docsTarget.full_name}`"
+    />
 
     <EmployeeFormDrawer
       :open="drawerOpen"
