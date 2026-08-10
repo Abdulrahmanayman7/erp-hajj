@@ -142,7 +142,7 @@ No updates/deletes via API. Sign attestation is a normal `approved → signed` r
 
 ## Future Documents link
 
-Documents sprint should attach files to contracts without altering core columns — e.g. polymorphic `documentables` (`documentable_type=Contract`, `documentable_id`) or `documents.contract_id`. Sprint 009 leaves a documented extension point only.
+**Owned by Sprint 013** ([ADR-0010](../../10-decisions/ADR-0010-DOCUMENT-STORAGE-AND-ENTITY-LINKS.md)): Documents table carries optional morph `linkable_type=contract` + `linkable_id`. No `documents.contract_id` column on Contracts. Hard-delete of a Contract must be blocked while Documents remain linked (implementation guard).
 
 ## Rollout impact
 

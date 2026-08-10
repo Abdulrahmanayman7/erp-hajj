@@ -65,7 +65,7 @@ Exact default role grants: [PERMISSIONS.md](PERMISSIONS.md).
 | Categories | Tenant-owned catalog active/inactive; unused hard-delete only (ADR-0006) | [DATA_MODEL.md](DATA_MODEL.md) |
 | Numbering | `CTR-000001…`, sequence + `FOR UPDATE`, immutable | [DATA_MODEL.md](DATA_MODEL.md) |
 | Party | Counterparty free-text + optional employee link; tenant is implicit first party | [BUSINESS_RULES.md](BUSINESS_RULES.md) |
-| Attachments | Deferred to Documents sprint | [BUSINESS_RULES.md](BUSINESS_RULES.md) |
+| Attachments | Deferred to Documents sprint (013 specified — ADR-0010); placeholder until Documents implementation | [BUSINESS_RULES.md](BUSINESS_RULES.md) |
 | Transition history | `contract_status_transitions` authoritative (incl. correlation ID) | [BUSINESS_RULES.md](BUSINESS_RULES.md) |
 | Sign | Manual attestation only — not e-sign | [BUSINESS_RULES.md](BUSINESS_RULES.md) |
 | Renewal | One direct child; transactional; unique `renewed_from_contract_id` | [BUSINESS_RULES.md](BUSINESS_RULES.md) |

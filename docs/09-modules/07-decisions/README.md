@@ -21,7 +21,7 @@ Sprint 011 implements **Decisions only**. Tasks remain a future module. A Decisi
 | **Employee** | Issuer / responsible personnel identity | Employees |
 | **User** | Authenticated actor (`created_by`, transition actor) | Users & Authorization |
 | **OrganizationUnit** | Optional responsible unit | Organization Structure |
-| **Document** | Attachments | Documents (later) |
+| **Document** | Attachments | Documents (Sprint 013 — specified; ADR-0010) |
 | **Notification** | Delivery of approval / status alerts | Notifications (later) |
 
 Do **not** treat a recommendation as automatically approved. Do **not** create Task rows in Sprint 011. Do **not** store `decision_id` on `meeting_recommendations` — Decisions owns `source_recommendation_id`.

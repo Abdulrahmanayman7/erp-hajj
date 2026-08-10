@@ -179,8 +179,8 @@ Supersedes earlier stub wording about “privileged delete of completed meetings
 ## 15. Documents
 
 - No upload/download in Sprint 010.
-- Future: meeting / agenda / minutes attachments via Documents module.
-- UI may show placeholder: المرفقات ستتوفر مع وحدة المستندات.
+- **Sprint 013 owns** file infrastructure ([09-documents/](../09-documents/), ADR-0010): morph alias `meeting`.
+- UI placeholder المرفقات ستتوفر مع وحدة المستندات remains until Documents implementation replaces it with **المستندات**.
 
 ## 16. Notifications (hooks only)
 

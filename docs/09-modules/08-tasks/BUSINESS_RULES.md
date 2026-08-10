@@ -183,8 +183,10 @@ Update Decisions module docs/tests at implementation time (spec lock here + ADR-
 
 ## 14. Documents
 
-1. No attachments in Sprint 012.
-2. Future Documents may link polymorphically to Task — document only; UI may show a disabled “المرفقات — قريباً” note only if needed; prefer **omit** upload UI.
+1. No attachments in Sprint 012 (measurement remains `completion_notes`).
+2. **Sprint 013 owns** file infrastructure ([09-documents/](../09-documents/), ADR-0010): optional morph alias `task`.
+3. At Documents implementation: Task details gain **المستندات**; until then omit upload UI.
+4. Completing a Task never requires Documents.
 
 ## 15. Notifications (hooks only)
 

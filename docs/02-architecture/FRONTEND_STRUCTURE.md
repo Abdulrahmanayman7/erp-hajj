@@ -31,7 +31,7 @@ src/
 │   ├── meetings/                 # Sprint 010 — implemented
 │   ├── decisions/                # Sprint 011 — implemented
 │   ├── tasks/                    # Sprint 012 — implemented
-│   ├── documents/
+│   ├── documents/                # Sprint 013 — specified
 │   ├── warehouses/
 │   ├── inventory/
 │   ├── assets/
@@ -103,6 +103,12 @@ A module may contain: pages, components, api, queries, mutations, types, validat
 - List + drawer; مهامي filter; overdue badge; lifecycle/assign/complete; Decision-linked create.
 - Auth `/me` exposes optional `employee_id` for assignee self-service UX (ADR-0009).
 - Full UI contract: [08-tasks/UI.md](../09-modules/08-tasks/UI.md).
+
+### Documents (Sprint 013 — specified)
+
+- Planned: `src/modules/documents/` — routes `/app/documents` (+ `/app/documents/:id`); sidebar **الوثائق** (`documents.view`).
+- Upload drawer; categories; entity **المستندات** widgets on Contracts/Meetings/Decisions/Tasks/Employees/Organization Units.
+- Full UI contract: [09-documents/UI.md](../09-modules/09-documents/UI.md); ADR-0010.
 
 ## Rules
 

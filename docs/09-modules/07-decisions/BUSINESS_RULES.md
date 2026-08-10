@@ -144,7 +144,8 @@ Statuses:
 ## 12. Documents
 
 1. No attachments in Sprint 011.
-2. Future Documents module may link via polymorphic / `decision_id` — document only; do not add upload placeholders.
+2. **Sprint 013 owns** file infrastructure ([09-documents/](../09-documents/), ADR-0010): optional morph alias `decision`.
+3. At Documents implementation: Decision details gain **المستندات** section; until then prefer omit upload UI (no fake placeholders required).
 
 ## 13. Notifications (hooks only)
 
