@@ -1,7 +1,5 @@
 export type UserStatus = 'active' | 'disabled'
 
-export type AvatarGroup = 'male' | 'female' | 'neutral'
-
 export type TenantStatus = 'pending' | 'active' | 'suspended' | 'archived'
 
 export interface AuthTenant {
@@ -13,24 +11,13 @@ export interface AuthTenant {
   timezone: string
 }
 
-export interface AuthRole {
-  id: number
-  code: string
-  name: string
-}
-
 export interface AuthUser {
   id: number
   name: string
   email: string
   status: UserStatus
-  avatar_group?: AvatarGroup
   is_platform_user: boolean
-  /** Linked Employee id when User↔Employee is set; null/omitted otherwise. */
-  employee_id?: number | null
   tenant: AuthTenant | null
-  roles: AuthRole[]
-  permissions: string[]
 }
 
 export interface LoginPayload {

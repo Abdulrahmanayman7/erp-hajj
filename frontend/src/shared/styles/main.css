@@ -1,53 +1,6 @@
 @import "tailwindcss";
 
-@theme {
-  --color-brand-primary-dark: #064e3b;
-  --color-brand-primary: #076b52;
-  --color-brand-primary-soft: #eaf4f0;
-  --color-brand-gold: #c6a15b;
-  --color-brand-gold-soft: #f7f1e5;
-  --color-brand-bg: #f7f8f6;
-  --color-brand-surface: #ffffff;
-  --color-brand-border: #e5e8e4;
-  --color-brand-text: #17201d;
-  --color-brand-text-secondary: #66736e;
-  --color-brand-text-muted: #98a19d;
-  --color-brand-danger: #c53d3d;
-  --color-brand-warning: #c58b27;
-  --color-brand-success: #16835b;
-  --font-sans: "Cairo", "Segoe UI", Tahoma, Arial, sans-serif;
-}
-
+/* Arabic-first font stack; final Arabic typeface is TBD (docs/05-ui-ux/DESIGN_GUIDELINES.md) */
 body {
-  font-family: var(--font-sans);
-  color: var(--color-brand-text);
-  background-color: var(--color-brand-bg);
-}
-
-/* Keep login fields clean under browser autofill (avoid bright yellow wash). */
-.login-field:-webkit-autofill,
-.login-field:-webkit-autofill:hover,
-.login-field:-webkit-autofill:focus {
-  -webkit-text-fill-color: #17352e;
-  caret-color: #17352e;
-  box-shadow: 0 0 0 1000px #ffffff inset;
-  transition: background-color 99999s ease-in-out 0s;
-}
-
-.login-checkbox:checked {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='white' stroke-width='2'%3E%3Cpath d='M3.5 8.5 6.5 11.5 12.5 4.5'/%3E%3C/svg%3E");
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: 12px 12px;
-}
-
-@keyframes login-enter {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  font-family: "Segoe UI", Tahoma, Arial, sans-serif;
 }

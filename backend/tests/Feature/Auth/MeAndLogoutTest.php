@@ -22,10 +22,9 @@ test('me returns tenant user profile', function (): void {
         ->assertJsonPath('data.status', 'active')
         ->assertJsonPath('data.is_platform_user', false)
         ->assertJsonPath('data.tenant.id', $tenant->id)
-        ->assertJsonPath('data.roles', [])
-        ->assertJsonPath('data.permissions', [])
         ->assertJsonMissingPath('data.password')
-        ->assertJsonMissingPath('data.remember_token');
+        ->assertJsonMissingPath('data.remember_token')
+        ->assertJsonMissingPath('data.permissions');
 });
 
 test('me returns platform user profile', function (): void {
@@ -36,22 +35,7 @@ test('me returns platform user profile', function (): void {
     $this->getJson('/api/v1/auth/me')
         ->assertOk()
         ->assertJsonPath('data.is_platform_user', true)
-        ->assertJsonPath('data.tenant', null)
-        ->assertJsonPath('data.roles', [])
-        ->assertJsonPath('data.permissions', []);
-});
-
-test('me returns roles and permissions for owner', function (): void {
-    $owner = actingAsTenantOwner();
-
-    $response = $this->getJson('/api/v1/auth/me')
-        ->assertOk()
-        ->assertJsonPath('data.id', $owner->id);
-
-    $permissions = $response->json('data.permissions');
-    expect($permissions)->toBeArray()->not->toBeEmpty();
-    expect($permissions)->toBe(collect($permissions)->sort()->values()->all());
-    expect($response->json('data.roles.0.code'))->toBe('tenant_owner');
+        ->assertJsonPath('data.tenant', null);
 });
 
 test('me unauthenticated returns AUTH_UNAUTHENTICATED', function (): void {

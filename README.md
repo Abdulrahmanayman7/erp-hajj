@@ -1,8 +1,7 @@
 # ERP Hajj
 
-> **Status:** Tenant Foundation (004) through Assets & Custodies (015) implemented. Sprint 016 Notifications **specified** (implementation pending). Next: Notifications implementation / Settings / remaining MVP modules.
->
-> **Last updated:** 2026-08-11
+> **Status:** Tenant Foundation (Sprint 004) and Authentication vertical slice (Sprint 005) implemented. No RBAC or business modules yet.
+> **Last updated:** 2026-08-08
 
 ## Project Purpose
 
@@ -89,30 +88,6 @@ npm run dev
 **Verify:** open `http://localhost:5173` — the system status page should show a successful call to `GET /api/v1/health`.
 
 **Quality checks:** backend `php artisan test` and `./vendor/bin/pint --test`; frontend `npm run test`, `npm run type-check`, `npm run build`. The same checks run in CI (`.github/workflows/ci.yml`) on every push/PR to `develop` and `main`.
-
-### Bootstrap first Tenant Owner (operational)
-
-After `migrate` + `db:seed`, the first tenant (`rafee` / رفيع) has default **roles** but may have **no users**. Without an active Tenant Owner, the SPA admin UI cannot manage RBAC.
-
-Use the CLI-only bootstrap command (no HTTP endpoint, no default credentials):
-
-```bash
-cd backend
-php artisan tenant:bootstrap-owner
-```
-
-Interactive prompts: tenant code (default `rafee`), name, email, hidden password + confirmation. Works for any tenant code — not hardcoded to `rafee`.
-
-Rules:
-
-- Rejects archived and suspended tenants (does not change tenant status).
-- Pending and active tenants may be bootstrapped.
-- If an active Owner already exists, requires explicit confirmation (default **no**).
-- Existing same-tenant users can receive `tenant_owner` without password overwrite (after confirmation).
-- Platform users and emails belonging to another tenant are rejected.
-- Password is never accepted as a CLI flag (avoids shell history leakage).
-
-Optional non-secret flags: `--tenant=`, `--name=`, `--email=`, `--force`, `--assign-existing`.
 
 ## Git Workflow
 

@@ -1,7 +1,7 @@
 # Database Principles
 
-> **Status:** Approved — includes the binding tenancy database strategy; business migrations do not exist yet (Sprint 007 org units specified)
-> **Last updated:** 2026-08-11
+> **Status:** Approved — includes the binding tenancy database strategy; business migrations do not exist yet
+> **Last updated:** 2026-08-06
 
 ## Purpose
 
@@ -35,7 +35,6 @@ Single database, shared schema. Every table is classified as **platform** or **t
 | `cache`, `cache_locks` | Key-value infrastructure; isolation is by key prefix `tenant:{id}:` through the shared namespace helper (MULTI_TENANCY §10). |
 | `migrations` | Framework bookkeeping. |
 | `audit_logs` | **Hybrid**: carries a **nullable** `tenant_id` — tenant actions record their tenant; platform events may record `NULL`; **platform access affecting a tenant writes the target tenant's id**. Append-only. Kept as one table so platform actions against a tenant appear in that tenant's audit view (see [AUDIT_TRAIL.md](../06-security/AUDIT_TRAIL.md)). |
-| `permissions` | **Platform catalog** (Sprint 006): code-defined capabilities (`module.action`); no `tenant_id` so vocabulary cannot drift per tenant. Justified in [02-users-and-authorization/DATA_MODEL.md](../09-modules/02-users-and-authorization/DATA_MODEL.md). |
 
 Any new platform table must be justified the same way in its module's `DATA_MODEL.md` and in the PR.
 
@@ -44,9 +43,7 @@ Any new platform table must be justified the same way in its module's `DATA_MODE
 - Carry `tenant_id BIGINT UNSIGNED NOT NULL`, FK → `tenants.id` `ON DELETE RESTRICT`; **`tenant_id` is immutable after record creation**.
 - Model implements the `TenantOwned` contract and uses the `UsesTenantScope` trait — no exceptions.
 - First tenant-owned table: `tenant_settings` (see [00-tenancy/DATA_MODEL.md](../09-modules/00-tenancy/DATA_MODEL.md)).
-- **Implemented tenant-owned tables:** `roles`, `user_roles`, `role_permissions` (Sprint 006); `organization_units` (Sprint 007 — see [03-organization-structure/DATA_MODEL.md](../09-modules/03-organization-structure/DATA_MODEL.md); ADR-0004).
-- **Planned tenant-owned tables** (each specified in its module's `DATA_MODEL.md` when designed): `positions`, `employees` (Sprint 008 — implemented; ADR-0005), `contract_categories`, `contracts`, `contract_status_transitions`, `contract_number_sequences` (Sprint 009 — implemented; ADR-0006), `meetings`, `meeting_*` (Sprint 010 — implemented; ADR-0007), `decision_number_sequences`, `decisions`, `decision_status_transitions` (Sprint 011 — implemented; ADR-0008), `task_number_sequences`, `tasks`, `task_status_transitions`, `task_assignment_history` (Sprint 012 — implemented; ADR-0009), `document_number_sequences`, `document_categories`, `documents` (Sprint 013 — implemented; ADR-0010), `warehouse_number_sequences`, `warehouses`, `inventory_item_number_sequences`, `inventory_categories`, `inventory_items`, `inventory_balances`, `inventory_movements`, `inventory_movement_number_sequences` (Sprint 014 — **implemented**, ADR-0011), `asset_number_sequences`, `asset_categories`, `assets`, `asset_status_transitions`, `asset_custody_number_sequences`, `asset_custodies` (Sprint 015 — **implemented**, ADR-0012), `notifications` (Sprint 016 — **specified**, ADR-0013; implementation pending), `tenant_settings`.
-- **Platform catalog (Sprint 006):** `permissions` — global, no `tenant_id`; justified because capabilities are code-defined and must not drift per tenant.
+- **Planned tenant-owned tables** (each specified in its module's `DATA_MODEL.md` when designed): `roles` (where tenant-owned), role assignments, `organizational_units`, `positions`, `employees`, `contracts`, `meetings`, `decisions`, `tasks`, `documents`, `warehouses`, `inventory_items`, `inventory_transactions`, `assets`, `custodies`, `notifications`, `tenant_settings`.
 
 ### Indexes on tenant-owned tables
 
@@ -79,10 +76,10 @@ Any new platform table must be justified the same way in its module's `DATA_MODE
 ## Auditability and Deletion
 
 - Standard timestamps (`created_at`, `updated_at`) on all tables.
-- **Prefer soft deletion where appropriate**, especially for completed meetings and audited business records where a `deleted_at` model is chosen. Soft-deleted rows keep their `tenant_id` and remain tenant-scoped. **Contracts (Sprint 009):** prefer explicit terminal statuses (`cancelled` / `closed` / `renewed` / `expired`) plus draft-only hard delete — not SoftDeletes — see [05-contracts/BUSINESS_RULES.md](../09-modules/05-contracts/BUSINESS_RULES.md).
+- **Prefer soft deletion where appropriate**, especially for approved/executed contracts, completed meetings, and audited business records. Soft-deleted rows keep their `tenant_id` and remain tenant-scoped.
 - Deleting a business record never deletes its audit history.
-- Inventory: append-only `inventory_movements` are the auditable source of truth; `inventory_balances.on_hand` is a materialized cache updated **in the same DB transaction** as each movement — never a client-editable source of truth ([ADR-0011](../10-decisions/ADR-0011-INVENTORY-LEDGER-BALANCE-AND-TRANSFER.md)).
-- Custody history rows are immutable after return; corrections deferred (ADR-0012 — **implemented** Sprint 015). Double-active custody prevented under Asset row lock (application-enforced on MySQL).
+- Inventory quantities are derived from transaction rows — no directly edited balance column as source of truth.
+- Custody history rows are immutable; corrections happen through controlled, permissioned operations.
 
 ## Change Discipline
 
@@ -93,4 +90,4 @@ Any new platform table must be justified the same way in its module's `DATA_MODE
 ## TBD
 
 - **Table naming conventions document**: unresolved because no business tables exist yet. **Recommended:** Laravel defaults (plural snake_case) codified when the first business module is designed. **Impact:** documentation only.
-- **Polymorphic relation conventions for documents/audit**: Documents Sprint 013 locks Laravel morph **string aliases** on `documents.linkable_type` (never FQCN) — see [ADR-0010](../10-decisions/ADR-0010-DOCUMENT-STORAGE-AND-ENTITY-LINKS.md). Audit polymorphic storage remains TBD until the Audit module design.
+- **Polymorphic relation conventions for documents/audit**: unresolved until the documents and audit modules are designed. **Recommended:** Laravel morph maps with enforced string aliases (never raw class names in the DB). **Impact:** affects `documents` and `audit_logs` schema design; no impact on the tenancy layer.

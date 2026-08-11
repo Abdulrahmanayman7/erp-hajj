@@ -50,8 +50,6 @@ describe('createAuthGuard', () => {
       status: 'active',
       is_platform_user: false,
       tenant: null,
-      roles: [],
-      permissions: [],
     })
 
     const guard = createAuthGuard(queryClient)
@@ -89,27 +87,5 @@ describe('createAuthGuard', () => {
 
     expect(result).toMatchObject({ name: 'access-blocked', query: { code: 'TENANT_SUSPENDED' } })
     expect(fetchCurrentUser).toHaveBeenCalledTimes(1)
-  })
-
-  it('sends authenticated users lacking permission to 403 page', async () => {
-    queryClient.setQueryData(currentUserQueryKey, {
-      id: 1,
-      name: 'Test',
-      email: 't@example.com',
-      status: 'active',
-      is_platform_user: false,
-      tenant: null,
-      roles: [],
-      permissions: ['dashboard.view'],
-    })
-
-    const guard = createAuthGuard(queryClient)
-    const result = await guard(
-      route({ requiresAuth: true, permission: 'users.view' }, '/app/users', 'users'),
-      {} as never,
-      (() => undefined) as never,
-    )
-
-    expect(result).toMatchObject({ name: 'app-forbidden' })
   })
 })

@@ -76,8 +76,7 @@ All responses use the standardized envelope in [API_STANDARDS.md](../../04-api/A
 
 Platform user: `is_platform_user: true`, `tenant: null`.
 
-**Do not include:** password, remember_token, reset tokens, internal flags.  
-**RBAC (Sprint 006):** After Users & Authorization implementation, `/auth/me` **additively** includes `roles` and sorted `permissions` — see [02-users-and-authorization/API.md](../02-users-and-authorization/API.md). Until then, omit fabricated permissions.
+**Do not include:** password, remember_token, permissions array (RBAC not in this sprint), reset tokens, internal flags.
 
 ### Errors
 

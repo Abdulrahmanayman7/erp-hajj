@@ -16,8 +16,5 @@ export default defineConfig({
   test: {
     environment: 'happy-dom',
     include: ['src/**/*.test.ts'],
-    // Windows spawn/fork instability under memory pressure — prefer threads.
-    pool: 'threads',
-    maxWorkers: 2,
   },
 })

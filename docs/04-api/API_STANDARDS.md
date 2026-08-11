@@ -1,9 +1,7 @@
 # API Standards
 
 > **Status:** Approved
-> **Last updated:** 2026-08-09
-
-Domain error codes for Organization Structure (`ORGANIZATION_UNIT_*`), Employees (`EMPLOYEE_*`, `POSITION_*`), and Contracts (`CONTRACT_*` including `CONTRACT_ALREADY_RENEWED` — specified Sprint 009) are listed in their module `API.md` files.
+> **Last updated:** 2026-08-08
 
 ## Purpose
 
@@ -73,7 +71,7 @@ POST /api/v1/tasks/{task}/complete
 
 - **Pagination** on all list endpoints (defaults/max page size: TBD); **search, filters, and sorting** supported via query parameters.
 - **ISO 8601** dates everywhere.
-- **Correct HTTP status codes**: `200/201` success, `401` unauthenticated, `403` unauthorized (`AUTHORIZATION_DENIED` for missing `module.action`), `404` not found, `422` validation / business rule codes (e.g. `USER_LAST_OWNER_PROTECTED`). A resource belonging to another tenant returns **`404`, never `403`**. Module-stable codes for RBAC: [02-users-and-authorization/API.md](../09-modules/02-users-and-authorization/API.md).
+- **Correct HTTP status codes**: `200/201` success, `401` unauthenticated, `403` unauthorized, `404` not found, `422` validation. A resource belonging to another tenant returns **`404`, never `403`**.
 - **Idempotency for sensitive actions where needed** (e.g. workflow transitions): mechanism TBD.
 - Arabic text must round-trip correctly (UTF-8 everywhere).
 

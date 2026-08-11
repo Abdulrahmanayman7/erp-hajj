@@ -1,6 +1,6 @@
 # Multi-Tenancy — Implementation Specification
 
-> **Status:** Approved — core implemented (Sprint 004): contexts, resolver, middleware, scoping stack, validation rules, queue/cache/storage isolation. Pending: correlation ID middleware (Audit module), tenant-settings and platform tenant-management endpoints (RBAC module), **notification delivery implementation** (Sprint 016 specified — ADR-0013; isolation rules in §12 remain binding), export isolation (owning module). See `docs/09-modules/00-tenancy/README.md` for the per-phase status.
+> **Status:** Approved — core implemented (Sprint 004): contexts, resolver, middleware, scoping stack, validation rules, queue/cache/storage isolation. Pending: correlation ID middleware (Audit module), tenant-settings and platform tenant-management endpoints (RBAC module), notification/export isolation (their owning modules). See `docs/09-modules/00-tenancy/README.md` for the per-phase status.
 > **Last updated:** 2026-08-06
 
 ## Purpose
@@ -203,7 +203,7 @@ Shared rule builders in `Core/Tenancy` (conceptual names; final class names fixe
 
 Rules: validation never accepts `tenant_id` from payload (not declared in any Form Request; silently ignored and force-overwritten by the trait — two independent layers); business modules never hand-write `exists:`/`unique:` strings against tenant-owned tables.
 
-**Conceptual example (not code):** creating a task with `assignee_id` and `unit_id` validates both through `TenantExists` against `employees`/`organization_units`; a valid-looking id belonging to tenant B fails validation exactly as a random nonexistent id would.
+**Conceptual example (not code):** creating a task with `assignee_id` and `unit_id` validates both through `TenantExists` against `employees`/`organizational_units`; a valid-looking id belonging to tenant B fails validation exactly as a random nonexistent id would.
 
 ## 9. Queues, Scheduler, Console, and Workers
 
