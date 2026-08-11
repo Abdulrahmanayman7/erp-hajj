@@ -33,8 +33,8 @@ src/
 │   ├── tasks/                    # Sprint 012 — implemented
 │   ├── documents/                # Sprint 013 — implemented
 │   ├── inventory/                # Sprint 014 — implemented (warehouses + stock UX)
-│   ├── assets/
-│   └── custodies/
+│   ├── assets/                   # Sprint 015 — specified (prefer single module for assets + custody UX)
+│   └── custodies/                # optional — prefer nesting under assets/ at implementation
 ├── shared/
 │   ├── api/              # http client, envelope handling
 │   ├── components/       # generic shared components (see DESIGN_GUIDELINES.md)
@@ -114,6 +114,13 @@ A module may contain: pages, components, api, queries, mutations, types, validat
 - `src/modules/inventory/` — routes `/app/warehouses`, `/app/inventory`, `/app/inventory/items`, `/app/inventory/movements`; sidebar **المستودعات** + **المخزون**.
 - Stock quantity never in a generic editable form — dedicated receipt/issue/return/transfer/adjust dialogs.
 - Full UI contract: [10-warehouses-and-inventory/UI.md](../09-modules/10-warehouses-and-inventory/UI.md); ADR-0011.
+
+### Assets & Custodies (Sprint 015 — specified, not implemented)
+
+- Prefer `src/modules/assets/` with nested custody UX; routes `/app/assets`, `/app/assets/:id`, `/app/my-custodies`.
+- Sidebar after المخزون: **الأصول** (`assets.view`); optional **عُهَدي**.
+- No generic status dropdown — assign/return/maintenance/retire/lost action dialogs.
+- Full UI contract: [11-assets-and-custodies/UI.md](../09-modules/11-assets-and-custodies/UI.md); ADR-0012.
 
 ## Rules
 

@@ -41,6 +41,7 @@ Define what must be tested and to what standard. Per-module test plans live in e
 - Meeting → Decision → Task workflow.
 - Document upload and protected download.
 - Inventory movements and balance mutations (Sprint 014 — **implemented**; ADR-0011): receipt/issue/return/transfer/adjust; insufficient-stock and concurrency; cross-tenant warehouse/item isolation; no direct balance PATCH.
+- Asset / custody assign-return (Sprint 015 — specified; ADR-0012): single active custody; double-assign race; cross-tenant isolation; holder self-view; no inventory balance side effects.
 - Asset custody assignment and return.
 
 ## Rules

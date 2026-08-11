@@ -40,7 +40,7 @@ Security baseline and multi-tenancy require private, tenant-isolated files with 
 - **Single optional polymorphic link** on `documents` (`linkable_type` alias + `linkable_id`).
 - Cardinality: Document 0..1 entity; Entity 0..N Documents; standalone allowed.
 - MVP UI links: Contract, Meeting, Decision, Task, Employee, Organization Unit.
-- Morph aliases reserved for Warehouse, Inventory Item (Sprint 014), Asset, Custody (register + UI with owning-module implementation).
+- Morph aliases: Warehouse / Inventory Item registered with Sprint 014; Asset / Custody reserved for Sprint 015 (register + UI with owning-module implementation).
 - **No** many-to-many `document_links` pivot in MVP.
 - Host hard-delete blocked while Documents remain linked.
 

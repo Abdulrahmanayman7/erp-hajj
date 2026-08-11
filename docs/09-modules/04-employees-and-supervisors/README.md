@@ -17,7 +17,8 @@ Manage each tenant’s **personnel records**: employees as the primary staff ent
 | **Employee** | Business personnel record | This module |
 | **OrganizationUnit.manager_user_id** | User responsible for a **unit** | Organization Structure |
 | **Employee.supervisor_id** | Employee’s direct **reporting** supervisor | This module |
-| **Warehouse.responsible_employee_id** | Oversight metadata only (not RBAC) | Warehouses & Inventory (Sprint 014 specified) |
+| **Warehouse.responsible_employee_id** | Oversight metadata only (not RBAC) | Warehouses & Inventory (Sprint 014 implemented) |
+| **AssetCustody.employee_id** | Custody receiver (not RBAC) | Assets & Custodies (Sprint 015 specified; ADR-0012) |
 | **RBAC role** | Authorization capabilities | Users & Authorization |
 
 ## Sprint 008 scope
