@@ -32,8 +32,7 @@ src/
 │   ├── decisions/                # Sprint 011 — implemented
 │   ├── tasks/                    # Sprint 012 — implemented
 │   ├── documents/                # Sprint 013 — implemented
-│   ├── inventory/                # Sprint 014 — specified (preferred single Vue module for warehouses + stock; see 10-warehouses-and-inventory/UI.md)
-│   ├── warehouses/               # optional alias path — prefer inventory/ unless split at implementation
+│   ├── inventory/                # Sprint 014 — implemented (warehouses + stock UX)
 │   ├── assets/
 │   └── custodies/
 ├── shared/
@@ -110,10 +109,9 @@ A module may contain: pages, components, api, queries, mutations, types, validat
 - Upload drawer; categories; entity **المستندات** widgets on Contracts/Meetings/Decisions/Tasks/Employees/Organization Units.
 - Full UI contract: [09-documents/UI.md](../09-modules/09-documents/UI.md); ADR-0010.
 
-### Warehouses & Inventory (Sprint 014 — specified, not implemented)
+### Warehouses & Inventory (Sprint 014 — implemented)
 
-- Prefer single Vue module `src/modules/inventory/` covering warehouses, items, balances, movements, and stock actions (UI.md).
-- Sidebar after الوثائق: **المستودعات** (`warehouses.view`) + **المخزون** (`inventory.view`).
+- `src/modules/inventory/` — routes `/app/warehouses`, `/app/inventory`, `/app/inventory/items`, `/app/inventory/movements`; sidebar **المستودعات** + **المخزون**.
 - Stock quantity never in a generic editable form — dedicated receipt/issue/return/transfer/adjust dialogs.
 - Full UI contract: [10-warehouses-and-inventory/UI.md](../09-modules/10-warehouses-and-inventory/UI.md); ADR-0011.
 

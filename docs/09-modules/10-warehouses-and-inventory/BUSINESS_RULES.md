@@ -1,6 +1,6 @@
 # Warehouses and Inventory — Business Rules
 
-> **Status:** Specified (Sprint 014) — **not implemented**
+> **Status:** Implemented (Sprint 014)
 > **Last updated:** 2026-08-11
 > ADR: [ADR-0011](../../10-decisions/ADR-0011-INVENTORY-LEDGER-BALANCE-AND-TRANSFER.md)
 

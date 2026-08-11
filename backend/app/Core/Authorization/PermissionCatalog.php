@@ -21,6 +21,8 @@ final class PermissionCatalog
         'decisions' => 'القرارات',
         'tasks' => 'المهام',
         'documents' => 'الوثائق',
+        'warehouses' => 'المستودعات',
+        'inventory' => 'المخزون',
         'dashboard' => 'لوحة التحكم',
         'tenant_settings' => 'إعدادات المنشأة',
     ];
@@ -102,6 +104,19 @@ final class PermissionCatalog
             ['name' => 'documents.archive', 'display_name' => 'أرشفة/استعادة مستند', 'module' => 'documents', 'description' => 'Archive and restore documents'],
             ['name' => 'documents.delete', 'display_name' => 'حذف مستند', 'module' => 'documents', 'description' => 'Hard-delete document metadata and file'],
             ['name' => 'documents.manage_categories', 'display_name' => 'إدارة تصنيفات الوثائق', 'module' => 'documents', 'description' => 'CRUD document categories'],
+
+            ['name' => 'warehouses.view', 'display_name' => 'عرض المستودعات', 'module' => 'warehouses', 'description' => 'List and view warehouses'],
+            ['name' => 'warehouses.create', 'display_name' => 'إنشاء مستودع', 'module' => 'warehouses', 'description' => 'Create warehouses'],
+            ['name' => 'warehouses.update', 'display_name' => 'تحديث مستودع', 'module' => 'warehouses', 'description' => 'Update warehouses and activate/deactivate'],
+            ['name' => 'warehouses.delete', 'display_name' => 'حذف مستودع', 'module' => 'warehouses', 'description' => 'Hard-delete unused warehouses'],
+
+            ['name' => 'inventory.view', 'display_name' => 'عرض المخزون', 'module' => 'inventory', 'description' => 'View items, categories, balances, and movements'],
+            ['name' => 'inventory.manage_items', 'display_name' => 'إدارة أصناف المخزون', 'module' => 'inventory', 'description' => 'Item and category CRUD / activate / deactivate'],
+            ['name' => 'inventory.add', 'display_name' => 'إضافة مخزون', 'module' => 'inventory', 'description' => 'Opening balance and stock receipts'],
+            ['name' => 'inventory.issue', 'display_name' => 'صرف مخزون', 'module' => 'inventory', 'description' => 'Issue stock from warehouses'],
+            ['name' => 'inventory.return', 'display_name' => 'إرجاع مخزون', 'module' => 'inventory', 'description' => 'Return stock to warehouses'],
+            ['name' => 'inventory.transfer', 'display_name' => 'تحويل مخزون', 'module' => 'inventory', 'description' => 'Transfer stock between warehouses'],
+            ['name' => 'inventory.adjust', 'display_name' => 'تسوية مخزون', 'module' => 'inventory', 'description' => 'Sensitive stock adjustments'],
 
             ['name' => 'dashboard.view', 'display_name' => 'عرض لوحة التحكم', 'module' => 'dashboard', 'description' => 'Access authenticated home'],
             ['name' => 'tenant_settings.view', 'display_name' => 'عرض إعدادات المنشأة', 'module' => 'tenant_settings', 'description' => 'View tenant settings'],
@@ -191,6 +206,17 @@ final class PermissionCatalog
                     'documents.archive',
                     'documents.delete',
                     'documents.manage_categories',
+                    'warehouses.view',
+                    'warehouses.create',
+                    'warehouses.update',
+                    'warehouses.delete',
+                    'inventory.view',
+                    'inventory.manage_items',
+                    'inventory.add',
+                    'inventory.issue',
+                    'inventory.return',
+                    'inventory.transfer',
+                    'inventory.adjust',
                 ],
             ],
             'department_manager' => [
@@ -230,6 +256,15 @@ final class PermissionCatalog
                     'documents.update',
                     'documents.archive',
                     'documents.manage_categories',
+                    'warehouses.view',
+                    'warehouses.create',
+                    'warehouses.update',
+                    'inventory.view',
+                    'inventory.manage_items',
+                    'inventory.add',
+                    'inventory.issue',
+                    'inventory.return',
+                    'inventory.transfer',
                 ],
             ],
             'supervisor' => [
@@ -241,6 +276,8 @@ final class PermissionCatalog
                     'tasks.view',
                     'documents.view',
                     'documents.download',
+                    'warehouses.view',
+                    'inventory.view',
                 ],
             ],
             'employee' => [
@@ -269,6 +306,8 @@ final class PermissionCatalog
                     'tasks.view',
                     'documents.view',
                     'documents.download',
+                    'warehouses.view',
+                    'inventory.view',
                 ],
             ],
             'read_only' => [
@@ -296,6 +335,7 @@ final class PermissionCatalog
             'roles.assign_permissions',
             'users.disable',
             'tenant_settings.update',
+            'inventory.adjust',
         ];
     }
 }

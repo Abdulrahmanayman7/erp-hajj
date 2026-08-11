@@ -1,6 +1,6 @@
 # Warehouses and Inventory — API
 
-> **Status:** Specified (Sprint 014) — **not implemented**
+> **Status:** Implemented (Sprint 014)
 > **Last updated:** 2026-08-11
 > Base: `/api/v1` · Auth: Sanctum SPA · Envelope: [API_STANDARDS.md](../../04-api/API_STANDARDS.md)
 

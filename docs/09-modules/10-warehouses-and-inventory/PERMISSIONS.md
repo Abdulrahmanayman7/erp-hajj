@@ -1,6 +1,6 @@
 # Warehouses and Inventory — Permissions
 
-> **Status:** Specified (Sprint 014) — **not implemented** (named for catalog; seed at implementation)
+> **Status:** Implemented (Sprint 014)
 > **Last updated:** 2026-08-11
 
 Capabilities use `module.action`. Policies never check role names. Frontend gates are UX-only.

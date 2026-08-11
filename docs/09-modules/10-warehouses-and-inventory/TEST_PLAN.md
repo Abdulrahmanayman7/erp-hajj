@@ -1,6 +1,6 @@
 # Warehouses and Inventory — Test Plan
 
-> **Status:** Specified (Sprint 014) — **not implemented**
+> **Status:** Implemented (Sprint 014)
 > **Last updated:** 2026-08-11
 > Tooling: **Pest** (backend) · **Vitest** (frontend)
 

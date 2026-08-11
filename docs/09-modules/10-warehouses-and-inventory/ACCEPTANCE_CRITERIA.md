@@ -1,6 +1,6 @@
 # Warehouses and Inventory — Acceptance Criteria
 
-> **Status:** Specified (Sprint 014) — **not implemented**
+> **Status:** Implemented (Sprint 014)
 > **Last updated:** 2026-08-11
 
 Implementation is **done** only when critical items below pass and docs say **Implemented**.

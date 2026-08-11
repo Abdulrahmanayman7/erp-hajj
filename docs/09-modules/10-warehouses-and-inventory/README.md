@@ -1,6 +1,6 @@
 # Module: Warehouses and Inventory (المستودعات والمخزون)
 
-> **Status:** Specified (Sprint 014) — **not implemented**
+> **Status:** Implemented (Sprint 014)
 > **Last updated:** 2026-08-11
 > Binding ADR: [ADR-0011](../../10-decisions/ADR-0011-INVENTORY-LEDGER-BALANCE-AND-TRANSFER.md)
 

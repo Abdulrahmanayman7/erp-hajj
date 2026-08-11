@@ -1,6 +1,6 @@
 # Warehouses and Inventory — Data Model
 
-> **Status:** Specified (Sprint 014) — **not implemented** (no migrations in this sprint)
+> **Status:** Implemented (Sprint 014)
 > **Last updated:** 2026-08-11
 
 ## Tables (future migration order)

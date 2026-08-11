@@ -7,6 +7,8 @@ export type DocumentLinkableType =
   | 'task'
   | 'employee'
   | 'organization_unit'
+  | 'warehouse'
+  | 'inventory_item'
 
 export const DOCUMENT_LINKABLE_TYPES: DocumentLinkableType[] = [
   'contract',
@@ -15,6 +17,8 @@ export const DOCUMENT_LINKABLE_TYPES: DocumentLinkableType[] = [
   'task',
   'employee',
   'organization_unit',
+  'warehouse',
+  'inventory_item',
 ]
 
 export interface DocumentCategorySummary {

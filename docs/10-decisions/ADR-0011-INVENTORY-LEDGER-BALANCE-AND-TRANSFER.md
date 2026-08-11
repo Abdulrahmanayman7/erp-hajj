@@ -1,9 +1,13 @@
 # ADR-0011: Inventory ledger, balance cache, and transfer consistency
 
-- **Status:** Accepted
+- **Status:** Accepted (implemented Sprint 014)
 - **Date:** 2026-08-11
-- **Sprint:** 014 (Warehouses & Inventory specification)
+- **Sprint:** 014 (Warehouses & Inventory)
 - **Deciders:** ERP Hajj product / engineering (documentation lock)
+
+## Implementation note (2026-08-11)
+
+Shipped as vertical slice: migrations (`warehouse_number_sequences`, `warehouses`, `inventory_categories`, `inventory_item_number_sequences`, `inventory_items`, `inventory_movement_number_sequences`, `inventory_balances`, `inventory_movements`), `InventoryBalanceLocker` (`FOR UPDATE` + race-safe ensure row; transfer locks by `warehouse_id` ASC), stock Actions, Policies, `warehouses.*` / `inventory.*` catalog, Documents morph `warehouse` / `inventory_item`, Pest `InventoryTest` (I01–I30), Vue `inventory` module. No Procurement, multi-UOM conversions, multi-step transfer workflow, or negative-stock configuration UI.
 
 ## Context
 
