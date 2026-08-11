@@ -177,6 +177,10 @@ export function hostRouteForLink(
       return `/app/employees`
     case 'organization_unit':
       return `/app/organization`
+    case 'warehouse':
+      return `/app/warehouses/${id}`
+    case 'inventory_item':
+      return `/app/inventory/items/${id}`
     default:
       return null
   }

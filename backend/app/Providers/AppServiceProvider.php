@@ -24,6 +24,14 @@ use App\Modules\Employees\Models\Employee;
 use App\Modules\Employees\Models\Position;
 use App\Modules\Employees\Policies\EmployeePolicy;
 use App\Modules\Employees\Policies\PositionPolicy;
+use App\Modules\Inventory\Models\InventoryBalance;
+use App\Modules\Inventory\Models\InventoryCategory;
+use App\Modules\Inventory\Models\InventoryItem;
+use App\Modules\Inventory\Models\Warehouse;
+use App\Modules\Inventory\Policies\InventoryCategoryPolicy;
+use App\Modules\Inventory\Policies\InventoryItemPolicy;
+use App\Modules\Inventory\Policies\InventoryStockPolicy;
+use App\Modules\Inventory\Policies\WarehousePolicy;
 use App\Modules\Meetings\Models\Meeting;
 use App\Modules\Meetings\Policies\MeetingPolicy;
 use App\Modules\OrganizationStructure\Models\OrganizationUnit;
@@ -93,6 +101,10 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Task::class, TaskPolicy::class);
         Gate::policy(Document::class, DocumentPolicy::class);
         Gate::policy(DocumentCategory::class, DocumentCategoryPolicy::class);
+        Gate::policy(Warehouse::class, WarehousePolicy::class);
+        Gate::policy(InventoryCategory::class, InventoryCategoryPolicy::class);
+        Gate::policy(InventoryItem::class, InventoryItemPolicy::class);
+        Gate::policy(InventoryBalance::class, InventoryStockPolicy::class);
 
         Relation::enforceMorphMap([
             'contract' => Contract::class,
@@ -101,6 +113,8 @@ class AppServiceProvider extends ServiceProvider
             'task' => Task::class,
             'employee' => Employee::class,
             'organization_unit' => OrganizationUnit::class,
+            'warehouse' => Warehouse::class,
+            'inventory_item' => InventoryItem::class,
         ]);
 
         Route::bind('user', function (string $value): User {

@@ -33,8 +33,7 @@ app/
 │   ├── Decisions/                # Sprint 011 — implemented
 │   ├── Tasks/                    # Sprint 012 — implemented
 │   ├── Documents/                # Sprint 013 — implemented
-│   ├── Warehouses/               # Sprint 014 — specified (implementation pending); may share Inventory/ package layout per module docs
-│   ├── Inventory/                # Sprint 014 — specified (implementation pending); ADR-0011
+│   ├── Inventory/                # Sprint 014 — implemented (warehouses + stock; ADR-0011)
 │   ├── Assets/
 │   ├── Custodies/
 │   ├── Notifications/

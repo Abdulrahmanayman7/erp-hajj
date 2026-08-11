@@ -1,6 +1,6 @@
 # Warehouses and Inventory — UI
 
-> **Status:** Specified (Sprint 014) — **not implemented**
+> **Status:** Implemented (Sprint 014)
 > **Last updated:** 2026-08-11
 > Shell: existing AppSidebar / RTL layout — **do not redesign**.
 

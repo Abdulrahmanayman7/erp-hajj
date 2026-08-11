@@ -13,10 +13,12 @@ import {
   IdCard,
   Archive,
   Network,
+  Package,
   PanelRightClose,
   PanelRightOpen,
   Shield,
   Users,
+  Warehouse,
   type LucideIcon,
 } from 'lucide-vue-next'
 
@@ -178,6 +180,26 @@ const navGroups = computed<NavGroup[]>(() => {
       to: '/app/documents',
       icon: Archive,
       permission: 'documents.view',
+      match: 'prefix',
+    })
+  }
+  if (can('warehouses.view')) {
+    organizationItems.push({
+      key: 'warehouses',
+      labelKey: 'nav.warehouses',
+      to: '/app/warehouses',
+      icon: Warehouse,
+      permission: 'warehouses.view',
+      match: 'prefix',
+    })
+  }
+  if (can('inventory.view')) {
+    organizationItems.push({
+      key: 'inventory',
+      labelKey: 'nav.inventory',
+      to: '/app/inventory',
+      icon: Package,
+      permission: 'inventory.view',
       match: 'prefix',
     })
   }

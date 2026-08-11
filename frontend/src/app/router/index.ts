@@ -139,6 +139,42 @@ export const router = createRouter({
       meta: { requiresAuth: true, layout: 'app', permission: 'documents.view' },
     },
     {
+      path: '/app/warehouses',
+      name: 'warehouses',
+      component: () => import('@/modules/inventory/pages/WarehousesPage.vue'),
+      meta: { requiresAuth: true, layout: 'app', permission: 'warehouses.view' },
+    },
+    {
+      path: '/app/warehouses/:id',
+      name: 'warehouse-details',
+      component: () => import('@/modules/inventory/pages/WarehouseDetailsPage.vue'),
+      meta: { requiresAuth: true, layout: 'app', permission: 'warehouses.view' },
+    },
+    {
+      path: '/app/inventory',
+      name: 'inventory',
+      component: () => import('@/modules/inventory/pages/InventoryBalancesPage.vue'),
+      meta: { requiresAuth: true, layout: 'app', permission: 'inventory.view' },
+    },
+    {
+      path: '/app/inventory/items',
+      name: 'inventory-items',
+      component: () => import('@/modules/inventory/pages/InventoryItemsPage.vue'),
+      meta: { requiresAuth: true, layout: 'app', permission: 'inventory.view' },
+    },
+    {
+      path: '/app/inventory/items/:id',
+      name: 'inventory-item-details',
+      component: () => import('@/modules/inventory/pages/InventoryItemDetailsPage.vue'),
+      meta: { requiresAuth: true, layout: 'app', permission: 'inventory.view' },
+    },
+    {
+      path: '/app/inventory/movements',
+      name: 'inventory-movements',
+      component: () => import('@/modules/inventory/pages/InventoryMovementsPage.vue'),
+      meta: { requiresAuth: true, layout: 'app', permission: 'inventory.view' },
+    },
+    {
       path: '/app/roles/:id/permissions',
       name: 'role-permissions',
       component: () => import('@/modules/roles/pages/RolePermissionsPage.vue'),

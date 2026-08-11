@@ -9,6 +9,8 @@ use App\Modules\Documents\Exceptions\DocumentDomainException;
 use App\Modules\Documents\Models\Document;
 use App\Modules\Documents\Models\DocumentCategory;
 use App\Modules\Employees\Models\Employee;
+use App\Modules\Inventory\Models\InventoryItem;
+use App\Modules\Inventory\Models\Warehouse;
 use App\Modules\Meetings\Models\Meeting;
 use App\Modules\OrganizationStructure\Models\OrganizationUnit;
 use App\Modules\Tasks\Models\Task;
@@ -100,6 +102,8 @@ final class DocumentReferenceValidator
             DocumentLinkableType::Task => sprintf('%s — %s', $model->getAttribute('task_number'), $model->getAttribute('title')),
             DocumentLinkableType::Employee => sprintf('%s — %s', $model->getAttribute('employee_number'), $model->getAttribute('full_name')),
             DocumentLinkableType::OrganizationUnit => sprintf('%s — %s', $model->getAttribute('code'), $model->getAttribute('name')),
+            DocumentLinkableType::Warehouse => sprintf('%s — %s', $model->getAttribute('warehouse_number'), $model->getAttribute('name')),
+            DocumentLinkableType::InventoryItem => sprintf('%s — %s', $model->getAttribute('item_number'), $model->getAttribute('name')),
         };
     }
 
@@ -112,6 +116,8 @@ final class DocumentReferenceValidator
             DocumentLinkableType::Task => Task::query(),
             DocumentLinkableType::Employee => Employee::query(),
             DocumentLinkableType::OrganizationUnit => OrganizationUnit::query(),
+            DocumentLinkableType::Warehouse => Warehouse::query(),
+            DocumentLinkableType::InventoryItem => InventoryItem::query(),
         };
 
         return $query->whereKey($id)->first();

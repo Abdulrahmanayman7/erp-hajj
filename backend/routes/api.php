@@ -12,6 +12,12 @@ use App\Modules\Documents\Controllers\DocumentCategoryController;
 use App\Modules\Documents\Controllers\DocumentController;
 use App\Modules\Employees\Controllers\EmployeeController;
 use App\Modules\Employees\Controllers\PositionController;
+use App\Modules\Inventory\Controllers\InventoryBalanceController;
+use App\Modules\Inventory\Controllers\InventoryCategoryController;
+use App\Modules\Inventory\Controllers\InventoryItemController;
+use App\Modules\Inventory\Controllers\InventoryMovementController;
+use App\Modules\Inventory\Controllers\InventoryStockController;
+use App\Modules\Inventory\Controllers\WarehouseController;
 use App\Modules\Meetings\Controllers\MeetingAgendaItemController;
 use App\Modules\Meetings\Controllers\MeetingAttendeeController;
 use App\Modules\Meetings\Controllers\MeetingController;
@@ -169,6 +175,37 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
             Route::post('/document-categories', [DocumentCategoryController::class, 'store'])->name('document-categories.store');
             Route::patch('/document-categories/{document_category}', [DocumentCategoryController::class, 'update'])->name('document-categories.update');
             Route::delete('/document-categories/{document_category}', [DocumentCategoryController::class, 'destroy'])->name('document-categories.destroy');
+
+            Route::get('/warehouses', [WarehouseController::class, 'index'])->name('warehouses.index');
+            Route::post('/warehouses', [WarehouseController::class, 'store'])->name('warehouses.store');
+            Route::get('/warehouses/{warehouse}', [WarehouseController::class, 'show'])->name('warehouses.show');
+            Route::patch('/warehouses/{warehouse}', [WarehouseController::class, 'update'])->name('warehouses.update');
+            Route::post('/warehouses/{warehouse}/activate', [WarehouseController::class, 'activate'])->name('warehouses.activate');
+            Route::post('/warehouses/{warehouse}/deactivate', [WarehouseController::class, 'deactivate'])->name('warehouses.deactivate');
+            Route::delete('/warehouses/{warehouse}', [WarehouseController::class, 'destroy'])->name('warehouses.destroy');
+
+            Route::get('/inventory-categories', [InventoryCategoryController::class, 'index'])->name('inventory-categories.index');
+            Route::post('/inventory-categories', [InventoryCategoryController::class, 'store'])->name('inventory-categories.store');
+            Route::patch('/inventory-categories/{category}', [InventoryCategoryController::class, 'update'])->name('inventory-categories.update');
+            Route::delete('/inventory-categories/{category}', [InventoryCategoryController::class, 'destroy'])->name('inventory-categories.destroy');
+
+            Route::get('/inventory-items', [InventoryItemController::class, 'index'])->name('inventory-items.index');
+            Route::post('/inventory-items', [InventoryItemController::class, 'store'])->name('inventory-items.store');
+            Route::get('/inventory-items/{inventory_item}', [InventoryItemController::class, 'show'])->name('inventory-items.show');
+            Route::patch('/inventory-items/{inventory_item}', [InventoryItemController::class, 'update'])->name('inventory-items.update');
+            Route::post('/inventory-items/{inventory_item}/activate', [InventoryItemController::class, 'activate'])->name('inventory-items.activate');
+            Route::post('/inventory-items/{inventory_item}/deactivate', [InventoryItemController::class, 'deactivate'])->name('inventory-items.deactivate');
+            Route::delete('/inventory-items/{inventory_item}', [InventoryItemController::class, 'destroy'])->name('inventory-items.destroy');
+            Route::get('/inventory-items/{inventory_item}/balances', [InventoryItemController::class, 'balances'])->name('inventory-items.balances');
+
+            Route::get('/inventory/balances', [InventoryBalanceController::class, 'index'])->name('inventory.balances.index');
+            Route::get('/inventory/movements', [InventoryMovementController::class, 'index'])->name('inventory.movements.index');
+            Route::get('/inventory/movements/{movement}', [InventoryMovementController::class, 'show'])->name('inventory.movements.show');
+            Route::post('/inventory/receipts', [InventoryStockController::class, 'receive'])->name('inventory.receipts.store');
+            Route::post('/inventory/issues', [InventoryStockController::class, 'issue'])->name('inventory.issues.store');
+            Route::post('/inventory/returns', [InventoryStockController::class, 'returnStock'])->name('inventory.returns.store');
+            Route::post('/inventory/transfers', [InventoryStockController::class, 'transfer'])->name('inventory.transfers.store');
+            Route::post('/inventory/adjustments', [InventoryStockController::class, 'adjust'])->name('inventory.adjustments.store');
         });
     });
 });
