@@ -1,6 +1,6 @@
 # Assets and Custodies — UI
 
-> **Status:** Specified (Sprint 015) — **not implemented**
+> **Status:** Implemented (Sprint 015)
 > **Last updated:** 2026-08-11
 > Shell: existing AppSidebar / RTL layout — **do not redesign**.
 

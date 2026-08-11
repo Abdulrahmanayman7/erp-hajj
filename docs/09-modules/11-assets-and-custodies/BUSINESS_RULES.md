@@ -1,6 +1,6 @@
 # Assets and Custodies — Business Rules
 
-> **Status:** Specified (Sprint 015) — **not implemented**
+> **Status:** Implemented (Sprint 015)
 > **Last updated:** 2026-08-11
 > ADR: [ADR-0012](../../10-decisions/ADR-0012-ASSET-CUSTODY-AND-OWNERSHIP.md)
 

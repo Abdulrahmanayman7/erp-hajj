@@ -1,6 +1,6 @@
 # ERP Hajj
 
-> **Status:** Tenant Foundation (004) through Warehouses & Inventory (014) implemented. Sprint 015 Assets & Custodies **specified** (implementation pending).
+> **Status:** Tenant Foundation (004) through Assets & Custodies (015) implemented. Next: Notifications / Settings / remaining MVP modules.
 >
 > **Last updated:** 2026-08-11
 

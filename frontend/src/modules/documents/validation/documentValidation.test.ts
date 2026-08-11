@@ -167,6 +167,8 @@ describe('entity documents section helpers', () => {
     expect(hostRouteForLink('organization_unit', 3)).toBe('/app/organization')
     expect(hostRouteForLink('warehouse', 3)).toBe('/app/warehouses/3')
     expect(hostRouteForLink('inventory_item', 3)).toBe('/app/inventory/items/3')
+    expect(hostRouteForLink('asset', 9)).toBe('/app/assets/9')
+    expect(hostRouteForLink('custody', 4)).toBeNull()
   })
 
   it('uses المستندات section title in locale', () => {

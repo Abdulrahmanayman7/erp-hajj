@@ -1,8 +1,8 @@
 # Permission Model
 
-> **Status:** Approved (catalog may grow with modules). Sprint 006–011 permissions are seeded as implemented.
+> **Status:** Approved (catalog may grow with modules). Sprint 006–015 permissions are seeded as implemented.
 >
-> **Last updated:** 2026-08-10
+> **Last updated:** 2026-08-11
 
 ## Purpose
 
@@ -42,7 +42,7 @@ Define the granular permission naming model and the master permission catalog. M
 | Documents | `documents.view` `documents.upload` `documents.download` `documents.update` `documents.archive` `documents.delete` `documents.manage_categories` — **implemented** Sprint 013 ([09-documents/PERMISSIONS.md](../09-modules/09-documents/PERMISSIONS.md); ADR-0010). Archive ≠ hard delete. Do not seed `contracts.attach_documents`. |
 | Warehouses | `warehouses.view` `warehouses.create` `warehouses.update` `warehouses.delete` — **implemented** Sprint 014 ([10-warehouses-and-inventory/PERMISSIONS.md](../09-modules/10-warehouses-and-inventory/PERMISSIONS.md); ADR-0011). |
 | Inventory | `inventory.view` `inventory.manage_items` `inventory.add` `inventory.issue` `inventory.return` `inventory.transfer` `inventory.adjust` — **implemented** Sprint 014. `manage_items` covers item master + categories; adjustments are sensitive. |
-| Assets | `assets.view` `assets.create` `assets.update` `assets.delete` `assets.assign` `assets.return` `assets.retire` — **specified** Sprint 015 ([11-assets-and-custodies/PERMISSIONS.md](../09-modules/11-assets-and-custodies/PERMISSIONS.md); ADR-0012). No separate `custodies.*` verbs. |
+| Assets | `assets.view` `assets.create` `assets.update` `assets.delete` `assets.assign` `assets.return` `assets.retire` — **implemented** Sprint 015 ([11-assets-and-custodies/PERMISSIONS.md](../09-modules/11-assets-and-custodies/PERMISSIONS.md); ADR-0012). Seeded via `PermissionCatalog`. No separate `custodies.*` verbs. |
 | Audit logs | `audit_logs.view` `audit_logs.export` |
 | Dashboard | `dashboard.view` |
 | Tenant settings | `tenant_settings.view` `tenant_settings.update` |

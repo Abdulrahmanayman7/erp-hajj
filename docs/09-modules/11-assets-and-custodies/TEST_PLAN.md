@@ -1,6 +1,6 @@
 # Assets and Custodies — Test Plan
 
-> **Status:** Specified (Sprint 015) — **not implemented**
+> **Status:** Implemented (Sprint 015) — Pest `AssetTest` 20/20 + Vitest assets 15/15 green
 > **Last updated:** 2026-08-11
 > Tooling: **Pest** (backend) · **Vitest** (frontend)
 

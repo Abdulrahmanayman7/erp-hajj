@@ -12,6 +12,7 @@ import {
   LogOut,
   IdCard,
   Archive,
+  Boxes,
   Network,
   Package,
   PanelRightClose,
@@ -201,6 +202,24 @@ const navGroups = computed<NavGroup[]>(() => {
       icon: Package,
       permission: 'inventory.view',
       match: 'prefix',
+    })
+  }
+  if (can('assets.view')) {
+    organizationItems.push({
+      key: 'assets',
+      labelKey: 'nav.assets',
+      to: '/app/assets',
+      icon: Boxes,
+      permission: 'assets.view',
+      match: 'prefix',
+    })
+    organizationItems.push({
+      key: 'my-custodies',
+      labelKey: 'nav.myCustodies',
+      to: '/app/my-custodies',
+      icon: IdCard,
+      permission: 'assets.view',
+      match: 'exact',
     })
   }
 

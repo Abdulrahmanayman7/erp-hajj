@@ -8,6 +8,12 @@ use App\Core\Authorization\Events\AuthorizationSecurityEvent;
 use App\Core\Authorization\Listeners\LogAuthorizationSecurityEvent;
 use App\Core\Shared\CorrelationId;
 use App\Models\User;
+use App\Modules\Assets\Models\Asset;
+use App\Modules\Assets\Models\AssetCategory;
+use App\Modules\Assets\Models\AssetCustody;
+use App\Modules\Assets\Policies\AssetCategoryPolicy;
+use App\Modules\Assets\Policies\AssetCustodyPolicy;
+use App\Modules\Assets\Policies\AssetPolicy;
 use App\Modules\Authorization\Models\Role;
 use App\Modules\Authorization\Policies\RolePolicy;
 use App\Modules\Contracts\Models\Contract;
@@ -105,6 +111,9 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(InventoryCategory::class, InventoryCategoryPolicy::class);
         Gate::policy(InventoryItem::class, InventoryItemPolicy::class);
         Gate::policy(InventoryBalance::class, InventoryStockPolicy::class);
+        Gate::policy(Asset::class, AssetPolicy::class);
+        Gate::policy(AssetCategory::class, AssetCategoryPolicy::class);
+        Gate::policy(AssetCustody::class, AssetCustodyPolicy::class);
 
         Relation::enforceMorphMap([
             'contract' => Contract::class,
@@ -115,6 +124,8 @@ class AppServiceProvider extends ServiceProvider
             'organization_unit' => OrganizationUnit::class,
             'warehouse' => Warehouse::class,
             'inventory_item' => InventoryItem::class,
+            'asset' => Asset::class,
+            'custody' => AssetCustody::class,
         ]);
 
         Route::bind('user', function (string $value): User {

@@ -1,7 +1,7 @@
 # Frontend Structure
 
-> **Status:** Approved — Auth (005) + Users/Roles RBAC UI (006) + Organization UI (007) + Employees (008) + Contracts (009) + Meetings (010) + Decisions (011) + Tasks (012) + Documents (013) implemented
-> **Last updated:** 2026-08-10
+> **Status:** Approved — Auth (005) + Users/Roles RBAC UI (006) + Organization UI (007) + Employees (008) + Contracts (009) + Meetings (010) + Decisions (011) + Tasks (012) + Documents (013) + Inventory (014) + Assets (015) implemented
+> **Last updated:** 2026-08-11
 
 ## Purpose
 
@@ -33,8 +33,7 @@ src/
 │   ├── tasks/                    # Sprint 012 — implemented
 │   ├── documents/                # Sprint 013 — implemented
 │   ├── inventory/                # Sprint 014 — implemented (warehouses + stock UX)
-│   ├── assets/                   # Sprint 015 — specified (prefer single module for assets + custody UX)
-│   └── custodies/                # optional — prefer nesting under assets/ at implementation
+│   └── assets/                   # Sprint 015 — implemented (assets + custody UX)
 ├── shared/
 │   ├── api/              # http client, envelope handling
 │   ├── components/       # generic shared components (see DESIGN_GUIDELINES.md)
@@ -115,10 +114,9 @@ A module may contain: pages, components, api, queries, mutations, types, validat
 - Stock quantity never in a generic editable form — dedicated receipt/issue/return/transfer/adjust dialogs.
 - Full UI contract: [10-warehouses-and-inventory/UI.md](../09-modules/10-warehouses-and-inventory/UI.md); ADR-0011.
 
-### Assets & Custodies (Sprint 015 — specified, not implemented)
+### Assets & Custodies (Sprint 015 — implemented)
 
-- Prefer `src/modules/assets/` with nested custody UX; routes `/app/assets`, `/app/assets/:id`, `/app/my-custodies`.
-- Sidebar after المخزون: **الأصول** (`assets.view`); optional **عُهَدي**.
+- `src/modules/assets/` — routes `/app/assets`, `/app/assets/:id`, `/app/my-custodies`; sidebar **الأصول** (`assets.view`) + **عُهَدي**.
 - No generic status dropdown — assign/return/maintenance/retire/lost action dialogs.
 - Full UI contract: [11-assets-and-custodies/UI.md](../09-modules/11-assets-and-custodies/UI.md); ADR-0012.
 

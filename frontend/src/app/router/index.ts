@@ -175,6 +175,24 @@ export const router = createRouter({
       meta: { requiresAuth: true, layout: 'app', permission: 'inventory.view' },
     },
     {
+      path: '/app/assets',
+      name: 'assets',
+      component: () => import('@/modules/assets/pages/AssetsListPage.vue'),
+      meta: { requiresAuth: true, layout: 'app', permission: 'assets.view' },
+    },
+    {
+      path: '/app/assets/:id',
+      name: 'asset-details',
+      component: () => import('@/modules/assets/pages/AssetDetailsPage.vue'),
+      meta: { requiresAuth: true, layout: 'app', permission: 'assets.view' },
+    },
+    {
+      path: '/app/my-custodies',
+      name: 'my-custodies',
+      component: () => import('@/modules/assets/pages/MyCustodiesPage.vue'),
+      meta: { requiresAuth: true, layout: 'app', permission: 'assets.view' },
+    },
+    {
       path: '/app/roles/:id/permissions',
       name: 'role-permissions',
       component: () => import('@/modules/roles/pages/RolePermissionsPage.vue'),

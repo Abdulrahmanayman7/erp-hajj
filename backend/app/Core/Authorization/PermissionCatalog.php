@@ -23,6 +23,7 @@ final class PermissionCatalog
         'documents' => 'الوثائق',
         'warehouses' => 'المستودعات',
         'inventory' => 'المخزون',
+        'assets' => 'الأصول',
         'dashboard' => 'لوحة التحكم',
         'tenant_settings' => 'إعدادات المنشأة',
     ];
@@ -117,6 +118,14 @@ final class PermissionCatalog
             ['name' => 'inventory.return', 'display_name' => 'إرجاع مخزون', 'module' => 'inventory', 'description' => 'Return stock to warehouses'],
             ['name' => 'inventory.transfer', 'display_name' => 'تحويل مخزون', 'module' => 'inventory', 'description' => 'Transfer stock between warehouses'],
             ['name' => 'inventory.adjust', 'display_name' => 'تسوية مخزون', 'module' => 'inventory', 'description' => 'Sensitive stock adjustments'],
+
+            ['name' => 'assets.view', 'display_name' => 'عرض الأصول والعهد', 'module' => 'assets', 'description' => 'List and view assets, categories, and custodies'],
+            ['name' => 'assets.create', 'display_name' => 'تسجيل أصل', 'module' => 'assets', 'description' => 'Register assets'],
+            ['name' => 'assets.update', 'display_name' => 'تحديث أصل', 'module' => 'assets', 'description' => 'Update asset metadata, categories, maintenance/restore'],
+            ['name' => 'assets.delete', 'display_name' => 'حذف أصل', 'module' => 'assets', 'description' => 'Hard-delete unused assets'],
+            ['name' => 'assets.assign', 'display_name' => 'تسليم عهدة', 'module' => 'assets', 'description' => 'Assign asset custody'],
+            ['name' => 'assets.return', 'display_name' => 'استلام عهدة', 'module' => 'assets', 'description' => 'Return asset custody'],
+            ['name' => 'assets.retire', 'display_name' => 'استبعاد/فقد أصل', 'module' => 'assets', 'description' => 'Retire or declare asset lost'],
 
             ['name' => 'dashboard.view', 'display_name' => 'عرض لوحة التحكم', 'module' => 'dashboard', 'description' => 'Access authenticated home'],
             ['name' => 'tenant_settings.view', 'display_name' => 'عرض إعدادات المنشأة', 'module' => 'tenant_settings', 'description' => 'View tenant settings'],
@@ -217,6 +226,13 @@ final class PermissionCatalog
                     'inventory.return',
                     'inventory.transfer',
                     'inventory.adjust',
+                    'assets.view',
+                    'assets.create',
+                    'assets.update',
+                    'assets.delete',
+                    'assets.assign',
+                    'assets.return',
+                    'assets.retire',
                 ],
             ],
             'department_manager' => [
@@ -265,6 +281,11 @@ final class PermissionCatalog
                     'inventory.issue',
                     'inventory.return',
                     'inventory.transfer',
+                    'assets.view',
+                    'assets.create',
+                    'assets.update',
+                    'assets.assign',
+                    'assets.return',
                 ],
             ],
             'supervisor' => [
@@ -278,6 +299,7 @@ final class PermissionCatalog
                     'documents.download',
                     'warehouses.view',
                     'inventory.view',
+                    'assets.view',
                 ],
             ],
             'employee' => [
@@ -288,6 +310,7 @@ final class PermissionCatalog
                     'tasks.view',
                     'documents.view',
                     'documents.download',
+                    'assets.view',
                 ],
             ],
             'auditor' => [
@@ -308,6 +331,7 @@ final class PermissionCatalog
                     'documents.download',
                     'warehouses.view',
                     'inventory.view',
+                    'assets.view',
                 ],
             ],
             'read_only' => [
@@ -336,6 +360,7 @@ final class PermissionCatalog
             'users.disable',
             'tenant_settings.update',
             'inventory.adjust',
+            'assets.retire',
         ];
     }
 }

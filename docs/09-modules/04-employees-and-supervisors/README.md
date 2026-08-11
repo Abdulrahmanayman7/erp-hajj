@@ -1,7 +1,7 @@
 # Module: Employees and Supervisors (الموظفون والمشرفون)
 
 > **Status:** Implemented (Sprint 008)
-> **Last updated:** 2026-08-09
+> **Last updated:** 2026-08-11
 
 ## Purpose
 
@@ -18,7 +18,7 @@ Manage each tenant’s **personnel records**: employees as the primary staff ent
 | **OrganizationUnit.manager_user_id** | User responsible for a **unit** | Organization Structure |
 | **Employee.supervisor_id** | Employee’s direct **reporting** supervisor | This module |
 | **Warehouse.responsible_employee_id** | Oversight metadata only (not RBAC) | Warehouses & Inventory (Sprint 014 implemented) |
-| **AssetCustody.employee_id** | Custody receiver (not RBAC) | Assets & Custodies (Sprint 015 specified; ADR-0012) |
+| **AssetCustody.employee_id** | Custody receiver (not RBAC) | Assets & Custodies (Sprint 015 **implemented**; ADR-0012) |
 | **RBAC role** | Authorization capabilities | Users & Authorization |
 
 ## Sprint 008 scope
@@ -57,7 +57,7 @@ Manage each tenant’s **personnel records**: employees as the primary staff ent
 
 - **Requires:** Tenancy, Auth, Users/RBAC, Organization Structure (implemented).
 - **Integrates:** `organization_units` (RESTRICT FK); optional `users` (SET NULL).
-- **Later consumers:** Contracts, Tasks, Custodies, Documents (Sprint 013 — specified; morph alias `employee`; ADR-0010), Assets.
+- **Later consumers:** Contracts, Tasks, Custodies / Assets (Sprint 015 — **implemented**; ADR-0012), Documents (Sprint 013 — implemented; morph alias `employee`; ADR-0010).
 
 ## Architectural note
 

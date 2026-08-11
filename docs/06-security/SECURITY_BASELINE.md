@@ -1,7 +1,7 @@
 # Security Baseline
 
 > **Status:** Approved baseline; authentication values finalized for Sprint 005 (implementation pending)
-> **Last updated:** 2026-08-08
+> **Last updated:** 2026-08-11
 
 ## Purpose
 
@@ -28,7 +28,7 @@ Each control below names the attack it prevents. Implementation details are spec
 | **Tenant code abuse** (using a known/guessed `tenant_code` to reach tenant data) | `tenant_code` is an operational label only (logs, exports, storage diagnostics, future subdomains). No resolver, policy, or endpoint ever accepts it as an authorization input — knowing a code grants nothing. |
 | **Untraceable actions** (no way to reconstruct who did what across request → job → export) | Mandatory request **correlation ID** (validated-or-regenerated per request, echoed in response headers) propagated to application logs, audit records, job payloads, and exports — see [AUDIT_TRAIL.md](AUDIT_TRAIL.md). |
 | **Inventory race / negative stock** (two concurrent issues or forged balance PATCH) | Stock mutations only via domain actions under `SELECT … FOR UPDATE` on balance rows; no client PATCH of balances/movements; MVP rejects `on_hand < 0` (`INVENTORY_INSUFFICIENT_STOCK`); transfers lock by ascending `warehouse_id` — [ADR-0011](../10-decisions/ADR-0011-INVENTORY-LEDGER-BALANCE-AND-TRANSFER.md). |
-| **Double asset custody** (two concurrent assigns) | Assign/return under Asset `FOR UPDATE`; re-check no active custody after lock; immutable returned rows — [ADR-0012](../10-decisions/ADR-0012-ASSET-CUSTODY-AND-OWNERSHIP.md). |
+| **Double asset custody** (two concurrent assigns) | Assign/return under Asset `FOR UPDATE`; re-check no active custody after lock; immutable returned rows — **implemented** Sprint 015 ([ADR-0012](../10-decisions/ADR-0012-ASSET-CUSTODY-AND-OWNERSHIP.md)). |
 
 ### Authentication
 

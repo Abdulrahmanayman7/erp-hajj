@@ -1,7 +1,7 @@
 # Database Principles
 
 > **Status:** Approved — includes the binding tenancy database strategy; business migrations do not exist yet (Sprint 007 org units specified)
-> **Last updated:** 2026-08-09
+> **Last updated:** 2026-08-11
 
 ## Purpose
 
@@ -45,7 +45,7 @@ Any new platform table must be justified the same way in its module's `DATA_MODE
 - Model implements the `TenantOwned` contract and uses the `UsesTenantScope` trait — no exceptions.
 - First tenant-owned table: `tenant_settings` (see [00-tenancy/DATA_MODEL.md](../09-modules/00-tenancy/DATA_MODEL.md)).
 - **Implemented tenant-owned tables:** `roles`, `user_roles`, `role_permissions` (Sprint 006); `organization_units` (Sprint 007 — see [03-organization-structure/DATA_MODEL.md](../09-modules/03-organization-structure/DATA_MODEL.md); ADR-0004).
-- **Planned tenant-owned tables** (each specified in its module's `DATA_MODEL.md` when designed): `positions`, `employees` (Sprint 008 — implemented; ADR-0005), `contract_categories`, `contracts`, `contract_status_transitions`, `contract_number_sequences` (Sprint 009 — implemented; ADR-0006), `meetings`, `meeting_*` (Sprint 010 — implemented; ADR-0007), `decision_number_sequences`, `decisions`, `decision_status_transitions` (Sprint 011 — implemented; ADR-0008), `task_number_sequences`, `tasks`, `task_status_transitions`, `task_assignment_history` (Sprint 012 — implemented; ADR-0009), `document_number_sequences`, `document_categories`, `documents` (Sprint 013 — implemented; ADR-0010), `warehouse_number_sequences`, `warehouses`, `inventory_item_number_sequences`, `inventory_categories`, `inventory_items`, `inventory_balances`, `inventory_movements`, `inventory_movement_number_sequences` (Sprint 014 — **implemented**, ADR-0011), `asset_number_sequences`, `asset_categories`, `assets`, `asset_status_transitions`, `asset_custody_number_sequences`, `asset_custodies` (Sprint 015 — **specified**, ADR-0012), `notifications`, `tenant_settings`.
+- **Planned tenant-owned tables** (each specified in its module's `DATA_MODEL.md` when designed): `positions`, `employees` (Sprint 008 — implemented; ADR-0005), `contract_categories`, `contracts`, `contract_status_transitions`, `contract_number_sequences` (Sprint 009 — implemented; ADR-0006), `meetings`, `meeting_*` (Sprint 010 — implemented; ADR-0007), `decision_number_sequences`, `decisions`, `decision_status_transitions` (Sprint 011 — implemented; ADR-0008), `task_number_sequences`, `tasks`, `task_status_transitions`, `task_assignment_history` (Sprint 012 — implemented; ADR-0009), `document_number_sequences`, `document_categories`, `documents` (Sprint 013 — implemented; ADR-0010), `warehouse_number_sequences`, `warehouses`, `inventory_item_number_sequences`, `inventory_categories`, `inventory_items`, `inventory_balances`, `inventory_movements`, `inventory_movement_number_sequences` (Sprint 014 — **implemented**, ADR-0011), `asset_number_sequences`, `asset_categories`, `assets`, `asset_status_transitions`, `asset_custody_number_sequences`, `asset_custodies` (Sprint 015 — **implemented**, ADR-0012), `notifications`, `tenant_settings`.
 - **Platform catalog (Sprint 006):** `permissions` — global, no `tenant_id`; justified because capabilities are code-defined and must not drift per tenant.
 
 ### Indexes on tenant-owned tables
@@ -82,7 +82,7 @@ Any new platform table must be justified the same way in its module's `DATA_MODE
 - **Prefer soft deletion where appropriate**, especially for completed meetings and audited business records where a `deleted_at` model is chosen. Soft-deleted rows keep their `tenant_id` and remain tenant-scoped. **Contracts (Sprint 009):** prefer explicit terminal statuses (`cancelled` / `closed` / `renewed` / `expired`) plus draft-only hard delete — not SoftDeletes — see [05-contracts/BUSINESS_RULES.md](../09-modules/05-contracts/BUSINESS_RULES.md).
 - Deleting a business record never deletes its audit history.
 - Inventory: append-only `inventory_movements` are the auditable source of truth; `inventory_balances.on_hand` is a materialized cache updated **in the same DB transaction** as each movement — never a client-editable source of truth ([ADR-0011](../10-decisions/ADR-0011-INVENTORY-LEDGER-BALANCE-AND-TRANSFER.md)).
-- Custody history rows are immutable after return; corrections deferred (ADR-0012). Double-active custody prevented under Asset row lock (application-enforced on MySQL).
+- Custody history rows are immutable after return; corrections deferred (ADR-0012 — **implemented** Sprint 015). Double-active custody prevented under Asset row lock (application-enforced on MySQL).
 
 ## Change Discipline
 

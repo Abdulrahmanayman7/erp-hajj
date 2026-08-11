@@ -1,6 +1,6 @@
 # Assets and Custodies — Permissions
 
-> **Status:** Specified (Sprint 015) — **not implemented** (named for catalog; seed at implementation)
+> **Status:** Implemented (Sprint 015) — catalog and role templates seeded via `PermissionCatalog`
 > **Last updated:** 2026-08-11
 
 Capabilities use `module.action`. Policies never check role names. Frontend gates are UX-only.
@@ -80,4 +80,4 @@ List `/assets` remains full-tenant only with `assets.view` (no automatic “only
 
 Owner via full catalog. Employee/Supervisor use **self-view** for own assigned assets via `/my-custodies` + asset show.
 Do not wipe custom roles when seeding templates.
-`assets.retire` is high-risk (document in PermissionCatalog high-risk list at implementation).
+`assets.retire` is high-risk (listed in `PermissionCatalog` high-risk list).

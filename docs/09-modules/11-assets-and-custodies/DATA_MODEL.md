@@ -1,10 +1,10 @@
 # Assets and Custodies — Data Model
 
-> **Status:** Specified (Sprint 015) — **not implemented** (no migrations in this sprint)
+> **Status:** Implemented (Sprint 015)
 > **Last updated:** 2026-08-11
 > ADR: [ADR-0012](../../10-decisions/ADR-0012-ASSET-CUSTODY-AND-OWNERSHIP.md)
 
-## Tables (future migration order)
+## Tables (migration order)
 
 1. `asset_number_sequences`
 2. `asset_categories`
@@ -158,12 +158,12 @@ asset → Asset
 custody → AssetCustody
 ```
 
-## Config (future)
+## Config
 
 `config/assets.php`: number prefixes/pads; status enums; condition allow-list; `purchase_value` max decimals = 2.
 
 ## Migration notes
 
-- Do **not** run in Sprint 015 specification.
+- Applied: `2026_08_11_150000`–`150006` (`asset_number_sequences`, `asset_categories`, `assets`, `asset_status_transitions`, `asset_custody_number_sequences`, `asset_custodies`, `assets.current_custody_id` FK).
 - Depends on: tenants, users, organization_units, employees, warehouses (nullable FK).
-- No DB FK to Documents (morph application-level).
+- No DB FK to Documents (morph application-level); aliases `asset` / `custody` registered.
