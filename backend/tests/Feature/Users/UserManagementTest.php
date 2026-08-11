@@ -29,9 +29,17 @@ test('user list supports search status role filter and default name sort', funct
     $owner = actingAsTenantOwner();
     $tenant = $owner->tenant;
 
-    $alpha = tenantUser($tenant, ['name' => 'أحمد', 'email' => 'ahmad@example.com']);
-    tenantUser($tenant, ['name' => 'زياد', 'email' => 'ziad@example.com']);
-    $disabled = tenantUser($tenant, ['name' => 'معطل', 'email' => 'off@example.com']);
+    // Pin actor identity so Faker names like "Ahmad …" cannot collide with the search needle.
+    $owner->forceFill([
+        'name' => 'مالك الاختبار',
+        'email' => 'owner-list-filter@example.test',
+    ])->save();
+
+    // Unique Latin needle — never use bare "ahmad" (common in fake()->name()).
+    $alphaEmail = 'list-filter-alpha-zz9k@example.test';
+    $alpha = tenantUser($tenant, ['name' => 'أحمد', 'email' => $alphaEmail]);
+    tenantUser($tenant, ['name' => 'زياد', 'email' => 'list-filter-ziad@example.test']);
+    $disabled = tenantUser($tenant, ['name' => 'معطل', 'email' => 'list-filter-off@example.test']);
     $disabled->status = UserStatus::Disabled;
     $disabled->save();
 
@@ -41,15 +49,15 @@ test('user list supports search status role filter and default name sort', funct
         $employee->id,
     ]])->assertOk();
 
-    spaGetJson('/api/v1/users?search=ahmad')
+    spaGetJson('/api/v1/users?search=list-filter-alpha-zz9k')
         ->assertOk()
         ->assertJsonCount(1, 'data')
-        ->assertJsonPath('data.0.email', 'ahmad@example.com');
+        ->assertJsonPath('data.0.email', $alphaEmail);
 
     spaGetJson('/api/v1/users?status=disabled')
         ->assertOk()
         ->assertJsonCount(1, 'data')
-        ->assertJsonPath('data.0.email', 'off@example.com');
+        ->assertJsonPath('data.0.email', 'list-filter-off@example.test');
 
     spaGetJson('/api/v1/users?role_id='.$employee->id)
         ->assertOk()
