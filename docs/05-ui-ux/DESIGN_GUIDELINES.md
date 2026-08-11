@@ -1,7 +1,7 @@
 # Design Guidelines
 
 > **Status:** Approved direction; detailed tokens TBD
-> **Last updated:** 2026-08-06
+> **Last updated:** 2026-08-09
 
 ## Purpose
 
@@ -26,7 +26,7 @@ Define the UI/UX rules for the web platform. One design language for all modules
 
 ## Shared Components (build once in `shared/components/`)
 
-App Shell · Right Sidebar · Header · Breadcrumbs · Page Header · KPI Card · Data Table · Filters Bar · Search Input · Status Badge · Empty State · Loading State · Error State · Form Field · Date Picker · User Selector · Department Selector · Permission Guard · Confirmation Dialog · Drawer · Modal · File Upload · Timeline · Audit History Panel
+App Shell · Right Sidebar · Header · Breadcrumbs · Page Header · KPI Card · Data Table · Filters Bar · Search Input · Status Badge · Empty State · Loading State · Error State · Form Field · Date Picker · User Selector · Organization Unit Selector · Permission Guard · Confirmation Dialog · Drawer · Modal · File Upload · Timeline · Audit History Panel
 
 Rules:
 
@@ -34,6 +34,8 @@ Rules:
 - Every list page uses Data Table + Filters Bar + pagination; every destructive action uses Confirmation Dialog.
 - Status Badge colors are consistent across modules (same status semantics → same color).
 - Permission Guard hides/disables unauthorized UI — **UX only**; backend authorization remains mandatory.
+- Prefer **Drawer** for straightforward create/edit forms (e.g. user account, organization unit, employee, contract draft, meeting draft, decision draft, task draft); use full pages for dense matrices or rich timelines (contract/meeting/decision/task details). See module UI docs under [docs/09-modules/](../09-modules/), including [08-tasks/UI.md](../09-modules/08-tasks/UI.md).
+- Authenticated but unauthorized routes: dedicated **403 / access denied** page — do not send users back to login.
 
 ## Accessibility
 

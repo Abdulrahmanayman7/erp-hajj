@@ -1,48 +1,59 @@
 # Permission Model
 
-> **Status:** Approved (catalog may grow with modules)
-> **Last updated:** 2026-08-06
+> **Status:** Approved (catalog may grow with modules). Sprint 006–015 permissions are seeded as implemented. Sprint 016 Notifications: **no** `notifications.*` catalog verbs (recipient-owned inbox — ADR-0013).
+>
+> **Last updated:** 2026-08-11
 
 ## Purpose
 
-Define the granular permission naming model and the master permission catalog. Module docs list their own slice in `PERMISSIONS.md` under [docs/09-modules/](../09-modules/).
+Define the granular permission naming model and the master permission catalog. Module docs list their own slice in `PERMISSIONS.md` under [docs/09-modules/](../09-modules/). Binding Sprint 006 rules: [02-users-and-authorization/](../09-modules/02-users-and-authorization/).
 
 ## Model
 
-- Permissions are named **`module.action`** (e.g. `contracts.approve`).
-- Roles are **dynamic**: a role is a named set of permissions; personas in [USERS_AND_PERSONAS.md](../01-business/USERS_AND_PERSONAS.md) are default templates only.
-- Enforcement is backend-side via **Policies and Gates**. Frontend permission checks are UX only.
+- Permissions are named **`module.action`** (e.g. `contracts.approve`). Machine `name` is **immutable** and globally unique.
+- Permissions are a **platform-global catalog** (no `tenant_id`). Roles are **tenant-owned**. Links: `role_permissions`, `user_roles`. **No direct user↔permission grants** in MVP.
+- Roles are **dynamic**; personas in [USERS_AND_PERSONAS.md](../01-business/USERS_AND_PERSONAS.md) are default **templates** only.
+- Multiple roles per user; effective permissions = **union** of active roles.
+- Enforcement is backend-side via **Policies and Gates**. Frontend `can()` is UX only.
+- **Seed only permissions for modules that exist in code.** The master catalog below is the long-term vocabulary; Sprint 006 seeds the slice in [02-users-and-authorization/PERMISSIONS.md](../09-modules/02-users-and-authorization/PERMISSIONS.md).
 
 ## Rules
 
 - **The Tenant Owner must not bypass authorization automatically.** All users pass Policies or Gates.
 - Exceptional access (e.g. Platform Super Admin into tenant data) must be explicit, permission-controlled, and **audited**.
 - Sensitive data access has its own permission (e.g. `employees.view_sensitive_data`).
-- Permission changes are audited.
+- Permission and role assignment changes are audited.
+- Platform permissions use existing Tenancy names: **`platform_tenants.*`** — never assignable to tenant roles. See [00-tenancy/PERMISSIONS.md](../09-modules/00-tenancy/PERMISSIONS.md).
 
-## Master Catalog
+## Master Catalog (documentation target)
 
 | Module | Permissions |
 |---|---|
-| Users | `users.view` `users.create` `users.update` `users.disable` `users.delete` |
+| Users | `users.view` `users.create` `users.update` `users.disable` `users.assign_roles` · `users.delete` (reserved; **not seeded** in Sprint 006 — disable replaces hard delete) |
 | Roles | `roles.view` `roles.create` `roles.update` `roles.delete` `roles.assign_permissions` |
-| Departments | `departments.view` `departments.create` `departments.update` `departments.delete` |
-| Employees | `employees.view` `employees.create` `employees.update` `employees.delete` `employees.view_sensitive_data` |
-| Contracts | `contracts.view` `contracts.create` `contracts.update` `contracts.review` `contracts.approve` `contracts.sign` `contracts.execute` `contracts.close` `contracts.renew` `contracts.delete` |
-| Meetings | `meetings.view` `meetings.create` `meetings.update` `meetings.cancel` `meetings.manage_attendees` `meetings.manage_minutes` |
-| Decisions | `decisions.view` `decisions.create` `decisions.update` `decisions.approve` `decisions.close` `decisions.delete` |
-| Tasks | `tasks.view` `tasks.create` `tasks.update` `tasks.assign` `tasks.change_status` `tasks.complete` `tasks.delete` |
-| Documents | `documents.view` `documents.upload` `documents.download` `documents.update` `documents.delete` `documents.manage_categories` |
-| Warehouses | `warehouses.view` `warehouses.create` `warehouses.update` `warehouses.delete` |
-| Inventory | `inventory.view` `inventory.add` `inventory.issue` `inventory.transfer` `inventory.return` `inventory.adjust` |
-| Assets | `assets.view` `assets.create` `assets.update` `assets.delete` `assets.assign` `assets.return` `assets.retire` |
+| Permissions (catalog read) | `permissions.view` |
+| Organization units | `organization_units.view` `organization_units.create` `organization_units.update` `organization_units.delete` — covers types department/section/unit; **seeded** with Sprint 007 ([03-organization-structure/PERMISSIONS.md](../09-modules/03-organization-structure/PERMISSIONS.md)). Obsolete draft names `departments.*` must not be seeded. |
+| Employees | `employees.view` `employees.create` `employees.update` `employees.deactivate` `employees.assign_supervisor` — **seeded with Sprint 008** ([04-employees-and-supervisors/PERMISSIONS.md](../09-modules/04-employees-and-supervisors/PERMISSIONS.md)). `employees.delete` / `employees.view_sensitive_data` reserved (**not seeded**). |
+| Positions | `positions.view` `positions.create` `positions.update` `positions.delete` — **seeded with Sprint 008** ([04-employees-and-supervisors/PERMISSIONS.md](../09-modules/04-employees-and-supervisors/PERMISSIONS.md)). |
+| Contracts | `contracts.view` `contracts.create` `contracts.update` `contracts.review` `contracts.approve` `contracts.sign` `contracts.execute` `contracts.close` `contracts.renew` `contracts.cancel` `contracts.delete` — **seeded with Sprint 009** ([05-contracts/PERMISSIONS.md](../09-modules/05-contracts/PERMISSIONS.md)) |
+| Meetings | `meetings.view` `meetings.create` `meetings.update` `meetings.cancel` `meetings.manage_attendees` `meetings.manage_minutes` — **seeded with Sprint 010** ([06-meetings/PERMISSIONS.md](../09-modules/06-meetings/PERMISSIONS.md)) |
+| Decisions | `decisions.view` `decisions.create` `decisions.update` `decisions.approve` `decisions.close` `decisions.delete` — **seeded with Sprint 011** ([07-decisions/PERMISSIONS.md](../09-modules/07-decisions/PERMISSIONS.md)). Submit/cancel map to `update`; return-draft maps to `approve`; no micro-permissions. |
+| Tasks | `tasks.view` `tasks.create` `tasks.update` `tasks.assign` `tasks.change_status` `tasks.complete` `tasks.delete` — **implemented** Sprint 012 ([08-tasks/PERMISSIONS.md](../09-modules/08-tasks/PERMISSIONS.md)). Start/cancel/progress map to `change_status`; limited assignee self-service documented in ADR-0009. |
+| Documents | `documents.view` `documents.upload` `documents.download` `documents.update` `documents.archive` `documents.delete` `documents.manage_categories` — **implemented** Sprint 013 ([09-documents/PERMISSIONS.md](../09-modules/09-documents/PERMISSIONS.md); ADR-0010). Archive ≠ hard delete. Do not seed `contracts.attach_documents`. |
+| Warehouses | `warehouses.view` `warehouses.create` `warehouses.update` `warehouses.delete` — **implemented** Sprint 014 ([10-warehouses-and-inventory/PERMISSIONS.md](../09-modules/10-warehouses-and-inventory/PERMISSIONS.md); ADR-0011). |
+| Inventory | `inventory.view` `inventory.manage_items` `inventory.add` `inventory.issue` `inventory.return` `inventory.transfer` `inventory.adjust` — **implemented** Sprint 014. `manage_items` covers item master + categories; adjustments are sensitive. |
+| Assets | `assets.view` `assets.create` `assets.update` `assets.delete` `assets.assign` `assets.return` `assets.retire` — **implemented** Sprint 015 ([11-assets-and-custodies/PERMISSIONS.md](../09-modules/11-assets-and-custodies/PERMISSIONS.md); ADR-0012). Seeded via `PermissionCatalog`. No separate `custodies.*` verbs. |
+| Notifications | **No seeded `notifications.*` in MVP** — own inbox is recipient-owned for any authenticated tenant User ([12-notifications/PERMISSIONS.md](../09-modules/12-notifications/PERMISSIONS.md); ADR-0013). Future `notifications.manage` only via CR. |
 | Audit logs | `audit_logs.view` `audit_logs.export` |
 | Dashboard | `dashboard.view` |
 | Tenant settings | `tenant_settings.view` `tenant_settings.update` |
+| Platform (tenants) | `platform_tenants.view` `platform_tenants.create` `platform_tenants.update` `platform_tenants.activate` `platform_tenants.suspend` `platform_tenants.archive` `platform_tenants.access_data` |
+
+## Default role templates
+
+Seeded system role codes and Sprint 006 permission mapping: [02-users-and-authorization/PERMISSIONS.md](../09-modules/02-users-and-authorization/PERMISSIONS.md) and [BUSINESS_RULES.md](../09-modules/02-users-and-authorization/BUSINESS_RULES.md).
 
 ## TBD
 
-- Custody-specific permissions beyond `assets.assign`/`assets.return` (e.g. custody correction permission): TBD.
-- Notification-related permissions: TBD.
-- Platform-level (Super Admin) permission names for tenant lifecycle management: TBD.
-- Default role templates → permission mapping: TBD.
+- Future `notifications.manage` (admin console) — out of MVP (ADR-0013).
+- Custody **correction/void** permission (post-return): deferred (ADR-0012).

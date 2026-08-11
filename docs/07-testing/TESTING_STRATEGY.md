@@ -1,7 +1,7 @@
 # Testing Strategy
 
 > **Status:** Approved (principles binding; Pest/Vitest decided; E2E tooling still TBD)
-> **Last updated:** 2026-08-08
+> **Last updated:** 2026-08-11
 
 ## Purpose
 
@@ -15,9 +15,11 @@ Define what must be tested and to what standard. Per-module test plans live in e
 
 - **Unit tests** — actions/services with non-trivial logic.
 - **Feature API tests** — per endpoint: success, validation failure (`422`), unauthenticated (`401`), unauthorized (`403`), cross-tenant (`404`).
-- **Policy tests** — permission-gated actions per the permission catalog.
+- **Policy tests** — permission-gated actions per the permission catalog; RBAC matrices in [02-users-and-authorization/TEST_PLAN.md](../09-modules/02-users-and-authorization/TEST_PLAN.md) (Sprint 006 — implemented). Organization unit matrices in [03-organization-structure/TEST_PLAN.md](../09-modules/03-organization-structure/TEST_PLAN.md) (Sprint 007 — implemented). Employee/supervisor matrices in [04-employees-and-supervisors/TEST_PLAN.md](../09-modules/04-employees-and-supervisors/TEST_PLAN.md) (Sprint 008 — implemented). Contract lifecycle matrices in [05-contracts/TEST_PLAN.md](../09-modules/05-contracts/TEST_PLAN.md) (Sprint 009 — implemented). Meeting matrices in [06-meetings/TEST_PLAN.md](../09-modules/06-meetings/TEST_PLAN.md) (Sprint 010 — implemented). Decision matrices in [07-decisions/TEST_PLAN.md](../09-modules/07-decisions/TEST_PLAN.md) (Sprint 011 — implemented). Task matrices in [08-tasks/TEST_PLAN.md](../09-modules/08-tasks/TEST_PLAN.md) (Sprint 012 — implemented). Document / file-authorization matrices in [09-documents/TEST_PLAN.md](../09-modules/09-documents/TEST_PLAN.md) (Sprint 013 — implemented).
+- **Privilege-escalation / last-owner / self-disable tests** — mandatory for Users & Authorization.
+- **Hierarchy / circular-reference tests** — mandatory for Organization Structure and employee supervisor chains when implemented.
+- **Workflow transition tests** — valid and invalid paths for core workflows when implemented (Contracts / Meetings / Decisions / Tasks + Decision close gate — see each module `TEST_PLAN.md`).
 - **Validation tests** — Form Request rules.
-- **Workflow transition tests** — valid and invalid transitions for all four core workflows.
 - **Audit tests** — critical operations produce the expected audit records; secrets never appear in audit values.
 - **File authorization tests** — private files are not downloadable without permission.
 - **Multi-tenant isolation tests** — mandatory per module. The tenancy foundation itself has a complete positive/negative/edge/security matrix in [00-tenancy/TEST_PLAN.md](../09-modules/00-tenancy/TEST_PLAN.md); business modules reuse its shared helpers (`actingAsTenantUser()`, two-tenant fixtures) and add at least one explicit cross-tenant test per endpoint group.
@@ -38,7 +40,9 @@ Define what must be tested and to what standard. Per-module test plans live in e
 - Contract lifecycle (draft → review → approval → signature → execution → closure/renewal).
 - Meeting → Decision → Task workflow.
 - Document upload and protected download.
-- Inventory transaction.
+- Inventory movements and balance mutations (Sprint 014 — **implemented**; ADR-0011): receipt/issue/return/transfer/adjust; insufficient-stock and concurrency; cross-tenant warehouse/item isolation; no direct balance PATCH.
+- Asset / custody assign-return (Sprint 015 — **implemented**; ADR-0012): single active custody; double-assign race; cross-tenant isolation; holder self-view; no inventory balance side effects (`AssetTest` 20/20).
+- In-app notifications (Sprint 016 — **specified**; ADR-0013): recipient ownership IDOR; cross-tenant isolation; dedupe for scheduled types; dispatcher failure isolation; Pest/Vitest matrices in [12-notifications/TEST_PLAN.md](../09-modules/12-notifications/TEST_PLAN.md).
 - Asset custody assignment and return.
 
 ## Rules

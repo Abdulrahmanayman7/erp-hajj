@@ -1,11 +1,25 @@
 # Architecture
 
 > **Status:** Approved
-> **Last updated:** 2026-08-06
+> **Last updated:** 2026-08-10
 
 ## Purpose
 
 Define the overall architecture and the mandatory layering rules for the platform.
+
+Hand-rolled tenant RBAC (Sprint 006 — **implemented**): global `permissions` catalog, tenant-owned `roles`, pivots `user_roles` / `role_permissions` — see [02-users-and-authorization/](../09-modules/02-users-and-authorization/). Do not add Spatie without an ADR.
+
+Tenant-internal hierarchy (Sprint 007 — **implemented**): single adjacency-list `organization_units` table — see [03-organization-structure/](../09-modules/03-organization-structure/) and [ADR-0004](../10-decisions/ADR-0004-ORGANIZATION-UNITS-HIERARCHY.md). Not multi-tenancy; not RBAC.
+
+Personnel (Sprint 008 — **specified**): `employees` + `positions` — see [04-employees-and-supervisors/](../09-modules/04-employees-and-supervisors/) and [ADR-0005](../10-decisions/ADR-0005-EMPLOYEE-POSITIONS-CATALOG.md). User ≠ Employee; unit manager ≠ employee supervisor.
+
+Contracts (Sprint 009 — **implemented**): `contract_categories` + `contracts` + transition history — see [05-contracts/](../09-modules/05-contracts/) and [ADR-0006](../10-decisions/ADR-0006-CONTRACT-CATEGORIES-CATALOG.md). Contract ≠ Document ≠ Supplier.
+
+Meetings (Sprint 010 — **implemented**): `meetings` + agenda/attendees/recommendations + transition history — see [06-meetings/](../09-modules/06-meetings/) and [ADR-0007](../10-decisions/ADR-0007-MEETING-AGENDA-AND-RECOMMENDATIONS.md). Recommendation ≠ Decision.
+
+Decisions (Sprint 011 — **implemented**): `decisions` + `decision_status_transitions` + `DEC-######` sequences — see [07-decisions/](../09-modules/07-decisions/) and [ADR-0008](../10-decisions/ADR-0008-DECISION-RECOMMENDATION-AND-APPROVAL.md). Decision ≠ Task.
+
+Tasks (Sprint 012 — **specified**): `tasks` + status/assignment histories + `TSK-######` sequences — see [08-tasks/](../09-modules/08-tasks/) and [ADR-0009](../10-decisions/ADR-0009-TASK-ASSIGNEE-AND-DECISION-GATE.md). Single Employee assignee; Decision close gated by open Tasks.
 
 ## Style
 

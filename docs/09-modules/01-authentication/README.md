@@ -1,6 +1,6 @@
 # Module: Authentication (المصادقة)
 
-> **Status:** Implemented (Sprint 005). Backend API + SPA UI + guards + Pest/Vitest green. **RBAC not included.**
+> **Status:** Implemented (Sprint 005). Backend API + SPA UI + guards + Pest/Vitest green. `/auth/me` includes additive `roles` + `permissions` from Sprint 006 RBAC.
 > **Last updated:** 2026-08-08
 > **Sprint:** 005
 

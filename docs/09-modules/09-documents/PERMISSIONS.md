@@ -1,18 +1,60 @@
 # Documents — Permissions
 
-> **Status:** Approved
-> **Last updated:** 2026-08-06
+> **Status:** Implemented (Sprint 013) — catalog and role templates seeded  
+> **Last updated:** 2026-08-10
 
-| Permission | Purpose |
+Capabilities use `module.action`. Policies never check role names. Frontend gates are UX-only.
+
+## Catalog (final MVP)
+
+| Permission | Meaning |
 |---|---|
-| `documents.view` | List/view document metadata |
-| `documents.upload` | Upload documents (audited) |
-| `documents.download` | Download documents (sensitive downloads audited) |
-| `documents.update` | Update metadata/links |
-| `documents.delete` | Archive/soft delete (audited) |
-| `documents.manage_categories` | Manage document categories |
+| `documents.view` | List/view Document metadata (center + details + entity widgets) |
+| `documents.upload` | Upload new Document (and optional initial link) |
+| `documents.download` | Download file bytes (audited) |
+| `documents.update` | Update title/description/category; change/clear link |
+| `documents.archive` | Archive and restore |
+| `documents.delete` | Hard-delete metadata + physical file |
+| `documents.manage_categories` | CRUD/deactivate document categories |
 
-## Rules
+**Supersedes stub:** archive is **not** folded into `documents.delete`.  
+**Host permission:** do **not** seed reserved `contracts.attach_documents` — use `documents.upload` + link.
 
-- Confidentiality level adds a second gate on top of permissions (semantics TBD).
-- Linked-entity access may further constrain visibility (e.g. employee attachments + sensitive data permission): interaction rules TBD.
+### Action → permission map
+
+| API / UX action | Permission |
+|---|---|
+| GET list / show / entity widget | `documents.view` |
+| POST upload | `documents.upload` |
+| GET download | `documents.download` |
+| PATCH metadata / link | `documents.update` |
+| POST archive / restore | `documents.archive` |
+| DELETE hard | `documents.delete` |
+| Category endpoints | `documents.manage_categories` (+ `documents.view` to pick categories on forms) |
+
+## Policy: `DocumentPolicy` / `DocumentCategoryPolicy`
+
+| Ability | Rule |
+|---|---|
+| `viewAny` / `view` | `documents.view` + same tenant |
+| `upload` / `create` | `documents.upload` |
+| `download` | `documents.download` + same tenant |
+| `update` | `documents.update` + same tenant |
+| `archive` / `restore` | `documents.archive` + same tenant |
+| `delete` | `documents.delete` + same tenant |
+| Category CRUD | `documents.manage_categories` |
+
+No Task-assignee self-service path for Documents.
+
+## Default system role template grants
+
+| Role template | view | upload | download | update | archive | delete | manage_categories |
+|---|---|---|---|---|---|---|---|
+| Tenant Owner | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| General Manager | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Department Manager | ✓ | ✓ | ✓ | ✓ | ✓ | — | ✓ |
+| Supervisor | ✓ | — | ✓ | — | — | — | — |
+| Employee (base) | ✓ | — | ✓ | — | — | — | — |
+| Auditor | ✓ | — | ✓ | — | — | — | — |
+
+Owner receives all via `*` catalog. Do not wipe custom roles when seeding templates.

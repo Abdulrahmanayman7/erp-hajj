@@ -1,7 +1,7 @@
 # Security Baseline
 
 > **Status:** Approved baseline; authentication values finalized for Sprint 005 (implementation pending)
-> **Last updated:** 2026-08-08
+> **Last updated:** 2026-08-11
 
 ## Purpose
 
@@ -27,6 +27,9 @@ Each control below names the attack it prevents. Implementation details are spec
 | **Platform privilege abuse** (Super Admin reading tenant data “because they can”) | Platform users have no tenant context; scoping fails closed for them. There is **no public tenancy bypass** — platform operations run inside the narrowly scoped `PlatformContext`, and access to one tenant's data exists only through the explicit `platform_tenants.access_data` permission wrapped in `TenantContext::runAsTenant()`, **always audited** into the target tenant's own audit trail with the correlation ID. |
 | **Tenant code abuse** (using a known/guessed `tenant_code` to reach tenant data) | `tenant_code` is an operational label only (logs, exports, storage diagnostics, future subdomains). No resolver, policy, or endpoint ever accepts it as an authorization input — knowing a code grants nothing. |
 | **Untraceable actions** (no way to reconstruct who did what across request → job → export) | Mandatory request **correlation ID** (validated-or-regenerated per request, echoed in response headers) propagated to application logs, audit records, job payloads, and exports — see [AUDIT_TRAIL.md](AUDIT_TRAIL.md). |
+| **Inventory race / negative stock** (two concurrent issues or forged balance PATCH) | Stock mutations only via domain actions under `SELECT … FOR UPDATE` on balance rows; no client PATCH of balances/movements; MVP rejects `on_hand < 0` (`INVENTORY_INSUFFICIENT_STOCK`); transfers lock by ascending `warehouse_id` — [ADR-0011](../10-decisions/ADR-0011-INVENTORY-LEDGER-BALANCE-AND-TRANSFER.md). |
+| **Double asset custody** (two concurrent assigns) | Assign/return under Asset `FOR UPDATE`; re-check no active custody after lock; immutable returned rows — **implemented** Sprint 015 ([ADR-0012](../10-decisions/ADR-0012-ASSET-CUSTODY-AND-OWNERSHIP.md)). |
+| **Notification IDOR / inbox leak** | Recipient-owned Policy (`recipient_user_id === actor`); tenant scope; no client create; no stored `action_url`; plain-text bodies — specified Sprint 016 ([ADR-0013](../10-decisions/ADR-0013-IN-APP-NOTIFICATION-OWNERSHIP-AND-DELIVERY.md)). |
 
 ### Authentication
 
@@ -46,6 +49,7 @@ Each control below names the attack it prevents. Implementation details are spec
 - No persona bypasses authorization; exceptional access is explicit and audited.
 - Permission and role changes are audited.
 - Never rely on frontend permission hiding — backend authorization is mandatory.
+- Sprint 006 RBAC (**implemented**): multiple roles; permissions via roles only; global permission catalog; tenant-owned roles; self-escalation and last-Owner protections — [02-users-and-authorization/BUSINESS_RULES.md](../09-modules/02-users-and-authorization/BUSINESS_RULES.md).
 
 ### Input, output, and data
 
@@ -86,6 +90,7 @@ No formal compliance certification is claimed. **Saudi PDPL (نظام حماية
 ## TBD
 
 - Production mail provider (password-reset delivery).
-- Malware scanner selection: TBD.
+- Malware scanner selection: TBD (Documents Sprint 013 enforces MIME/extension/size + private storage + authz; product scanner deferred — ADR-0010).
+- Private document downloads: authorized streamed API only (`documents.download`); no public disk URLs (Sprint 013 implemented).
 - Secure header set finalization: TBD at deployment.
 - Whether disabled-account login should collapse into generic invalid-credentials for stronger anti-enumeration (current auth spec returns `AUTH_ACCOUNT_DISABLED` after successful password verify) — Change Request only.

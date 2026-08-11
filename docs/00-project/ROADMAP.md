@@ -1,7 +1,7 @@
 # Roadmap
 
 > **Status:** Draft (delivery order aligned to completed / next sprints)
-> **Last updated:** 2026-08-08
+> **Last updated:** 2026-08-11
 
 ## Purpose
 
@@ -19,11 +19,20 @@ The 21 modules and four core workflows defined in [MVP_SCOPE.md](MVP_SCOPE.md), 
 | Module-level documentation under `docs/09-modules/` | Done (living docs) |
 | Backend + frontend scaffolding (health, RTL shell, CI) | Done |
 | Sprint 004 — Tenant Foundation (data + core scoping/isolation) | Done (implementation) |
-| Sprint 005 — Authentication (API + SPA UI) | **Done** (RBAC still pending) |
-| Users / roles / permissions (RBAC) | Next after Authentication |
-| Organizational structure → remaining MVP modules | After RBAC |
-
-Natural dependency order remains: **tenancy → authentication → users/roles/permissions → organizational structure → remaining modules**.
+| Sprint 005 — Authentication (API + SPA UI) | **Done** |
+| Sprint 006 — Users / roles / permissions (RBAC) | **Done** (implementation) |
+| Sprint 007 — Organization Structure | **Done** (implementation) |
+| Sprint 008 — Employees + Supervisors | **Done** (implementation) |
+| Sprint 009 — Contracts | **Done** (implementation) |
+| Sprint 010 — Meetings | **Done** (implementation) |
+| Sprint 011 — Decisions | **Done** (implementation) |
+| Sprint 012 — Tasks & Assignments | **Done** (implementation) |
+| Sprint 013 — Documents & Archiving | **Done** (implementation) |
+| Sprint 014 — Warehouses & Inventory | **Done** (implementation) |
+| Sprint 015 — Assets & Custodies | **Done** (implementation) |
+| Sprint 016 — Notifications | **Specification complete** — implementation pending |
+| Remaining MVP modules | Next: Notifications implementation / Settings / Dashboard / Audit module polish |
+Natural dependency order remains: **tenancy → authentication → users/roles/permissions → organizational structure → employees → contracts → meetings → decisions → tasks → documents → warehouses/inventory → assets/custodies → remaining modules**.
 
 ## Later — Future Vision (NOT part of the MVP, all TBD)
 

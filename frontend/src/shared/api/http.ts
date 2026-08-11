@@ -140,3 +140,149 @@ export async function apiPost<TData>(
 
   return request<TData>('POST', path, body)
 }
+
+export async function apiPut<TData>(
+  path: string,
+  body?: unknown,
+): Promise<ApiSuccess<TData>> {
+  await ensureCsrfCookie()
+  return request<TData>('PUT', path, body)
+}
+
+export async function apiPatch<TData>(
+  path: string,
+  body?: unknown,
+): Promise<ApiSuccess<TData>> {
+  await ensureCsrfCookie()
+  return request<TData>('PATCH', path, body)
+}
+
+export async function apiDelete<TData = null>(path: string): Promise<ApiSuccess<TData>> {
+  await ensureCsrfCookie()
+  return request<TData>('DELETE', path)
+}
+
+/**
+ * Multipart POST (e.g. document upload). Do not set Content-Type — the browser sets the boundary.
+ */
+export async function apiPostFormData<TData>(
+  path: string,
+  formData: FormData,
+  allowCsrfRetry = true,
+): Promise<ApiSuccess<TData>> {
+  await ensureCsrfCookie()
+
+  const headers: Record<string, string> = {
+    Accept: 'application/json',
+    'X-Requested-With': 'XMLHttpRequest',
+  }
+
+  const xsrf = readXsrfToken()
+  if (xsrf) {
+    headers['X-XSRF-TOKEN'] = xsrf
+  }
+
+  let response: Response
+  try {
+    response = await fetch(`${baseUrl}${path}`, {
+      method: 'POST',
+      headers,
+      credentials: 'include',
+      body: formData,
+    })
+  } catch {
+    throw new ApiError(0, undefined)
+  }
+
+  if (response.status === 419 && allowCsrfRetry) {
+    resetCsrfBootstrap()
+    await ensureCsrfCookie()
+    return apiPostFormData<TData>(path, formData, false)
+  }
+
+  const parsed = await parseBody(response)
+
+  if (!response.ok || parsed === undefined || parsed.success !== true) {
+    throw new ApiError(
+      response.status,
+      parsed?.success === false ? parsed : undefined,
+    )
+  }
+
+  return parsed as ApiSuccess<TData>
+}
+
+export interface BlobDownloadResult {
+  blob: Blob
+  filename: string | null
+}
+
+function filenameFromContentDisposition(header: string | null): string | null {
+  if (!header) {
+    return null
+  }
+
+  const utf8Match = /filename\*\s*=\s*UTF-8''([^;]+)/i.exec(header)
+  if (utf8Match?.[1]) {
+    try {
+      return decodeURIComponent(utf8Match[1].trim().replace(/^["']|["']$/g, ''))
+    } catch {
+      return utf8Match[1].trim().replace(/^["']|["']$/g, '')
+    }
+  }
+
+  const plainMatch = /filename\s*=\s*([^;]+)/i.exec(header)
+  if (plainMatch?.[1]) {
+    return plainMatch[1].trim().replace(/^["']|["']$/g, '')
+  }
+
+  return null
+}
+
+/** Authorized binary download (private storage — never use a public storage URL). */
+export async function apiDownloadBlob(
+  path: string,
+  allowCsrfRetry = true,
+): Promise<BlobDownloadResult> {
+  await ensureCsrfCookie()
+
+  const headers: Record<string, string> = {
+    Accept: '*/*',
+    'X-Requested-With': 'XMLHttpRequest',
+  }
+
+  const xsrf = readXsrfToken()
+  if (xsrf) {
+    headers['X-XSRF-TOKEN'] = xsrf
+  }
+
+  let response: Response
+  try {
+    response = await fetch(`${baseUrl}${path}`, {
+      method: 'GET',
+      headers,
+      credentials: 'include',
+    })
+  } catch {
+    throw new ApiError(0, undefined)
+  }
+
+  if (response.status === 419 && allowCsrfRetry) {
+    resetCsrfBootstrap()
+    await ensureCsrfCookie()
+    return apiDownloadBlob(path, false)
+  }
+
+  if (!response.ok) {
+    const parsed = await parseBody(response)
+    throw new ApiError(
+      response.status,
+      parsed?.success === false ? parsed : undefined,
+    )
+  }
+
+  const blob = await response.blob()
+  const filename = filenameFromContentDisposition(response.headers.get('Content-Disposition'))
+
+  return { blob, filename }
+}

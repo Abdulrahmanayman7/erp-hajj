@@ -168,7 +168,7 @@ Successful login clears the **login** limiter for that email+IP.
 
 - Email verification: **out** of Sprint 005.
 - MFA: **future** only.
-- RBAC / permissions on `/auth/me`: **out** — do not fabricate.
+- RBAC / permissions on `/auth/me`: **out of Sprint 005** — additive extension specified for Sprint 006 ([02-users-and-authorization](../02-users-and-authorization/)).
 - `logout-all`: **future**.
 
 ## Resolved former TBDs

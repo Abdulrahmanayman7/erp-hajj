@@ -1,22 +1,94 @@
-# Notifications — API (planned)
+# Notifications — API
 
-> **Status:** Planned contract — no endpoints exist yet; proposals pending TBD decisions
-> **Last updated:** 2026-08-06
+> **Status:** Specified (Sprint 016) — **not implemented**
+> **Last updated:** 2026-08-11
+> Base: `/api/v1` · Auth: Sanctum SPA · Envelope: [API_STANDARDS.md](../../04-api/API_STANDARDS.md)
 
-All endpoints follow [API_STANDARDS.md](../../04-api/API_STANDARDS.md).
+All routes: authenticated + tenant-active. Access is **recipient-owned** (see [PERMISSIONS.md](PERMISSIONS.md)). Cross-tenant / other-user → **404**.
 
-```text
-GET  /api/v1/notifications                       # own notifications; filters: read/unread, type, date
-POST /api/v1/notifications/{notification}/read   # mark as read (proposal)
-POST /api/v1/notifications/read-all              # proposal
+**No** client create/update/delete of notification content. **No** mark-unread.
+
+---
+
+## Endpoints
+
+| Method | Path | Access | Notes |
+|---|---|---|---|
+| GET | `/notifications` | Own inbox | Paginated |
+| GET | `/notifications/unread-count` | Own | `{ "unread_count": N }` |
+| GET | `/notifications/{notification}` | Own row | 404 if other user/tenant |
+| POST | `/notifications/{notification}/read` | Own row | Idempotent |
+| POST | `/notifications/read-all` | Own | Marks all unread for actor |
+
+### Unread count response
+
+```json
+{
+  "success": true,
+  "message": "",
+  "data": { "unread_count": 3 }
+}
 ```
 
-## Behavior
+Efficient query: `COUNT(*)` where `recipient_user_id = actor` AND `read_at IS NULL` under tenant scope — **do not** load the full inbox.
 
-- Responses contain only the authenticated user's notifications within their tenant.
-- Generation is internal (module events + queued jobs) — no public "send notification" endpoint in the MVP.
+---
 
-## TBD
+## List filters / sorting
 
-- Endpoints depend on read/unread model decision: TBD.
-- Unread count endpoint for the header bell: TBD with UI design.
+| Param | Notes |
+|---|---|
+| `unread_only` | `1` / `true` → `read_at IS NULL` |
+| `type` | Exact catalog type |
+| `severity` | `info` \| `warning` \| `critical` |
+| `created_from` / `created_to` | ISO date(time) range on `created_at` |
+| `page` / `per_page` | Default per_page 15; max 100 |
+
+**Default sort:** `created_at DESC`, then `id DESC`.
+
+---
+
+## Resource shape
+
+```json
+{
+  "id": 1,
+  "type": "TASK_ASSIGNED",
+  "title": "…",
+  "body": "…",
+  "severity": "info",
+  "entity_type": "task",
+  "entity_id": 12,
+  "read_at": null,
+  "created_at": "…",
+  "is_read": false
+}
+```
+
+- Do **not** embed full Task/Contract resources.
+- Optional compact `entity_label` only if cheap and already composed into title — prefer title/body alone in MVP.
+- Never expose other users’ ids as recipients.
+
+---
+
+## Error codes
+
+| Code | When |
+|---|---|
+| `NOTIFICATION_NOT_FOUND` | Prefer generic **404** |
+| `NOTIFICATION_IMMUTABLE` | Attempt to mutate non-read fields |
+| `NOTIFICATION_FORBIDDEN` | Prefer **404** for IDOR (no existence leak) |
+
+Validation errors → standard `422` envelope.
+
+---
+
+## Generation
+
+Internal only (Actions / Jobs / Artisan). **No** `POST /notifications`.
+
+---
+
+## Audit
+
+Mark-read endpoints do **not** emit high-volume audit events (see BUSINESS_RULES).

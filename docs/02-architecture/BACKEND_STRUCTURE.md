@@ -1,7 +1,7 @@
 # Backend Structure
 
-> **Status:** Approved — backend scaffolded; Tenant Foundation core implemented (Sprint 004); Authentication specified for Sprint 005 — **not implemented**
-> **Last updated:** 2026-08-08
+> **Status:** Approved — Tenant Foundation (004) + Authentication (005) + Users/RBAC (006) + OrganizationStructure (007) + Employees (008) + Contracts (009) + Meetings (010) + Decisions (011) + Tasks (012) + Documents (013) + Inventory (014) + Assets (015) implemented; Notifications (016) **specified**
+> **Last updated:** 2026-08-11
 
 ## Purpose
 
@@ -18,25 +18,24 @@ app/
 ├── Core/
 │   ├── Tenancy/        # tenant resolution, automatic scoping, tenant context for jobs/cache (Sprint 004)
 │   ├── Auth/           # Sanctum SPA session auth, login/logout/me/password-reset Actions (Sprint 005)
+│   ├── Authorization/  # Sprint 006: effective permissions, Gates helpers, catalog sync (hand-rolled; no Spatie)
 │   ├── Audit/          # audit recording used by all modules (minimal recorder may ship with auth)
 │   ├── Shared/         # base classes, standardized API response envelope
 │   └── Support/        # helpers, cross-cutting utilities
 ├── Modules/
 │   ├── Organizations/          # tenant management (platform level)
-│   ├── Users/
-│   ├── Authorization/          # roles, permissions
-│   ├── OrganizationStructure/
-│   ├── Employees/              # includes supervisor classification
-│   ├── Contracts/
-│   ├── Meetings/
-│   ├── Decisions/
-│   ├── Tasks/
-│   ├── Documents/
-│   ├── Warehouses/
-│   ├── Inventory/
-│   ├── Assets/
-│   ├── Custodies/
-│   ├── Notifications/
+│   ├── Users/                  # Sprint 006: tenant user administration
+│   ├── Authorization/          # Sprint 006: tenant roles + role_permissions (module surface)
+│   ├── OrganizationStructure/    # Sprint 007 — implemented (`organization_units`)
+│   ├── Employees/                # Sprint 008 — implemented
+│   ├── Contracts/                # Sprint 009 — implemented
+│   ├── Meetings/                 # Sprint 010 — implemented
+│   ├── Decisions/                # Sprint 011 — implemented
+│   ├── Tasks/                    # Sprint 012 — implemented
+│   ├── Documents/                # Sprint 013 — implemented
+│   ├── Inventory/                # Sprint 014 — implemented (warehouses + stock; ADR-0011)
+│   ├── Assets/                   # Sprint 015 — implemented (assets + custodies nested; ADR-0012)
+│   ├── Notifications/              # Sprint 016 — specified (ADR-0013); implementation pending
 │   └── Dashboard/
 ```
 
@@ -81,3 +80,9 @@ Controllers must not:
 - HTTP surface: `/api/v1/auth/*` (see [01-authentication/API.md](../09-modules/01-authentication/API.md)).
 - Prefer `App\Core\Auth\` for session/login Actions, middleware (`EnsureUserIsActive`), Resources, and Form Requests — authentication is platform plumbing, not a tenant business module.
 - Reuse `Core\Tenancy` for tenant gates; do not duplicate tenant resolution inside login beyond the documented login-time checks.
+
+### Users & Authorization placement (Sprint 006 — specified)
+
+- HTTP: `/api/v1/users`, `/api/v1/roles`, `/api/v1/permissions` — see [02-users-and-authorization/API.md](../09-modules/02-users-and-authorization/API.md).
+- Prefer `App\Core\Authorization\` for permission catalog sync, `hasPermission` helpers, and TenantCache invalidation; `App\Modules\Users\` and `App\Modules\Authorization\` for HTTP/Actions/Policies/Models.
+- Hand-rolled RBAC only — do not add Spatie. Extend `/auth/me` additively with `roles` + `permissions` when RBAC ships.

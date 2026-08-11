@@ -1,0 +1,319 @@
+<script setup lang="ts">
+import { computed, nextTick, onUnmounted, ref, watch, type CSSProperties } from 'vue'
+import { Check, ChevronDown } from 'lucide-vue-next'
+
+export interface AppSelectOption {
+  value: string | number
+  label: string
+  hint?: string
+  disabled?: boolean
+}
+
+const props = withDefaults(
+  defineProps<{
+    modelValue?: string | number | null
+    options?: AppSelectOption[]
+    placeholder?: string
+    disabled?: boolean
+    searchable?: boolean
+    searchPlaceholder?: string
+    size?: 'sm' | 'md'
+    teleport?: boolean
+  }>(),
+  {
+    modelValue: null,
+    options: () => [],
+    placeholder: 'اختر…',
+    disabled: false,
+    searchable: false,
+    searchPlaceholder: 'بحث…',
+    size: 'md',
+    teleport: true,
+  },
+)
+
+const emit = defineEmits<{
+  'update:modelValue': [value: string | number | null]
+}>()
+
+const root = ref<HTMLElement | null>(null)
+const triggerRef = ref<HTMLButtonElement | null>(null)
+const open = ref(false)
+const search = ref('')
+const activeIndex = ref(-1)
+const menuPosition = ref({ top: 0, left: 0, width: 0, openUp: false })
+
+const selected = computed(
+  () => props.options.find((option) => String(option.value) === String(props.modelValue)) ?? null,
+)
+
+const filteredOptions = computed(() => {
+  const query = search.value.trim().toLowerCase()
+  if (!props.searchable || !query) return props.options
+  return props.options.filter((option) => {
+    const label = String(option.label ?? '').toLowerCase()
+    const hint = String(option.hint ?? '').toLowerCase()
+    return label.includes(query) || hint.includes(query)
+  })
+})
+
+const displayLabel = computed(() => selected.value?.label ?? props.placeholder)
+const hasValue = computed(() => selected.value != null)
+
+const triggerClass = computed(() => {
+  const base = props.size === 'sm' ? 'h-9 text-xs' : 'h-11 text-sm'
+  if (props.disabled) {
+    return `${base} cursor-not-allowed border-brand-border bg-brand-bg text-brand-text-muted opacity-70`
+  }
+  if (open.value) {
+    return `${base} border-brand-primary/50 bg-brand-surface text-brand-text ring-2 ring-brand-primary/15`
+  }
+  return `${base} border-brand-border bg-brand-surface text-brand-text hover:border-brand-primary/30`
+})
+
+function syncMenuPosition(): void {
+  const el = triggerRef.value
+  if (!el) return
+  const rect = el.getBoundingClientRect()
+  const viewportH = window.innerHeight
+  const menuMaxH = 280
+  const spaceBelow = viewportH - rect.bottom
+  const openUp = spaceBelow < menuMaxH && rect.top > spaceBelow
+
+  menuPosition.value = {
+    top: openUp ? rect.top - 6 : rect.bottom + 6,
+    left: rect.left,
+    width: rect.width,
+    openUp,
+  }
+}
+
+function bindPositionListeners(): void {
+  window.addEventListener('scroll', syncMenuPosition, true)
+  window.addEventListener('resize', syncMenuPosition)
+}
+
+function unbindPositionListeners(): void {
+  window.removeEventListener('scroll', syncMenuPosition, true)
+  window.removeEventListener('resize', syncMenuPosition)
+}
+
+function toggle(): void {
+  if (props.disabled) return
+  open.value = !open.value
+}
+
+function close(): void {
+  if (!open.value) return
+  open.value = false
+  search.value = ''
+  activeIndex.value = -1
+  unbindPositionListeners()
+}
+
+function pick(option: AppSelectOption): void {
+  if (option.disabled) return
+  emit('update:modelValue', option.value)
+  close()
+}
+
+function onDocumentClick(event: MouseEvent): void {
+  const target = event.target as HTMLElement | null
+  if (!root.value?.contains(target) && !target?.closest?.('[data-app-select-menu]')) {
+    close()
+  }
+}
+
+function onDocumentKeydown(event: KeyboardEvent): void {
+  if (!open.value) return
+  if (event.key === 'Escape') {
+    event.preventDefault()
+    close()
+    return
+  }
+
+  const list = filteredOptions.value.filter((option) => !option.disabled)
+  if (!list.length) return
+
+  if (event.key === 'ArrowDown') {
+    event.preventDefault()
+    activeIndex.value = (activeIndex.value + 1) % list.length
+  } else if (event.key === 'ArrowUp') {
+    event.preventDefault()
+    activeIndex.value = (activeIndex.value - 1 + list.length) % list.length
+  } else if (event.key === 'Enter' && activeIndex.value >= 0) {
+    event.preventDefault()
+    pick(list[activeIndex.value]!)
+  }
+}
+
+const menuStyle = computed((): CSSProperties | undefined => {
+  if (!props.teleport) return undefined
+  const pos = menuPosition.value
+  if (pos.openUp) {
+    return {
+      position: 'fixed',
+      bottom: `${window.innerHeight - pos.top}px`,
+      left: `${pos.left}px`,
+      width: `${pos.width}px`,
+      zIndex: 250,
+    }
+  }
+  return {
+    position: 'fixed',
+    top: `${pos.top}px`,
+    left: `${pos.left}px`,
+    width: `${pos.width}px`,
+    zIndex: 250,
+  }
+})
+
+watch(open, async (isOpen) => {
+  if (!isOpen) return
+  activeIndex.value = Math.max(
+    0,
+    filteredOptions.value.findIndex(
+      (option) => String(option.value) === String(props.modelValue) && !option.disabled,
+    ),
+  )
+  await nextTick()
+  syncMenuPosition()
+  bindPositionListeners()
+  root.value?.querySelector<HTMLInputElement>('[data-select-search]')?.focus()
+})
+
+let listenersBound = false
+watch(open, (isOpen) => {
+  if (isOpen && !listenersBound) {
+    document.addEventListener('click', onDocumentClick)
+    document.addEventListener('keydown', onDocumentKeydown)
+    listenersBound = true
+  }
+  if (!isOpen && listenersBound) {
+    document.removeEventListener('click', onDocumentClick)
+    document.removeEventListener('keydown', onDocumentKeydown)
+    listenersBound = false
+  }
+})
+
+onUnmounted(() => {
+  unbindPositionListeners()
+  if (listenersBound) {
+    document.removeEventListener('click', onDocumentClick)
+    document.removeEventListener('keydown', onDocumentKeydown)
+  }
+})
+</script>
+
+<template>
+  <div ref="root" class="relative min-w-[11rem]">
+    <button
+      ref="triggerRef"
+      type="button"
+      class="flex w-full items-center justify-between gap-2 rounded-xl border px-3 font-semibold transition"
+      :class="triggerClass"
+      :disabled="disabled"
+      :aria-expanded="open"
+      aria-haspopup="listbox"
+      @click="toggle"
+    >
+      <span
+        class="min-w-0 truncate text-start"
+        :class="hasValue ? 'text-brand-text' : 'text-brand-text-muted'"
+      >
+        {{ displayLabel }}
+      </span>
+      <ChevronDown
+        class="h-4 w-4 shrink-0 text-brand-text-muted transition"
+        :class="open ? 'rotate-180 text-brand-primary' : ''"
+        :stroke-width="2.25"
+      />
+    </button>
+
+    <Teleport to="body" :disabled="!teleport">
+      <Transition
+        enter-active-class="transition duration-150 ease-out"
+        enter-from-class="opacity-0 -translate-y-1 scale-[0.98]"
+        enter-to-class="opacity-100 translate-y-0 scale-100"
+        leave-active-class="transition duration-100 ease-in"
+        leave-from-class="opacity-100 translate-y-0 scale-100"
+        leave-to-class="opacity-0 -translate-y-1 scale-[0.98]"
+      >
+        <div
+          v-if="open"
+          data-app-select-menu
+          class="overflow-hidden rounded-xl border border-brand-border bg-brand-surface shadow-xl ring-1 ring-black/5"
+          :class="teleport ? '' : 'absolute inset-x-0 z-[250] mt-1.5'"
+          :style="menuStyle"
+          role="listbox"
+        >
+          <div v-if="searchable" class="border-b border-brand-border p-2">
+            <input
+              v-model="search"
+              data-select-search
+              type="search"
+              :placeholder="searchPlaceholder"
+              class="h-9 w-full rounded-lg border border-brand-border bg-brand-bg px-3 text-sm text-brand-text outline-none focus:border-brand-primary/40 focus:ring-2 focus:ring-brand-primary/15"
+              @click.stop
+            />
+          </div>
+
+          <ul class="max-h-52 overflow-y-auto p-1.5">
+            <li
+              v-if="!filteredOptions.length"
+              class="px-3 py-6 text-center text-xs font-semibold text-brand-text-muted"
+            >
+              لا توجد نتائج
+            </li>
+            <li
+              v-for="(option, index) in filteredOptions"
+              :key="String(option.value)"
+              role="option"
+              :aria-selected="String(option.value) === String(modelValue)"
+            >
+              <button
+                type="button"
+                class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-start text-sm transition"
+                :class="
+                  option.disabled
+                    ? 'cursor-not-allowed opacity-45'
+                    : String(option.value) === String(modelValue)
+                      ? 'bg-brand-primary-soft text-brand-primary-dark'
+                      : index === activeIndex
+                        ? 'bg-brand-bg text-brand-text'
+                        : 'text-brand-text hover:bg-brand-bg'
+                "
+                :disabled="option.disabled"
+                @click="pick(option)"
+              >
+                <span
+                  class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border"
+                  :class="
+                    String(option.value) === String(modelValue)
+                      ? 'border-brand-primary bg-brand-primary text-white'
+                      : 'border-brand-border bg-brand-surface'
+                  "
+                >
+                  <Check
+                    v-if="String(option.value) === String(modelValue)"
+                    class="h-3 w-3"
+                    :stroke-width="3"
+                  />
+                </span>
+                <span class="min-w-0 flex-1">
+                  <span class="block truncate font-bold">{{ option.label }}</span>
+                  <span
+                    v-if="option.hint"
+                    class="mt-0.5 block truncate text-[11px] font-semibold text-brand-text-muted"
+                  >
+                    {{ option.hint }}
+                  </span>
+                </span>
+              </button>
+            </li>
+          </ul>
+        </div>
+      </Transition>
+    </Teleport>
+  </div>
+</template>

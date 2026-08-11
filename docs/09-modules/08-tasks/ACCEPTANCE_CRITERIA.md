@@ -1,13 +1,75 @@
 # Tasks — Acceptance Criteria
 
-> **Status:** Draft
-> **Last updated:** 2026-08-06
+> **Status:** Implemented (Sprint 012)
+> **Last updated:** 2026-08-10
 
-- [ ] Tasks CRUD works, tenant-scoped; individual and group assignment supported.
-- [ ] Every task has at least one responsible assignee from the same tenant; cross-tenant assignment is impossible.
-- [ ] Status set New/In Progress/Blocked/Overdue/Completed/Cancelled enforced; Overdue derived automatically from due date + status.
-- [ ] Progress percentage tracked; measurable status reporting available.
-- [ ] Assignment and completion are audited.
-- [ ] Task-decision linkage feeds decision closure correctly.
-- [ ] Comments and attachments work; completion evidence captured per decided rules.
-- [ ] Cross-tenant access returns `404`.
+A Sprint 012 implementation is done only when all items below pass and match [DEFINITION_OF_DONE.md](../../00-project/DEFINITION_OF_DONE.md).
+
+## Domain
+
+- [ ] Task is first-class and distinct from Decision
+- [ ] Tasks own nullable `decision_id`; Decision has no task_ids array
+- [ ] Standalone Tasks allowed
+- [ ] Single Employee assignee only (no multi-assignee pivot)
+- [ ] No auto-create Tasks on Decision approve/close
+- [ ] No Documents / notification delivery
+
+## Numbering
+
+- [ ] `TSK-000001…` tenant-scoped, immutable, sequence + `FOR UPDATE`
+
+## Lifecycle
+
+- [ ] Statuses: draft → assigned → in_progress → completed; cancel from early states
+- [ ] Overdue derived, not a status
+- [ ] No free PATCH of status
+- [ ] No reopen from terminal
+- [ ] Completion requires `completion_notes`; sets `completed_at` and progress 100
+
+## Decision integration
+
+- [ ] Create only against `approved` Decision
+- [ ] Decision details shows linked Tasks + إنشاء مهمة
+- [ ] Close Decision blocked while open linked Tasks (`DECISION_CLOSE_NOT_ALLOWED`)
+- [ ] Completing last Task does not auto-close Decision
+
+## Assignee / self-service
+
+- [ ] Assign/reassign with history + audit
+- [ ] Linked User assignee can view/start/progress/complete own Task
+- [ ] Cannot self-cancel / self-reassign / self-delete
+- [ ] No linked Employee → no self-service
+
+## Delete
+
+- [ ] Untouched draft only; no SoftDeletes
+
+## Security
+
+- [ ] Cross-tenant 404 suite
+- [ ] Policies capability + assigneeSelf rules only
+- [ ] Permissions seeded per [PERMISSIONS.md](PERMISSIONS.md)
+
+## API / audit
+
+- [ ] Endpoints match [API.md](API.md)
+- [ ] Audit events for create/update/assign/reassign/start/progress/complete/cancel/delete
+
+## UI
+
+- [ ] Sidebar المهام + list + details
+- [ ] مهامي filter; overdue badge; lifecycle dialogs
+- [ ] Decision Tasks section + close blocked UX
+- [ ] RTL / responsive
+
+## Tests
+
+- [ ] Pest matrix green including tenancy, close gate, self-service
+- [ ] Vitest matrix green
+- [ ] `tsc` passes
+
+## Docs
+
+- [ ] Module docs marked Implemented after ship
+- [ ] Decisions docs updated for Tasks section + close gate
+- [ ] Documents/Notifications still not implemented
