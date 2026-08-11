@@ -42,8 +42,9 @@ Collect the cross-module business rules that are explicitly agreed. Module-speci
 
 ## Inventory (Workflow 4)
 
-- Quantities are calculated from transactions; manual stock editing is restricted to permissioned adjustments with a reason.
-- Negative stock is blocked unless explicitly configured later.
+- Quantities are ledger-authored via append-only movements; materialized balances are not client-editable ([ADR-0011](../10-decisions/ADR-0011-INVENTORY-LEDGER-BALANCE-AND-TRANSFER.md)).
+- Manual stock editing is restricted to permissioned adjustments with a reason.
+- Negative stock is blocked in MVP (configuration deferred).
 
 ## Access and Audit
 
@@ -53,10 +54,10 @@ Collect the cross-module business rules that are explicitly agreed. Module-speci
 
 ## TBD (not yet defined — do not assume)
 
-- Numbering/reference schemes: Contracts `CTR-######`, Meetings `MTG-######`, Decisions `DEC-######`, Tasks `TSK-######` (Sprint 012 spec). Remaining modules TBD.
+- Numbering/reference schemes: Contracts `CTR-######`, Meetings `MTG-######`, Decisions `DEC-######`, Tasks `TSK-######`, Documents `DOC-######`, Warehouses `WH-######`, Inventory items `ITM-######`, Movements `MOV-######` (Sprint 014 spec). Remaining modules TBD.
 - Approval hierarchies and delegation rules: TBD.
 - Backup Supervisor behavior: future vision, TBD unless explicitly approved for the MVP.
 - Recurring-task automation details: TBD — multi-assignee/group Task assignment deferred (ADR-0009).
 - Document retention periods and confidentiality-level definitions: TBD.
 - Task SLA / due-soon notification jobs: TBD (overdue is derived in Sprint 012; no delivery).
-- Negative-stock configuration mechanism: TBD.
+- Negative-stock configuration mechanism: TBD (MVP blocks negatives — ADR-0011).

@@ -28,8 +28,9 @@ The 21 modules and four core workflows defined in [MVP_SCOPE.md](MVP_SCOPE.md), 
 | Sprint 011 — Decisions | **Done** (implementation) |
 | Sprint 012 — Tasks & Assignments | **Done** (implementation) |
 | Sprint 013 — Documents & Archiving | **Done** (implementation) |
-| Remaining MVP modules | Next: Warehouses / Inventory / remaining |
-Natural dependency order remains: **tenancy → authentication → users/roles/permissions → organizational structure → employees → contracts → meetings → decisions → tasks → documents → remaining modules**.
+| Sprint 014 — Warehouses & Inventory | **Spec complete** — implementation pending |
+| Remaining MVP modules | Next after Inventory: Assets / Custodies / remaining |
+Natural dependency order remains: **tenancy → authentication → users/roles/permissions → organizational structure → employees → contracts → meetings → decisions → tasks → documents → warehouses/inventory → remaining modules**.
 
 ## Later — Future Vision (NOT part of the MVP, all TBD)
 

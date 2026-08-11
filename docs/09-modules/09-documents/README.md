@@ -15,7 +15,8 @@ A **Document** is a single uploaded file plus server-managed metadata (and optio
 - Central document center (`/app/documents`) + details.
 - Tenant-owned `document_categories` catalog (active/inactive).
 - Human `document_number` (`DOC-######`) + private binary storage under `TenantStorage::DOCUMENTS`.
-- Optional **single** polymorphic link per Document to one of: Contract, Meeting, Decision, Task, Employee, Organization Unit (aliases reserved for Warehouse / Asset / Custody for later modules).
+- Optional **single** polymorphic link per Document to one of: Contract, Meeting, Decision, Task, Employee, Organization Unit.
+- Reserved morph aliases for later host UI / registration: `warehouse`, `inventory_item` (Sprint 014 inventory implementation), `asset`, `custody`.
 - Lifecycle: `active` ↔ `archived`; hard delete with `documents.delete`.
 - Streamed authorized download (no public URLs).
 - Embedded **المستندات** sections on implemented entity details (Contracts, Meetings, Decisions, Tasks, Employees, Organization Units).
@@ -30,7 +31,7 @@ A **Document** is a single uploaded file plus server-managed metadata (and optio
 - Malware/AV scanner product integration (readiness hook only).
 - Bulk upload ZIP, public CDN, signed URLs that bypass Policy.
 - Form builder / knowledge management / policies library (future scope).
-- Warehouse / Asset / Custody attachment UI until those modules ship (morph aliases reserved only).
+- Warehouse / Inventory item / Asset / Custody attachment UI until those modules ship (morph aliases `warehouse`, `inventory_item`, `asset`, `custody` reserved; register + UI with Sprint 014+ implementations).
 
 ## Personas
 

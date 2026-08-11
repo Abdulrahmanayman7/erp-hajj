@@ -1,7 +1,7 @@
 # Documents — Business Rules
 
-> **Status:** Implemented (Sprint 013)  
-> **Last updated:** 2026-08-10  
+> **Status:** Implemented (Sprint 013)
+> **Last updated:** 2026-08-10
 > ADR: [ADR-0010](../../10-decisions/ADR-0010-DOCUMENT-STORAGE-AND-ENTITY-LINKS.md)
 
 ## 1. What is a Document
@@ -19,8 +19,8 @@
 ## 3. Storage security (binding)
 
 1. **Private disk only** (Laravel private / non-public disk). Never `public` disk or web-reachable paths.
-2. Paths built **only** via `TenantStorage::path(TenantStorage::DOCUMENTS, …)` →  
-   `tenants/{tenant_id}/documents/{uuid}.{ext}`  
+2. Paths built **only** via `TenantStorage::path(TenantStorage::DOCUMENTS, …)` →
+   `tenants/{tenant_id}/documents/{uuid}.{ext}`
    where `{tenant_id}` is numeric from `TenantContext` (not `tenant_code`).
 3. **Stored filename** = opaque UUID + normalized extension (server-derived from validated MIME/extension map).
 4. **Original filename** stored as metadata only (sanitized for display; never used as storage path).
@@ -54,14 +54,14 @@ Mismatch → `DOCUMENT_INVALID_FILE`. Oversized → `DOCUMENT_FILE_TOO_LARGE`.
 
 ## 7. Entity link model (MVP)
 
-1. Each Document has **at most one** optional polymorphic link:  
+1. Each Document has **at most one** optional polymorphic link:
    `linkable_type` (morph alias string) + `linkable_id` (nullable pair).
 2. Cardinality: **Document → 0..1 entity**; **Entity → 0..N Documents**.
 3. Standalone Documents (no link) are allowed (central archive / general files).
 4. One Document **cannot** belong to multiple records in MVP (no `document_links` pivot). Sharing across entities requires a Change Request or a second upload.
-5. Morph map aliases (never FQCN in DB):  
-   `contract`, `meeting`, `decision`, `task`, `employee`, `organization_unit`  
-   Reserved (schema-ready, UI later): `warehouse`, `asset`, `custody`.
+5. Morph map aliases (never FQCN in DB):
+   Implemented: `contract`, `meeting`, `decision`, `task`, `employee`, `organization_unit`.
+   Reserved (register at owning-module implementation): `warehouse`, `inventory_item` (Sprint 014), `asset`, `custody`.
 6. Link target must exist, same tenant; foreign → `DOCUMENT_LINK_INVALID` / validation 422 (or 404 if treated as missing under tenant scope).
 7. Link/unlink via create payload and dedicated actions (or PATCH metadata) per [API.md](API.md) — never trust client morph without TenantExists-style checks.
 

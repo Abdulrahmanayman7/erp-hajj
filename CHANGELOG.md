@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Sprint 014 — Warehouses & Inventory specification** (documentation only — no application code): warehouses (`WH-######`) + inventory items (`ITM-######`) + categories; append-only movements (`MOV-######`) with materialized `inventory_balances`; atomic transfers; no negative stock; `FOR UPDATE` + deterministic lock order; permissions `warehouses.*` + `inventory.view|manage_items|add|issue|return|transfer|adjust`; ADR-0011; full module docs under `docs/09-modules/10-warehouses-and-inventory/`. No Procurement, unit conversions, lot/serial, multi-step transfer workflow, or Assets/Custodies auto-posting.
+
 - **Sprint 013 — Documents & Archiving vertical slice:** tenant-owned `documents` (+ `document_number_sequences`, `document_categories`); concurrency-safe `DOC-######` via `SELECT … FOR UPDATE`; private storage via `TenantStorage::DOCUMENTS` (`tenants/{id}/documents/{uuid}.ext`); original filename metadata only; finfo MIME/extension allow-list + 20 MiB; SHA-256 checksum (duplicates allowed); optional single morph link (Contract/Meeting/Decision/Task/Employee/Organization Unit); lifecycle `active`/`archived` + hard delete; host hard-delete guards (`DOCUMENT_ENTITY_IN_USE`); Policies + seeded `documents.*` catalog + role templates; APIs `/api/v1/documents` (+ download/archive/restore) and `/api/v1/document-categories`; Vue `documents` module (list, upload drawer, details, categories, host **المستندات**); Pest + Vitest green. No versioning, multi-link pivot, confidentiality levels, malware scanner, OCR, or public URLs (ADR-0010).
 
 - **Sprint 013 — Documents & Archiving specification** (superseded by implementation above).
