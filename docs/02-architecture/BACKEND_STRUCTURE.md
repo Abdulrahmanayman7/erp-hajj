@@ -34,8 +34,8 @@ app/
 │   ├── Tasks/                    # Sprint 012 — implemented
 │   ├── Documents/                # Sprint 013 — implemented
 │   ├── Inventory/                # Sprint 014 — implemented (warehouses + stock; ADR-0011)
-│   ├── Assets/
-│   ├── Custodies/
+│   ├── Assets/                   # Sprint 015 — specified (implementation pending); may own Custodies/ package layout per module docs; ADR-0012
+│   ├── Custodies/                # Sprint 015 — specified (prefer nesting under Assets/ at implementation)
 │   ├── Notifications/
 │   └── Dashboard/
 ```

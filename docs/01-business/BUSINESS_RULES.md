@@ -37,8 +37,10 @@ Collect the cross-module business rules that are explicitly agreed. Module-speci
 
 ## Assets and Custodies (Workflow 3)
 
-- An asset cannot be actively assigned to more than one person at the same time.
-- Custody history is immutable except through controlled correction permissions.
+- An asset cannot be actively assigned to more than one person at the same time ([ADR-0012](../10-decisions/ADR-0012-ASSET-CUSTODY-AND-OWNERSHIP.md)).
+- Custody history is append-only immutable after return; void/correction deferred.
+- Asset statuses: `available` \| `in_use` \| `maintenance` \| `damaged` \| `retired` \| `lost`; holder SoR = active custody.
+- Numbering: Assets `AST-######`, Custodies `CUS-######` (Sprint 015 spec).
 
 ## Inventory (Workflow 4)
 
@@ -54,7 +56,7 @@ Collect the cross-module business rules that are explicitly agreed. Module-speci
 
 ## TBD (not yet defined — do not assume)
 
-- Numbering/reference schemes: Contracts `CTR-######`, Meetings `MTG-######`, Decisions `DEC-######`, Tasks `TSK-######`, Documents `DOC-######`, Warehouses `WH-######`, Inventory items `ITM-######`, Movements `MOV-######` (Sprint 014 spec). Remaining modules TBD.
+- Numbering/reference schemes: Contracts `CTR-######`, Meetings `MTG-######`, Decisions `DEC-######`, Tasks `TSK-######`, Documents `DOC-######`, Warehouses `WH-######`, Inventory items `ITM-######`, Movements `MOV-######`, Assets `AST-######`, Custodies `CUS-######` (Sprint 015 spec). Remaining modules TBD.
 - Approval hierarchies and delegation rules: TBD.
 - Backup Supervisor behavior: future vision, TBD unless explicitly approved for the MVP.
 - Recurring-task automation details: TBD — multi-assignee/group Task assignment deferred (ADR-0009).

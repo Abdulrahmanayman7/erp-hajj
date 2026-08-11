@@ -103,9 +103,19 @@ flowchart RL
 
 ### Rules
 
-- Custody assignment must record asset, receiver, assignment date, and expected return date when applicable.
+- Custody assignment must record asset, receiver (Employee), assignment date, and expected return date when applicable.
 - Returning custody must preserve the complete historical record; old custody history must never be overwritten.
 - An asset cannot be actively assigned to more than one person at the same time.
+
+### Sprint 015 locked decisions (see [11-assets-and-custodies/](../09-modules/11-assets-and-custodies/) · [ADR-0012](../10-decisions/ADR-0012-ASSET-CUSTODY-AND-OWNERSHIP.md))
+
+- Assets `AST-######`; custodies `CUS-######`.
+- Asset statuses: `available` \| `in_use` \| `maintenance` \| `damaged` \| `retired` \| `lost` (stub **Assigned** dropped — active custody ⇒ `in_use`).
+- Append-only `asset_custodies` + `asset_status_transitions`; single active custody under Asset `FOR UPDATE`.
+- Current holder SoR = active custody (optional `current_custody_id` cache).
+- Optional home/storage `warehouse_id` (not inventory quantity); no `inventory_item_id` / no auto stock post in Sprint 015.
+- Damaged/Lost are statuses via explicit actions; liability workflows deferred.
+- Custody correction/void deferred.
 
 ## Workflow 4: Inventory transaction (حركة المخزون)
 
