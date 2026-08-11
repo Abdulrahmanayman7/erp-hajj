@@ -37,7 +37,7 @@ Define the shared vocabulary of the project in English with the Arabic business 
 | Inventory movement | حركة مخزون | Append-only stock ledger row (`MOV-######`): opening/receipt/issue/return/transfer/adjustment. |
 | Asset | أصل | Individually tracked resource (`AST-######`); statuses include available/in_use/maintenance/damaged/retired/lost (Sprint 015 spec). |
 | Custody | عهدة | Append-only handover of an Asset to an Employee (`CUS-######`); at most one active per asset; history immutable after return. |
-| Notification | إشعار | A system alert required by MVP modules (e.g. contract expiry). |
+| Notification | إشعار | Tenant-owned in-app attention record addressed to a **User** (not Employee). System-generated; own-inbox only. See ADR-0013 / Sprint 016. |
 | Audit trail | سجل التدقيق | Immutable record of who did what, when, from where, and in which tenant. |
 | Role | دور | A named, dynamic set of permissions assigned to users. |
 | Permission | صلاحية | The right to perform a specific action, named `module.action`. |

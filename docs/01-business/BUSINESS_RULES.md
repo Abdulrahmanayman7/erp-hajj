@@ -32,7 +32,7 @@ Collect the cross-module business rules that are explicitly agreed. Module-speci
 
 - Status transitions are controlled and each records actor, timestamp, and optional comments.
 - Deleting an approved or executed contract is restricted; Sprint 009: hard delete **draft-only**; otherwise cancel/close/expire/renew (no SoftDeletes dual model).
-- Contract expiry notifications must be supported (delivery in Notifications sprint; Contracts owns expiry status + hooks).
+- Contract expiry notifications must be supported (in-app delivery owned by Notifications / ADR-0013; Contracts owns expiry status + hooks).
 - Numbering: `CTR-######` tenant sequence (see [05-contracts/](../09-modules/05-contracts/)).
 
 ## Assets and Custodies (Workflow 3)
@@ -61,5 +61,5 @@ Collect the cross-module business rules that are explicitly agreed. Module-speci
 - Backup Supervisor behavior: future vision, TBD unless explicitly approved for the MVP.
 - Recurring-task automation details: TBD — multi-assignee/group Task assignment deferred (ADR-0009).
 - Document retention periods and confidentiality-level definitions: TBD.
-- Task SLA / due-soon notification jobs: TBD (overdue is derived in Sprint 012; no delivery).
+- Task due-soon / overdue **notification jobs** owned by Notifications (ADR-0013); overdue remains a derived Task flag.
 - Negative-stock configuration mechanism: TBD (MVP blocks negatives — ADR-0011).

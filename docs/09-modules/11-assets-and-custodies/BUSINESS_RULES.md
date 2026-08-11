@@ -101,9 +101,15 @@ No generic `PATCH status`. Only documented action endpoints.
 1. Morph aliases at implementation: `asset`, `custody`.
 2. Host hard-delete blocked when Documents remain (`DOCUMENT_ENTITY_IN_USE`).
 
-## 10. Notifications
+## 10. Notifications (Sprint 016 ownership)
 
-Hooks only (e.g. future overdue expected return). No delivery in Sprint 015.
+In-app delivery owned by [12-notifications/](../12-notifications/) (ADR-0013):
+
+- `CUSTODY_ASSIGNED` → holder Employee’s User if linked
+- `CUSTODY_RETURNED` → original `assigned_by` User
+- `CUSTODY_EXPECTED_RETURN_SOON` / `CUSTODY_OVERDUE` → holder User (scheduled; daily dedupe)
+
+Entity deep-link should use `entity_type=asset` + asset id. No email/SMS in MVP.
 
 ## 11. Audit
 

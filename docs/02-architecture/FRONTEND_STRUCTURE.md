@@ -143,6 +143,12 @@ A module may contain: pages, components, api, queries, mutations, types, validat
 - CSRF: `GET /sanctum/csrf-cookie` before mutating auth calls; handle `401`/`419`/`403`/`429` per [01-authentication/UI.md](../09-modules/01-authentication/UI.md).
 - No localStorage auth tokens; no fabricated permissions on the client.
 
+## Notifications UI (Sprint 016 — specified)
+
+- Topbar **bell** + unread badge + dropdown/panel; full page `/app/notifications` (الإشعارات).
+- Module folder: `frontend/src/modules/notifications/` (implementation pending).
+- MVP realtime = TanStack polling/refetch — **no** WebSockets/Reverb requirement (ADR-0013).
+
 ## TBD
 
-- Notifications UI placement (header bell vs. page): TBD.
+- (none for notifications placement — locked above)

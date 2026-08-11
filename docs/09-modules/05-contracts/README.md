@@ -35,7 +35,7 @@ Do **not** merge suppliers, payments, e-signature, or DMS into Contracts.
 | Append-only status transition history | Full Documents upload/download (deferred) |
 | Optional `employee_id` / `organization_unit_id` | Procurement workflows |
 | Informational `value` + `currency` (SAR default) | Accounting of contract values |
-| Expiry job + expiring-soon filter/badge | Notification delivery (hook only) |
+| Expiry job + expiring-soon filter/badge | In-app notification delivery (Sprint 016 / ADR-0013) |
 | Permissions, Policies, Arabic RTL UI | SoftDeletes dual-model; free status editing |
 | Audit events + Pest/Vitest matrices | Dashboard KPI widgets (Dashboard sprint) |
 
