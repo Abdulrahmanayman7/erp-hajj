@@ -26,7 +26,7 @@ Sprint 010 implements **Meetings**. Decisions remain a separate implemented modu
 | **User** | Authenticated account (`created_by`) | Users & Authorization |
 | **OrganizationUnit** | Optional responsible unit | Organization Structure |
 | **Document** | File attachments | Documents (later) |
-| **Notification** | Delivery of invites / reminders | Notifications (later) |
+| **Notification** | In-app delivery (ADR-0013) | Notifications (Sprint 016 — specified) |
 
 Do **not** conflate Recommendation with Decision. Do **not** convert recommendations into tasks in Sprint 010. Do **not** invent Decision/Task rows from Meetings.
 
@@ -79,7 +79,7 @@ Exact default role grants: [PERMISSIONS.md](PERMISSIONS.md).
 | Recommendations | First-class table; **not** Decisions; no `decision_id` (Decisions own `source_recommendation_id`, ADR-0008) | [ADR-0007](../../10-decisions/ADR-0007-MEETING-AGENDA-AND-RECOMMENDATIONS.md) · [07-decisions/](../07-decisions/) |
 | Attendees | Tenant **employees only**; external names deferred | [BUSINESS_RULES.md](BUSINESS_RULES.md) |
 | Attachments | Owned by Documents (Sprint 013 — implemented; ADR-0010); **المستندات** on meeting details | [09-documents/](../09-documents/) |
-| Notifications | Hooks named only; no delivery | [BUSINESS_RULES.md](BUSINESS_RULES.md) |
+| Notifications | In-app types owned by Sprint 016 (ADR-0013) | [12-notifications/](../12-notifications/) |
 | Delete | Hard delete **draft-only** (never left draft) | [BUSINESS_RULES.md](BUSINESS_RULES.md) |
 
 ## References

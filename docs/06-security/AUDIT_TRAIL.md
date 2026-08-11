@@ -1,6 +1,6 @@
 # Audit Trail
 
-> **Status:** Approved requirement (correlation ID design finalized; auth + RBAC + org + employees + contracts + meetings + decisions event names aligned through Sprint 011); storage design TBD
+> **Status:** Approved requirement (correlation ID design finalized; auth + RBAC + org + employees + contracts + meetings + decisions + tasks + documents + inventory + assets event names aligned through Sprint 015); Notifications (016) clarified as **not** an audit clone (ADR-0013); storage design TBD
 > **Last updated:** 2026-08-11
 
 ## Purpose
@@ -56,6 +56,10 @@ Every incoming request receives a **correlation ID** assigned by early middlewar
 - Unauthorized attempts to enter `PlatformContext`.
 
 Each module lists its audit events in its `BUSINESS_RULES.md` / `ACCEPTANCE_CRITERIA.md`.
+
+### Notifications vs audit (Sprint 016 / ADR-0013)
+
+In-app notification **create** and **mark-read** are **not** high-value audit events in MVP (volume). Domain Actions that generate notifications still emit their existing domain audit events. Notifications are not a substitute for the audit trail and must not clone every security event into the inbox.
 
 ## Guarantees
 

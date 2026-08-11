@@ -41,7 +41,7 @@ This module answers Workflow 4 ([CORE_WORKFLOWS.md](../../01-business/CORE_WORKF
 - Barcode/QR hardware scanning (optional `barcode` metadata string only).
 - Multi-step transfer workflow (requested → dispatched → received).
 - Negative-stock configuration UI.
-- Dashboard KPI widgets / notification delivery (hooks only).
+- Dashboard KPI widgets deferred; in-app `STOCK_BELOW_MINIMUM` owned by Notifications (ADR-0013).
 - SoftDeletes on movements.
 
 ## Personas

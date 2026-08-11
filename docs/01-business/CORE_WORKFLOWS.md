@@ -77,7 +77,7 @@ flowchart RL
 - Contract status transitions must be controlled (explicit action endpoints, policy-gated).
 - Each transition must record actor, timestamp, and optional comments.
 - Attachments must be preserved (**Documents module** — Sprint 013 specified / ADR-0010; implementation pending; Contracts remain attachable via morph `contract` without changing Contract columns).
-- Contract expiry notifications must be supported (**Notifications module** delivers; Contracts emits expiry state + documented hooks).
+- Contract expiry notifications must be supported (**Notifications module** delivers in-app per ADR-0013; Contracts emits expiry state + documented hooks).
 - Unauthorized users must not review, approve, sign, execute, close, renew, or cancel contracts.
 
 ### Sprint 009 locked decisions (see [05-contracts/](../09-modules/05-contracts/))

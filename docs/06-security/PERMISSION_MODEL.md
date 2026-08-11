@@ -1,6 +1,6 @@
 # Permission Model
 
-> **Status:** Approved (catalog may grow with modules). Sprint 006–015 permissions are seeded as implemented.
+> **Status:** Approved (catalog may grow with modules). Sprint 006–015 permissions are seeded as implemented. Sprint 016 Notifications: **no** `notifications.*` catalog verbs (recipient-owned inbox — ADR-0013).
 >
 > **Last updated:** 2026-08-11
 
@@ -43,6 +43,7 @@ Define the granular permission naming model and the master permission catalog. M
 | Warehouses | `warehouses.view` `warehouses.create` `warehouses.update` `warehouses.delete` — **implemented** Sprint 014 ([10-warehouses-and-inventory/PERMISSIONS.md](../09-modules/10-warehouses-and-inventory/PERMISSIONS.md); ADR-0011). |
 | Inventory | `inventory.view` `inventory.manage_items` `inventory.add` `inventory.issue` `inventory.return` `inventory.transfer` `inventory.adjust` — **implemented** Sprint 014. `manage_items` covers item master + categories; adjustments are sensitive. |
 | Assets | `assets.view` `assets.create` `assets.update` `assets.delete` `assets.assign` `assets.return` `assets.retire` — **implemented** Sprint 015 ([11-assets-and-custodies/PERMISSIONS.md](../09-modules/11-assets-and-custodies/PERMISSIONS.md); ADR-0012). Seeded via `PermissionCatalog`. No separate `custodies.*` verbs. |
+| Notifications | **No seeded `notifications.*` in MVP** — own inbox is recipient-owned for any authenticated tenant User ([12-notifications/PERMISSIONS.md](../09-modules/12-notifications/PERMISSIONS.md); ADR-0013). Future `notifications.manage` only via CR. |
 | Audit logs | `audit_logs.view` `audit_logs.export` |
 | Dashboard | `dashboard.view` |
 | Tenant settings | `tenant_settings.view` `tenant_settings.update` |
@@ -54,5 +55,5 @@ Seeded system role codes and Sprint 006 permission mapping: [02-users-and-author
 
 ## TBD
 
-- Notification-related permissions: TBD.
+- Future `notifications.manage` (admin console) — out of MVP (ADR-0013).
 - Custody **correction/void** permission (post-return): deferred (ADR-0012).

@@ -95,7 +95,7 @@ Generic AuditTrail alone is insufficient for operational assignment timelines �
 5. **Overdue (derived, never a status):**  
    `due_date < today(tenant tz)` **AND** status ∈ {`draft`,`assigned`,`in_progress`}.  
    Terminal `completed` / `cancelled` are never overdue.
-6. No scheduler / due-soon job in Sprint 012 (notification hooks only).
+6. Due-soon / overdue **detection** remains derived on Tasks; **notification delivery jobs** owned by Sprint 016 (ADR-0013).
 
 ## 9. Priority
 
@@ -188,21 +188,17 @@ Update Decisions module docs/tests at implementation time (spec lock here + ADR-
 3. At Documents implementation: Task details gain **المستندات**; until then omit upload UI.
 4. Completing a Task never requires Documents.
 
-## 15. Notifications (hooks only)
+## 15. Notifications (Sprint 016 ownership)
 
-| Hook | When |
-|---|---|
-| `TASK_CREATED` | Create |
-| `TASK_ASSIGNED` | First assign |
-| `TASK_REASSIGNED` | Reassign |
-| `TASK_STARTED` | start |
-| `TASK_PROGRESS_UPDATED` | progress PUT |
-| `TASK_COMPLETED` | complete |
-| `TASK_CANCELLED` | cancel |
-| `TASK_DUE_SOON` | Future job |
-| `TASK_OVERDUE` | Future job |
+In-app delivery owned by [12-notifications/](../12-notifications/) (ADR-0013).
 
-No email/SMS/push in Sprint 012.
+| Type (MVP delivered) | When | Recipient |
+|---|---|---|
+| `TASK_ASSIGNED` / `TASK_REASSIGNED` | Assign / reassign | Assignee Employee’s User if linked |
+| `TASK_COMPLETED` | Complete | `created_by` if ≠ actor |
+| `TASK_DUE_SOON` / `TASK_OVERDUE` | Daily job | Assignee User if linked |
+
+Not delivered in MVP (noise): create/start/progress/cancel hooks. No email/SMS/push. Employee without User → skip assignee notification.
 
 ## 16. Self-service and User↔Employee
 

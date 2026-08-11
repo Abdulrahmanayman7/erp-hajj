@@ -182,14 +182,14 @@ Supersedes earlier stub wording about “privileged delete of completed meetings
 - **Sprint 013 owns** file infrastructure ([09-documents/](../09-documents/), ADR-0010): morph alias `meeting`.
 - UI placeholder المرفقات ستتوفر مع وحدة المستندات remains until Documents implementation replaces it with **المستندات**.
 
-## 16. Notifications (hooks only)
+## 16. Notifications (Sprint 016 ownership)
 
-Named future hooks (no delivery in Sprint 010):
+In-app delivery owned by [12-notifications/](../12-notifications/) (ADR-0013). Approved types:
 
-- `meeting_scheduled`
-- `meeting_rescheduled`
-- `meeting_cancelled`
-- `meeting_starting_soon` (scheduler TBD with Notifications module)
+- `MEETING_SCHEDULED` / `MEETING_RESCHEDULED` / `MEETING_CANCELLED` — attendee Users (+ creator)
+- `MEETING_STARTING_SOON` — scheduled job; default window **60 minutes**; daily dedupe per meeting
+
+Meetings Actions invoke the Notification dispatcher after successful transitions; no email/SMS in MVP.
 
 ## 17. Derived list hints (not statuses)
 
@@ -213,4 +213,4 @@ Every critical action listed in [API.md](API.md) / [TEST_PLAN.md](TEST_PLAN.md) 
 | External attendees | Deferred |
 | Minutes amendments after complete | Deferred |
 | Decision conversion UX | Sprint 011 — implemented ([07-decisions/UI.md](../07-decisions/UI.md)); Meetings shows إنشاء قرار |
-| `meeting_starting_soon` job timing | Notifications sprint |
+| `MEETING_STARTING_SOON` window | Locked default 60 minutes in Notifications config (ADR-0013) |

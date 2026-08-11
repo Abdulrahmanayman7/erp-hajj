@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Sprint 016 — Notifications specification:** in-app only (ADR-0013); recipient = User; tenant-owned `notifications` table with `dedupe_key`; dispatcher architecture; read_at model; no user delete; no `action_url`; curated type catalog (contracts/meetings/decisions/tasks/custody/low-stock); topbar bell + `/app/notifications`; polling not websockets. **Implementation pending.**
+
 - **Sprint 015 — Assets & Custodies vertical slice:** tenant-owned `asset_categories` + `assets` (+ `asset_number_sequences`) + append-only `asset_status_transitions` + `asset_custodies` (+ custody sequences); concurrency-safe `AST-######` / `CUS-######` via Asset `SELECT … FOR UPDATE`; statuses `available|in_use|maintenance|damaged|retired|lost`; single active custody; assign/return with `next_status`; optional home warehouse + org unit metadata; no inventory auto-post / `inventory_item_id`; Documents morph aliases `asset` / `custody` + delete guard; Policies + seeded `assets.view|create|update|delete|assign|return|retire` via `PermissionCatalog`; holder self-view (ADR-0012); APIs under `/api/v1/assets`, `/asset-categories`, `/asset-custodies`, `/my-custodies`; Vue `assets` module (list, details, assign/return/lifecycle dialogs, categories, عُهَدي); Pest `AssetTest` 20/20 + Vitest assets 15/15 + `tsc`/build green. No Procurement, maintenance work-orders, depreciation, or custody void/correction.
 
 - **Sprint 015 — Assets & Custodies specification** (superseded by implementation above).

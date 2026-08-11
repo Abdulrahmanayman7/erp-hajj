@@ -147,15 +147,14 @@ Statuses:
 2. **Sprint 013 owns** file infrastructure ([09-documents/](../09-documents/), ADR-0010): optional morph alias `decision`.
 3. At Documents implementation: Decision details gain **المستندات** section; until then prefer omit upload UI (no fake placeholders required).
 
-## 13. Notifications (hooks only)
+## 13. Notifications (Sprint 016 ownership)
 
-Future notification keys (no delivery in Sprint 011):
+In-app delivery owned by [12-notifications/](../12-notifications/) (ADR-0013):
 
-- `DECISION_SUBMITTED`
-- `DECISION_APPROVED`
-- `DECISION_RETURNED_TO_DRAFT`
-- `DECISION_CLOSED`
-- `DECISION_CANCELLED`
+- `DECISION_SUBMITTED` → tenant Users with `decisions.approve` (capability fanout; exclude actor)
+- `DECISION_APPROVED` / `DECISION_RETURNED_TO_DRAFT` / `DECISION_CLOSED` / `DECISION_CANCELLED` → targeted Users per Notifications BUSINESS_RULES
+
+Decisions Actions call the dispatcher after successful transitions. No email/SMS in MVP.
 
 ## 14. Future / linked Tasks integration (Sprint 012)
 

@@ -123,7 +123,7 @@ This satisfies [DATABASE_PRINCIPLES.md](../../03-database/DATABASE_PRINCIPLES.md
 ## 13. Low stock
 
 1. Derived, not persisted: `on_hand <= minimum_stock` → `low`; `on_hand = 0` → `out_of_stock`; else `normal`.
-2. Dashboard/notification delivery deferred; detection must be queryable for future widgets.
+2. Dashboard widgets remain deferred; **in-app** `STOCK_BELOW_MINIMUM` delivery is owned by Sprint 016 (ADR-0013) — recipient = warehouse `responsible_employee` User only (skip if none). Detection remains queryable via balances/`stock_state`.
 
 ## 14. Documents
 
@@ -131,9 +131,9 @@ This satisfies [DATABASE_PRINCIPLES.md](../../03-database/DATABASE_PRINCIPLES.md
 2. Linking movements as Document hosts: **deferred**.
 3. Host hard-delete guards when Documents remain linked (same pattern as Contracts/Tasks).
 
-## 15. Notifications
+## 15. Notifications (Sprint 016 ownership)
 
-Hooks only (e.g. future `STOCK_BELOW_MINIMUM`). No delivery in Sprint 014.
+Type `STOCK_BELOW_MINIMUM` — see [12-notifications/BUSINESS_RULES.md](../12-notifications/BUSINESS_RULES.md). Inventory movements may trigger the dispatcher after commit; daily scanner backs it. No GM broadcast.
 
 ## 16. Audit
 

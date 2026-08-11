@@ -215,7 +215,7 @@ Operator completes the successor through the normal lifecycle. Do not auto-activ
 4. Open-ended (`end_date` null) never auto-expire.
 5. Job must be idempotent (skip if already `expired`).
 
-Notifications: **not delivered in Sprint 009**. Emit/document future hooks for Notifications sprint (`contract_expiring_soon`, `contract_expired`).
+Notifications: owned by Sprint 016 ([12-notifications/](../12-notifications/), ADR-0013). Types `CONTRACT_EXPIRING_SOON` / `CONTRACT_EXPIRED`; recipients = `created_by` User (+ linked `employee.user_id` when present). Delivery is in-app; Contracts remains SoR for expiry status + scheduler transition.
 
 ---
 
