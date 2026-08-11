@@ -1,8 +1,8 @@
 # ERP Hajj
 
-> **Status:** Tenant Foundation (004) through Documents & Archiving (013) implemented.
+> **Status:** Tenant Foundation (004) through Documents & Archiving (013) implemented. Sprint 014 Warehouses & Inventory **specified** (implementation pending).
 >
-> **Last updated:** 2026-08-10
+> **Last updated:** 2026-08-11
 
 ## Project Purpose
 

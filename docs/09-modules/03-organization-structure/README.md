@@ -49,7 +49,7 @@ Unit manager (`manager_user_id`) ≠ employee direct manager (Employees module).
 ## Dependencies
 
 - **Requires:** Tenancy, Authentication, Users & Authorization (implemented).
-- **Consumed later by:** Employees (primary unit + positions + employee reporting), Contracts, Meetings, Tasks, Documents (Sprint 013 — specified; morph alias `organization_unit`; ADR-0010), Warehouses, etc.
+- **Consumed later by:** Employees (primary unit + positions + employee reporting), Contracts, Meetings, Tasks, Documents (morph `organization_unit`; ADR-0010), Warehouses (optional `organization_unit_id` — Sprint 014 specified; ADR-0011), etc.
 - **Does not require:** Employees module — units stand alone; employee counts appear when Employees exists.
 
 ## Implementation notes

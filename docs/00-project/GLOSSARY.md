@@ -31,9 +31,10 @@ Define the shared vocabulary of the project in English with the Arabic business 
 | Responsible person | الشخص المسؤول | Do not conflate: Decision `responsible_employee_id` (governance follow-up) vs Task `assigned_to_employee_id` (execution assignee). |
 | Document | وثيقة / مستند | A single uploaded file plus metadata in the central document center (`DOC-######`), optionally linked to one business entity (ADR-0010). |
 | Archiving | أرشفة | Document status transition to `archived` (file retained); distinct from hard delete. |
-| Warehouse | مستودع | A physical or logical storage location. |
-| Inventory item | صنف مخزون | A stock-tracked item; quantities derive from transactions. |
-| Inventory transaction | حركة مخزون | A movement affecting quantity: addition, issue, return, transfer, adjustment. |
+| Warehouse | مستودع | Storage location (`WH-######`); optional org unit + responsible employee metadata (Sprint 014 spec). |
+| Inventory item | صنف مخزون | Quantity-tracked item (`ITM-######`); fixed base unit; not an Asset. |
+| Inventory balance | رصيد مخزون | Materialized on-hand qty per warehouse+item (cache; ledger-authored). |
+| Inventory movement | حركة مخزون | Append-only stock ledger row (`MOV-######`): opening/receipt/issue/return/transfer/adjustment. |
 | Asset | أصل | An individually tracked physical or registered resource (device, vehicle, furniture...). |
 | Custody | عهدة | The handover/assignment of an asset to an employee or supervisor; history is immutable. |
 | Notification | إشعار | A system alert required by MVP modules (e.g. contract expiry). |

@@ -111,6 +111,8 @@ flowchart RL
 
 Purchase / Addition → Storage → Transfer / Issue / Return → Updated Balance
 
+> **Note (Sprint 014):** “Purchase/Addition” in the diagram means **manual inventory receipt/opening** until Procurement exists. No purchase orders in MVP.
+
 ```mermaid
 flowchart RL
     AdditionNode["Purchase/Addition إضافة"] --> StorageNode["Storage تخزين"]
@@ -120,10 +122,19 @@ flowchart RL
 
 ### Rules
 
-- Inventory quantities are **calculated from transactions** — never edited directly.
+- Inventory quantities are **ledger-authored** via append-only movements; cached balances are updated in the same transaction — never edited directly by clients ([ADR-0011](../10-decisions/ADR-0011-INVENTORY-LEDGER-BALANCE-AND-TRANSFER.md)).
 - Manual stock editing must be restricted (adjustment transactions with permission and reason).
-- Every transaction must record source, destination, actor, time, and reason.
-- Negative stock must be blocked unless explicitly configured later (configuration: TBD).
+- Every transaction must record warehouse, item, quantity effect, actor, time, and reason.
+- Negative stock must be blocked in MVP (configuration deferred).
+
+### Sprint 014 locked decisions (see [10-warehouses-and-inventory/](../09-modules/10-warehouses-and-inventory/) · [ADR-0011](../10-decisions/ADR-0011-INVENTORY-LEDGER-BALANCE-AND-TRANSFER.md))
+
+- Warehouses `WH-######`; items `ITM-######`; movements `MOV-######`.
+- Materialized `inventory_balances` + immutable `inventory_movements`.
+- Actions: opening/receipt, issue, return, atomic transfer, adjustment (delta).
+- Fixed base UOM per item (`DECIMAL(18,3)`); no conversions.
+- Concurrent mutations: `SELECT … FOR UPDATE`; transfer locks by ascending `warehouse_id`.
+- Procurement/Assets/Custodies must not write balances directly.
 
 ## TBD
 
@@ -131,3 +142,4 @@ flowchart RL
 - Rejection/return-to-previous-stage behavior in **decision** flows: TBD. (Contracts: return `in_review` → `draft` locked in Sprint 009 spec.)
 - Measurement criteria/KPIs for task execution: TBD.
 - Renewal behavior for contracts: **locked** in Sprint 009 (new record + `renewed_from_contract_id`) — see [05-contracts/BUSINESS_RULES.md](../09-modules/05-contracts/BUSINESS_RULES.md).
+- Negative-stock configuration mechanism: **deferred** (MVP always blocks; ADR-0011).

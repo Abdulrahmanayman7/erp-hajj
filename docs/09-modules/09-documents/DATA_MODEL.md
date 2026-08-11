@@ -98,7 +98,7 @@ Register aliases in AppServiceProvider at implementation:
 
 ```
 contract, meeting, decision, task, employee, organization_unit,
-warehouse, asset, custody  // last three reserved
+warehouse, inventory_item, asset, custody  // reserved until owning modules register + UI
 ```
 
 ## 4. Relationships
