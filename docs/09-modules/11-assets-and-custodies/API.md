@@ -1,6 +1,6 @@
 # Assets and Custodies — API
 
-> **Status:** Specified (Sprint 015) — **not implemented**
+> **Status:** Implemented (Sprint 015)
 > **Last updated:** 2026-08-11
 > Base: `/api/v1` · Auth: Sanctum SPA · Envelope: [API_STANDARDS.md](../../04-api/API_STANDARDS.md)
 

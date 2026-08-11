@@ -181,6 +181,11 @@ export function hostRouteForLink(
       return `/app/warehouses/${id}`
     case 'inventory_item':
       return `/app/inventory/items/${id}`
+    case 'asset':
+      return `/app/assets/${id}`
+    case 'custody':
+      // Custody detail page is not in MVP routes; omit host link unless asset is known elsewhere.
+      return null
     default:
       return null
   }

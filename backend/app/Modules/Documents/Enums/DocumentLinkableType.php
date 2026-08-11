@@ -15,6 +15,8 @@ enum DocumentLinkableType: string
     case OrganizationUnit = 'organization_unit';
     case Warehouse = 'warehouse';
     case InventoryItem = 'inventory_item';
+    case Asset = 'asset';
+    case Custody = 'custody';
 
     /**
      * @return list<string>

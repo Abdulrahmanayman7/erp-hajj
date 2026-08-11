@@ -1,7 +1,7 @@
 # Documents — Business Rules
 
 > **Status:** Implemented (Sprint 013)
-> **Last updated:** 2026-08-10
+> **Last updated:** 2026-08-11
 > ADR: [ADR-0010](../../10-decisions/ADR-0010-DOCUMENT-STORAGE-AND-ENTITY-LINKS.md)
 
 ## 1. What is a Document
@@ -60,8 +60,7 @@ Mismatch → `DOCUMENT_INVALID_FILE`. Oversized → `DOCUMENT_FILE_TOO_LARGE`.
 3. Standalone Documents (no link) are allowed (central archive / general files).
 4. One Document **cannot** belong to multiple records in MVP (no `document_links` pivot). Sharing across entities requires a Change Request or a second upload.
 5. Morph map aliases (never FQCN in DB):
-   Implemented: `contract`, `meeting`, `decision`, `task`, `employee`, `organization_unit`.
-   Reserved (register at owning-module implementation): `warehouse`, `inventory_item` (Sprint 014 — implemented), `asset`, `custody` (Sprint 015 — specified).
+   Implemented: `contract`, `meeting`, `decision`, `task`, `employee`, `organization_unit`, `warehouse`, `inventory_item` (Sprint 014), `asset`, `custody` (Sprint 015).
 6. Link target must exist, same tenant; foreign → `DOCUMENT_LINK_INVALID` / validation 422 (or 404 if treated as missing under tenant scope).
 7. Link/unlink via create payload and dedicated actions (or PATCH metadata) per [API.md](API.md) — never trust client morph without TenantExists-style checks.
 

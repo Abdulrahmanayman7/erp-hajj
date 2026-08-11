@@ -1,7 +1,7 @@
 # Module: Organizational Structure (الهيكل التنظيمي)
 
 > **Status:** **Implemented** (Sprint 007)
-> **Last updated:** 2026-08-09
+> **Last updated:** 2026-08-11
 
 ## Purpose
 
@@ -49,7 +49,7 @@ Unit manager (`manager_user_id`) ≠ employee direct manager (Employees module).
 ## Dependencies
 
 - **Requires:** Tenancy, Authentication, Users & Authorization (implemented).
-- **Consumed later by:** Employees (primary unit + positions + employee reporting), Contracts, Meetings, Tasks, Documents (morph `organization_unit`; ADR-0010), Warehouses (optional `organization_unit_id` — Sprint 014 implemented; ADR-0011), Assets (optional owning unit — Sprint 015 specified; ADR-0012), etc.
+- **Consumed later by:** Employees (primary unit + positions + employee reporting), Contracts, Meetings, Tasks, Documents (morph `organization_unit`; ADR-0010), Warehouses (optional `organization_unit_id` — Sprint 014 implemented; ADR-0011), Assets (optional owning unit — Sprint 015 **implemented**; ADR-0012), etc.
 - **Does not require:** Employees module — units stand alone; employee counts appear when Employees exists.
 
 ## Implementation notes

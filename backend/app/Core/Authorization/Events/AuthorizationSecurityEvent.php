@@ -229,6 +229,30 @@ final class AuthorizationSecurityEvent
 
     public const STOCK_ADJUSTED = 'STOCK_ADJUSTED';
 
+    public const ASSET_CREATED = 'ASSET_CREATED';
+
+    public const ASSET_UPDATED = 'ASSET_UPDATED';
+
+    public const ASSET_DELETED = 'ASSET_DELETED';
+
+    public const ASSET_CATEGORY_CREATED = 'ASSET_CATEGORY_CREATED';
+
+    public const ASSET_CATEGORY_UPDATED = 'ASSET_CATEGORY_UPDATED';
+
+    public const ASSET_CATEGORY_DELETED = 'ASSET_CATEGORY_DELETED';
+
+    public const ASSET_SENT_TO_MAINTENANCE = 'ASSET_SENT_TO_MAINTENANCE';
+
+    public const ASSET_RESTORED = 'ASSET_RESTORED';
+
+    public const ASSET_RETIRED = 'ASSET_RETIRED';
+
+    public const ASSET_DECLARED_LOST = 'ASSET_DECLARED_LOST';
+
+    public const ASSET_ASSIGNED = 'ASSET_ASSIGNED';
+
+    public const ASSET_RETURNED = 'ASSET_RETURNED';
+
     /**
      * @param  array<string, mixed>  $context
      */

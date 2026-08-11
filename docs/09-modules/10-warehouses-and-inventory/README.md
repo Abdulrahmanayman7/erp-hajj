@@ -34,7 +34,7 @@ This module answers Workflow 4 ([CORE_WORKFLOWS.md](../../01-business/CORE_WORKF
 ## Out of scope (explicit)
 
 - Procurement, suppliers, purchase orders, goods-receipt against PO.
-- Asset registry, custody assignment/return workflows ([11-assets-and-custodies/](../11-assets-and-custodies/) — Sprint 015 specified; ADR-0012). Assets may later **emit** inventory movements — they must not mutate balances directly. Sprint 015 does **not** auto-post stock.
+- Asset registry, custody assignment/return workflows ([11-assets-and-custodies/](../11-assets-and-custodies/) — Sprint 015 **implemented**; ADR-0012). Assets may later **emit** inventory movements — they must not mutate balances directly. Sprint 015 does **not** auto-post stock.
 - Accounting / costing / valuation / multi-currency stock value.
 - Batch/lot, expiry, serial-number stock tracking.
 - Unit conversions (multi-UOM).

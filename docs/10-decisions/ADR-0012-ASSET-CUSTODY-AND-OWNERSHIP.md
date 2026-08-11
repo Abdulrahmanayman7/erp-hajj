@@ -1,9 +1,13 @@
 # ADR-0012: Asset custody and current ownership model
 
-- **Status:** Accepted
+- **Status:** Accepted (implemented Sprint 015)
 - **Date:** 2026-08-11
-- **Sprint:** 015 (Assets & Custodies specification)
+- **Sprint:** 015 (Assets & Custodies)
 - **Deciders:** ERP Hajj product / engineering (documentation lock)
+
+## Implementation note (2026-08-11)
+
+Shipped as vertical slice: migrations (`asset_number_sequences`, `asset_categories`, `assets`, `asset_status_transitions`, `asset_custody_number_sequences`, `asset_custodies`, `assets.current_custody_id` FK), assign/return under Asset `FOR UPDATE`, Policies, `assets.*` catalog via `PermissionCatalog`, Documents morph aliases `asset` / `custody`, Pest `AssetTest` (20/20 — tenancy, single active custody, return consistency, self-view, RBAC, no inventory side effects, document morph + delete guard), Vue `assets` module. No Procurement, maintenance work-orders, depreciation, `inventory_item_id`, inventory auto-post, or custody void/correction.
 
 ## Context
 

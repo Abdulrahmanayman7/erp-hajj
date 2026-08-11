@@ -2,6 +2,8 @@
 
 namespace App\Modules\Documents\Support;
 
+use App\Modules\Assets\Models\Asset;
+use App\Modules\Assets\Models\AssetCustody;
 use App\Modules\Contracts\Models\Contract;
 use App\Modules\Decisions\Models\Decision;
 use App\Modules\Documents\Enums\DocumentLinkableType;
@@ -104,6 +106,8 @@ final class DocumentReferenceValidator
             DocumentLinkableType::OrganizationUnit => sprintf('%s — %s', $model->getAttribute('code'), $model->getAttribute('name')),
             DocumentLinkableType::Warehouse => sprintf('%s — %s', $model->getAttribute('warehouse_number'), $model->getAttribute('name')),
             DocumentLinkableType::InventoryItem => sprintf('%s — %s', $model->getAttribute('item_number'), $model->getAttribute('name')),
+            DocumentLinkableType::Asset => sprintf('%s — %s', $model->getAttribute('asset_number'), $model->getAttribute('name')),
+            DocumentLinkableType::Custody => (string) $model->getAttribute('custody_number'),
         };
     }
 
@@ -118,6 +122,8 @@ final class DocumentReferenceValidator
             DocumentLinkableType::OrganizationUnit => OrganizationUnit::query(),
             DocumentLinkableType::Warehouse => Warehouse::query(),
             DocumentLinkableType::InventoryItem => InventoryItem::query(),
+            DocumentLinkableType::Asset => Asset::query(),
+            DocumentLinkableType::Custody => AssetCustody::query(),
         };
 
         return $query->whereKey($id)->first();

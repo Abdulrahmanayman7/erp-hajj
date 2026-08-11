@@ -3,6 +3,10 @@
 use App\Core\Auth\Controllers\AuthController;
 use App\Core\Auth\Middleware\EnsureUserIsActive;
 use App\Core\Health\HealthController;
+use App\Modules\Assets\Controllers\AssetCategoryController;
+use App\Modules\Assets\Controllers\AssetController;
+use App\Modules\Assets\Controllers\AssetCustodyController;
+use App\Modules\Assets\Controllers\MyCustodyController;
 use App\Modules\Authorization\Controllers\PermissionController;
 use App\Modules\Authorization\Controllers\RoleController;
 use App\Modules\Contracts\Controllers\ContractCategoryController;
@@ -206,6 +210,27 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
             Route::post('/inventory/returns', [InventoryStockController::class, 'returnStock'])->name('inventory.returns.store');
             Route::post('/inventory/transfers', [InventoryStockController::class, 'transfer'])->name('inventory.transfers.store');
             Route::post('/inventory/adjustments', [InventoryStockController::class, 'adjust'])->name('inventory.adjustments.store');
+
+            Route::get('/asset-categories', [AssetCategoryController::class, 'index'])->name('asset-categories.index');
+            Route::post('/asset-categories', [AssetCategoryController::class, 'store'])->name('asset-categories.store');
+            Route::patch('/asset-categories/{category}', [AssetCategoryController::class, 'update'])->name('asset-categories.update');
+            Route::delete('/asset-categories/{category}', [AssetCategoryController::class, 'destroy'])->name('asset-categories.destroy');
+
+            Route::get('/assets', [AssetController::class, 'index'])->name('assets.index');
+            Route::post('/assets', [AssetController::class, 'store'])->name('assets.store');
+            Route::get('/assets/{asset}', [AssetController::class, 'show'])->name('assets.show');
+            Route::patch('/assets/{asset}', [AssetController::class, 'update'])->name('assets.update');
+            Route::delete('/assets/{asset}', [AssetController::class, 'destroy'])->name('assets.destroy');
+            Route::post('/assets/{asset}/maintenance', [AssetController::class, 'maintenance'])->name('assets.maintenance');
+            Route::post('/assets/{asset}/restore', [AssetController::class, 'restore'])->name('assets.restore');
+            Route::post('/assets/{asset}/retire', [AssetController::class, 'retire'])->name('assets.retire');
+            Route::post('/assets/{asset}/declare-lost', [AssetController::class, 'declareLost'])->name('assets.declare-lost');
+            Route::post('/assets/{asset}/assign', [AssetController::class, 'assign'])->name('assets.assign');
+            Route::post('/assets/{asset}/return', [AssetController::class, 'returnCustody'])->name('assets.return');
+
+            Route::get('/asset-custodies', [AssetCustodyController::class, 'index'])->name('asset-custodies.index');
+            Route::get('/asset-custodies/{custody}', [AssetCustodyController::class, 'show'])->name('asset-custodies.show');
+            Route::get('/my-custodies', [MyCustodyController::class, 'index'])->name('my-custodies.index');
         });
     });
 });

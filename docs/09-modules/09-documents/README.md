@@ -1,7 +1,7 @@
 # Module: Documents and Archiving (الوثائق والأرشفة)
 
 > **Status:** Implemented (Sprint 013)  
-> **Last updated:** 2026-08-10  
+> **Last updated:** 2026-08-11  
 > Binding ADR: [ADR-0010](../../10-decisions/ADR-0010-DOCUMENT-STORAGE-AND-ENTITY-LINKS.md)
 
 ## Purpose
@@ -14,12 +14,12 @@ A **Document** is a single uploaded file plus server-managed metadata (and optio
 
 - Central document center (`/app/documents`) + details.
 - Tenant-owned `document_categories` catalog (active/inactive).
-- Human `document_number` (`DOC-######`) + private binary storage under `TenantStorage::DOCUMENTS`.
+- Human `document_number` (`DOC-######`) + private binary storage via `TenantStorage::DOCUMENTS`.
 - Optional **single** polymorphic link per Document to one of: Contract, Meeting, Decision, Task, Employee, Organization Unit.
-- Reserved morph aliases for later host UI / registration: `asset`, `custody` (Sprint 015 — specified). `warehouse` / `inventory_item` registered with Sprint 014 implementation.
+- Morph aliases `warehouse` / `inventory_item` registered with Sprint 014; `asset` / `custody` registered with Sprint 015 (owning-module implementation).
 - Lifecycle: `active` ↔ `archived`; hard delete with `documents.delete`.
 - Streamed authorized download (no public URLs).
-- Embedded **المستندات** sections on implemented entity details (Contracts, Meetings, Decisions, Tasks, Employees, Organization Units).
+- Embedded **المستندات** sections on implemented entity details (Contracts, Meetings, Decisions, Tasks, Employees, Organization Units; Assets/Custodies with Sprint 015).
 - Permissions, Policies, audit events, Pest/Vitest plans.
 
 ## Out of scope
@@ -31,7 +31,6 @@ A **Document** is a single uploaded file plus server-managed metadata (and optio
 - Malware/AV scanner product integration (readiness hook only).
 - Bulk upload ZIP, public CDN, signed URLs that bypass Policy.
 - Form builder / knowledge management / policies library (future scope).
-- Asset / Custody attachment UI until Sprint 015 ships (morph aliases `asset`, `custody` reserved; warehouse/inventory_item already implemented with Sprint 014).
 
 ## Personas
 

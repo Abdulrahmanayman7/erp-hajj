@@ -1,6 +1,6 @@
 # Module: Assets and Custodies (الأصول والعُهد)
 
-> **Status:** Specified (Sprint 015) — **not implemented**
+> **Status:** Implemented (Sprint 015)
 > **Last updated:** 2026-08-11
 > Binding ADR: [ADR-0012](../../10-decisions/ADR-0012-ASSET-CUSTODY-AND-OWNERSHIP.md)
 
@@ -30,8 +30,8 @@ This module answers Workflow 3 ([CORE_WORKFLOWS.md](../../01-business/CORE_WORKF
 - First-class append-only **custodies** with **at most one active custody per asset**.
 - Assign / return concurrency-safe under asset row lock.
 - Optional `warehouse_id` (home/storage) and `organization_unit_id` (owner unit).
-- Documents morph aliases `asset` + `custody` (register at implementation).
-- Permissions `assets.*` (including assign/return/retire); Policies; audit; API; RTL UI; Pest/Vitest plans.
+- Documents morph aliases `asset` + `custody` registered (ADR-0010).
+- Permissions `assets.*` (including assign/return/retire) seeded via `PermissionCatalog`; Policies; audit; API; RTL UI; Pest/Vitest.
 - Assignee **self-view** of own custodies (ADR-0012), capability-gated like Tasks.
 
 ## Out of scope (explicit)
