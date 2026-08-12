@@ -80,12 +80,13 @@ Exact default role grants: [PERMISSIONS.md](PERMISSIONS.md).
 | Attendees | Tenant **employees only**; external names deferred | [BUSINESS_RULES.md](BUSINESS_RULES.md) |
 | Attachments | Owned by Documents (Sprint 013 — implemented; ADR-0010); **المستندات** on meeting details | [09-documents/](../09-documents/) |
 | Notifications | In-app types owned by Sprint 016 (ADR-0013) | [12-notifications/](../12-notifications/) |
+| Dashboard | Today / starting-soon aggregates consume Meetings SoR (ADR-0014) | [13-dashboard/](../13-dashboard/) |
 | Delete | Hard delete **draft-only** (never left draft) | [BUSINESS_RULES.md](BUSINESS_RULES.md) |
 
 ## References
 
 - [CORE_WORKFLOWS.md](../../01-business/CORE_WORKFLOWS.md) Workflow 1 · [BUSINESS_RULES.md](../../01-business/BUSINESS_RULES.md)
 - [07-decisions/](../07-decisions/) · [08-tasks/](../08-tasks/) · [04-employees-and-supervisors/](../04-employees-and-supervisors/) · [03-organization-structure/](../03-organization-structure/)
-- [09-documents/](../09-documents/) · [12-notifications/](../12-notifications/)
+- [09-documents/](../09-documents/) · [12-notifications/](../12-notifications/) · [13-dashboard/](../13-dashboard/)
 - [MODULE_TEMPLATE.md](../../02-architecture/MODULE_TEMPLATE.md)
 - [ADR-0007](../../10-decisions/ADR-0007-MEETING-AGENDA-AND-RECOMMENDATIONS.md)

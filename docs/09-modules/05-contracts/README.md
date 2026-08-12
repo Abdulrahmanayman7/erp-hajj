@@ -75,5 +75,5 @@ Exact default role grants: [PERMISSIONS.md](PERMISSIONS.md).
 
 - [CORE_WORKFLOWS.md](../../01-business/CORE_WORKFLOWS.md) · [BUSINESS_RULES.md](../../01-business/BUSINESS_RULES.md)
 - [04-employees-and-supervisors/](../04-employees-and-supervisors/) · [03-organization-structure/](../03-organization-structure/)
-- [09-documents/](../09-documents/) · [12-notifications/](../12-notifications/)
+- [09-documents/](../09-documents/) · [12-notifications/](../12-notifications/) · [13-dashboard/](../13-dashboard/)
 - [MODULE_TEMPLATE.md](../../02-architecture/MODULE_TEMPLATE.md)

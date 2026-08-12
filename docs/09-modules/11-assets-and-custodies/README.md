@@ -77,3 +77,4 @@ This module answers Workflow 3 ([CORE_WORKFLOWS.md](../../01-business/CORE_WORKF
 - [ADR-0009](../../10-decisions/ADR-0009-TASK-ASSIGNEE-AND-DECISION-GATE.md) — self-service pattern
 - [10-warehouses-and-inventory/](../10-warehouses-and-inventory/)
 - [04-employees-and-supervisors/](../04-employees-and-supervisors/)
+- [12-notifications/](../12-notifications/) · [13-dashboard/](../13-dashboard/) (overdue/due-soon aggregates; Assets remain SoR)

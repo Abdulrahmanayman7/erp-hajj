@@ -22,7 +22,8 @@ Sprint 012 specifies **Tasks & Assignments only**. Documents and notification de
 | **User** | Authenticated actor (`created_by`, transition actor) | Users & Authorization |
 | **OrganizationUnit** | Optional owning/responsible unit | Organization Structure |
 | **Document** | Attachments / evidence files | Documents (Sprint 013 — implemented; ADR-0010) |
-| **Notification** | In-app delivery (ADR-0013) | Notifications (Sprint 016 — specified) |
+| **Notification** | In-app delivery (ADR-0013) | Notifications (Sprint 016 — **implemented**) |
+| **Dashboard** | Operational aggregates / deep-links (ADR-0014) | Dashboard (Sprint 017 — specified); Tasks remain SoR |
 
 Do **not** auto-create Tasks when a Decision is approved. Do **not** put `task_ids` or progress on Decision. Do **not** conflate Decision closure with Task completion without the explicit close gate (ADR-0009).
 

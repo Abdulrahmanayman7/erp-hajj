@@ -62,6 +62,7 @@ Deliver **in-app notifications required by MVP modules** so authenticated Users 
 - Tenancy, Auth, Users/RBAC (recipient User).
 - Employees (User↔Employee for assignee/holder resolution — never auto-create Users).
 - Contracts, Meetings, Decisions, Tasks, Assets/Custodies, Inventory (event sources).
+- Dashboard may show unread count only; Attention Center must not replace Notifications (ADR-0014).
 - Queue + scheduler (tenant context per MULTI_TENANCY §9 / §12).
 
 ## Explicit non-goals reminders

@@ -1,7 +1,7 @@
 # Frontend Structure
 
-> **Status:** Approved — Auth (005) + Users/Roles RBAC UI (006) + Organization UI (007) + Employees (008) + Contracts (009) + Meetings (010) + Decisions (011) + Tasks (012) + Documents (013) + Inventory (014) + Assets (015) + Notifications (016) implemented
-> **Last updated:** 2026-08-11
+> **Status:** Approved — Auth (005) through Notifications (016) implemented; Dashboard (017) **specified**
+> **Last updated:** 2026-08-12
 
 ## Purpose
 
@@ -22,7 +22,7 @@ src/
 │   └── guards/           # auth/permission route guards
 ├── modules/
 │   ├── auth/
-│   ├── dashboard/
+│   ├── dashboard/                # Sprint 017 — specified (ADR-0014); replaces AppHome KPIs
 │   ├── users/
 │   ├── roles/
 │   ├── organization/             # Sprint 007 — implemented
@@ -139,9 +139,16 @@ A module may contain: pages, components, api, queries, mutations, types, validat
 ## Auth UI decisions (Sprint 005 — implemented)
 
 - Guest routes: `/login`, `/forgot-password`, `/reset-password`.
-- Authenticated shell after login: temporary welcome / system status — **no fake dashboard KPIs**.
+- Authenticated home `/app`: temporary welcome until Sprint 017 implementation; then **permission-aware operational Dashboard** (ADR-0014) — **no fake KPIs**, **no charts** in MVP.
 - CSRF: `GET /sanctum/csrf-cookie` before mutating auth calls; handle `401`/`419`/`403`/`429` per [01-authentication/UI.md](../09-modules/01-authentication/UI.md).
 - No localStorage auth tokens; no fabricated permissions on the client.
+
+## Dashboard UI (Sprint 017 — specified)
+
+- Module folder: `frontend/src/modules/dashboard/` (implementation pending).
+- Canonical route `/app` (+ optional `/app/dashboard` redirect).
+- Single query to `GET /api/v1/dashboard`; omit missing sections client-side.
+- Attention Center + KPI cards + today/soon lists; deep-links to owning modules.
 
 ## Notifications UI (Sprint 016 — implemented)
 
@@ -151,4 +158,4 @@ A module may contain: pages, components, api, queries, mutations, types, validat
 
 ## TBD
 
-- (none for notifications placement — locked above)
+- (none for notifications/dashboard placement — locked above)

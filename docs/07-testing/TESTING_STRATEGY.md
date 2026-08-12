@@ -43,6 +43,7 @@ Define what must be tested and to what standard. Per-module test plans live in e
 - Inventory movements and balance mutations (Sprint 014 — **implemented**; ADR-0011): receipt/issue/return/transfer/adjust; insufficient-stock and concurrency; cross-tenant warehouse/item isolation; no direct balance PATCH.
 - Asset / custody assign-return (Sprint 015 — **implemented**; ADR-0012): single active custody; double-assign race; cross-tenant isolation; holder self-view; no inventory balance side effects (`AssetTest` 20/20).
 - In-app notifications (Sprint 016 — **implemented**; ADR-0013): recipient ownership IDOR; cross-tenant isolation; dedupe for scheduled types; dispatcher failure isolation; Pest/Vitest matrices in [12-notifications/TEST_PLAN.md](../09-modules/12-notifications/TEST_PLAN.md).
+- Dashboard (Sprint 017 — **specified**; ADR-0014): tenant-scoped aggregates; permission-omit (no zero leakage); self-service personal overlays; no cross-UOM sums; Pest/Vitest matrices in [13-dashboard/TEST_PLAN.md](../09-modules/13-dashboard/TEST_PLAN.md).
 - Asset custody assignment and return.
 
 ## Rules

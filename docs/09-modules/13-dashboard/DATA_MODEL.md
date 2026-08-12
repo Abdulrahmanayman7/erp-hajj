@@ -1,23 +1,39 @@
-# Dashboard — Data Model (conceptual)
+# Dashboard — Data Model
 
-> **Status:** Conceptual — no migrations exist
-> **Last updated:** 2026-08-06
+> **Status:** Specification complete — implementation pending (Sprint 017)
+> **Last updated:** 2026-08-12
 
-The dashboard **owns no business tables** — it aggregates read-only indicators from other modules:
+## Ownership
 
-| Widget | Source module |
+The Dashboard module **owns no business tables** and **adds no migrations** in Sprint 017.
+
+All indicators are computed read-only from existing tenant-owned tables.
+
+## Source map
+
+| Dashboard concept | Tables / resolvers |
 |---|---|
-| Active users | Users |
-| Employees / Supervisors | Employees |
-| Active contracts / nearing expiry | Contracts |
-| Open / overdue tasks | Tasks |
-| Upcoming meetings | Meetings |
-| Recent decisions | Decisions |
-| Low-stock alerts | Inventory |
-| Assigned assets | Assets/Custodies |
-| Recent audit activity | Audit trail |
+| Tasks KPIs / lists | `tasks` (+ open/overdue semantics) |
+| Contracts KPIs / lists | `contracts` + `config('contracts.expiring_soon_days')` |
+| Meetings KPIs / lists | `meetings` (`scheduled_at` UTC) |
+| Decisions KPIs | `decisions`; open-task gate via `tasks.decision_id` |
+| Inventory KPIs | `inventory_balances` + `inventory_items.minimum_stock` + `StockStateResolver` |
+| Assets KPIs | `assets.status` |
+| Custody KPIs / lists | `asset_custodies` (active + `expected_return_at`) |
+| Unread notifications | `notifications` (`recipient_user_id`, `read_at IS NULL`) |
 
-## Notes
+## Caching / materialization
 
-- Any caching/materialization of aggregates uses tenant-scoped cache keys and is never a source of truth.
-- Per-user dashboard preferences (layout customization): not specified — do not build without approval.
+- **MVP:** no `dashboard_*` tables, no Redis Dashboard cache keys.
+- Conceptual future (out of Sprint 017): any cache **must** use `tenant:{id}:…` namespace and a permission fingerprint — see ADR-0014. Not approved for implementation now.
+
+## Preferences
+
+Per-user Dashboard layout customization: **out of scope** (requires Change Request).
+
+## Migrations
+
+| Decision | Value |
+|---|---|
+| Migrations added by Sprint 017 | **None** |
+| Schema changes to source modules | **None** |
