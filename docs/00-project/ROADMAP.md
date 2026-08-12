@@ -33,8 +33,19 @@ The 21 modules and four core workflows defined in [MVP_SCOPE.md](MVP_SCOPE.md), 
 | Sprint 016 — Notifications | **Done** (implementation) |
 | Sprint 017 — Dashboard | **Done** (implementation) |
 | Sprint 018 — Audit Trail | **Done** (implementation; ADR-0015) |
-| Remaining MVP modules | Next: Tenant settings / platform polish |
-Natural dependency order remains: **tenancy → authentication → users/roles/permissions → organizational structure → employees → contracts → meetings → decisions → tasks → documents → warehouses/inventory → assets/custodies → notifications → dashboard → audit trail → remaining modules**.
+| Sprint 019 — MVP Integration & Release Hardening | **In progress / code-ready** (gates, deploy/UAT docs; see [MVP_RELEASE_CHECKLIST.md](../08-deployment/MVP_RELEASE_CHECKLIST.md)) |
+| Remaining MVP modules | **P1 open:** Tenant settings API/UI (`tenant_settings`) — see [MVP_KNOWN_LIMITATIONS.md](MVP_KNOWN_LIMITATIONS.md) |
+
+Natural dependency order remains: **tenancy → authentication → users/roles/permissions → organizational structure → employees → contracts → meetings → decisions → tasks → documents → warehouses/inventory → assets/custodies → notifications → dashboard → audit trail → settings / release**.
+
+## Release posture (Sprint 019)
+
+| Track | Status |
+|---|---|
+| MVP modules 004–018 code | Implemented — hardening in Sprint 019 |
+| UAT | Checklist ready — execution pending |
+| Production deployment | Pending ops + infrastructure |
+| Recommended first tag | `v0.1.0` (create only after approval — not auto-created) |
 
 ## Later — Future Vision (NOT part of the MVP, all TBD)
 

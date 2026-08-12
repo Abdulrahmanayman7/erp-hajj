@@ -49,8 +49,19 @@ jobs:
       - name: Check code style (Pint)
         run: ./vendor/bin/pint --test
 
+      - name: Composer security audit
+        run: composer audit
+        continue-on-error: true
+
       - name: Run tests (Pest)
         run: php artisan test
+
+      # schedule:list probes EventMutex::exists() per event; with CACHE_STORE=database
+      # that hits MySQL cache_locks. CI has no MySQL — use array cache for this step only.
+      - name: Show schedule list
+        run: php artisan schedule:list
+        env:
+          CACHE_STORE: array
 
   frontend:
     name: Frontend (Vue)
@@ -71,6 +82,10 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: npm security audit
+        run: npm audit --omit=dev
+        continue-on-error: true
 
       - name: Run tests (Vitest)
         run: npm run test

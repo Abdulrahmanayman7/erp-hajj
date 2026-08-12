@@ -46,12 +46,14 @@ Define what must be tested and to what standard. Per-module test plans live in e
 - Dashboard (Sprint 017 — **implemented**; ADR-0014): tenant-scoped aggregates; permission-omit (no zero leakage); self-service personal overlays; no cross-UOM sums; Pest/Vitest matrices in [13-dashboard/TEST_PLAN.md](../09-modules/13-dashboard/TEST_PLAN.md).
 - Audit Trail (Sprint 018 — **implemented**; ADR-0015): append-only `audit_logs`; tenancy IDOR; secrets exclusion; transaction rollback; representative events; Pest/Vitest matrices in [14-audit-trail/TEST_PLAN.md](../09-modules/14-audit-trail/TEST_PLAN.md).
 - Asset custody assignment and return.
+- **MVP UAT:** executable manual checklist in [MVP_UAT_CHECKLIST.md](MVP_UAT_CHECKLIST.md) (Sprint 019). Do not mark UAT passed unless scenarios were actually executed.
 
 ## Rules
 
 - **Tests must be deterministic** — no time-of-day, ordering, or external-service dependence; flaky tests are fixed or quarantined with an issue, never ignored.
 - **Failing or flaky security tests block merging** (cross-tenant attack suites, policy tests, file-authorization tests) — see [DEFINITION_OF_DONE.md](../00-project/DEFINITION_OF_DONE.md).
 - Do not weaken or delete a failing test to make it pass — fix the code or raise the issue.
+- Sprint 019: Prefer deterministic factory uniqueness (avoid Faker `unique()` exhaustion across large suites). CI Pest remains SQLite-first; disposable MySQL migrate validation is part of release readiness.
 
 ## Environment Rules (see [ENVIRONMENTS.md](../08-deployment/ENVIRONMENTS.md))
 

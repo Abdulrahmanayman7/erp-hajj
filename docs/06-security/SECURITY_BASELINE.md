@@ -76,9 +76,12 @@ Each control below names the attack it prevents. Implementation details are spec
 
 ### Operations
 
-- HTTPS in production; secure headers.
-- Backup and restore procedures (defined per environment — see [ENVIRONMENTS.md](../08-deployment/ENVIRONMENTS.md)).
+- HTTPS in production; secure headers (final CSP set TBD at deployment layer — see [DEPLOYMENT.md](../08-deployment/DEPLOYMENT.md)).
+- Production must run with `APP_ENV=production` and `APP_DEBUG=false` (no stack traces to clients).
+- Public `GET /api/v1/health` must not expose environment name or DB internals (Sprint 019).
+- Backup and restore procedures — see [BACKUP_AND_RECOVERY.md](../08-deployment/BACKUP_AND_RECOVERY.md) and [ENVIRONMENTS.md](../08-deployment/ENVIRONMENTS.md).
 - Audit logging per [AUDIT_TRAIL.md](AUDIT_TRAIL.md).
+- CORS exposes `X-Correlation-ID` to the SPA; do not use `allowed_origins: *` with credentialed SPA cookies.
 
 ## Compliance Posture
 

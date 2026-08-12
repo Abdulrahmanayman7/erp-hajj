@@ -12,10 +12,12 @@ it('returns the standardized success envelope from /api/v1/health', function ():
         ->assertJsonStructure([
             'success',
             'message',
-            'data' => ['application', 'version', 'environment', 'timestamp'],
-        ]);
+            'data' => ['application', 'version', 'status', 'timestamp'],
+        ])
+        ->assertJsonMissingPath('data.environment');
 
     expect($response->json('data.version'))->toBe('v1');
+    expect($response->json('data.status'))->toBe('ok');
 });
 
 it('is publicly accessible without authentication', function (): void {

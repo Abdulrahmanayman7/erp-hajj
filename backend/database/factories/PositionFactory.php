@@ -18,8 +18,8 @@ class PositionFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => fake()->unique()->jobTitle(),
-            'code' => strtoupper(fake()->unique()->lexify('POS_????')),
+            'name' => fake()->unique()->bothify('مسمى-????-##'),
+            'code' => strtoupper(fake()->unique()->bothify('POS_????_##')),
             'is_active' => true,
         ];
     }

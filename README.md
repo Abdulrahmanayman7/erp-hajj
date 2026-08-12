@@ -1,6 +1,6 @@
 # ERP Hajj
 
-> **Status:** Tenant Foundation (004) through Audit Trail (018) implemented. Next: Settings / remaining MVP modules.
+> **Status:** Sprint 019 hardening — modules Tenant Foundation (004) through Audit Trail (018) implemented and integration-hardened. **UAT pending. Production deployment pending.** System settings API/UI remains a known P1 gap for full 21-module MVP.
 >
 > **Last updated:** 2026-08-12
 
@@ -25,7 +25,7 @@ Core workflows:
 3. Asset → Available → Assigned as Custody → In Use → Returned → Available / Maintenance / Retired
 4. Inventory: Addition → Storage → Transfer/Issue/Return → Updated Balance
 
-Everything else (mobile apps, pilgrims, transportation, finance, AI, integrations...) is future scope — see [OUT_OF_SCOPE.md](docs/00-project/OUT_OF_SCOPE.md).
+Everything else (mobile apps, pilgrims, transportation, finance, AI, integrations...) is future scope — see [OUT_OF_SCOPE.md](docs/00-project/OUT_OF_SCOPE.md). Known deferrals and incomplete slices: [MVP_KNOWN_LIMITATIONS.md](docs/00-project/MVP_KNOWN_LIMITATIONS.md).
 
 ## Technology Stack
 
@@ -40,26 +40,24 @@ Everything else (mobile apps, pilgrims, transportation, finance, AI, integration
 
 ```text
 erp-hajj/
-├── backend/          # Laravel 12 API (app/Core scaffolded; /api/v1/health live)
-├── frontend/         # Vue 3 SPA (RTL app shell, system status page)
+├── backend/          # Laravel 12 API
+├── frontend/         # Vue 3 SPA (RTL); vercel.json SPA rewrites
 ├── docs/             # Source-of-truth documentation
-│   ├── 00-project/   # Vision, scope, roadmap, glossary, team & git workflow
-│   ├── 01-business/  # Personas, core workflows, business rules
+│   ├── 00-project/   # Vision, scope, roadmap, limitations, git workflow
+│   ├── 01-business/
 │   ├── 02-architecture/
 │   ├── 03-database/
 │   ├── 04-api/
 │   ├── 05-ui-ux/
-│   ├── 06-security/  # Baseline, permission model, audit trail
-│   ├── 07-testing/
-│   ├── 08-deployment/
-│   ├── 09-modules/   # Per-module documentation (15 modules)
+│   ├── 06-security/
+│   ├── 07-testing/   # incl. MVP_UAT_CHECKLIST.md
+│   ├── 08-deployment/# ENVIRONMENTS, DEPLOYMENT, backups, release checklist
+│   ├── 09-modules/
 │   └── 10-decisions/ # ADRs
-├── .cursor/rules/    # AI assistant rules enforcing project standards
-├── .github/          # PR template, issue templates, workflows
-├── scripts/
+├── .cursor/rules/
+├── .github/
 ├── README.md
-├── CHANGELOG.md
-└── .editorconfig
+└── CHANGELOG.md
 ```
 
 ## Local Setup
@@ -74,21 +72,29 @@ composer install
 cp .env.example .env        # set your DB credentials (MySQL: erp_hajj)
 php artisan key:generate
 php artisan migrate
+php artisan db:seed         # RBAC catalog + default roles for seeded tenants
 php artisan serve
+```
+
+Optional (jobs / notifications scanners):
+
+```bash
+php artisan queue:work
+php artisan schedule:work
 ```
 
 **Frontend** (serves at `http://localhost:5173`):
 
 ```bash
 cd frontend
-npm install
+npm ci                      # prefer lockfile-exact install
 cp .env.example .env        # VITE_API_URL=http://localhost:8000
 npm run dev
 ```
 
-**Verify:** open `http://localhost:5173` — the system status page should show a successful call to `GET /api/v1/health`.
+**Verify:** `GET /api/v1/health` and open the SPA login / dashboard after bootstrapping an Owner.
 
-**Quality checks:** backend `php artisan test` and `./vendor/bin/pint --test`; frontend `npm run test`, `npm run type-check`, `npm run build`. The same checks run in CI (`.github/workflows/ci.yml`) on every push/PR to `develop` and `main`.
+**Quality checks:** backend `php artisan test` and `./vendor/bin/pint --test`; frontend `npm run test`, `npm run type-check`, `npm run build`. CI: `.github/workflows/ci.yml` on push/PR to `develop` and `main`.
 
 ### Bootstrap first Tenant Owner (operational)
 
@@ -113,6 +119,16 @@ Rules:
 - Password is never accepted as a CLI flag (avoids shell history leakage).
 
 Optional non-secret flags: `--tenant=`, `--name=`, `--email=`, `--force`, `--assign-existing`.
+
+## Deployment & release
+
+See:
+
+- [docs/08-deployment/DEPLOYMENT.md](docs/08-deployment/DEPLOYMENT.md)
+- [docs/08-deployment/MVP_RELEASE_CHECKLIST.md](docs/08-deployment/MVP_RELEASE_CHECKLIST.md)
+- [docs/07-testing/MVP_UAT_CHECKLIST.md](docs/07-testing/MVP_UAT_CHECKLIST.md)
+
+Frontend on Vercel: Root Directory `frontend`, Install `npm ci`, Build `npm run build`, Output `dist`. Backend requires persistent PHP + MySQL + queue + scheduler + private storage — not a static-only host.
 
 ## Git Workflow
 

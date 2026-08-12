@@ -25,6 +25,8 @@ Dashboard (Sprint 017 — **implemented**): permission-aware operational read mo
 
 Audit Trail (Sprint 018 — **implemented**): semantic immutable `audit_logs` + viewer — see [14-audit-trail/](../09-modules/14-audit-trail/) and [ADR-0015](../10-decisions/ADR-0015-SEMANTIC-AUDIT-TRAIL-AND-IMMUTABLE-HISTORY.md). Not Notifications; not generic Eloquent observers.
 
+MVP Integration & Release Hardening (Sprint 019): integration gates, deployment/UAT checklists, health/CORS/env hardening — see [DEPLOYMENT.md](../08-deployment/DEPLOYMENT.md) and [MVP_KNOWN_LIMITATIONS.md](../00-project/MVP_KNOWN_LIMITATIONS.md). System settings API/UI remains a known P1 gap within MVP scope.
+
 ## Style
 
 - **Modular monolith**: one deployable Laravel 12 application organized into a `Core/` layer and business `Modules/`. See [ADR-0002](../10-decisions/ADR-0002-MODULAR-MONOLITH.md) and [BACKEND_STRUCTURE.md](BACKEND_STRUCTURE.md).
