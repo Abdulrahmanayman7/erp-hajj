@@ -45,8 +45,12 @@ export const router = createRouter({
     {
       path: '/app',
       name: 'app-home',
-      component: () => import('@/modules/auth/pages/AppHomePage.vue'),
-      meta: { requiresAuth: true, layout: 'app' },
+      component: () => import('@/modules/dashboard/pages/DashboardPage.vue'),
+      meta: { requiresAuth: true, layout: 'app', permission: 'dashboard.view' },
+    },
+    {
+      path: '/app/dashboard',
+      redirect: '/app',
     },
     {
       path: '/app/403',

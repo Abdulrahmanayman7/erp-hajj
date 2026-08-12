@@ -21,7 +21,7 @@ Decisions (Sprint 011 — **implemented**): `decisions` + `decision_status_trans
 
 Tasks (Sprint 012 — **specified**): `tasks` + status/assignment histories + `TSK-######` sequences — see [08-tasks/](../09-modules/08-tasks/) and [ADR-0009](../10-decisions/ADR-0009-TASK-ASSIGNEE-AND-DECISION-GATE.md). Single Employee assignee; Decision close gated by open Tasks.
 
-Dashboard (Sprint 017 — **specified**): permission-aware operational read model — see [13-dashboard/](../09-modules/13-dashboard/) and [ADR-0014](../10-decisions/ADR-0014-PERMISSION-AWARE-DASHBOARD-AGGREGATION.md). No business ownership; no cross-UOM stock totals.
+Dashboard (Sprint 017 — **implemented**): permission-aware operational read model — see [13-dashboard/](../09-modules/13-dashboard/) and [ADR-0014](../10-decisions/ADR-0014-PERMISSION-AWARE-DASHBOARD-AGGREGATION.md). No business ownership; no cross-UOM stock totals.
 
 ## Style
 

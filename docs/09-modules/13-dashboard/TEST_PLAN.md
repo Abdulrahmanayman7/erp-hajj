@@ -1,9 +1,9 @@
 # Dashboard — Test Plan
 
-> **Status:** Specification complete — implementation pending (Sprint 017)
+> **Status:** Implemented (Sprint 017)
 > **Last updated:** 2026-08-12
 > Tooling: **Pest** (backend) · **Vitest** (frontend)
-> No executable tests in this documentation sprint.
+> Executable coverage: `tests/Feature/Dashboard/DashboardTest.php` + `frontend/src/modules/dashboard/**/*.test.ts`.
 
 Failing security / cross-tenant / permission-omit tests block merge at implementation.
 

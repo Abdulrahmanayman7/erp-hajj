@@ -1,6 +1,6 @@
 # Dashboard — Permissions
 
-> **Status:** Specification complete — implementation pending (Sprint 017)
+> **Status:** Implemented (Sprint 017)
 > **Last updated:** 2026-08-12
 
 ## Catalog

@@ -11,6 +11,7 @@ use App\Modules\Authorization\Controllers\PermissionController;
 use App\Modules\Authorization\Controllers\RoleController;
 use App\Modules\Contracts\Controllers\ContractCategoryController;
 use App\Modules\Contracts\Controllers\ContractController;
+use App\Modules\Dashboard\Controllers\DashboardController;
 use App\Modules\Decisions\Controllers\DecisionController;
 use App\Modules\Documents\Controllers\DocumentCategoryController;
 use App\Modules\Documents\Controllers\DocumentController;
@@ -50,6 +51,8 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
     });
 
     Route::middleware(['auth:sanctum', 'user.active', 'tenant.active'])->group(function (): void {
+        Route::get('/dashboard', [DashboardController::class, 'show'])->name('dashboard.show');
+
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
         Route::post('/users', [UserController::class, 'store'])->name('users.store');
         Route::get('/users/{user}', [UserController::class, 'show'])->name('users.show');

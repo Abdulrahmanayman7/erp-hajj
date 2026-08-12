@@ -1,9 +1,13 @@
 # ADR-0014: Permission-Aware Dashboard Aggregation Model
 
-- **Status:** Accepted (specification — implementation pending Sprint 017)
+- **Status:** Accepted — **Implemented** (Sprint 017)
 - **Date:** 2026-08-12
 - **Sprint:** 017 (Dashboard)
 - **Deciders:** ERP Hajj product / engineering (documentation lock)
+
+## Implementation note (2026-08-12)
+
+Shipped: `GET /api/v1/dashboard` via `Modules/Dashboard` aggregators; Gate `viewDashboard` (`dashboard.view`); sparse permission-aware payload; Attention from business SoRs; Vue `DashboardPage` at `/app` (+ `/app/dashboard` redirect); no migrations/cache/charts; Pest `DashboardTest` 11/11.
 
 ## Context
 
