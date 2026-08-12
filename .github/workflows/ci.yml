@@ -56,8 +56,12 @@ jobs:
       - name: Run tests (Pest)
         run: php artisan test
 
+      # schedule:list probes EventMutex::exists() per event; with CACHE_STORE=database
+      # that hits MySQL cache_locks. CI has no MySQL — use array cache for this step only.
       - name: Show schedule list
         run: php artisan schedule:list
+        env:
+          CACHE_STORE: array
 
   frontend:
     name: Frontend (Vue)
