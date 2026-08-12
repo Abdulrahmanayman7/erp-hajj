@@ -13,7 +13,7 @@ class HealthController
             data: [
                 'application' => config('app.name'),
                 'version' => 'v1',
-                'environment' => config('app.env'),
+                'status' => 'ok',
                 'timestamp' => now()->toIso8601String(),
             ],
             message: 'ERP Hajj API is running',

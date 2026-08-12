@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Sprint 019 — MVP Integration & Release Hardening:** architecture/tenant/RBAC release audit; health endpoint no longer leaks `APP_ENV`; CORS exposes `X-Correlation-ID`; `.env.example` documents session secure cookies, document disk, queue/scheduler, PHP upload limits; `frontend/vercel.json` SPA rewrites; CI advisory `composer audit` / `npm audit`; PositionFactory uniqueness hardening; deployment docs (`DEPLOYMENT`, `BACKUP_AND_RECOVERY`, `MVP_RELEASE_CHECKLIST`), `MVP_UAT_CHECKLIST`, `MVP_KNOWN_LIMITATIONS`. Distinguishes: MVP code-ready (004–018) · UAT pending · production deployment pending. System settings API/UI remains P1 incomplete for full 21-module scope.
+
 - **Sprint 018 — Audit Trail vertical slice:** hybrid append-only `audit_logs` (ADR-0015); `Core/Audit` recorder/sanitizer dual-writes from existing `AuthorizationSecurityEvent` / `AuthSecurityEvent` (log sinks kept); `GET /api/v1/audit-logs` (+ show) with `audit_logs.view`; Owner/GM/Auditor grants; Vue `modules/audit` (`/app/audit`); no export/pruning/hash-chain/observers; Pest `AuditTest` 13/13; full Pest 365; Vitest 208; `tsc`/build green.
 
 - **Sprint 018 — Audit Trail specification** (superseded by implementation above).
