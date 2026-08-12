@@ -1,6 +1,6 @@
 # Dashboard — Data Model
 
-> **Status:** Specification complete — implementation pending (Sprint 017)
+> **Status:** Implemented (Sprint 017) — no Dashboard tables/migrations
 > **Last updated:** 2026-08-12
 
 ## Ownership

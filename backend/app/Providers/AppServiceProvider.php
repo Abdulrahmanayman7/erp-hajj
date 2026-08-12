@@ -20,6 +20,7 @@ use App\Modules\Contracts\Models\Contract;
 use App\Modules\Contracts\Models\ContractCategory;
 use App\Modules\Contracts\Policies\ContractCategoryPolicy;
 use App\Modules\Contracts\Policies\ContractPolicy;
+use App\Modules\Dashboard\Policies\DashboardPolicy;
 use App\Modules\Decisions\Models\Decision;
 use App\Modules\Decisions\Policies\DecisionPolicy;
 use App\Modules\Documents\Models\Document;
@@ -117,6 +118,8 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(AssetCategory::class, AssetCategoryPolicy::class);
         Gate::policy(AssetCustody::class, AssetCustodyPolicy::class);
         Gate::policy(Notification::class, NotificationPolicy::class);
+
+        Gate::define('viewDashboard', [DashboardPolicy::class, 'view']);
 
         Relation::enforceMorphMap([
             'contract' => Contract::class,

@@ -1,6 +1,6 @@
 # Dashboard — Business Rules
 
-> **Status:** Specification complete — implementation pending (Sprint 017)
+> **Status:** Implemented (Sprint 017)
 > **Last updated:** 2026-08-12
 > ADR: [ADR-0014](../../10-decisions/ADR-0014-PERMISSION-AWARE-DASHBOARD-AGGREGATION.md)
 

@@ -1,6 +1,6 @@
 # Frontend Structure
 
-> **Status:** Approved — Auth (005) through Notifications (016) implemented; Dashboard (017) **specified**
+> **Status:** Approved — Auth (005) through Dashboard (017) implemented
 > **Last updated:** 2026-08-12
 
 ## Purpose
@@ -22,7 +22,7 @@ src/
 │   └── guards/           # auth/permission route guards
 ├── modules/
 │   ├── auth/
-│   ├── dashboard/                # Sprint 017 — specified (ADR-0014); replaces AppHome KPIs
+│   ├── dashboard/                # Sprint 017 — implemented (ADR-0014); `/app` home
 │   ├── users/
 │   ├── roles/
 │   ├── organization/             # Sprint 007 — implemented
@@ -139,14 +139,14 @@ A module may contain: pages, components, api, queries, mutations, types, validat
 ## Auth UI decisions (Sprint 005 — implemented)
 
 - Guest routes: `/login`, `/forgot-password`, `/reset-password`.
-- Authenticated home `/app`: temporary welcome until Sprint 017 implementation; then **permission-aware operational Dashboard** (ADR-0014) — **no fake KPIs**, **no charts** in MVP.
+- Authenticated home `/app`: **permission-aware operational Dashboard** (ADR-0014) — **no fake KPIs**, **no charts** in MVP.
 - CSRF: `GET /sanctum/csrf-cookie` before mutating auth calls; handle `401`/`419`/`403`/`429` per [01-authentication/UI.md](../09-modules/01-authentication/UI.md).
 - No localStorage auth tokens; no fabricated permissions on the client.
 
-## Dashboard UI (Sprint 017 — specified)
+## Dashboard UI (Sprint 017 — implemented)
 
-- Module folder: `frontend/src/modules/dashboard/` (implementation pending).
-- Canonical route `/app` (+ optional `/app/dashboard` redirect).
+- Module folder: `frontend/src/modules/dashboard/`.
+- Canonical route `/app` (+ `/app/dashboard` redirect).
 - Single query to `GET /api/v1/dashboard`; omit missing sections client-side.
 - Attention Center + KPI cards + today/soon lists; deep-links to owning modules.
 

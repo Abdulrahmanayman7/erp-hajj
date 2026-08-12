@@ -1,6 +1,6 @@
 # Backend Structure
 
-> **Status:** Approved — Tenant Foundation (004) through Notifications (016) implemented; Dashboard (017) **specified**
+> **Status:** Approved — Tenant Foundation (004) through Dashboard (017) implemented
 > **Last updated:** 2026-08-12
 
 ## Purpose
@@ -36,7 +36,7 @@ app/
 │   ├── Inventory/                # Sprint 014 — implemented (warehouses + stock; ADR-0011)
 │   ├── Assets/                   # Sprint 015 — implemented (assets + custodies nested; ADR-0012)
 │   ├── Notifications/              # Sprint 016 — implemented (ADR-0013)
-│   └── Dashboard/                  # Sprint 017 — specified (ADR-0014); implementation pending
+│   └── Dashboard/                  # Sprint 017 — implemented (ADR-0014)
 ```
 
 ## Module Contents
