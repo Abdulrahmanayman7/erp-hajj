@@ -1,7 +1,7 @@
 # Architecture
 
 > **Status:** Approved
-> **Last updated:** 2026-08-10
+> **Last updated:** 2026-08-12
 
 ## Purpose
 
@@ -22,6 +22,8 @@ Decisions (Sprint 011 — **implemented**): `decisions` + `decision_status_trans
 Tasks (Sprint 012 — **specified**): `tasks` + status/assignment histories + `TSK-######` sequences — see [08-tasks/](../09-modules/08-tasks/) and [ADR-0009](../10-decisions/ADR-0009-TASK-ASSIGNEE-AND-DECISION-GATE.md). Single Employee assignee; Decision close gated by open Tasks.
 
 Dashboard (Sprint 017 — **implemented**): permission-aware operational read model — see [13-dashboard/](../09-modules/13-dashboard/) and [ADR-0014](../10-decisions/ADR-0014-PERMISSION-AWARE-DASHBOARD-AGGREGATION.md). No business ownership; no cross-UOM stock totals.
+
+Audit Trail (Sprint 018 — **specified**): semantic immutable `audit_logs` + viewer — see [14-audit-trail/](../09-modules/14-audit-trail/) and [ADR-0015](../10-decisions/ADR-0015-SEMANTIC-AUDIT-TRAIL-AND-IMMUTABLE-HISTORY.md). Not Notifications; not generic Eloquent observers.
 
 ## Style
 

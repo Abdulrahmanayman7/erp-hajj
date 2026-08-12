@@ -17,7 +17,7 @@ Provide the tenancy foundation every other module depends on: the tenant (organi
 | Endpoints and stable error codes | [API.md](API.md) |
 | Permission catalog (`tenant_settings.*`, `platform_tenants.*`) | [PERMISSIONS.md](PERMISSIONS.md) |
 | Threat model (attack → control) | [SECURITY_BASELINE.md](../../06-security/SECURITY_BASELINE.md) |
-| Correlation ID and audit record design | [AUDIT_TRAIL.md](../../06-security/AUDIT_TRAIL.md) |
+| Correlation ID and audit record design | [AUDIT_TRAIL.md](../../06-security/AUDIT_TRAIL.md) · [14-audit-trail/](../14-audit-trail/) · [ADR-0015](../../10-decisions/ADR-0015-SEMANTIC-AUDIT-TRAIL-AND-IMMUTABLE-HISTORY.md) |
 | Complete Pest matrix | [TEST_PLAN.md](TEST_PLAN.md) |
 | Definition of done | [ACCEPTANCE_CRITERIA.md](ACCEPTANCE_CRITERIA.md) + [DEFINITION_OF_DONE.md](../../00-project/DEFINITION_OF_DONE.md) |
 

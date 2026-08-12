@@ -67,6 +67,6 @@ Deliver **in-app notifications required by MVP modules** so authenticated Users 
 
 ## Explicit non-goals reminders
 
-- Notifications ≠ Audit Trail.
+- Notifications ≠ Audit Trail ([14-audit-trail/](../14-audit-trail/), ADR-0015): domain Actions may emit audit **and** notify independently; notification create/read is not an audit event.
 - Do not notify every `AuthorizationSecurityEvent`.
 - Do not fan out every event to Tenant Owner / GM by default.

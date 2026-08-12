@@ -17,7 +17,7 @@ Provide tenant-scoped **user administration** and a **dynamic RBAC** system (rol
 | Permissions | Global catalog (read-only in tenant UI); assign to roles via matrix |
 | Authorization | Policies, effective-permission helpers, cache, extend `/auth/me` |
 | Frontend | Users pages, roles pages, permission matrix, sidebar, `can()` / PermissionGuard |
-| Security | Cross-tenant isolation, self-escalation guards, last Tenant Owner protection, audit events |
+| Security | Cross-tenant isolation, self-escalation guards, last Tenant Owner protection, audit events (`USER_*` / `ROLE_*` → Audit Trail ADR-0015) |
 
 ## Out of scope (Sprint 006)
 

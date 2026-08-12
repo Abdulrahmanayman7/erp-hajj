@@ -38,7 +38,7 @@ Define the shared vocabulary of the project in English with the Arabic business 
 | Asset | أصل | Individually tracked resource (`AST-######`); statuses include available/in_use/maintenance/damaged/retired/lost (Sprint 015 spec). |
 | Custody | عهدة | Append-only handover of an Asset to an Employee (`CUS-######`); at most one active per asset; history immutable after return. |
 | Notification | إشعار | Tenant-owned in-app attention record addressed to a **User** (not Employee). System-generated; own-inbox only. See ADR-0013 / Sprint 016. |
-| Audit trail | سجل التدقيق | Immutable record of who did what, when, from where, and in which tenant. |
+| Audit trail | سجل التدقيق | Immutable, append-only accountability history (who/what/when/entity/tenant/correlation); semantic events persisted in `audit_logs` — not Notifications, not app logs (ADR-0015). |
 | Role | دور | A named, dynamic set of permissions assigned to users. |
 | Permission | صلاحية | The right to perform a specific action, named `module.action`. |
 | Dashboard | لوحة التحكم | Tenant-scoped, permission-aware **operational overview** read model (KPIs + Attention + today/soon). Does not own business data. See ADR-0014 / Sprint 017. |

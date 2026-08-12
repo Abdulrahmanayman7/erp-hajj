@@ -45,6 +45,6 @@ No role-name Policy checks. No Task-assignee self-service bypass of `documents.*
 ## References
 
 - [ADR-0010](../../10-decisions/ADR-0010-DOCUMENT-STORAGE-AND-ENTITY-LINKS.md)
-- [SECURITY_BASELINE.md](../../06-security/SECURITY_BASELINE.md) · [AUDIT_TRAIL.md](../../06-security/AUDIT_TRAIL.md) · [MULTI_TENANCY.md](../../02-architecture/MULTI_TENANCY.md) §11
+- [SECURITY_BASELINE.md](../../06-security/SECURITY_BASELINE.md) · [AUDIT_TRAIL.md](../../06-security/AUDIT_TRAIL.md) · [14-audit-trail/](../14-audit-trail/) (ADR-0015 — `DOCUMENT_DOWNLOADED` etc. persist to `audit_logs` at Audit implementation) · [MULTI_TENANCY.md](../../02-architecture/MULTI_TENANCY.md) §11
 - Implemented `App\Core\Tenancy\TenantStorage` (`DOCUMENTS` directory)
 - Host modules: Contracts / Meetings / Decisions / Tasks (attachments deferred → owned here)

@@ -1,6 +1,6 @@
 # Frontend Structure
 
-> **Status:** Approved — Auth (005) through Dashboard (017) implemented
+> **Status:** Approved — Auth (005) through Dashboard (017) implemented; Audit Trail (018) **specified**
 > **Last updated:** 2026-08-12
 
 ## Purpose
@@ -33,7 +33,9 @@ src/
 │   ├── tasks/                    # Sprint 012 — implemented
 │   ├── documents/                # Sprint 013 — implemented
 │   ├── inventory/                # Sprint 014 — implemented (warehouses + stock UX)
-│   └── assets/                   # Sprint 015 — implemented (assets + custody UX)
+│   ├── assets/                   # Sprint 015 — implemented (assets + custody UX)
+│   ├── notifications/            # Sprint 016 — implemented (ADR-0013)
+│   └── audit/                    # Sprint 018 — specified (`/app/audit`; ADR-0015)
 ├── shared/
 │   ├── api/              # http client, envelope handling
 │   ├── components/       # generic shared components (see DESIGN_GUIDELINES.md)
@@ -149,6 +151,12 @@ A module may contain: pages, components, api, queries, mutations, types, validat
 - Canonical route `/app` (+ `/app/dashboard` redirect).
 - Single query to `GET /api/v1/dashboard`; omit missing sections client-side.
 - Attention Center + KPI cards + today/soon lists; deep-links to owning modules.
+
+## Audit Trail UI (Sprint 018 — specified)
+
+- Module folder: `frontend/src/modules/audit/` (implementation pending).
+- Routes `/app/audit`, `/app/audit/:id`; sidebar **سجل التدقيق** under system admin group.
+- Permission `audit_logs.view`; Arabic event labels; no export button until export ships.
 
 ## Notifications UI (Sprint 016 — implemented)
 
