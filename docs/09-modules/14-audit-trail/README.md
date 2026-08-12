@@ -1,6 +1,6 @@
 # Module: Audit Trail (سجل التدقيق)
 
-> **Status:** Specification complete — implementation pending (Sprint 018)
+> **Status:** Implemented (Sprint 018)
 > **Last updated:** 2026-08-12
 > ADR: [ADR-0015](../../10-decisions/ADR-0015-SEMANTIC-AUDIT-TRAIL-AND-IMMUTABLE-HISTORY.md)
 

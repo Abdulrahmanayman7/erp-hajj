@@ -6,7 +6,7 @@
 
 ## Purpose
 
-Authenticate users of the ERP Hajj SPA via **Laravel Sanctum session (cookie) authentication**, enforce account and tenant lifecycle gates before a session is established, expose a current-user profile for the frontend shell, and support email-based password reset. Authentication security events (`AuthSecurityEvent`) are the semantic source for Audit Trail persistence ([14-audit-trail/](../14-audit-trail/), ADR-0015 — implementation pending; today: log sink).
+Authenticate users of the ERP Hajj SPA via **Laravel Sanctum session (cookie) authentication**, enforce account and tenant lifecycle gates before a session is established, expose a current-user profile for the frontend shell, and support email-based password reset. Authentication security events (`AuthSecurityEvent`) persist to Audit Trail via `Core/Audit` ([14-audit-trail/](../14-audit-trail/), ADR-0015) while retaining the application log sink.
 
 ## Implemented in Sprint 005
 

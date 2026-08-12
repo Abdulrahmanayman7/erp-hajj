@@ -34,7 +34,7 @@ Single database, shared schema. Every table is classified as **platform** or **t
 | `jobs`, `job_batches`, `failed_jobs` | Queue infrastructure. Tenant context travels **inside the job payload** as trusted server-generated metadata (see MULTI_TENANCY §9), not as a column — the queue tables store serialized work, not business data. Failed-job payloads preserve tenant identification. Access is platform-level only. |
 | `cache`, `cache_locks` | Key-value infrastructure; isolation is by key prefix `tenant:{id}:` through the shared namespace helper (MULTI_TENANCY §10). |
 | `migrations` | Framework bookkeeping. |
-| `audit_logs` | **Hybrid**: carries a **nullable** `tenant_id` — tenant actions record their tenant; platform events may record `NULL`; **platform access affecting a tenant writes the target tenant's id**. Append-only (`created_at` only). Single table so platform actions against a tenant appear in that tenant's audit view — schema locked in [14-audit-trail/DATA_MODEL.md](../09-modules/14-audit-trail/DATA_MODEL.md) / [ADR-0015](../10-decisions/ADR-0015-SEMANTIC-AUDIT-TRAIL-AND-IMMUTABLE-HISTORY.md) (implementation pending). |
+| `audit_logs` | **Hybrid**: carries a **nullable** `tenant_id` — tenant actions record their tenant; platform events may record `NULL`; **platform access affecting a tenant writes the target tenant's id**. Append-only (`created_at` only). Single table so platform actions against a tenant appear in that tenant's audit view — **implemented** Sprint 018 ([14-audit-trail/DATA_MODEL.md](../09-modules/14-audit-trail/DATA_MODEL.md) / [ADR-0015](../10-decisions/ADR-0015-SEMANTIC-AUDIT-TRAIL-AND-IMMUTABLE-HISTORY.md)). |
 | `permissions` | **Platform catalog** (Sprint 006): code-defined capabilities (`module.action`); no `tenant_id` so vocabulary cannot drift per tenant. Justified in [02-users-and-authorization/DATA_MODEL.md](../09-modules/02-users-and-authorization/DATA_MODEL.md). |
 
 Any new platform table must be justified the same way in its module's `DATA_MODEL.md` and in the PR.
@@ -46,7 +46,7 @@ Any new platform table must be justified the same way in its module's `DATA_MODE
 - First tenant-owned table: `tenant_settings` (see [00-tenancy/DATA_MODEL.md](../09-modules/00-tenancy/DATA_MODEL.md)).
 - **Implemented tenant-owned tables:** `roles`, `user_roles`, `role_permissions` (Sprint 006); `organization_units` (Sprint 007 — see [03-organization-structure/DATA_MODEL.md](../09-modules/03-organization-structure/DATA_MODEL.md); ADR-0004).
 - **Planned tenant-owned tables** (each specified in its module's `DATA_MODEL.md` when designed): … `notifications` (Sprint 016 — **implemented**, ADR-0013), `tenant_settings`.
-- **Hybrid planned:** `audit_logs` (Sprint 018 — **specified**, ADR-0015; implementation pending) — see classification table above.
+- **Hybrid implemented:** `audit_logs` (Sprint 018 — **implemented**, ADR-0015) — see classification table above.
 - **Platform catalog (Sprint 006):** `permissions` — global, no `tenant_id`; justified because capabilities are code-defined and must not drift per tenant.
 
 ### Indexes on tenant-owned tables

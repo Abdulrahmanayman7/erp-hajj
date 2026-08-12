@@ -1,6 +1,6 @@
 # Permission Model
 
-> **Status:** Approved (catalog may grow with modules). Sprint 006–015 permissions are seeded as implemented. Sprint 016 Notifications: **no** `notifications.*` catalog verbs (recipient-owned inbox — ADR-0013). Sprint 018 Audit Trail: seed `audit_logs.view` at implementation; `audit_logs.export` reserved/deferred (ADR-0015).
+> **Status:** Approved (catalog may grow with modules). Sprint 006–017 permissions seeded as implemented. Sprint 016 Notifications: **no** `notifications.*` catalog verbs (recipient-owned inbox — ADR-0013). Sprint 018 Audit Trail: **`audit_logs.view` seeded**; `audit_logs.export` reserved/deferred (ADR-0015).
 >
 > **Last updated:** 2026-08-12
 
@@ -44,7 +44,7 @@ Define the granular permission naming model and the master permission catalog. M
 | Inventory | `inventory.view` `inventory.manage_items` `inventory.add` `inventory.issue` `inventory.return` `inventory.transfer` `inventory.adjust` — **implemented** Sprint 014. `manage_items` covers item master + categories; adjustments are sensitive. |
 | Assets | `assets.view` `assets.create` `assets.update` `assets.delete` `assets.assign` `assets.return` `assets.retire` — **implemented** Sprint 015 ([11-assets-and-custodies/PERMISSIONS.md](../09-modules/11-assets-and-custodies/PERMISSIONS.md); ADR-0012). Seeded via `PermissionCatalog`. No separate `custodies.*` verbs. |
 | Notifications | **No seeded `notifications.*` in MVP** — own inbox is recipient-owned for any authenticated tenant User ([12-notifications/PERMISSIONS.md](../09-modules/12-notifications/PERMISSIONS.md); ADR-0013). Future `notifications.manage` only via CR. |
-| Audit logs | `audit_logs.view` (seed at Audit implementation) · `audit_logs.export` (**reserved**; export deferred — [14-audit-trail/PERMISSIONS.md](../09-modules/14-audit-trail/PERMISSIONS.md); ADR-0015) |
+| Audit logs | `audit_logs.view` (**seeded** Sprint 018) · `audit_logs.export` (**reserved**; export deferred — [14-audit-trail/PERMISSIONS.md](../09-modules/14-audit-trail/PERMISSIONS.md); ADR-0015) |
 | Dashboard | `dashboard.view` (page/API gate only; sections use owning module `*.view` — ADR-0014) |
 | Tenant settings | `tenant_settings.view` `tenant_settings.update` |
 | Platform (tenants) | `platform_tenants.view` `platform_tenants.create` `platform_tenants.update` `platform_tenants.activate` `platform_tenants.suspend` `platform_tenants.archive` `platform_tenants.access_data` |

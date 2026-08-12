@@ -44,7 +44,7 @@ Define what must be tested and to what standard. Per-module test plans live in e
 - Asset / custody assign-return (Sprint 015 — **implemented**; ADR-0012): single active custody; double-assign race; cross-tenant isolation; holder self-view; no inventory balance side effects (`AssetTest` 20/20).
 - In-app notifications (Sprint 016 — **implemented**; ADR-0013): recipient ownership IDOR; cross-tenant isolation; dedupe for scheduled types; dispatcher failure isolation; Pest/Vitest matrices in [12-notifications/TEST_PLAN.md](../09-modules/12-notifications/TEST_PLAN.md).
 - Dashboard (Sprint 017 — **implemented**; ADR-0014): tenant-scoped aggregates; permission-omit (no zero leakage); self-service personal overlays; no cross-UOM sums; Pest/Vitest matrices in [13-dashboard/TEST_PLAN.md](../09-modules/13-dashboard/TEST_PLAN.md).
-- Audit Trail (Sprint 018 — **specified**; ADR-0015): append-only `audit_logs`; tenancy IDOR; secrets exclusion; transaction rollback; representative events; Pest/Vitest matrices in [14-audit-trail/TEST_PLAN.md](../09-modules/14-audit-trail/TEST_PLAN.md).
+- Audit Trail (Sprint 018 — **implemented**; ADR-0015): append-only `audit_logs`; tenancy IDOR; secrets exclusion; transaction rollback; representative events; Pest/Vitest matrices in [14-audit-trail/TEST_PLAN.md](../09-modules/14-audit-trail/TEST_PLAN.md).
 - Asset custody assignment and return.
 
 ## Rules

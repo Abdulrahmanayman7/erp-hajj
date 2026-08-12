@@ -34,8 +34,11 @@ final class DownloadDocument
             'actor_id' => $actor->id,
             'document_id' => $document->id,
             'document_number' => $document->document_number,
+            'title' => $document->title,
             'mime_type' => $document->mime_type,
             'size_bytes' => $document->size_bytes,
+            'linkable_type' => $document->linkable_type,
+            'linkable_id' => $document->linkable_id,
         ], $request);
 
         return Storage::disk($document->storage_disk)->download(

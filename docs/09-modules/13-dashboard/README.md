@@ -37,7 +37,7 @@ This is an **administrative / operational** dashboard — **not** a BI platform,
 - Per-user layout customization / widget drag-drop.
 - Role-name dashboard presets (capability-driven only — ADR-0014).
 - Cross-UOM stock quantity totals.
-- Recent Audit Trail widget (Audit **viewer** module specified in Sprint 018 — widget still deferred; list UI is `/app/audit`).
+- Recent Audit Trail widget (Audit **viewer** implemented in Sprint 018 at `/app/audit` — Dashboard widget still deferred).
 - Documents vanity totals; HR headcount analytics.
 - WebSockets / live “real-time” claims.
 - Dashboard-specific Redis cache in MVP (indexed queries only — ADR-0014).

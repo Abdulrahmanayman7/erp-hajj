@@ -1,9 +1,13 @@
 # ADR-0015: Semantic Audit Trail and Immutable History
 
-- **Status:** Accepted — Specification (Sprint 018); implementation pending
+- **Status:** Accepted — **Implemented** (Sprint 018)
 - **Date:** 2026-08-12
 - **Sprint:** 018 (Audit Trail)
 - **Deciders:** ERP Hajj product / engineering (documentation lock)
+
+## Implementation note (2026-08-12)
+
+Shipped: hybrid `audit_logs` table; `Core/Audit` (`AuditRecorder`, `SensitiveFieldSanitizer`, event mapper) dual-writing from `AuthorizationSecurityEvent` / `AuthSecurityEvent` (log listeners preserved); `Modules/Audit` list/show API + Policy (`audit_logs.view`); Vue `/app/audit` + detail; Pest `AuditTest` 13/13; full Pest 365; Vitest 208; no export/pruning/hash-chain/observers.
 
 ## Context
 

@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Core\Audit\Listeners\PersistAuthorizationSecurityAudit;
+use App\Core\Audit\Listeners\PersistAuthSecurityAudit;
 use App\Core\Auth\Events\AuthSecurityEvent;
 use App\Core\Auth\Listeners\LogAuthSecurityEvent;
 use App\Core\Authorization\Events\AuthorizationSecurityEvent;
@@ -14,6 +16,8 @@ use App\Modules\Assets\Models\AssetCustody;
 use App\Modules\Assets\Policies\AssetCategoryPolicy;
 use App\Modules\Assets\Policies\AssetCustodyPolicy;
 use App\Modules\Assets\Policies\AssetPolicy;
+use App\Modules\Audit\Models\AuditLog;
+use App\Modules\Audit\Policies\AuditLogPolicy;
 use App\Modules\Authorization\Models\Role;
 use App\Modules\Authorization\Policies\RolePolicy;
 use App\Modules\Contracts\Models\Contract;
@@ -96,7 +100,9 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Event::listen(AuthSecurityEvent::class, LogAuthSecurityEvent::class);
+        Event::listen(AuthSecurityEvent::class, PersistAuthSecurityAudit::class);
         Event::listen(AuthorizationSecurityEvent::class, LogAuthorizationSecurityEvent::class);
+        Event::listen(AuthorizationSecurityEvent::class, PersistAuthorizationSecurityAudit::class);
 
         Gate::policy(User::class, UserPolicy::class);
         Gate::policy(Role::class, RolePolicy::class);
@@ -118,6 +124,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(AssetCategory::class, AssetCategoryPolicy::class);
         Gate::policy(AssetCustody::class, AssetCustodyPolicy::class);
         Gate::policy(Notification::class, NotificationPolicy::class);
+        Gate::policy(AuditLog::class, AuditLogPolicy::class);
 
         Gate::define('viewDashboard', [DashboardPolicy::class, 'view']);
 
@@ -158,6 +165,20 @@ class AppServiceProvider extends ServiceProvider
             return Notification::query()
                 ->whereKey($value)
                 ->where('recipient_user_id', $actor->id)
+                ->firstOrFail();
+        });
+
+        // Tenant audit rows only — foreign / platform-null → 404.
+        Route::bind('auditLog', function (string $value): AuditLog {
+            $actor = auth()->user();
+
+            if ($actor === null || $actor->tenant_id === null) {
+                abort(404);
+            }
+
+            return AuditLog::query()
+                ->whereKey($value)
+                ->where('tenant_id', $actor->tenant_id)
                 ->firstOrFail();
         });
     }

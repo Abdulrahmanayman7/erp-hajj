@@ -1,6 +1,6 @@
 # Audit Trail — Data Model
 
-> **Status:** Specification complete — implementation pending (Sprint 018)
+> **Status:** Implemented (Sprint 018)
 > **Last updated:** 2026-08-12
 > ADR: [ADR-0015](../../10-decisions/ADR-0015-SEMANTIC-AUDIT-TRAIL-AND-IMMUTABLE-HISTORY.md)
 
@@ -69,12 +69,12 @@ Do **not** add speculative indexes on JSON paths in MVP.
 - **Read path (tenant Users):** query `where tenant_id = current`. Hybrid null rows are **invisible** to tenants.
 - Prefer a dedicated query scope / repository rather than forcing classic `UsesTenantScope` if null hybrid rows conflict with fail-closed scoping — document in implementation PR. Fail closed: no tenant context → no tenant audit reads.
 
-## 5. Migration strategy (future implementation — do not create now)
+## 5. Migration strategy
 
-1. One migration: `create_audit_logs_table`.
+1. Migration applied: `2026_08_12_200000_create_audit_logs_table`.
 2. Depends on: `tenants`, `users`.
-3. No data backfill required for MVP (historical log lines in `storage/logs` stay logs).
-4. After migration: register listeners that persist from existing events (dual-write with log listeners).
+3. No data backfill (historical log lines in `storage/logs` stay logs).
+4. Listeners dual-write with existing log listeners.
 5. Rollback: drop table only if empty / approved; losing audit is high risk — prefer forward fix.
 
 ## 6. Package decision

@@ -203,6 +203,18 @@ export const router = createRouter({
       meta: { requiresAuth: true, layout: 'app' },
     },
     {
+      path: '/app/audit',
+      name: 'audit',
+      component: () => import('@/modules/audit/pages/AuditListPage.vue'),
+      meta: { requiresAuth: true, layout: 'app', permission: 'audit_logs.view' },
+    },
+    {
+      path: '/app/audit/:id',
+      name: 'audit-detail',
+      component: () => import('@/modules/audit/pages/AuditDetailPage.vue'),
+      meta: { requiresAuth: true, layout: 'app', permission: 'audit_logs.view' },
+    },
+    {
       path: '/app/roles/:id/permissions',
       name: 'role-permissions',
       component: () => import('@/modules/roles/pages/RolePermissionsPage.vue'),

@@ -7,6 +7,7 @@ use App\Modules\Assets\Controllers\AssetCategoryController;
 use App\Modules\Assets\Controllers\AssetController;
 use App\Modules\Assets\Controllers\AssetCustodyController;
 use App\Modules\Assets\Controllers\MyCustodyController;
+use App\Modules\Audit\Controllers\AuditLogController;
 use App\Modules\Authorization\Controllers\PermissionController;
 use App\Modules\Authorization\Controllers\RoleController;
 use App\Modules\Contracts\Controllers\ContractCategoryController;
@@ -241,6 +242,9 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
             Route::post('/notifications/read-all', [NotificationController::class, 'markReadAll'])->name('notifications.read-all');
             Route::get('/notifications/{notification}', [NotificationController::class, 'show'])->name('notifications.show');
             Route::post('/notifications/{notification}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
+
+            Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
+            Route::get('/audit-logs/{auditLog}', [AuditLogController::class, 'show'])->name('audit-logs.show');
         });
     });
 });

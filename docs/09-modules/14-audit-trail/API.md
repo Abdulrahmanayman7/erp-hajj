@@ -1,6 +1,6 @@
 # Audit Trail — API
 
-> **Status:** Specification complete — implementation pending (Sprint 018)
+> **Status:** Implemented (Sprint 018)
 > **Last updated:** 2026-08-12
 
 All endpoints follow [API_STANDARDS.md](../../04-api/API_STANDARDS.md). **Read-only** — no create/update/delete.

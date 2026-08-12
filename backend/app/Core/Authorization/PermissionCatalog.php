@@ -24,6 +24,7 @@ final class PermissionCatalog
         'warehouses' => 'المستودعات',
         'inventory' => 'المخزون',
         'assets' => 'الأصول',
+        'audit_logs' => 'سجل التدقيق',
         'dashboard' => 'لوحة التحكم',
         'tenant_settings' => 'إعدادات المنشأة',
     ];
@@ -127,6 +128,8 @@ final class PermissionCatalog
             ['name' => 'assets.return', 'display_name' => 'استلام عهدة', 'module' => 'assets', 'description' => 'Return asset custody'],
             ['name' => 'assets.retire', 'display_name' => 'استبعاد/فقد أصل', 'module' => 'assets', 'description' => 'Retire or declare asset lost'],
 
+            ['name' => 'audit_logs.view', 'display_name' => 'عرض سجل التدقيق', 'module' => 'audit_logs', 'description' => 'List and view tenant audit logs'],
+
             ['name' => 'dashboard.view', 'display_name' => 'عرض لوحة التحكم', 'module' => 'dashboard', 'description' => 'Access authenticated home'],
             ['name' => 'tenant_settings.view', 'display_name' => 'عرض إعدادات المنشأة', 'module' => 'tenant_settings', 'description' => 'View tenant settings'],
             ['name' => 'tenant_settings.update', 'display_name' => 'تحديث إعدادات المنشأة', 'module' => 'tenant_settings', 'description' => 'Update tenant settings'],
@@ -165,6 +168,7 @@ final class PermissionCatalog
                     'roles.view',
                     'permissions.view',
                     'tenant_settings.view',
+                    'audit_logs.view',
                     'organization_units.view',
                     'organization_units.create',
                     'organization_units.update',
@@ -318,6 +322,7 @@ final class PermissionCatalog
                 'description' => null,
                 'permissions' => [
                     'dashboard.view',
+                    'audit_logs.view',
                     'users.view',
                     'roles.view',
                     'permissions.view',
