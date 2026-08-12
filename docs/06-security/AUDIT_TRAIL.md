@@ -51,7 +51,7 @@ Summary groups (exact codes already used in code where noted):
 - Warehouses / inventory / stock movements
 - Assets / custodies (`ASSET_*`)
 - Auth (`LOGIN_*`, `LOGOUT`, password-reset, account/tenant block attempts — `AuthSecurityEvent`)
-- Tenant lifecycle / settings / exceptional platform access (planned codes when platform Actions ship)
+- Tenant lifecycle / settings / exceptional platform access (planned codes when platform Actions ship; Settings update code **`TENANT_SETTINGS_UPDATED`** — [15-system-settings/](../09-modules/15-system-settings/), ADR-0016)
 
 Authoritative per-entity histories (`contract_status_transitions`, `inventory_movements`, …) remain domain SoRs; audit is the cross-cutting accountability stream.
 

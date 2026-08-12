@@ -67,6 +67,7 @@ Each control below names the attack it prevents. Implementation details are spec
 - **Authorized downloads only** (permission-checked, audited for sensitive documents).
 - MIME and extension validation; file size limits; tenant-isolated storage paths.
 - Malware scanning readiness (integration point planned; actual scanner TBD).
+- Tenant Settings (Sprint 020 spec): no secret/env storage; high-risk `tenant_settings.update`; audited `TENANT_SETTINGS_UPDATED` — [15-system-settings/SECURITY.md](../09-modules/15-system-settings/SECURITY.md).
 
 ### Secrets and configuration
 

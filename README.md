@@ -1,6 +1,6 @@
 # ERP Hajj
 
-> **Status:** Sprint 019 hardening — modules Tenant Foundation (004) through Audit Trail (018) implemented and integration-hardened. **UAT pending. Production deployment pending.** System settings API/UI remains a known P1 gap for full 21-module MVP.
+> **Status:** Sprint 020 — System Settings **specified** (implementation pending). Modules Tenant Foundation (004) through Audit Trail (018) implemented; Sprint 019 hardening merged. **UAT pending. Production deployment pending.**
 >
 > **Last updated:** 2026-08-12
 
@@ -25,7 +25,7 @@ Core workflows:
 3. Asset → Available → Assigned as Custody → In Use → Returned → Available / Maintenance / Retired
 4. Inventory: Addition → Storage → Transfer/Issue/Return → Updated Balance
 
-Everything else (mobile apps, pilgrims, transportation, finance, AI, integrations...) is future scope — see [OUT_OF_SCOPE.md](docs/00-project/OUT_OF_SCOPE.md). Known deferrals and incomplete slices: [MVP_KNOWN_LIMITATIONS.md](docs/00-project/MVP_KNOWN_LIMITATIONS.md).
+Everything else (mobile apps, pilgrims, transportation, finance, AI, integrations...) is future scope — see [OUT_OF_SCOPE.md](docs/00-project/OUT_OF_SCOPE.md). Known deferrals and incomplete slices: [MVP_KNOWN_LIMITATIONS.md](docs/00-project/MVP_KNOWN_LIMITATIONS.md). System Settings product contract: [docs/09-modules/15-system-settings/](docs/09-modules/15-system-settings/) · [ADR-0016](docs/10-decisions/ADR-0016-TYPED-TENANT-SETTINGS-AND-RESOLUTION.md).
 
 ## Technology Stack
 

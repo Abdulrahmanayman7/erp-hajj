@@ -7,13 +7,16 @@ All endpoints follow [API_STANDARDS.md](../../04-api/API_STANDARDS.md): `/api/v1
 
 ## Tenant settings (tenant users)
 
+Authoritative product contract for the Settings vertical slice: [15-system-settings/API.md](../15-system-settings/API.md) · [ADR-0016](../../10-decisions/ADR-0016-TYPED-TENANT-SETTINGS-AND-RESOLUTION.md).
+
 ```text
 GET   /api/v1/tenant-settings          # tenant_settings.view
-PATCH /api/v1/tenant-settings          # tenant_settings.update (audited: old/new values)
+PATCH /api/v1/tenant-settings          # tenant_settings.update (audited: TENANT_SETTINGS_UPDATED)
 ```
 
-- Both operate on the authenticated user's tenant only (context-derived); there is no `{tenant}` parameter — a parameter would invite client-controlled tenancy.
-- `PATCH` accepts a map of `key → value`; keys are validated against the registered settings catalog of the modules (keys TBD per module).
+- Both operate on the authenticated user's tenant only (context-derived); there is no `{tenant}` parameter.
+- **MVP body:** typed `general` + `regional` groups mapped to **`tenants` columns** (not an unrestricted `key → value` bag). Unknown fields rejected.
+- Operational thresholds remain **global config** in MVP (not PATCH-able here).
 
 ## Platform tenant management (platform users only, inside `PlatformContext`)
 
@@ -48,6 +51,7 @@ POST  /api/v1/platform/tenants/{tenant}/archive     # platform_tenants.archive (
 
 ## TBD
 
-- **Settings keys catalog**: collected as modules are designed. **Recommended:** central registry in `Core/Tenancy`. **Impact:** validation layer only.
 - **Exceptional-access read endpoints** (how `platform_tenants.access_data` is exercised): unresolved — support workflow not designed. **Recommended:** dedicated read-only platform endpoints per entity, added when support workflows demand them. **Impact:** additive; permission, `runAsTenant` mechanism, and audit path already specified.
 - **Provisioning endpoint** (tenant + first Tenant Owner in one operation): pending the onboarding TBD in [BUSINESS_RULES.md](BUSINESS_RULES.md).
+
+~~Settings keys catalog~~ — **resolved for MVP** in [15-system-settings/BUSINESS_RULES.md](../15-system-settings/BUSINESS_RULES.md) (Tenant columns; KV reserved for future catalog keys).

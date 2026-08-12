@@ -158,6 +158,12 @@ A module may contain: pages, components, api, queries, mutations, types, validat
 - Routes `/app/audit`, `/app/audit/:id`; sidebar **سجل التدقيق** under system admin group.
 - Permission `audit_logs.view`; Arabic event labels; no export button until export ships.
 
+## System Settings UI (Sprint 020 — specified; implementation pending)
+
+- Module folder (planned): `frontend/src/modules/settings/`.
+- Route `/app/settings` (الإعدادات); sidebar under System; `tenant_settings.view` / `update`.
+- Contract: [15-system-settings/UI.md](../09-modules/15-system-settings/UI.md) · [ADR-0016](../10-decisions/ADR-0016-TYPED-TENANT-SETTINGS-AND-RESOLUTION.md).
+
 ## Notifications UI (Sprint 016 — implemented)
 
 - Topbar **bell** + unread badge + dropdown/panel; full page `/app/notifications` (الإشعارات).
@@ -166,4 +172,4 @@ A module may contain: pages, components, api, queries, mutations, types, validat
 
 ## TBD
 
-- (none for notifications/dashboard placement — locked above)
+- (none for notifications/dashboard/settings placement — locked above)

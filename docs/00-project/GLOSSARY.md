@@ -1,7 +1,7 @@
 # Glossary
 
 > **Status:** Draft
-> **Last updated:** 2026-08-10
+> **Last updated:** 2026-08-12
 
 ## Purpose
 
@@ -42,6 +42,7 @@ Define the shared vocabulary of the project in English with the Arabic business 
 | Role | دور | A named, dynamic set of permissions assigned to users. |
 | Permission | صلاحية | The right to perform a specific action, named `module.action`. |
 | Dashboard | لوحة التحكم | Tenant-scoped, permission-aware **operational overview** read model (KPIs + Attention + today/soon). Does not own business data. See ADR-0014 / Sprint 017. |
+| System Settings | إعدادات المنشأة | Tenant-scoped singleton configuration surface (`GET|PATCH /api/v1/tenant-settings`) for identity/regional fields on `tenants` (ADR-0016). Not platform admin, secrets, or feature flags. |
 
 ## Rules
 

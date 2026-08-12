@@ -33,16 +33,18 @@ The 21 modules and four core workflows defined in [MVP_SCOPE.md](MVP_SCOPE.md), 
 | Sprint 016 — Notifications | **Done** (implementation) |
 | Sprint 017 — Dashboard | **Done** (implementation) |
 | Sprint 018 — Audit Trail | **Done** (implementation; ADR-0015) |
-| Sprint 019 — MVP Integration & Release Hardening | **In progress / code-ready** (gates, deploy/UAT docs; see [MVP_RELEASE_CHECKLIST.md](../08-deployment/MVP_RELEASE_CHECKLIST.md)) |
-| Remaining MVP modules | **P1 open:** Tenant settings API/UI (`tenant_settings`) — see [MVP_KNOWN_LIMITATIONS.md](MVP_KNOWN_LIMITATIONS.md) |
+| Sprint 019 — MVP Integration & Release Hardening | **Done** (merged; deploy/UAT checklists) |
+| Sprint 020 — System Settings | **Specified** — [15-system-settings/](../09-modules/15-system-settings/) · [ADR-0016](../10-decisions/ADR-0016-TYPED-TENANT-SETTINGS-AND-RESOLUTION.md); **implementation pending** |
+| Remaining MVP work | Implement System Settings; UAT; production deploy |
 
-Natural dependency order remains: **tenancy → authentication → users/roles/permissions → organizational structure → employees → contracts → meetings → decisions → tasks → documents → warehouses/inventory → assets/custodies → notifications → dashboard → audit trail → settings / release**.
+Natural dependency order remains: **tenancy → authentication → users/roles/permissions → … → audit trail → system settings → release**.
 
-## Release posture (Sprint 019)
+## Release posture
 
 | Track | Status |
 |---|---|
-| MVP modules 004–018 code | Implemented — hardening in Sprint 019 |
+| MVP modules 004–018 code | Implemented |
+| System Settings (module 21) | Spec complete (020); code pending |
 | UAT | Checklist ready — execution pending |
 | Production deployment | Pending ops + infrastructure |
 | Recommended first tag | `v0.1.0` (create only after approval — not auto-created) |
