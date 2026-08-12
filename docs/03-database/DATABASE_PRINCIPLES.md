@@ -43,7 +43,7 @@ Any new platform table must be justified the same way in its module's `DATA_MODE
 
 - Carry `tenant_id BIGINT UNSIGNED NOT NULL`, FK → `tenants.id` `ON DELETE RESTRICT`; **`tenant_id` is immutable after record creation**.
 - Model implements the `TenantOwned` contract and uses the `UsesTenantScope` trait — no exceptions.
-- First tenant-owned table: `tenant_settings` (see [00-tenancy/DATA_MODEL.md](../09-modules/00-tenancy/DATA_MODEL.md)).
+- First tenant-owned table: `tenant_settings` (see [00-tenancy/DATA_MODEL.md](../09-modules/00-tenancy/DATA_MODEL.md)). MVP System Settings (ADR-0016) primarily mutate **`tenants` columns**; KV rows are reserved for future catalog keys — do not duplicate Tenant columns into settings keys.
 - **Implemented tenant-owned tables:** `roles`, `user_roles`, `role_permissions` (Sprint 006); `organization_units` (Sprint 007 — see [03-organization-structure/DATA_MODEL.md](../09-modules/03-organization-structure/DATA_MODEL.md); ADR-0004).
 - **Planned tenant-owned tables** (each specified in its module's `DATA_MODEL.md` when designed): … `notifications` (Sprint 016 — **implemented**, ADR-0013), `tenant_settings`.
 - **Hybrid implemented:** `audit_logs` (Sprint 018 — **implemented**, ADR-0015) — see classification table above.

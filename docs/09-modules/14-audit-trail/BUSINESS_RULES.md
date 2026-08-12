@@ -188,7 +188,7 @@ MVP: append-only table + authorization + no update/delete API. **No** hash chain
 ## 19. Timezone
 
 - Store `created_at` in UTC (Laravel default).
-- Display in **tenant timezone** (existing tenant settings / project convention).
+- Display in **tenant timezone** (`tenants.timezone`; System Settings SoT — [15-system-settings/](../15-system-settings/), ADR-0016).
 
 ## 20. Dashboard relationship
 

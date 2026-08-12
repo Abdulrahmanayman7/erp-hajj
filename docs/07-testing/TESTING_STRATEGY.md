@@ -47,6 +47,7 @@ Define what must be tested and to what standard. Per-module test plans live in e
 - Audit Trail (Sprint 018 — **implemented**; ADR-0015): append-only `audit_logs`; tenancy IDOR; secrets exclusion; transaction rollback; representative events; Pest/Vitest matrices in [14-audit-trail/TEST_PLAN.md](../09-modules/14-audit-trail/TEST_PLAN.md).
 - Asset custody assignment and return.
 - **MVP UAT:** executable manual checklist in [MVP_UAT_CHECKLIST.md](MVP_UAT_CHECKLIST.md) (Sprint 019). Do not mark UAT passed unless scenarios were actually executed.
+- System Settings (Sprint 020 — **specified**; ADR-0016): Pest/Vitest matrices in [15-system-settings/TEST_PLAN.md](../09-modules/15-system-settings/TEST_PLAN.md) — **executable tests belong to the implementation sprint**.
 
 ## Rules
 

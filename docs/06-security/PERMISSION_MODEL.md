@@ -46,7 +46,7 @@ Define the granular permission naming model and the master permission catalog. M
 | Notifications | **No seeded `notifications.*` in MVP** — own inbox is recipient-owned for any authenticated tenant User ([12-notifications/PERMISSIONS.md](../09-modules/12-notifications/PERMISSIONS.md); ADR-0013). Future `notifications.manage` only via CR. |
 | Audit logs | `audit_logs.view` (**seeded** Sprint 018) · `audit_logs.export` (**reserved**; export deferred — [14-audit-trail/PERMISSIONS.md](../09-modules/14-audit-trail/PERMISSIONS.md); ADR-0015) |
 | Dashboard | `dashboard.view` (page/API gate only; sections use owning module `*.view` — ADR-0014) |
-| Tenant settings | `tenant_settings.view` `tenant_settings.update` |
+| Tenant settings | `tenant_settings.view` `tenant_settings.update` | Spec: [15-system-settings/PERMISSIONS.md](../09-modules/15-system-settings/PERMISSIONS.md) (ADR-0016); seeded; API/UI implementation pending |
 | Platform (tenants) | `platform_tenants.view` `platform_tenants.create` `platform_tenants.update` `platform_tenants.activate` `platform_tenants.suspend` `platform_tenants.archive` `platform_tenants.access_data` |
 
 ## Default role templates

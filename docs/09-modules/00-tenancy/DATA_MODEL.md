@@ -91,5 +91,5 @@ Subscription/billing fields, per-tenant branding, and per-tenant domains are **a
 
 ## TBD
 
-- **Settings keys required by MVP modules**: unresolved — keys emerge as each module is designed. **Recommended:** each module's `DATA_MODEL.md` declares its keys; central registry class in `Core/Tenancy` aggregates them. **Impact:** validation layer only; no schema change.
+- **Settings keys required by MVP modules**: **MVP resolved** — see [15-system-settings/](../15-system-settings/) + [ADR-0016](../../10-decisions/ADR-0016-TYPED-TENANT-SETTINGS-AND-RESOLUTION.md). Product fields use `tenants` columns; `tenant_settings` KV reserved for future typed keys. Per-tenant operational thresholds remain **out of MVP** (global config).
 - **Subscription/commercial fields**: unresolved — commercial model not confirmed. **Recommended:** defer; add via satellite table when confirmed. **Impact:** additive migration only.

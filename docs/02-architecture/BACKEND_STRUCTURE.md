@@ -1,6 +1,6 @@
 # Backend Structure
 
-> **Status:** Approved — Tenant Foundation (004) through Audit Trail (018) implemented
+> **Status:** Approved — Tenant Foundation (004) through Audit Trail (018) implemented; System Settings (020) specified
 > **Last updated:** 2026-08-12
 
 ## Purpose
@@ -16,7 +16,7 @@ PHP 8.2+, Laravel 12, Sanctum, MySQL, Redis when required, Laravel Queue, REST A
 ```text
 app/
 ├── Core/
-│   ├── Tenancy/        # tenant resolution, automatic scoping, tenant context for jobs/cache (Sprint 004)
+│   ├── Tenancy/        # tenant resolution, automatic scoping, tenant context for jobs/cache (Sprint 004); settings catalog/resolver (020 impl)
 │   ├── Auth/           # Sanctum SPA session auth, login/logout/me/password-reset Actions (Sprint 005)
 │   ├── Authorization/  # Sprint 006: effective permissions, Gates helpers, catalog sync (hand-rolled; no Spatie)
 │   ├── Audit/          # Sprint 018 — implemented: AuditRecorder + sanitizer (persist from security events → audit_logs)
@@ -37,7 +37,8 @@ app/
 │   ├── Assets/                   # Sprint 015 — implemented (assets + custodies nested; ADR-0012)
 │   ├── Notifications/              # Sprint 016 — implemented (ADR-0013)
 │   ├── Dashboard/                  # Sprint 017 — implemented (ADR-0014)
-│   └── Audit/                      # Sprint 018 — implemented viewer (list/show; ADR-0015)
+│   ├── Audit/                      # Sprint 018 — implemented viewer (list/show; ADR-0015)
+│   └── Settings/                   # Sprint 020 — specified (tenant-settings API; ADR-0016; impl pending)
 ```
 
 ## Module Contents

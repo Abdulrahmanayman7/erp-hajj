@@ -5,7 +5,7 @@
 
 ## Tenant-level
 
-- **Tenant settings page** — view/update settings, permission-gated (`tenant_settings.*`), with audit history panel.
+- **Tenant settings page** — `/app/settings` (الإعدادات), permission-gated (`tenant_settings.*`). Full UX: [15-system-settings/UI.md](../15-system-settings/UI.md). Optional audit history via Audit module filters after `TENANT_SETTINGS_UPDATED` ships.
 
 ## Platform-level
 

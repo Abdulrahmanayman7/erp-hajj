@@ -75,7 +75,7 @@ User with **only** `dashboard.view` receives:
 
 ## 4. Time & timezone
 
-1. Tenant timezone = `tenants.timezone` or app default `Asia/Riyadh`.
+1. Tenant timezone = `tenants.timezone` (editable via System Settings when implemented — [15-system-settings/](../15-system-settings/); ADR-0016). Fallback app default `Asia/Riyadh` only if blank.
 2. **`today`** = calendar date in tenant timezone.
 3. Contract/Task date comparisons use tenant “today” (same as Contracts expire / Tasks overdue / Notifications scanners).
 4. Meeting `scheduled_at` stored UTC; “today” / “next 7 days” / “starting soon” convert using tenant timezone.
