@@ -1,6 +1,6 @@
 # Frontend Structure
 
-> **Status:** Approved — Auth (005) + Users/Roles RBAC UI (006) + Organization UI (007) + Employees (008) + Contracts (009) + Meetings (010) + Decisions (011) + Tasks (012) + Documents (013) + Inventory (014) + Assets (015) implemented
+> **Status:** Approved — Auth (005) + Users/Roles RBAC UI (006) + Organization UI (007) + Employees (008) + Contracts (009) + Meetings (010) + Decisions (011) + Tasks (012) + Documents (013) + Inventory (014) + Assets (015) + Notifications (016) implemented
 > **Last updated:** 2026-08-11
 
 ## Purpose
@@ -143,10 +143,10 @@ A module may contain: pages, components, api, queries, mutations, types, validat
 - CSRF: `GET /sanctum/csrf-cookie` before mutating auth calls; handle `401`/`419`/`403`/`429` per [01-authentication/UI.md](../09-modules/01-authentication/UI.md).
 - No localStorage auth tokens; no fabricated permissions on the client.
 
-## Notifications UI (Sprint 016 — specified)
+## Notifications UI (Sprint 016 — implemented)
 
 - Topbar **bell** + unread badge + dropdown/panel; full page `/app/notifications` (الإشعارات).
-- Module folder: `frontend/src/modules/notifications/` (implementation pending).
+- Module folder: `frontend/src/modules/notifications/`.
 - MVP realtime = TanStack polling/refetch — **no** WebSockets/Reverb requirement (ADR-0013).
 
 ## TBD

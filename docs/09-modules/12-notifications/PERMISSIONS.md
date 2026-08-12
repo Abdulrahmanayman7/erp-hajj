@@ -1,7 +1,7 @@
 # Notifications — Permissions
 
-> **Status:** Specification complete — implementation pending (Sprint 016)
-> **Last updated:** 2026-08-11
+> **Status:** Implemented (Sprint 016)
+> **Last updated:** 2026-08-12
 
 ## Catalog (MVP)
 

@@ -1,7 +1,7 @@
 # Backend Structure
 
-> **Status:** Approved — Tenant Foundation (004) + Authentication (005) + Users/RBAC (006) + OrganizationStructure (007) + Employees (008) + Contracts (009) + Meetings (010) + Decisions (011) + Tasks (012) + Documents (013) + Inventory (014) + Assets (015) implemented; Notifications (016) **specified**
-> **Last updated:** 2026-08-11
+> **Status:** Approved — Tenant Foundation (004) + Authentication (005) + Users/RBAC (006) + OrganizationStructure (007) + Employees (008) + Contracts (009) + Meetings (010) + Decisions (011) + Tasks (012) + Documents (013) + Inventory (014) + Assets (015) + Notifications (016) implemented
+> **Last updated:** 2026-08-12
 
 ## Purpose
 
@@ -35,7 +35,7 @@ app/
 │   ├── Documents/                # Sprint 013 — implemented
 │   ├── Inventory/                # Sprint 014 — implemented (warehouses + stock; ADR-0011)
 │   ├── Assets/                   # Sprint 015 — implemented (assets + custodies nested; ADR-0012)
-│   ├── Notifications/              # Sprint 016 — specified (ADR-0013); implementation pending
+│   ├── Notifications/              # Sprint 016 — implemented (ADR-0013)
 │   └── Dashboard/
 ```
 

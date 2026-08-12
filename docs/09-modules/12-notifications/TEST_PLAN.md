@@ -1,9 +1,9 @@
 # Notifications — Test Plan
 
-> **Status:** Specification complete — implementation pending (Sprint 016)
-> **Last updated:** 2026-08-11
+> **Status:** Implemented (Sprint 016)
+> **Last updated:** 2026-08-12
 > Tooling: **Pest** (backend) · **Vitest** (frontend)
-> No executable tests in this documentation sprint.
+> Executable coverage: `tests/Feature/Notifications/NotificationTest.php` + frontend Vitest under `modules/notifications/`.
 
 Failing security / cross-tenant / IDOR tests block merge at implementation.
 

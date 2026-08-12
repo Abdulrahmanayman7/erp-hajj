@@ -1,6 +1,6 @@
 # Audit Trail
 
-> **Status:** Approved requirement (correlation ID design finalized; auth + RBAC + org + employees + contracts + meetings + decisions + tasks + documents + inventory + assets event names aligned through Sprint 015); Notifications (016) clarified as **not** an audit clone (ADR-0013); storage design TBD
+> **Status:** Approved requirement (correlation ID design finalized; auth + RBAC + org + employees + contracts + meetings + decisions + tasks + documents + inventory + assets event names aligned through Sprint 015); Notifications (016) implemented as delivery/read-model (**not** an audit clone; ADR-0013); storage design TBD
 > **Last updated:** 2026-08-11
 
 ## Purpose

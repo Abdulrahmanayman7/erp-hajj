@@ -1,7 +1,7 @@
 # Notifications — Business Rules
 
-> **Status:** Specification complete — implementation pending (Sprint 016)
-> **Last updated:** 2026-08-11
+> **Status:** Implemented (Sprint 016)
+> **Last updated:** 2026-08-12
 > ADR: [ADR-0013](../../10-decisions/ADR-0013-IN-APP-NOTIFICATION-OWNERSHIP-AND-DELIVERY.md)
 
 ## 1. What is a Notification?

@@ -10,6 +10,7 @@ use App\Modules\Meetings\Exceptions\MeetingDomainException;
 use App\Modules\Meetings\Models\Meeting;
 use App\Modules\Meetings\Support\MeetingLifecycle;
 use App\Modules\Meetings\Support\MeetingTransitionRecorder;
+use App\Modules\Notifications\Support\NotificationHooks;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -22,6 +23,7 @@ final class TransitionMeeting
         private readonly TenantContext $tenantContext,
         private readonly MeetingTransitionRecorder $transitions,
         private readonly AuthorizationSecurity $security,
+        private readonly NotificationHooks $notifications,
     ) {}
 
     /**
@@ -67,6 +69,14 @@ final class TransitionMeeting
                 'from_status' => $from->value,
                 'to_status' => $to->value,
             ], $auditExtra), $request);
+
+            if ($to === MeetingStatus::Scheduled) {
+                $this->notifications->meetingScheduled($locked);
+            }
+
+            if ($to === MeetingStatus::Cancelled) {
+                $this->notifications->meetingCancelled($locked);
+            }
 
             return $this->loadRelations($locked);
         });

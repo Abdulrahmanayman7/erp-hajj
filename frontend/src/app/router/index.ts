@@ -193,6 +193,12 @@ export const router = createRouter({
       meta: { requiresAuth: true, layout: 'app', permission: 'assets.view' },
     },
     {
+      path: '/app/notifications',
+      name: 'notifications',
+      component: () => import('@/modules/notifications/pages/NotificationsPage.vue'),
+      meta: { requiresAuth: true, layout: 'app' },
+    },
+    {
       path: '/app/roles/:id/permissions',
       name: 'role-permissions',
       component: () => import('@/modules/roles/pages/RolePermissionsPage.vue'),

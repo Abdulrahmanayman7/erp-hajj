@@ -1,6 +1,6 @@
 # Notifications — Data Model
 
-> **Status:** Specified (Sprint 016) — **not implemented** (no migrations in this sprint)
+> **Status:** Implemented (Sprint 016)
 > **Last updated:** 2026-08-11
 > ADR: [ADR-0013](../../10-decisions/ADR-0013-IN-APP-NOTIFICATION-OWNERSHIP-AND-DELIVERY.md)
 

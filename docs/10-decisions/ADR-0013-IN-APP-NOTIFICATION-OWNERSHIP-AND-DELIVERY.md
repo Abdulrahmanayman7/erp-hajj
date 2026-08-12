@@ -1,10 +1,13 @@
 # ADR-0013: In-App Notification Ownership and Delivery Model
 
-- **Status:** Accepted (specification — implementation pending Sprint 016)
+- **Status:** Accepted — **Implemented** (Sprint 016)
 - **Date:** 2026-08-11
 - **Sprint:** 016 (Notifications)
 - **Deciders:** ERP Hajj product / engineering (documentation lock)
 
+## Implementation note (2026-08-12)
+
+Shipped: tenant-owned `notifications` table; `Modules/Notifications` dispatcher/hooks/scanners; recipient-owned API; Vue bell + `/app/notifications`; no `notifications.*` permissions; no `action_url`; curated MVP type catalog only.
 ## Context
 
 MVP modules emit many audited lifecycle events. Early stubs mixed “notification hooks” with audit events and left unresolved: recipient identity (User vs Employee), channels, dedupe for schedulers, permissions for inbox access, and whether Laravel’s notification package is mandatory. MULTI_TENANCY §12 already requires tenant-scoped database notifications and job context isolation.

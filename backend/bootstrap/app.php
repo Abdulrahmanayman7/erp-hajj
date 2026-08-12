@@ -12,6 +12,7 @@ use App\Modules\Decisions\Exceptions\DecisionDomainException;
 use App\Modules\Documents\Exceptions\DocumentDomainException;
 use App\Modules\Employees\Exceptions\EmployeeDomainException;
 use App\Modules\Meetings\Exceptions\MeetingDomainException;
+use App\Modules\Notifications\Exceptions\NotificationDomainException;
 use App\Modules\OrganizationStructure\Exceptions\OrganizationDomainException;
 use App\Modules\Tasks\Exceptions\TaskDomainException;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -37,6 +38,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withCommands([
         __DIR__.'/../app/Core/Authorization/Console',
         __DIR__.'/../app/Modules/Contracts/Console',
+        __DIR__.'/../app/Modules/Notifications/Console',
     ])
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->statefulApi();
@@ -92,6 +94,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(fn (DecisionDomainException $e): JsonResponse => $e->render());
         $exceptions->render(fn (TaskDomainException $e): JsonResponse => $e->render());
         $exceptions->render(fn (DocumentDomainException $e): JsonResponse => $e->render());
+        $exceptions->render(fn (NotificationDomainException $e): JsonResponse => $e->render());
 
         $exceptions->render(function (AuthorizationException $e, Request $request): ?JsonResponse {
             if (! $request->is('api/*')) {

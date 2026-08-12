@@ -6,6 +6,7 @@ use App\Core\Authorization\Events\AuthorizationSecurityEvent;
 use App\Core\Authorization\Support\AuthorizationSecurity;
 use App\Core\Tenancy\TenantContext;
 use App\Models\User;
+use App\Modules\Notifications\Support\NotificationHooks;
 use App\Modules\Tasks\Enums\TaskStatus;
 use App\Modules\Tasks\Exceptions\TaskDomainException;
 use App\Modules\Tasks\Models\Task;
@@ -20,6 +21,7 @@ final class CompleteTask
         private readonly TenantContext $tenantContext,
         private readonly TaskTransitionRecorder $transitions,
         private readonly AuthorizationSecurity $security,
+        private readonly NotificationHooks $notifications,
     ) {}
 
     public function execute(User $actor, Task $task, string $completionNotes, Request $request): Task
@@ -54,6 +56,8 @@ final class CompleteTask
                 'from_status' => $from->value,
                 'to_status' => $to->value,
             ], $request);
+
+            $this->notifications->taskCompleted($locked, $actor);
 
             return $this->loadRelations($locked);
         });
