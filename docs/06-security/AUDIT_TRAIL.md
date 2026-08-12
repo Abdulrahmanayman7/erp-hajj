@@ -1,6 +1,6 @@
 # Audit Trail
 
-> **Status:** Specification complete — implementation pending (Sprint 018). Event names aligned through Sprint 017 emitters; storage/viewer locked by ADR-0015.
+> **Status:** Implemented (Sprint 018). Event names aligned through Sprint 017 emitters; storage/viewer shipped via ADR-0015.
 > **Last updated:** 2026-08-12
 > Module: [14-audit-trail/](../09-modules/14-audit-trail/) · ADR: [ADR-0015](../10-decisions/ADR-0015-SEMANTIC-AUDIT-TRAIL-AND-IMMUTABLE-HISTORY.md)
 
@@ -8,7 +8,7 @@
 
 Define what must be audited and the guarantees the audit trail provides. The audit trail is both an MVP module ([docs/09-modules/14-audit-trail/](../09-modules/14-audit-trail/)) and a cross-cutting requirement — **no module may bypass audit logging** for its critical operations.
 
-Today’s emitters (`AuthorizationSecurityEvent`, `AuthSecurityEvent`) write application logs. Sprint 018 specifies persistence into `audit_logs` via `Core/Audit` without renaming stable event codes.
+Emitters (`AuthorizationSecurityEvent`, `AuthSecurityEvent`) dual-write application logs **and** `audit_logs` via `Core/Audit` without renaming stable event codes.
 
 ## Audit Record Fields (binding — Sprint 018)
 

@@ -1,6 +1,6 @@
 # ERP Hajj
 
-> **Status:** Tenant Foundation (004) through Dashboard (017) implemented. Sprint 018 Audit Trail **specified** (implementation pending). Next: Audit implementation · Settings / remaining MVP modules.
+> **Status:** Tenant Foundation (004) through Audit Trail (018) implemented. Next: Settings / remaining MVP modules.
 >
 > **Last updated:** 2026-08-12
 

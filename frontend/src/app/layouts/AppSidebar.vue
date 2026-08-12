@@ -18,6 +18,7 @@ import {
   PanelRightClose,
   PanelRightOpen,
   Shield,
+  ScrollText,
   Users,
   Warehouse,
   type LucideIcon,
@@ -101,6 +102,16 @@ const navGroups = computed<NavGroup[]>(() => {
       to: '/app/roles',
       icon: Shield,
       permission: 'roles.view',
+      match: 'prefix',
+    })
+  }
+  if (can('audit_logs.view')) {
+    systemItems.push({
+      key: 'audit',
+      labelKey: 'nav.audit',
+      to: '/app/audit',
+      icon: ScrollText,
+      permission: 'audit_logs.view',
       match: 'prefix',
     })
   }

@@ -23,7 +23,7 @@ Tasks (Sprint 012 — **specified**): `tasks` + status/assignment histories + `T
 
 Dashboard (Sprint 017 — **implemented**): permission-aware operational read model — see [13-dashboard/](../09-modules/13-dashboard/) and [ADR-0014](../10-decisions/ADR-0014-PERMISSION-AWARE-DASHBOARD-AGGREGATION.md). No business ownership; no cross-UOM stock totals.
 
-Audit Trail (Sprint 018 — **specified**): semantic immutable `audit_logs` + viewer — see [14-audit-trail/](../09-modules/14-audit-trail/) and [ADR-0015](../10-decisions/ADR-0015-SEMANTIC-AUDIT-TRAIL-AND-IMMUTABLE-HISTORY.md). Not Notifications; not generic Eloquent observers.
+Audit Trail (Sprint 018 — **implemented**): semantic immutable `audit_logs` + viewer — see [14-audit-trail/](../09-modules/14-audit-trail/) and [ADR-0015](../10-decisions/ADR-0015-SEMANTIC-AUDIT-TRAIL-AND-IMMUTABLE-HISTORY.md). Not Notifications; not generic Eloquent observers.
 
 ## Style
 

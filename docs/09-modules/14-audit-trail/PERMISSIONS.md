@@ -1,6 +1,6 @@
 # Audit Trail — Permissions
 
-> **Status:** Specification complete — implementation pending (Sprint 018)
+> **Status:** Implemented (Sprint 018)
 > **Last updated:** 2026-08-12
 
 ## Catalog
