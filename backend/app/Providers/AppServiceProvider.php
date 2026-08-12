@@ -40,6 +40,8 @@ use App\Modules\Inventory\Policies\InventoryStockPolicy;
 use App\Modules\Inventory\Policies\WarehousePolicy;
 use App\Modules\Meetings\Models\Meeting;
 use App\Modules\Meetings\Policies\MeetingPolicy;
+use App\Modules\Notifications\Models\Notification;
+use App\Modules\Notifications\Policies\NotificationPolicy;
 use App\Modules\OrganizationStructure\Models\OrganizationUnit;
 use App\Modules\OrganizationStructure\Policies\OrganizationUnitPolicy;
 use App\Modules\Tasks\Models\Task;
@@ -114,6 +116,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Asset::class, AssetPolicy::class);
         Gate::policy(AssetCategory::class, AssetCategoryPolicy::class);
         Gate::policy(AssetCustody::class, AssetCustodyPolicy::class);
+        Gate::policy(Notification::class, NotificationPolicy::class);
 
         Relation::enforceMorphMap([
             'contract' => Contract::class,
@@ -138,6 +141,20 @@ class AppServiceProvider extends ServiceProvider
             return User::query()
                 ->whereKey($value)
                 ->where('tenant_id', $actor->tenant_id)
+                ->firstOrFail();
+        });
+
+        // Recipient-owned: other users / cross-tenant → 404 (no existence leak).
+        Route::bind('notification', function (string $value): Notification {
+            $actor = auth()->user();
+
+            if ($actor === null || $actor->tenant_id === null) {
+                abort(404);
+            }
+
+            return Notification::query()
+                ->whereKey($value)
+                ->where('recipient_user_id', $actor->id)
                 ->firstOrFail();
         });
     }

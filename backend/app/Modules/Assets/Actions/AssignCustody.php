@@ -14,6 +14,7 @@ use App\Modules\Assets\Models\Asset;
 use App\Modules\Assets\Models\AssetCustody;
 use App\Modules\Assets\Support\AssetReferenceValidator;
 use App\Modules\Assets\Support\AssetStatusTransitionRecorder;
+use App\Modules\Notifications\Support\NotificationHooks;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -25,6 +26,7 @@ final class AssignCustody
         private readonly AssetStatusTransitionRecorder $transitions,
         private readonly CorrelationId $correlationId,
         private readonly AuthorizationSecurity $security,
+        private readonly NotificationHooks $notifications,
     ) {}
 
     /**
@@ -115,6 +117,8 @@ final class AssignCustody
                 'from_status' => $from->value,
                 'to_status' => AssetStatus::InUse->value,
             ], $request);
+
+            $this->notifications->custodyAssigned($custody, $locked);
 
             return $locked->load([
                 'category',

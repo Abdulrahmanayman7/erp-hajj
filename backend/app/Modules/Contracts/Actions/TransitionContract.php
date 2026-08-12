@@ -10,6 +10,7 @@ use App\Modules\Contracts\Exceptions\ContractDomainException;
 use App\Modules\Contracts\Models\Contract;
 use App\Modules\Contracts\Support\ContractLifecycle;
 use App\Modules\Contracts\Support\ContractTransitionRecorder;
+use App\Modules\Notifications\Support\NotificationHooks;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -22,6 +23,7 @@ final class TransitionContract
         private readonly TenantContext $tenantContext,
         private readonly ContractTransitionRecorder $transitions,
         private readonly AuthorizationSecurity $security,
+        private readonly NotificationHooks $notifications,
     ) {}
 
     public function execute(
@@ -58,6 +60,10 @@ final class TransitionContract
                 'from_status' => $from->value,
                 'to_status' => $to->value,
             ], $auditExtra), $request);
+
+            if ($to === ContractStatus::Expired) {
+                $this->notifications->contractExpired($locked);
+            }
 
             return $locked->load([
                 'category',

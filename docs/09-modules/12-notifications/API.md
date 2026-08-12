@@ -1,7 +1,7 @@
 # Notifications — API
 
-> **Status:** Specified (Sprint 016) — **not implemented**
-> **Last updated:** 2026-08-11
+> **Status:** Implemented (Sprint 016)
+> **Last updated:** 2026-08-12
 > Base: `/api/v1` · Auth: Sanctum SPA · Envelope: [API_STANDARDS.md](../../04-api/API_STANDARDS.md)
 
 All routes: authenticated + tenant-active. Access is **recipient-owned** (see [PERMISSIONS.md](PERMISSIONS.md)). Cross-tenant / other-user → **404**.

@@ -14,6 +14,7 @@ use App\Modules\Inventory\Models\InventoryMovement;
 use App\Modules\Inventory\Support\InventoryBalanceLocker;
 use App\Modules\Inventory\Support\InventoryQuantity;
 use App\Modules\Inventory\Support\InventoryReferenceValidator;
+use App\Modules\Notifications\Support\NotificationHooks;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -26,6 +27,7 @@ final class TransferStock
         private readonly InventoryBalanceLocker $locker,
         private readonly CorrelationId $correlationId,
         private readonly AuthorizationSecurity $security,
+        private readonly NotificationHooks $notifications,
     ) {}
 
     /**
@@ -130,6 +132,8 @@ final class TransferStock
                 'destination_balance_after' => $destAfter,
                 'reason' => $reason,
             ], $request);
+
+            $this->notifications->stockBelowMinimum($sourceWarehouse, $item, $sourceAfter);
 
             return [
                 'transfer_out' => $out->load(['warehouse', 'item', 'performer']),

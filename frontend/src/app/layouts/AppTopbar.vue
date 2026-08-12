@@ -2,10 +2,11 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRoute } from 'vue-router'
-import { Bell, ChevronDown, CircleHelp, LogOut } from 'lucide-vue-next'
+import { ChevronDown, CircleHelp, LogOut } from 'lucide-vue-next'
 
 import { useLogoutMutation } from '@/modules/auth/mutations/useLogoutMutation'
 import { useCurrentUserQuery } from '@/modules/auth/queries/useCurrentUserQuery'
+import NotificationBell from '@/modules/notifications/components/NotificationBell.vue'
 import UserAvatar from '@/shared/components/UserAvatar.vue'
 
 const { t } = useI18n()
@@ -35,6 +36,8 @@ const breadcrumbs = computed(() => {
     crumbs.push({ label: t('nav.organization'), to: null })
   } else if (path.startsWith('/app/employees')) {
     crumbs.push({ label: t('nav.employees'), to: null })
+  } else if (path.startsWith('/app/notifications')) {
+    crumbs.push({ label: t('nav.notifications'), to: null })
   } else if (path === '/app' || path === '/app/') {
     crumbs.push({ label: t('nav.dashboard'), to: null })
   }
@@ -92,14 +95,7 @@ onUnmounted(() => {
     </nav>
 
     <div class="flex items-center gap-1 sm:gap-2">
-      <button
-        type="button"
-        class="inline-flex h-10 w-10 items-center justify-center rounded-xl text-brand-text-secondary transition hover:bg-brand-bg hover:text-brand-primary"
-        :aria-label="t('nav.notifications')"
-        :title="t('shell.comingSoon')"
-      >
-        <Bell class="h-5 w-5" :stroke-width="1.75" />
-      </button>
+      <NotificationBell />
 
       <button
         type="button"

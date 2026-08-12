@@ -9,3 +9,9 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('contracts:expire')->daily();
+
+Schedule::command('notifications:scan-contracts')->daily();
+Schedule::command('notifications:scan-tasks')->daily();
+Schedule::command('notifications:scan-custodies')->daily();
+Schedule::command('notifications:scan-low-stock')->daily();
+Schedule::command('notifications:scan-meetings-soon')->everyFifteenMinutes();

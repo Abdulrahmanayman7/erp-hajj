@@ -6,6 +6,7 @@ use App\Core\Authorization\Events\AuthorizationSecurityEvent;
 use App\Core\Authorization\Support\AuthorizationSecurity;
 use App\Core\Tenancy\TenantContext;
 use App\Models\User;
+use App\Modules\Notifications\Support\NotificationHooks;
 use App\Modules\Tasks\Enums\TaskStatus;
 use App\Modules\Tasks\Exceptions\TaskDomainException;
 use App\Modules\Tasks\Models\Task;
@@ -24,6 +25,7 @@ final class AssignTask
         private readonly TaskTransitionRecorder $transitions,
         private readonly TaskAssignmentRecorder $assignments,
         private readonly AuthorizationSecurity $security,
+        private readonly NotificationHooks $notifications,
     ) {}
 
     public function execute(
@@ -78,7 +80,7 @@ final class AssignTask
                 );
             }
 
-            $this->assignments->record(
+            $history = $this->assignments->record(
                 $locked,
                 $fromEmployeeId,
                 (int) $employee->id,
@@ -99,6 +101,8 @@ final class AssignTask
                 'from_employee_id' => $fromEmployeeId,
                 'to_employee_id' => $employee->id,
             ], $request);
+
+            $this->notifications->taskAssigned($locked, $history, reassigned: $fromEmployeeId !== null);
 
             return $this->loadRelations($locked);
         });

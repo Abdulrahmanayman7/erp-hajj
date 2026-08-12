@@ -10,6 +10,7 @@ use App\Modules\Decisions\Exceptions\DecisionDomainException;
 use App\Modules\Decisions\Models\Decision;
 use App\Modules\Decisions\Support\DecisionLifecycle;
 use App\Modules\Decisions\Support\DecisionTransitionRecorder;
+use App\Modules\Notifications\Support\NotificationHooks;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -22,6 +23,7 @@ final class TransitionDecision
         private readonly TenantContext $tenantContext,
         private readonly DecisionTransitionRecorder $transitions,
         private readonly AuthorizationSecurity $security,
+        private readonly NotificationHooks $notifications,
     ) {}
 
     /**
@@ -51,7 +53,7 @@ final class TransitionDecision
             $locked->status = $to;
             $locked->save();
 
-            $this->transitions->record(
+            $transition = $this->transitions->record(
                 $locked,
                 $from,
                 $to,
@@ -68,6 +70,18 @@ final class TransitionDecision
                 'from_status' => $from->value,
                 'to_status' => $to->value,
             ], $auditExtra), $request);
+
+            if ($actor !== null) {
+                match ($to) {
+                    DecisionStatus::PendingApproval => $this->notifications->decisionSubmitted($locked, $actor),
+                    DecisionStatus::Approved => $this->notifications->decisionApproved($locked),
+                    DecisionStatus::Draft => $from === DecisionStatus::PendingApproval
+                        ? $this->notifications->decisionReturned($locked, $transition)
+                        : null,
+                    DecisionStatus::Closed => $this->notifications->decisionClosed($locked),
+                    DecisionStatus::Cancelled => $this->notifications->decisionCancelled($locked),
+                };
+            }
 
             return $this->loadRelations($locked);
         });

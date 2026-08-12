@@ -26,6 +26,7 @@ use App\Modules\Meetings\Controllers\MeetingAgendaItemController;
 use App\Modules\Meetings\Controllers\MeetingAttendeeController;
 use App\Modules\Meetings\Controllers\MeetingController;
 use App\Modules\Meetings\Controllers\MeetingRecommendationController;
+use App\Modules\Notifications\Controllers\NotificationController;
 use App\Modules\OrganizationStructure\Controllers\OrganizationUnitController;
 use App\Modules\Tasks\Controllers\TaskController;
 use App\Modules\Users\Controllers\UserController;
@@ -231,6 +232,12 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
             Route::get('/asset-custodies', [AssetCustodyController::class, 'index'])->name('asset-custodies.index');
             Route::get('/asset-custodies/{custody}', [AssetCustodyController::class, 'show'])->name('asset-custodies.show');
             Route::get('/my-custodies', [MyCustodyController::class, 'index'])->name('my-custodies.index');
+
+            Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+            Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
+            Route::post('/notifications/read-all', [NotificationController::class, 'markReadAll'])->name('notifications.read-all');
+            Route::get('/notifications/{notification}', [NotificationController::class, 'show'])->name('notifications.show');
+            Route::post('/notifications/{notification}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
         });
     });
 });

@@ -13,6 +13,7 @@ use App\Modules\Inventory\Models\InventoryMovement;
 use App\Modules\Inventory\Support\InventoryBalanceLocker;
 use App\Modules\Inventory\Support\InventoryQuantity;
 use App\Modules\Inventory\Support\InventoryReferenceValidator;
+use App\Modules\Notifications\Support\NotificationHooks;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -24,6 +25,7 @@ final class IssueStock
         private readonly InventoryBalanceLocker $locker,
         private readonly CorrelationId $correlationId,
         private readonly AuthorizationSecurity $security,
+        private readonly NotificationHooks $notifications,
     ) {}
 
     /**
@@ -80,6 +82,8 @@ final class IssueStock
                 'balance_after' => $after,
                 'reason' => $reason,
             ], $request);
+
+            $this->notifications->stockBelowMinimum($warehouse, $item, $after);
 
             return $movement->load(['warehouse', 'item', 'performer']);
         });

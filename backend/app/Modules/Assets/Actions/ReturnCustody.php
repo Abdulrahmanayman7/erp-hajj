@@ -13,6 +13,7 @@ use App\Modules\Assets\Models\Asset;
 use App\Modules\Assets\Models\AssetCustody;
 use App\Modules\Assets\Support\AssetReferenceValidator;
 use App\Modules\Assets\Support\AssetStatusTransitionRecorder;
+use App\Modules\Notifications\Support\NotificationHooks;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -23,6 +24,7 @@ final class ReturnCustody
         private readonly AssetReferenceValidator $references,
         private readonly AssetStatusTransitionRecorder $transitions,
         private readonly AuthorizationSecurity $security,
+        private readonly NotificationHooks $notifications,
     ) {}
 
     /**
@@ -90,6 +92,8 @@ final class ReturnCustody
                 'from_status' => $from->value,
                 'to_status' => $next->value,
             ], $request);
+
+            $this->notifications->custodyReturned($custody, $locked);
 
             return $locked->load([
                 'category',

@@ -10,6 +10,7 @@ use App\Modules\Meetings\Enums\MeetingStatus;
 use App\Modules\Meetings\Exceptions\MeetingDomainException;
 use App\Modules\Meetings\Models\Meeting;
 use App\Modules\Meetings\Support\MeetingTransitionRecorder;
+use App\Modules\Notifications\Support\NotificationHooks;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -19,6 +20,7 @@ final class RescheduleMeeting
         private readonly TenantContext $tenantContext,
         private readonly MeetingTransitionRecorder $transitions,
         private readonly AuthorizationSecurity $security,
+        private readonly NotificationHooks $notifications,
     ) {}
 
     public function execute(User $actor, Meeting $meeting, string $scheduledAt, ?string $comment, Request $request): Meeting
@@ -57,6 +59,8 @@ final class RescheduleMeeting
                 'to_status' => MeetingStatus::Scheduled->value,
                 'scheduled_at' => $locked->scheduled_at?->toIso8601String(),
             ], $request);
+
+            $this->notifications->meetingRescheduled($locked);
 
             return $locked->load([
                 'organizationUnit',
