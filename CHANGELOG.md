@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Sprint 018 — Audit Trail specification:** implementation-ready module docs (`docs/09-modules/14-audit-trail/`) + **ADR-0015** (semantic events, hybrid `audit_logs`, append-only, actor/system model, sanitization, same-transaction domain writes, indefinite MVP retention); viewer API/UI contract (`audit_logs.view`); export deferred (`audit_logs.export` reserved); no application code.
+
 - **Sprint 017 — Dashboard vertical slice:** permission-aware operational read model (ADR-0014); `GET /api/v1/dashboard` with Gate `viewDashboard` (`dashboard.view` + per-section `*.view`); sparse omit-unauthorized KPIs/Attention/Today/Work/Resources; unread notifications recipient-owned; no migrations/cache/charts/cross-UOM sums; Vue `modules/dashboard` replaces `/app` home (+ `/app/dashboard` redirect); Pest `DashboardTest` 11/11; full Pest 352; Vitest 199; `tsc`/build green.
 
 - **Sprint 017 — Dashboard specification** (superseded by implementation above).

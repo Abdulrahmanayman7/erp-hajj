@@ -1,7 +1,7 @@
 # Roadmap
 
 > **Status:** Draft (delivery order aligned to completed / next sprints)
-> **Last updated:** 2026-08-11
+> **Last updated:** 2026-08-12
 
 ## Purpose
 
@@ -32,8 +32,9 @@ The 21 modules and four core workflows defined in [MVP_SCOPE.md](MVP_SCOPE.md), 
 | Sprint 015 — Assets & Custodies | **Done** (implementation) |
 | Sprint 016 — Notifications | **Done** (implementation) |
 | Sprint 017 — Dashboard | **Done** (implementation) |
-| Remaining MVP modules | Next: Settings / Audit module polish |
-Natural dependency order remains: **tenancy → authentication → users/roles/permissions → organizational structure → employees → contracts → meetings → decisions → tasks → documents → warehouses/inventory → assets/custodies → notifications → dashboard → remaining modules**.
+| Sprint 018 — Audit Trail | **Specification complete** — implementation pending (ADR-0015) |
+| Remaining MVP modules | Next: Audit Trail implementation · Tenant settings / platform polish |
+Natural dependency order remains: **tenancy → authentication → users/roles/permissions → organizational structure → employees → contracts → meetings → decisions → tasks → documents → warehouses/inventory → assets/custodies → notifications → dashboard → audit trail → remaining modules**.
 
 ## Later — Future Vision (NOT part of the MVP, all TBD)
 
