@@ -1,6 +1,6 @@
 # ERP Hajj
 
-> **Status:** Tenant Foundation (004) through Notifications (016) implemented. Next: Settings / Dashboard / remaining MVP modules.
+> **Status:** Tenant Foundation (004) through Notifications (016) implemented. Sprint 017 Dashboard **specified** (implementation pending). Next: Dashboard implementation / Settings / remaining MVP modules.
 >
 > **Last updated:** 2026-08-11
 

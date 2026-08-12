@@ -30,6 +30,7 @@ Each control below names the attack it prevents. Implementation details are spec
 | **Inventory race / negative stock** (two concurrent issues or forged balance PATCH) | Stock mutations only via domain actions under `SELECT … FOR UPDATE` on balance rows; no client PATCH of balances/movements; MVP rejects `on_hand < 0` (`INVENTORY_INSUFFICIENT_STOCK`); transfers lock by ascending `warehouse_id` — [ADR-0011](../10-decisions/ADR-0011-INVENTORY-LEDGER-BALANCE-AND-TRANSFER.md). |
 | **Double asset custody** (two concurrent assigns) | Assign/return under Asset `FOR UPDATE`; re-check no active custody after lock; immutable returned rows — **implemented** Sprint 015 ([ADR-0012](../10-decisions/ADR-0012-ASSET-CUSTODY-AND-OWNERSHIP.md)). |
 | **Notification IDOR / inbox leak** | Recipient-owned Policy (`recipient_user_id === actor`); tenant scope; no client create; no stored `action_url`; plain-text bodies — **implemented** Sprint 016 ([ADR-0013](../10-decisions/ADR-0013-IN-APP-NOTIFICATION-OWNERSHIP-AND-DELIVERY.md)). |
+| **Dashboard aggregate leakage** | `dashboard.view` page gate; omit sections without module `*.view`; never zero-fill forbidden modules; personal my-tasks/my-custodies never expand to unauthorized tenant totals; no cross-tenant aggregates — **specified** Sprint 017 ([ADR-0014](../10-decisions/ADR-0014-PERMISSION-AWARE-DASHBOARD-AGGREGATION.md)). |
 
 ### Authentication
 

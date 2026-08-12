@@ -76,6 +76,7 @@ Exact default role grants: [PERMISSIONS.md](PERMISSIONS.md).
 | Priority | **Omitted** in MVP | [BUSINESS_RULES.md](BUSINESS_RULES.md) |
 | Delete | Hard delete **draft-only** (never left draft) | [BUSINESS_RULES.md](BUSINESS_RULES.md) |
 | Future Tasks | Tasks own `decision_id`; linked Tasks UI at Sprint 012 | [08-tasks/](../08-tasks/) |
+| Dashboard | Pending-approval / open-decision KPIs consume Decisions SoR (ADR-0014) | [13-dashboard/](../13-dashboard/) |
 
 ## References
 

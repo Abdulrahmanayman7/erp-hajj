@@ -45,7 +45,7 @@ Define the granular permission naming model and the master permission catalog. M
 | Assets | `assets.view` `assets.create` `assets.update` `assets.delete` `assets.assign` `assets.return` `assets.retire` — **implemented** Sprint 015 ([11-assets-and-custodies/PERMISSIONS.md](../09-modules/11-assets-and-custodies/PERMISSIONS.md); ADR-0012). Seeded via `PermissionCatalog`. No separate `custodies.*` verbs. |
 | Notifications | **No seeded `notifications.*` in MVP** — own inbox is recipient-owned for any authenticated tenant User ([12-notifications/PERMISSIONS.md](../09-modules/12-notifications/PERMISSIONS.md); ADR-0013). Future `notifications.manage` only via CR. |
 | Audit logs | `audit_logs.view` `audit_logs.export` |
-| Dashboard | `dashboard.view` |
+| Dashboard | `dashboard.view` (page/API gate only; sections use owning module `*.view` — ADR-0014) |
 | Tenant settings | `tenant_settings.view` `tenant_settings.update` |
 | Platform (tenants) | `platform_tenants.view` `platform_tenants.create` `platform_tenants.update` `platform_tenants.activate` `platform_tenants.suspend` `platform_tenants.archive` `platform_tenants.access_data` |
 
