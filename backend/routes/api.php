@@ -30,6 +30,7 @@ use App\Modules\Meetings\Controllers\MeetingController;
 use App\Modules\Meetings\Controllers\MeetingRecommendationController;
 use App\Modules\Notifications\Controllers\NotificationController;
 use App\Modules\OrganizationStructure\Controllers\OrganizationUnitController;
+use App\Modules\Settings\Controllers\TenantSettingsController;
 use App\Modules\Tasks\Controllers\TaskController;
 use App\Modules\Users\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -53,6 +54,9 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
 
     Route::middleware(['auth:sanctum', 'user.active', 'tenant.active'])->group(function (): void {
         Route::get('/dashboard', [DashboardController::class, 'show'])->name('dashboard.show');
+
+        Route::get('/tenant-settings', [TenantSettingsController::class, 'show'])->name('tenant-settings.show');
+        Route::patch('/tenant-settings', [TenantSettingsController::class, 'update'])->name('tenant-settings.update');
 
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
         Route::post('/users', [UserController::class, 'store'])->name('users.store');

@@ -27,6 +27,7 @@ export const ar = {
     notifications: 'الإشعارات',
     profile: 'الملف الشخصي',
     audit: 'سجل التدقيق',
+    settings: 'الإعدادات',
   },
   shell: {
     breadcrumbHome: 'الرئيسية',
@@ -1829,6 +1830,35 @@ export const ar = {
       entitySnapshotOnly: 'الكيان غير متاح للفتح — يُعرض من اللقطة المحفوظة فقط',
       noChanges: 'لا توجد قيم قبل/بعد لهذا الحدث',
       noMetadata: 'لا توجد بيانات إضافية',
+    },
+  },
+  settings: {
+    title: 'إعدادات المنشأة',
+    subtitle: 'إدارة الهوية والمنطقة الزمنية للمنشأة الحالية',
+    refresh: 'تحديث',
+    save: 'حفظ',
+    retry: 'إعادة المحاولة',
+    successSave: 'تم حفظ الإعدادات بنجاح',
+    viewOnlyNotice: 'لديك صلاحية العرض فقط — لا يمكن تعديل الإعدادات.',
+    timezoneHelp: 'تؤثر المنطقة الزمنية على لوحة التحكم والتنبيهات وتواريخ الاستحقاق.',
+    timezoneSearch: 'بحث عن منطقة زمنية…',
+    localeArabic: 'العربية',
+    localeReadonlyHint: 'لغة الواجهة ثابتة على العربية في الإصدار الحالي.',
+    sections: {
+      general: 'عام',
+      regional: 'المنطقة والوقت',
+    },
+    fields: {
+      name: 'اسم المنشأة',
+      contactName: 'اسم جهة الاتصال',
+      contactEmail: 'بريد جهة الاتصال',
+      contactPhone: 'هاتف جهة الاتصال',
+      timezone: 'المنطقة الزمنية',
+      locale: 'اللغة',
+    },
+    errors: {
+      generic: 'تعذر حفظ الإعدادات. حاول مرة أخرى.',
+      load: 'تعذر تحميل الإعدادات.',
     },
   },
   status: {

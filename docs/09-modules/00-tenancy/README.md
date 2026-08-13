@@ -1,7 +1,7 @@
 # Module: Multi-Tenant Foundation (التأسيس متعدد المستأجرين)
 
-> **Status:** Core implemented (Sprint 004). Data layer, contexts, resolver, middleware, scoping stack, validation rules, queue/cache/storage isolation, and the full core Pest suite are implemented and green. **Tenant settings API/UI:** specified in Sprint 020 — see [15-system-settings/](../15-system-settings/) + [ADR-0016](../../10-decisions/ADR-0016-TYPED-TENANT-SETTINGS-AND-RESOLUTION.md) (**implementation pending**). **Still pending separately:** `/api/v1/platform/tenants` endpoints, lifecycle transition HTTP APIs, exceptional-access audit path.
-> **Last updated:** 2026-08-12
+> **Status:** Core implemented (Sprint 004). Data layer, contexts, resolver, middleware, scoping stack, validation rules, queue/cache/storage isolation, and the full core Pest suite are implemented and green. **Tenant settings API/UI:** **implemented** in Sprint 020 — see [15-system-settings/](../15-system-settings/) + [ADR-0016](../../10-decisions/ADR-0016-TYPED-TENANT-SETTINGS-AND-RESOLUTION.md). **Still pending separately:** `/api/v1/platform/tenants` endpoints, lifecycle transition HTTP APIs, exceptional-access audit path.
+> **Last updated:** 2026-08-13
 
 ## Purpose
 

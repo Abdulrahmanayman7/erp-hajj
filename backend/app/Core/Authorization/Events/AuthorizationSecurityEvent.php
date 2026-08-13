@@ -253,6 +253,8 @@ final class AuthorizationSecurityEvent
 
     public const ASSET_RETURNED = 'ASSET_RETURNED';
 
+    public const TENANT_SETTINGS_UPDATED = 'TENANT_SETTINGS_UPDATED';
+
     /**
      * @param  array<string, mixed>  $context
      */

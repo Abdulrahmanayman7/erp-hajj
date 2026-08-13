@@ -34,8 +34,8 @@ The 21 modules and four core workflows defined in [MVP_SCOPE.md](MVP_SCOPE.md), 
 | Sprint 017 — Dashboard | **Done** (implementation) |
 | Sprint 018 — Audit Trail | **Done** (implementation; ADR-0015) |
 | Sprint 019 — MVP Integration & Release Hardening | **Done** (merged; deploy/UAT checklists) |
-| Sprint 020 — System Settings | **Specified** — [15-system-settings/](../09-modules/15-system-settings/) · [ADR-0016](../10-decisions/ADR-0016-TYPED-TENANT-SETTINGS-AND-RESOLUTION.md); **implementation pending** |
-| Remaining MVP work | Implement System Settings; UAT; production deploy |
+| Sprint 020 — System Settings | **Done** (implementation; ADR-0016) |
+| Remaining MVP work | UAT; production deploy |
 
 Natural dependency order remains: **tenancy → authentication → users/roles/permissions → … → audit trail → system settings → release**.
 
@@ -43,8 +43,8 @@ Natural dependency order remains: **tenancy → authentication → users/roles/p
 
 | Track | Status |
 |---|---|
-| MVP modules 004–018 code | Implemented |
-| System Settings (module 21) | Spec complete (020); code pending |
+| MVP modules 004–020 code | Implemented (Settings closes module 21) |
+| System Settings (module 21) | **Implemented** |
 | UAT | Checklist ready — execution pending |
 | Production deployment | Pending ops + infrastructure |
 | Recommended first tag | `v0.1.0` (create only after approval — not auto-created) |

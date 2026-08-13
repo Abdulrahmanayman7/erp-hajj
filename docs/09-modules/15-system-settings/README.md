@@ -1,21 +1,22 @@
 # Module: System Settings (إعدادات المنشأة)
 
-> **Status:** Specified (Sprint 020) — **implementation pending**
-> **Last updated:** 2026-08-12
+> **Status:** Implemented (Sprint 020)
+> **Last updated:** 2026-08-13
 > ADR: [ADR-0016](../../10-decisions/ADR-0016-TYPED-TENANT-SETTINGS-AND-RESOLUTION.md)
 
 ## Purpose
 
 Give authorized tenant administrators a **single, bounded place** to view and update the small set of **tenant-level settings** already required by the implemented ERP (identity + regional defaults), without opening platform administration, secrets, or arbitrary configuration.
 
-## Scope (MVP / Sprint 020 specification)
+## Scope (MVP / Sprint 020 implementation)
 
 - Tenant-facing singleton API: `GET|PATCH /api/v1/tenant-settings`.
 - Typed catalog mapping to existing **`tenants` columns** (`name`, `timezone`, contacts; `locale` read-only).
-- Permissions: existing `tenant_settings.view` / `tenant_settings.update` (no rename).
+- `TenantSettingsResolver` over Tenant columns only (no KV overlay).
+- Permissions: existing `tenant_settings.view` / `tenant_settings.update` (no rename; no new permissions).
 - Arabic RTL UI: `/app/settings` (الإعدادات), sidebar under System.
-- Audit: `TENANT_SETTINGS_UPDATED` on successful update.
-- Pest + Vitest matrices documented for the implementation sprint.
+- Audit: `TENANT_SETTINGS_UPDATED` on successful mutating update (no-op / GET not audited).
+- Pest `TenantSettingsTest` (17) + Vitest settings suites; full Pest / Vitest green.
 
 ## Out of scope (MVP)
 
@@ -28,6 +29,7 @@ Give authorized tenant administrators a **single, bounded place** to view and up
 - Making operational thresholds (contract expiring-soon, meeting starting-soon, task/custody due-soon) per-tenant.
 - Currency FX / multi-currency engine.
 - Per-user settings.
+- New `tenant_settings` KV product keys / migrations.
 
 ## Personas (capability-driven)
 
@@ -44,8 +46,8 @@ Policies check **permissions**, never role names.
 
 | Concern | Owner |
 |---|---|
-| Tenant registry columns + `tenant_settings` table | `Core/Tenancy` |
-| Settings catalog, resolver, Actions, Policy, API | Proposed `Modules/Settings` (or thin Controllers over Core Tenancy Actions) |
+| Tenant registry columns | `Core/Tenancy` |
+| Settings catalog/resolver, Actions, Policy, API | `Modules/Settings` |
 | Vue settings module | `frontend/src/modules/settings/` |
 | Platform tenant APIs | Still 00-tenancy / future platform slice — **not** this UI |
 
@@ -58,8 +60,9 @@ Policies check **permissions**, never role names.
 | [API.md](API.md) | Endpoints, payloads, errors |
 | [DATA_MODEL.md](DATA_MODEL.md) | Storage mapping; no duplicate columns |
 | [UI.md](UI.md) | Route, sidebar, sections, save UX |
-| [ACCEPTANCE_CRITERIA.md](ACCEPTANCE_CRITERIA.md) | Definition of done for implementation |
+| [ACCEPTANCE_CRITERIA.md](ACCEPTANCE_CRITERIA.md) | Definition of done |
 | [TEST_PLAN.md](TEST_PLAN.md) | Pest + Vitest matrices |
+| [SECURITY.md](SECURITY.md) | Threat model |
 
 ## References
 

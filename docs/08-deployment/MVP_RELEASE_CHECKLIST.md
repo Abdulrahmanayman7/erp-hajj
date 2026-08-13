@@ -98,7 +98,7 @@ Use Markdown checkboxes. Another developer/ops person should be able to follow t
 
 ## Known incomplete before “full 21-module MVP”
 
-- [ ] System settings API/UI (`tenant_settings.*`) — permissions/catalog exist; full settings vertical slice still pending (see ROADMAP)
+- [x] System settings API/UI (`tenant_settings.*`) — **implemented** Sprint 020 (ADR-0016)
 
 ## Related
 

@@ -1,7 +1,7 @@
 # System Settings — Security threat model
 
-> Companion to [SECURITY_BASELINE.md](../../06-security/SECURITY_BASELINE.md)  
-> **Sprint 020 specification**
+> Companion to [SECURITY_BASELINE.md](../../06-security/SECURITY_BASELINE.md)
+> **Sprint 020 — implemented**
 
 | Threat | Control |
 |---|---|

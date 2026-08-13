@@ -9,7 +9,6 @@ These items are **approved deferrals** or incomplete MVP-scope slices. They are 
 
 | Item | Notes |
 |---|---|
-| System settings API/UI (`tenant_settings`) | **Specified** (Sprint 020 / ADR-0016); permissions + table + Tenant columns exist; **API/UI implementation pending**. |
 | Platform tenant admin HTTP APIs | Platform Super Admin exceptional access remains narrowly scoped; full `/platform/tenants` product UI TBD. |
 
 ## Explicitly out of MVP (do not build in hardening)

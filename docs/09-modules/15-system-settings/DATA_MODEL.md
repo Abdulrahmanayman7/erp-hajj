@@ -1,7 +1,7 @@
 # System Settings — Data Model
 
-> **Status:** Specified (Sprint 020) — **no new migration required for MVP catalog**  
-> **Last updated:** 2026-08-12
+> **Status:** Implemented (Sprint 020) — **no new migration** (Tenant columns only)
+> **Last updated:** 2026-08-13
 
 ## Storage strategy (ADR-0016)
 

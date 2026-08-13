@@ -19,6 +19,7 @@ import {
   PanelRightOpen,
   Shield,
   ScrollText,
+  Settings,
   Users,
   Warehouse,
   type LucideIcon,
@@ -112,6 +113,16 @@ const navGroups = computed<NavGroup[]>(() => {
       to: '/app/audit',
       icon: ScrollText,
       permission: 'audit_logs.view',
+      match: 'prefix',
+    })
+  }
+  if (can('tenant_settings.view')) {
+    systemItems.push({
+      key: 'settings',
+      labelKey: 'nav.settings',
+      to: '/app/settings',
+      icon: Settings,
+      permission: 'tenant_settings.view',
       match: 'prefix',
     })
   }

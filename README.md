@@ -1,8 +1,8 @@
 # ERP Hajj
 
-> **Status:** Sprint 020 — System Settings **specified** (implementation pending). Modules Tenant Foundation (004) through Audit Trail (018) implemented; Sprint 019 hardening merged. **UAT pending. Production deployment pending.**
+> **Status:** Sprint 020 System Settings **implemented**. Modules Tenant Foundation (004) through Settings (020) shipped. **UAT pending. Production deployment pending.**
 >
-> **Last updated:** 2026-08-12
+> **Last updated:** 2026-08-13
 
 ## Project Purpose
 

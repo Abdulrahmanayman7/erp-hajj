@@ -9,7 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Sprint 020 — System Settings specification:** ADR-0016 (typed tenant settings + resolution); module docs `docs/09-modules/15-system-settings/`; MVP catalog = Tenant columns (`name`, `timezone`, contacts; `locale` read-only `ar`); thresholds/currency/logo remain non-tenant or deferred; API `GET|PATCH /api/v1/tenant-settings`; permissions unchanged; **implementation pending**.
+- **Sprint 020 — System Settings vertical slice:** typed tenant settings (ADR-0016) over existing `tenants` columns (`name`, contacts, `timezone`; `locale` read-only `ar`); `GET|PATCH /api/v1/tenant-settings`; `TenantSettingsResolver`; Policies/Gates on existing `tenant_settings.view|update`; audit `TENANT_SETTINGS_UPDATED`; Vue `/app/settings` (الإعدادات); no new migration / no KV product keys / no thresholds/currency/logo; Pest `TenantSettingsTest` 17/17; full Pest 382; Vitest 215; `tsc`/build green.
+
+- **Sprint 020 — System Settings specification** (superseded by implementation above).
 
 - **Sprint 019 — MVP Integration & Release Hardening:** architecture/tenant/RBAC release audit; health endpoint no longer leaks `APP_ENV`; CORS exposes `X-Correlation-ID`; `.env.example` documents session secure cookies, document disk, queue/scheduler, PHP upload limits; `frontend/vercel.json` SPA rewrites; CI advisory `composer audit` / `npm audit`; PositionFactory uniqueness hardening; deployment docs (`DEPLOYMENT`, `BACKUP_AND_RECOVERY`, `MVP_RELEASE_CHECKLIST`), `MVP_UAT_CHECKLIST`, `MVP_KNOWN_LIMITATIONS`. Distinguishes: MVP code-ready (004–018) · UAT pending · production deployment pending. System settings API/UI remains P1 incomplete for full 21-module scope.
 
