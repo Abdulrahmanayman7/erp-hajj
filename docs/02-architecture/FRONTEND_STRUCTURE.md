@@ -158,9 +158,9 @@ A module may contain: pages, components, api, queries, mutations, types, validat
 - Routes `/app/audit`, `/app/audit/:id`; sidebar **سجل التدقيق** under system admin group.
 - Permission `audit_logs.view`; Arabic event labels; no export button until export ships.
 
-## System Settings UI (Sprint 020 — specified; implementation pending)
+## System Settings UI (Sprint 020 — implemented)
 
-- Module folder (planned): `frontend/src/modules/settings/`.
+- Module folder: `frontend/src/modules/settings/`.
 - Route `/app/settings` (الإعدادات); sidebar under System; `tenant_settings.view` / `update`.
 - Contract: [15-system-settings/UI.md](../09-modules/15-system-settings/UI.md) · [ADR-0016](../10-decisions/ADR-0016-TYPED-TENANT-SETTINGS-AND-RESOLUTION.md).
 

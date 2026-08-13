@@ -49,6 +49,7 @@ use App\Modules\Notifications\Models\Notification;
 use App\Modules\Notifications\Policies\NotificationPolicy;
 use App\Modules\OrganizationStructure\Models\OrganizationUnit;
 use App\Modules\OrganizationStructure\Policies\OrganizationUnitPolicy;
+use App\Modules\Settings\Policies\TenantSettingsPolicy;
 use App\Modules\Tasks\Models\Task;
 use App\Modules\Tasks\Policies\TaskPolicy;
 use App\Modules\Users\Policies\UserPolicy;
@@ -127,6 +128,8 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(AuditLog::class, AuditLogPolicy::class);
 
         Gate::define('viewDashboard', [DashboardPolicy::class, 'view']);
+        Gate::define('viewTenantSettings', [TenantSettingsPolicy::class, 'view']);
+        Gate::define('updateTenantSettings', [TenantSettingsPolicy::class, 'update']);
 
         Relation::enforceMorphMap([
             'contract' => Contract::class,

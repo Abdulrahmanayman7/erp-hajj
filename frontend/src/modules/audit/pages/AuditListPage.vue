@@ -11,9 +11,12 @@ import {
   auditEventLabel,
 } from '../utils/auditDisplay'
 import type { ListAuditLogsParams } from '../types/audit'
+import { useCurrentUserQuery } from '@/modules/auth/queries/useCurrentUserQuery'
 
 const { t } = useI18n()
 const router = useRouter()
+const { data: currentUser } = useCurrentUserQuery()
+const tenantTimezone = computed(() => currentUser.value?.tenant?.timezone || 'Asia/Riyadh')
 
 const filters = reactive<ListAuditLogsParams>({
   search: '',
@@ -71,7 +74,7 @@ function formatTime(iso: string): string {
     return new Intl.DateTimeFormat('ar-SA', {
       dateStyle: 'medium',
       timeStyle: 'short',
-      timeZone: 'Asia/Riyadh',
+      timeZone: tenantTimezone.value,
     }).format(new Date(iso))
   } catch {
     return iso

@@ -1,7 +1,7 @@
 # System Settings — API
 
-> **Status:** Specified (Sprint 020) — implementation pending  
-> **Last updated:** 2026-08-12  
+> **Status:** Implemented (Sprint 020)
+> **Last updated:** 2026-08-13
 > Aligns with [00-tenancy/API.md](../00-tenancy/API.md) path names.
 
 ## Endpoints

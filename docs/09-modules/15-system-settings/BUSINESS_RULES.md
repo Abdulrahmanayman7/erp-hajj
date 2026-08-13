@@ -1,7 +1,7 @@
 # System Settings — Business Rules
 
-> **Status:** Specified (Sprint 020) — implementation pending  
-> **Last updated:** 2026-08-12  
+> **Status:** Implemented (Sprint 020)
+> **Last updated:** 2026-08-13
 > ADR: [ADR-0016](../../10-decisions/ADR-0016-TYPED-TENANT-SETTINGS-AND-RESOLUTION.md)
 
 ## 1. Singleton per tenant

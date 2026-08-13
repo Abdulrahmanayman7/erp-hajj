@@ -29,7 +29,7 @@ Define the agreed, fixed MVP scope. Anything not listed here is out of scope (se
 18. Notifications required by MVP modules (الإشعارات)
 19. Audit trail for critical operations (سجل التدقيق)
 20. Multi-tenant foundation
-21. System-level settings required by the above modules — **specified** ([15-system-settings/](../09-modules/15-system-settings/), [ADR-0016](../10-decisions/ADR-0016-TYPED-TENANT-SETTINGS-AND-RESOLUTION.md)); **implementation pending**
+21. System-level settings required by the above modules — **implemented** ([15-system-settings/](../09-modules/15-system-settings/), [ADR-0016](../10-decisions/ADR-0016-TYPED-TENANT-SETTINGS-AND-RESOLUTION.md))
 
 Module-level documentation lives in [docs/09-modules/](../09-modules/).
 

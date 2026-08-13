@@ -1,7 +1,7 @@
 # System Settings — UI
 
-> **Status:** Specified (Sprint 020) — implementation pending  
-> **Last updated:** 2026-08-12
+> **Status:** Implemented (Sprint 020)
+> **Last updated:** 2026-08-13
 
 ## Route
 
@@ -22,7 +22,7 @@ Single canonical page — no scattered settings screens.
 
 One page, two sections (no unrelated tabs):
 
-1. **عام** — name + contact fields  
+1. **عام** — name + contact fields
 2. **المنطقة والوقت** — timezone select; locale shown read-only (`العربية` / `ar`)
 
 No Operations section until tenant-configurable thresholds are approved.

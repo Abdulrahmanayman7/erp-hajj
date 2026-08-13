@@ -1,7 +1,8 @@
 # ADR-0016 — Typed Tenant Settings and Configuration Resolution
 
-> **Status:** Accepted (specification — Sprint 020)
+> **Status:** Accepted — **Implemented** (Sprint 020)
 > **Date:** 2026-08-12
+> **Implemented:** 2026-08-13
 > **Deciders:** ERP Hajj engineering (documentation-first)
 
 ## Context
@@ -106,6 +107,15 @@ Settings changes do **not** emit in-app Notifications in MVP. Audit is sufficien
 | Tenant-editable thresholds in MVP | Cross-module behavior change without CR |
 | Feature flags / plugin manager / theme builder | Out of MVP scope |
 | Settings as secret/env UI | Deployment concern, not tenant SoR |
+
+## Implementation note (Sprint 020)
+
+Shipped as `Modules/Settings` + `frontend/src/modules/settings/`:
+
+- `GET|PATCH /api/v1/tenant-settings` over **`tenants` columns** only (no new migration; no KV product keys).
+- `TenantSettingsResolver` for effective typed DTO; timezone SoT remains `tenants.timezone`.
+- Audit `TENANT_SETTINGS_UPDATED` on real changes; GM view-only / Owner update per catalog.
+- Thresholds/currency/logo remain out of scope as decided above.
 
 ## References
 

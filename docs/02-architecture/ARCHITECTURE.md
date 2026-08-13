@@ -27,7 +27,7 @@ Audit Trail (Sprint 018 — **implemented**): semantic immutable `audit_logs` + 
 
 MVP Integration & Release Hardening (Sprint 019): integration gates, deployment/UAT checklists, health/CORS/env hardening — see [DEPLOYMENT.md](../08-deployment/DEPLOYMENT.md) and [MVP_KNOWN_LIMITATIONS.md](../00-project/MVP_KNOWN_LIMITATIONS.md).
 
-System Settings (Sprint 020 — **specified**): typed tenant settings over existing Tenant columns; ADR-0016 — see [15-system-settings/](../09-modules/15-system-settings/). **Implementation pending.**
+System Settings (Sprint 020 — **implemented**): typed tenant settings over existing Tenant columns; ADR-0016 — see [15-system-settings/](../09-modules/15-system-settings/).
 
 ## Style
 

@@ -13,10 +13,13 @@ import {
   formatAuditValue,
   resolveAuditDeepLink,
 } from '../utils/auditDisplay'
+import { useCurrentUserQuery } from '@/modules/auth/queries/useCurrentUserQuery'
 
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
+const { data: currentUser } = useCurrentUserQuery()
+const tenantTimezone = computed(() => currentUser.value?.tenant?.timezone || 'Asia/Riyadh')
 
 const id = computed(() => {
   const raw = Number(route.params.id)
@@ -40,7 +43,7 @@ function formatTime(iso: string): string {
     return new Intl.DateTimeFormat('ar-SA', {
       dateStyle: 'full',
       timeStyle: 'medium',
-      timeZone: 'Asia/Riyadh',
+      timeZone: tenantTimezone.value,
     }).format(new Date(iso))
   } catch {
     return iso

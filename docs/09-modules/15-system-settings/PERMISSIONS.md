@@ -1,7 +1,7 @@
 # System Settings — Permissions
 
-> **Status:** Specified (Sprint 020) — names already seeded  
-> **Last updated:** 2026-08-12
+> **Status:** Implemented (Sprint 020) — names seeded; API/UI shipped
+> **Last updated:** 2026-08-13
 
 ## Catalog (stable — do not rename)
 

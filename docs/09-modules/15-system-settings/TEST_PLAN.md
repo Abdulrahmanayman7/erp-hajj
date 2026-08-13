@@ -1,7 +1,7 @@
 # System Settings — Test Plan
 
-> **Status:** Specified (Sprint 020) — **no executable tests in this sprint**  
-> **Last updated:** 2026-08-12
+> **Status:** Implemented (Sprint 020) — Pest/Vitest matrices executed
+> **Last updated:** 2026-08-13
 
 ## Backend Pest (implementation sprint)
 

@@ -1,7 +1,7 @@
 # Backend Structure
 
-> **Status:** Approved — Tenant Foundation (004) through Audit Trail (018) implemented; System Settings (020) specified
-> **Last updated:** 2026-08-12
+> **Status:** Approved — Tenant Foundation (004) through System Settings (020) implemented
+> **Last updated:** 2026-08-13
 
 ## Purpose
 
@@ -38,7 +38,7 @@ app/
 │   ├── Notifications/              # Sprint 016 — implemented (ADR-0013)
 │   ├── Dashboard/                  # Sprint 017 — implemented (ADR-0014)
 │   ├── Audit/                      # Sprint 018 — implemented viewer (list/show; ADR-0015)
-│   └── Settings/                   # Sprint 020 — specified (tenant-settings API; ADR-0016; impl pending)
+│   └── Settings/                   # Sprint 020 — implemented (tenant-settings API; ADR-0016)
 ```
 
 ## Module Contents
