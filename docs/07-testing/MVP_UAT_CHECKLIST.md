@@ -1,7 +1,8 @@
 # MVP UAT Checklist
 
-> **Status:** Ready for execution — **not** marked passed unless scenarios were actually run
-> **Last updated:** 2026-08-12
+> **Status:** Partially executed via automated + disposable MySQL RC validation (2026-08-13) — **interactive browser UAT still required**
+> **Last updated:** 2026-08-13
+> **RC branch:** `release/0.1.0-uat`
 
 Use a dedicated **UAT tenant** (not production data). Prefer seeded/bootstrap roles:
 
@@ -18,6 +19,8 @@ Do **not** seed fake production business data into the production database.
 
 For each scenario: record Pass / Fail / Blocked and tester initials.
 
+**Legend for this RC session:** `Auto` = Pest/Vitest evidence; `MySQL` = disposable MariaDB migrate/seed/scanners; `UI` = interactive browser (not run here).
+
 ---
 
 ## UAT-01 Authentication
@@ -33,6 +36,8 @@ For each scenario: record Pass / Fail / Blocked and tester initials.
 
 **Expected:** Session established only for active users on active tenants; logout clears access.
 
+**RC 2026-08-13:** Auto **Pass** (Pest Auth suites). UI **Blocked / not executed**.
+
 ---
 
 ## UAT-02 RBAC
@@ -47,6 +52,8 @@ For each scenario: record Pass / Fail / Blocked and tester initials.
 
 **Expected:** Backend denies unauthorized actions (403); UI mirrors but does not replace backend.
 
+**RC 2026-08-13:** Auto **Pass** (Users/Roles Pest). MySQL double-seed: 83 permissions, 7 roles, Owner has `tenant_settings.update`, GM view-only. UI **not executed**.
+
 ---
 
 ## UAT-03 Organization → Employee
@@ -59,6 +66,8 @@ For each scenario: record Pass / Fail / Blocked and tester initials.
 4. Activate/deactivate employee as designed.
 
 **Expected:** Employee appears in lists; cross-tenant IDs fail with 404 if attempted via API tools.
+
+**RC 2026-08-13:** Auto **Pass** (Organization + Employee Pest, incl. cross-tenant). UI **not executed**.
 
 ---
 
@@ -74,6 +83,8 @@ For each scenario: record Pass / Fail / Blocked and tester initials.
 
 **Expected:** Illegal transitions blocked; close gate enforced.
 
+**RC 2026-08-13:** Auto **Pass** (Meeting/Decision/Task Pest). UI **not executed**.
+
 ---
 
 ## UAT-05 Documents
@@ -88,6 +99,8 @@ For each scenario: record Pass / Fail / Blocked and tester initials.
 
 **Expected:** No public URL; no storage path in JSON; unauthorized download denied.
 
+**RC 2026-08-13:** Auto **Pass** (Documents Pest). Host PHP upload limits **not verified**. UI **not executed**.
+
 ---
 
 ## UAT-06 Inventory
@@ -101,6 +114,8 @@ For each scenario: record Pass / Fail / Blocked and tester initials.
 
 **Expected:** Decimal quantities stable; no negative stock.
 
+**RC 2026-08-13:** Auto **Pass** (Inventory Pest). UI **not executed**.
+
 ---
 
 ## UAT-07 Assets & Custodies
@@ -112,6 +127,8 @@ For each scenario: record Pass / Fail / Blocked and tester initials.
 3. Confirm inventory stock unchanged by asset actions.
 
 **Expected:** Single active custody rules held; inventory untouched.
+
+**RC 2026-08-13:** Auto **Pass** (Asset Pest). UI **not executed**.
 
 ---
 
@@ -126,6 +143,8 @@ For each scenario: record Pass / Fail / Blocked and tester initials.
 
 **Expected:** No `notifications.*` permission required for own inbox; no cross-user leakage.
 
+**RC 2026-08-13:** Auto **Pass** (Notification Pest). MySQL scanners executed (0 candidates on empty seed; second meetings scan stable). Continuous `queue:work` **not sustained**. UI **not executed**.
+
 ---
 
 ## UAT-09 Dashboard
@@ -137,6 +156,8 @@ For each scenario: record Pass / Fail / Blocked and tester initials.
 3. Confirm figures reflect current tenant SoR after prior UAT actions.
 
 **Expected:** No other-tenant data; unauthorized sections omitted.
+
+**RC 2026-08-13:** Auto **Pass** (Dashboard Pest). UI **not executed**.
 
 ---
 
@@ -150,6 +171,8 @@ For each scenario: record Pass / Fail / Blocked and tester initials.
 
 **Expected:** Append-only; tenant-scoped; secrets sanitized.
 
+**RC 2026-08-13:** Auto **Pass** (Audit Pest). UI **not executed**.
+
 ---
 
 ## UAT-11 Cross-tenant isolation (API)
@@ -159,18 +182,22 @@ For each scenario: record Pass / Fail / Blocked and tester initials.
 1. As Tenant A, request Tenant B resource IDs for users, contracts, documents, tasks, audit, etc.
 2. **Expected:** `404` (not `403`) for cross-tenant lookups per project convention.
 
+**RC 2026-08-13:** Auto **Pass** (explicit cross-tenant tests across modules + Settings).
+
 ---
 
 ## UAT-12 Responsive / RTL smoke
 
 **Widths:** desktop, tablet, mobile viewport.
 
-Pages: Dashboard, Users/Roles, Organization, Employees, Contracts, Meetings, Decisions, Tasks, Documents, Inventory, Assets, Notifications, Audit.
+Pages: Dashboard, Users/Roles, Organization, Employees, Contracts, Meetings, Decisions, Tasks, Documents, Inventory, Assets, Notifications, Audit, Settings.
 
 - [ ] No critical horizontal overflow
 - [ ] Drawers/dialogs usable
 - [ ] Arabic labels consistent (no raw enum codes)
 - [ ] RTL alignment acceptable
+
+**RC 2026-08-13:** **Not executed** (no interactive browser session).
 
 ---
 
@@ -180,12 +207,25 @@ Record what was actually tested:
 
 | Browser | Version | Result |
 |---|---|---|
-| Chrome | | |
-| Firefox | | |
-| Edge | | |
-| Mobile Safari / Chromium | | |
+| Chrome | — | Not tested |
+| Firefox | — | Not tested |
+| Edge | — | Not tested |
+| Mobile Safari / Chromium | — | Not tested |
 
 Do not claim untested browsers.
+
+---
+
+## UAT-14 System Settings (Sprint 020)
+
+1. Owner: GET/PATCH `/api/v1/tenant-settings`; UI `/app/settings` save.
+2. GM: view-only (no update).
+3. Employee: denied by default.
+4. Immutable: `tenant_code`, `locale` (`ar`), no `tenant_id` override; IANA timezone only.
+5. Audit `TENANT_SETTINGS_UPDATED` on real change; GET/no-op not audited.
+6. No new settings migration / no KV product writes.
+
+**RC 2026-08-13:** Auto **Pass** (TenantSettingsTest 17/17). MySQL: permissions present; KV rows remain 0 after seed. UI **not executed**.
 
 ---
 
@@ -193,8 +233,8 @@ Do not claim untested browsers.
 
 | Role | Name | Date | Result |
 |---|---|---|---|
-| Tester | | | |
+| Tester (automated RC) | Cursor agent | 2026-08-13 | Automated/MySQL gates Pass; interactive UI Blocked |
 | Product/Owner | | | |
 | Tech lead | | | |
 
-**Overall UAT:** ☐ Passed · ☐ Passed with waived P2 · ☐ Failed
+**Overall UAT:** ☐ Passed · ☐ Passed with waived P2 · ☑ Failed / incomplete (interactive browser UAT + human sign-off remaining)

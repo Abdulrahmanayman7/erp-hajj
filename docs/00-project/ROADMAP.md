@@ -1,7 +1,7 @@
 # Roadmap
 
 > **Status:** Draft (delivery order aligned to completed / next sprints)
-> **Last updated:** 2026-08-12
+> **Last updated:** 2026-08-13
 
 ## Purpose
 
@@ -45,7 +45,7 @@ Natural dependency order remains: **tenancy → authentication → users/roles/p
 |---|---|
 | MVP modules 004–020 code | Implemented (Settings closes module 21) |
 | System Settings (module 21) | **Implemented** |
-| UAT | Checklist ready — execution pending |
+| UAT | Automated/API evidence on RC `release/0.1.0-uat` — **interactive browser UAT still pending** |
 | Production deployment | Pending ops + infrastructure |
 | Recommended first tag | `v0.1.0` (create only after approval — not auto-created) |
 

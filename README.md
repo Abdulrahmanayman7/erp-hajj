@@ -1,6 +1,6 @@
 # ERP Hajj
 
-> **Status:** Sprint 020 System Settings **implemented**. Modules Tenant Foundation (004) through Settings (020) shipped. **UAT pending. Production deployment pending.**
+> **Status:** Sprint 020 System Settings **implemented**. Modules Tenant Foundation (004) through Settings (020) shipped. RC `release/0.1.0-uat`: automated gates + disposable MariaDB migrate/seed green; **interactive browser UAT still pending. Production deployment pending.**
 >
 > **Last updated:** 2026-08-13
 
