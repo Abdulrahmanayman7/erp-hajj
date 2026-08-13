@@ -1,16 +1,22 @@
 # MVP Known Limitations
 
-> **Status:** Release communication — RC 0.1.0 UAT validation (2026-08-13)
+> **Status:** Release communication — P1 closure attempt `release/0.1.0-final-validation` (2026-08-13)
 > **Last updated:** 2026-08-13
 
-These items are **approved deferrals** or incomplete MVP-scope slices. They are not accidental omissions unless noted.
+These items are **approved deferrals** or incomplete release gates. They are not accidental omissions unless noted.
 
-## Incomplete within MVP scope
+## Incomplete within MVP scope / release gates
 
 | Item | Notes |
 |---|---|
-| Platform tenant admin HTTP APIs | Platform Super Admin exceptional access remains narrowly scoped; full `/platform/tenants` product UI TBD. |
-| Interactive browser UAT sign-off | Automated Pest/Vitest + disposable MariaDB migrate/seed/scanners executed on `release/0.1.0-uat`; Chrome/Firefox/Edge + RTL/responsive human UAT still required before calling v0.1.0 release-ready. |
+| Platform tenant admin HTTP APIs | Full `/platform/tenants` product UI TBD. |
+| Staging / real-host smoke | **P1 open** — no staging credentials in this environment. |
+| Host PHP upload limits | **P1 open** — local XAMPP values do not satisfy the host gate. |
+| Firefox UAT | **P1 open** — system Firefox present; Playwright headless launch failed. |
+| Chrome UAT completeness | **Partial** — most routes OK; some navigations hit host `ERR_INSUFFICIENT_RESOURCES`. |
+| Full human ops UAT | Governance/inventory/assets/notifications deep UI chains not fully signed PASS. |
+| Sustained queue fanout | Worker can run locally; representative multi-job fanout on staging still required. |
+| Product/Owner sign-off | **P1 open** — must be human. |
 
 ## Explicitly out of MVP (do not build in hardening)
 

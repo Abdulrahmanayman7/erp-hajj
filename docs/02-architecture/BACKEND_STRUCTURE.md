@@ -75,7 +75,7 @@ Controllers must not:
 - **Routes:** single `routes/api.php` with a `Route::prefix('v1')->name('api.v1.')` group for now; per-module route files will be introduced when the first business modules are implemented.
 - **PSR-4:** everything lives under the default `App\` namespace — `App\Core\...` and `App\Modules\...` (e.g. `App\Core\Shared\ApiResponse`, `App\Core\Health\HealthController`). No extra service-provider wiring until a module needs it.
 - **Testing:** Pest replaces PHPUnit-style classes (`tests/Pest.php` binds `Tests\TestCase` to `tests/Feature`).
-- **Sanctum:** SPA cookie authentication — `statefulApi()` middleware enabled in `bootstrap/app.php`; `FRONTEND_URL` + `SANCTUM_STATEFUL_DOMAINS` configured; CORS allows only the SPA origin with credentials.
+- **Sanctum:** SPA cookie authentication — `statefulApi()` middleware enabled in `bootstrap/app.php`; `FRONTEND_URL` + `SANCTUM_STATEFUL_DOMAINS` configured; CORS allows the SPA origin(s) (`FRONTEND_URL`, optional `CORS_ALLOWED_ORIGINS`, and the localhost/127.0.0.1 twin) with credentials — never `*`.
 
 ### Auth module placement (Sprint 005)
 
