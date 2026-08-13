@@ -1,7 +1,7 @@
 # MVP Known Limitations
 
-> **Status:** Release communication — Sprint 019
-> **Last updated:** 2026-08-12
+> **Status:** Release communication — RC 0.1.0 UAT validation (2026-08-13)
+> **Last updated:** 2026-08-13
 
 These items are **approved deferrals** or incomplete MVP-scope slices. They are not accidental omissions unless noted.
 
@@ -10,6 +10,7 @@ These items are **approved deferrals** or incomplete MVP-scope slices. They are 
 | Item | Notes |
 |---|---|
 | Platform tenant admin HTTP APIs | Platform Super Admin exceptional access remains narrowly scoped; full `/platform/tenants` product UI TBD. |
+| Interactive browser UAT sign-off | Automated Pest/Vitest + disposable MariaDB migrate/seed/scanners executed on `release/0.1.0-uat`; Chrome/Firefox/Edge + RTL/responsive human UAT still required before calling v0.1.0 release-ready. |
 
 ## Explicitly out of MVP (do not build in hardening)
 

@@ -149,5 +149,6 @@ test('the tenants registry itself is queryable without tenant context', function
 test('the generated SQL qualifies tenant_id with the table name', function (): void {
     $sql = withTenant($this->tenantA, fn (): string => TenantSetting::query()->toSql());
 
-    expect($sql)->toContain('"tenant_settings"."tenant_id"');
+    // Driver-agnostic: SQLite uses "table"."col"; MySQL/MariaDB uses `table`.`col`.
+    expect($sql)->toMatch('/["`]tenant_settings["`]\s*\.\s*["`]tenant_id["`]/');
 });

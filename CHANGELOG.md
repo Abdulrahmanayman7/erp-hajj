@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **RC 0.1.0 UAT validation (2026-08-13):** disposable MariaDB `erp_hajj_release_test` fresh migrate + idempotent double seed; full Pest 382×2; Vitest 215; composer/npm audits clean; scanners exercised; TenantScope SQL-quote assertion made driver-agnostic; `phpunit.xml` forces SQLite DB env so shell MySQL credentials cannot override Pest. Interactive browser UAT + backup restore drill + production smoke remain open — release **not** tagged.
+
 ### Added
 
 - **Sprint 020 — System Settings vertical slice:** typed tenant settings (ADR-0016) over existing `tenants` columns (`name`, contacts, `timezone`; `locale` read-only `ar`); `GET|PATCH /api/v1/tenant-settings`; `TenantSettingsResolver`; Policies/Gates on existing `tenant_settings.view|update`; audit `TENANT_SETTINGS_UPDATED`; Vue `/app/settings` (الإعدادات); no new migration / no KV product keys / no thresholds/currency/logo; Pest `TenantSettingsTest` 17/17; full Pest 382; Vitest 215; `tsc`/build green.
