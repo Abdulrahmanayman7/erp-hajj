@@ -1,6 +1,6 @@
 # ERP Hajj
 
-> **Status:** Sprint 020 System Settings **implemented**. Modules Tenant Foundation (004) through Settings (020) shipped. RC `release/0.1.0-uat`: automated gates + disposable MariaDB migrate/seed green; **interactive browser UAT still pending. Production deployment pending.**
+> **Status:** Sprint 020 System Settings **implemented**. Final validation / P1 closure on `release/0.1.0-final-validation`: Edge PASS, Settings timezone PASS, backup/restore retained; **staging/host, Firefox, full human ops UAT, sustained queue fanout, and Owner sign-off still open → RELEASE NOT READY.**
 >
 > **Last updated:** 2026-08-13
 

@@ -7,7 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Local CORS localhost vs 127.0.0.1:** browsers treat these as distinct origins. CORS now allows `FRONTEND_URL`, optional `CORS_ALLOWED_ORIGINS`, and the loopback twin of `FRONTEND_URL`, so Vite at `http://localhost:5173` works when the API was configured with `http://127.0.0.1:5173` (and the reverse). Still never `*` with credentialed cookies.
+
 ### Changed
+
+- **RC 0.1.0 P1 closure attempt (2026-08-13):** Settings timezone Cairo↔Riyadh live API PASS; Chrome route matrix mostly PASS (host resource failures on some desktop navigations); Firefox Playwright launch FAIL; decision-close gate PASS; sustained queue worker ran with empty job queue (insufficient for fanout PASS). Staging/host smoke, host PHP limits, and Product/Owner sign-off remain **OPEN** — **not release-ready**.
+
+- **RC 0.1.0 final validation (2026-08-13):** local Edge browser/responsive/role UAT; disposable MariaDB backup+restore (DB + private document blob); queue `--once` + scanners; frontend `nanoid` advisory cleared via lockfile bump. Staging/host smoke, Firefox, complete Chrome UAT, and Product/Owner sign-off remain open — **not release-ready**.
 
 - **RC 0.1.0 UAT validation (2026-08-13):** disposable MariaDB `erp_hajj_release_test` fresh migrate + idempotent double seed; full Pest 382×2; Vitest 215; composer/npm audits clean; scanners exercised; TenantScope SQL-quote assertion made driver-agnostic; `phpunit.xml` forces SQLite DB env so shell MySQL credentials cannot override Pest. Interactive browser UAT + backup restore drill + production smoke remain open — release **not** tagged.
 

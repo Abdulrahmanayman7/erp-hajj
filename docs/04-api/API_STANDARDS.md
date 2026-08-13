@@ -1,7 +1,7 @@
 # API Standards
 
 > **Status:** Approved
-> **Last updated:** 2026-08-09
+> **Last updated:** 2026-08-13
 
 Domain error codes for Organization Structure (`ORGANIZATION_UNIT_*`), Employees (`EMPLOYEE_*`, `POSITION_*`), and Contracts (`CONTRACT_*` including `CONTRACT_ALREADY_RENEWED` — specified Sprint 009) are listed in their module `API.md` files.
 
@@ -85,7 +85,7 @@ POST /api/v1/tasks/{task}/complete
 
 ## Decisions
 
-- **Sanctum mode for the SPA: cookie session** (HttpOnly cookie + CSRF protection via `sanctum/csrf-cookie`). `statefulApi()` middleware is enabled; CORS allows only the SPA origin with credentials.
+- **Sanctum mode for the SPA: cookie session** (HttpOnly cookie + CSRF protection via `sanctum/csrf-cookie`). `statefulApi()` middleware is enabled; CORS allows the configured SPA origin(s) with credentials (`localhost` and `127.0.0.1` are distinct).
 - The standardized envelope is implemented by `App\Core\Shared\ApiResponse`; the first live endpoint is `GET /api/v1/health`.
 
 ## Auth rate limiting (decided — Sprint 005)

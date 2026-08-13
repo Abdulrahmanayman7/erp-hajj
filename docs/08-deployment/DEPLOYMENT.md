@@ -1,7 +1,7 @@
 # Backend & Frontend Deployment
 
 > **Status:** Implementation-ready for controlled MVP release
-> **Last updated:** 2026-08-12
+> **Last updated:** 2026-08-13
 
 ## Purpose
 
@@ -53,6 +53,7 @@ APP_ENV=production
 APP_DEBUG=false
 APP_URL=https://api.example.com
 FRONTEND_URL=https://app.example.com
+CORS_ALLOWED_ORIGINS=https://app.example.com
 QUEUE_CONNECTION=database   # or redis when provisioned
 CACHE_STORE=database        # or redis when provisioned
 FILESYSTEM_DISK=local
@@ -116,7 +117,8 @@ post_max_size >= 25M
 
 ### CORS / Sanctum
 
-- `FRONTEND_URL` / Sanctum stateful domains must match the SPA origin exactly.
+- `FRONTEND_URL` / Sanctum stateful domains must match the SPA origin exactly (`localhost` ≠ `127.0.0.1`).
+- Local: `CORS_ALLOWED_ORIGINS` may list both loopback SPA URLs; production should list only the real SPA origin.
 - Do not set CORS `allowed_origins` to `*` when credentials/cookies are used.
 - Response header `X-Correlation-ID` is exposed to the SPA (`config/cors.php` `exposed_headers`).
 
