@@ -19,3 +19,4 @@ desktop.ini
 node_modules/
 **/node_modules/
 # Backend and frontend will add their own ignores when scaffolded
+backend/erp_hajj_perf
