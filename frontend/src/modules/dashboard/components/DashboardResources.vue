@@ -6,6 +6,7 @@ import { RouterLink } from 'vue-router'
 import type { DashboardKpis, DashboardResources } from '../types/dashboard'
 import {
   isSafeAppHref,
+  effectiveSeverity,
   pickKpis,
   RESOURCE_ASSET_KPI_KEYS,
   RESOURCE_INVENTORY_KPI_KEYS,
@@ -62,7 +63,7 @@ const visible = computed(
             </p>
             <p
               class="mt-1 text-xl font-bold tabular-nums"
-              :class="severityValueClass(entry.kpi.severity)"
+              :class="severityValueClass(effectiveSeverity(entry.kpi.severity, entry.kpi.value))"
             >
               {{ entry.kpi.value }}
             </p>
@@ -92,7 +93,7 @@ const visible = computed(
             </p>
             <p
               class="mt-1 text-xl font-bold tabular-nums"
-              :class="severityValueClass(entry.kpi.severity)"
+              :class="severityValueClass(effectiveSeverity(entry.kpi.severity, entry.kpi.value))"
             >
               {{ entry.kpi.value }}
             </p>
@@ -104,7 +105,7 @@ const visible = computed(
         :is="isSafeAppHref(myCustodies.href) ? RouterLink : 'div'"
         v-if="myCustodies"
         :to="isSafeAppHref(myCustodies.href) ? myCustodies.href : undefined"
-        class="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-brand-border bg-[#F4F6F5]/70 p-4 transition"
+        class="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-brand-border bg-brand-bg/70 p-4 transition"
         :class="
           isSafeAppHref(myCustodies.href)
             ? 'hover:border-brand-primary/30 hover:bg-brand-primary-soft/40'

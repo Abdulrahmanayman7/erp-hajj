@@ -12,19 +12,29 @@ export function validateTaskForm(form: TaskFormState): Record<string, string> {
 
 export function taskStatusBadgeClass(status: TaskStatus): string {
   return ({
-    draft: 'bg-neutral-100 text-neutral-700 ring-1 ring-neutral-200/80',
-    assigned: 'bg-sky-50 text-sky-900 ring-1 ring-sky-200/70',
-    in_progress: 'bg-amber-50 text-amber-900 ring-1 ring-amber-200/70',
-    completed: 'bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200/70',
-    cancelled: 'bg-red-50 text-red-800 ring-1 ring-red-200/70',
+    draft: 'bg-slate-100 text-brand-text ring-1 ring-inset ring-slate-300/80',
+    assigned: 'bg-sky-100 text-brand-text ring-1 ring-inset ring-sky-300/80',
+    in_progress: 'bg-amber-100 text-brand-text ring-1 ring-inset ring-amber-300/80',
+    completed: 'bg-emerald-100 text-brand-text ring-1 ring-inset ring-emerald-300/80',
+    cancelled: 'bg-red-100 text-brand-text ring-1 ring-inset ring-red-300/80',
+  } as const)[status]
+}
+
+export function taskStatusDotClass(status: TaskStatus): string {
+  return ({
+    draft: 'bg-slate-500',
+    assigned: 'bg-sky-500',
+    in_progress: 'bg-amber-500',
+    completed: 'bg-emerald-500',
+    cancelled: 'bg-red-500',
   } as const)[status]
 }
 
 export function taskPriorityBadgeClass(priority: TaskPriority): string {
   return ({
-    low: 'bg-neutral-100 text-neutral-600 ring-1 ring-neutral-200/80',
-    medium: 'bg-sky-50 text-sky-800 ring-1 ring-sky-200/70',
-    high: 'bg-red-50 text-red-800 ring-1 ring-red-200/70',
+    low: 'bg-neutral-100 text-brand-text ring-1 ring-neutral-200/80',
+    medium: 'bg-sky-50 text-brand-text ring-1 ring-sky-200/70',
+    high: 'bg-red-50 text-brand-text ring-1 ring-red-200/70',
   } as const)[priority]
 }
 

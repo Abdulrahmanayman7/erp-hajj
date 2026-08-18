@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 import {
   ChevronLeft,
   ChevronRight,
@@ -12,35 +12,37 @@ import {
   Search,
 } from 'lucide-vue-next'
 
-import { useEmployeesQuery } from '@/modules/employees/queries/useEmployeesQuery'
+import { listEmployees } from '@/modules/employees/api/employeesApi'
 import { useOrganizationUnitsFlatQuery } from '@/modules/organization/queries/useOrganizationUnitsQuery'
 import { ApiError } from '@/shared/api/http'
+import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
+import { employeeSelectOption, namedCodeOption, toSelectId } from '@/shared/lookups/selectOptions'
 import AppTooltip from '@/shared/components/AppTooltip.vue'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
-import { usePermissions } from '@/shared/composables/usePermissions'
 import { useToast } from '@/shared/composables/useToast'
+import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
 
 import CategoriesManagerDrawer from '../components/CategoriesManagerDrawer.vue'
 import ContractFormDrawer from '../components/ContractFormDrawer.vue'
-import {
-  useCreateContractMutation,
-  useUpdateContractMutation,
-} from '../mutations/useContractMutations'
-import { useCategoriesQuery } from '../queries/useCategoriesQuery'
+import { useCreateContractMutation, useUpdateContractMutation } from '../mutations/useContractMutations'
+import { listCategories } from '../api/categoriesApi'
 import { useContractsQuery } from '../queries/useContractsQuery'
 import type { Contract, ContractFormState, ContractStatus } from '../types/contracts'
 import {
   CONTRACT_STATUSES,
   contractStatusBadgeClass,
+  contractStatusDotClass,
   mapContractErrorCode,
   resolveContractsListState,
   validateContractForm,
 } from '../validation/contractValidation'
 
 const { t } = useI18n()
-const { can } = usePermissions()
+const router = useRouter()
 const toast = useToast()
+
+const focusedRowIndex = ref(-1)
 
 const filters = reactive({
   search: '',
@@ -55,8 +57,9 @@ const filters = reactive({
   direction: 'desc',
 })
 
+const committedSearch = useDebouncedRef(() => filters.search)
 const queryParams = computed(() => ({
-  search: filters.search || undefined,
+  search: committedSearch.value || undefined,
   status: filters.status === 'all' ? undefined : filters.status,
   category_id: filters.category_id,
   organization_unit_id: filters.organization_unit_id,
@@ -71,23 +74,10 @@ const queryParams = computed(() => ({
 const { data, isLoading, isError, refetch, isFetching } = useContractsQuery(queryParams)
 
 const { data: orgUnitsData } = useOrganizationUnitsFlatQuery({ status: 'active' })
-const { data: categoriesData } = useCategoriesQuery(
-  { per_page: 100 },
-  {
-    enabled: computed(
-      () => can('contracts.view') || can('contracts.create') || can('contracts.update'),
-    ),
-  },
-)
-const { data: activeCategoriesData } = useCategoriesQuery(
-  { is_active: true, per_page: 100 },
-  {
-    enabled: computed(() => can('contracts.create') || can('contracts.update')),
-  },
-)
-const { data: employeesData } = useEmployeesQuery(
-  computed(() => ({ status: 'active' as const, per_page: 100 })),
-)
+const fetchActiveEmployees = (params: { search?: string; page: number; per_page: number }) =>
+  listEmployees({ ...params, status: 'active' })
+const fetchCategories = (params: { search?: string; page: number; per_page: number }) =>
+  listCategories(params)
 
 const createMutation = useCreateContractMutation()
 const updateMutation = useUpdateContractMutation()
@@ -101,6 +91,88 @@ const listState = computed(() =>
     count: contracts.value.length,
   }),
 )
+
+watch(
+  contracts,
+  (rows) => {
+    if (rows.length === 0) {
+      focusedRowIndex.value = -1
+      return
+    }
+    if (focusedRowIndex.value >= rows.length) {
+      focusedRowIndex.value = rows.length - 1
+    }
+  },
+  { deep: false },
+)
+
+function focusRow(index: number): void {
+  if (contracts.value.length === 0) {
+    focusedRowIndex.value = -1
+    return
+  }
+  focusedRowIndex.value = Math.min(Math.max(index, 0), contracts.value.length - 1)
+}
+
+function openFocusedContract(): void {
+  const contract = contracts.value[focusedRowIndex.value]
+  if (!contract) return
+  void router.push(`/app/contracts/${contract.id}`)
+}
+
+function onTableKeydown(event: KeyboardEvent): void {
+  if (drawerOpen.value || categoriesOpen.value || contracts.value.length === 0) return
+
+  const target = event.target as HTMLElement | null
+  if (target) {
+    const tag = target.tagName
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable) {
+      return
+    }
+  }
+
+  if (event.key === 'ArrowDown') {
+    event.preventDefault()
+    focusRow(focusedRowIndex.value < 0 ? 0 : focusedRowIndex.value + 1)
+    return
+  }
+
+  if (event.key === 'ArrowUp') {
+    event.preventDefault()
+    focusRow(focusedRowIndex.value < 0 ? 0 : focusedRowIndex.value - 1)
+    return
+  }
+
+  if (event.key === 'Home') {
+    event.preventDefault()
+    focusRow(0)
+    return
+  }
+
+  if (event.key === 'End') {
+    event.preventDefault()
+    focusRow(contracts.value.length - 1)
+    return
+  }
+
+  if (event.key === 'Enter' && focusedRowIndex.value >= 0) {
+    event.preventDefault()
+    openFocusedContract()
+  }
+}
+
+function rowToneClass(index: number): string {
+  if (focusedRowIndex.value === index) {
+    return 'bg-[#EDF6F1]'
+  }
+  return index % 2 === 1 ? 'bg-[#FAFBFA]' : 'bg-brand-surface'
+}
+
+function rowAccentClass(index: number): string {
+  return focusedRowIndex.value === index
+    ? 'border-s-brand-primary'
+    : 'border-s-transparent'
+}
 
 const drawerOpen = ref(false)
 const editing = ref<Contract | null>(null)
@@ -130,39 +202,14 @@ const statusOptions = computed<AppSelectOption[]>(() => [
   })),
 ])
 
-const categoryFilterOptions = computed<AppSelectOption[]>(() => [
-  { value: '', label: t('contracts.filters.allCategories') },
-  ...(categoriesData.value?.data ?? []).map((c) => ({
-    value: c.id,
-    label: c.name,
-    hint: c.code ?? undefined,
-  })),
-])
-
-const categoryFormOptions = computed<AppSelectOption[]>(() => {
-  const active = activeCategoriesData.value?.data ?? []
-  const options = active.map((c) => ({
-    value: c.id,
-    label: c.name,
-    hint: c.code ?? undefined,
-  }))
-
-  // Keep current inactive category selectable while editing a draft.
-  if (editing.value?.category) {
-    const currentId = editing.value.category.id
-    const exists = options.some((o) => o.value === currentId)
-    if (!exists) {
-      const full = (categoriesData.value?.data ?? []).find((c) => c.id === currentId)
-      options.unshift({
-        value: currentId,
-        label: editing.value.category.name,
-        hint: full && !full.is_active ? t('contracts.categoryInactive') : (editing.value.category.code ?? undefined),
-      })
-    }
-  }
-
-  return options
-})
+const emptyCategory = computed<AppSelectOption>(() => ({
+  value: '',
+  label: t('contracts.filters.allCategories'),
+}))
+const emptyEmployee = computed<AppSelectOption>(() => ({
+  value: '',
+  label: t('contracts.filters.allEmployees'),
+}))
 
 const orgUnitFilterOptions = computed<AppSelectOption[]>(() => [
   { value: '', label: t('contracts.filters.allOrgUnits') },
@@ -182,24 +229,6 @@ const orgUnitFormOptions = computed<AppSelectOption[]>(() => [
   })),
 ])
 
-const employeeFilterOptions = computed<AppSelectOption[]>(() => [
-  { value: '', label: t('contracts.filters.allEmployees') },
-  ...(employeesData.value?.data ?? []).map((e) => ({
-    value: e.id,
-    label: e.full_name,
-    hint: e.employee_number,
-  })),
-])
-
-const employeeFormOptions = computed<AppSelectOption[]>(() => [
-  { value: '', label: t('contracts.noEmployee') },
-  ...(employeesData.value?.data ?? []).map((e) => ({
-    value: e.id,
-    label: e.full_name,
-    hint: e.employee_number,
-  })),
-])
-
 const counterpartyKindOptions = computed<AppSelectOption[]>(() => [
   { value: 'organization', label: t('contracts.counterpartyKind.organization') },
   { value: 'person', label: t('contracts.counterpartyKind.person') },
@@ -212,7 +241,7 @@ const isFormSubmitting = computed(
 
 watch(
   () => [
-    filters.search,
+    committedSearch.value,
     filters.status,
     filters.category_id,
     filters.organization_unit_id,
@@ -357,11 +386,7 @@ function formatValue(contract: Contract): string {
 }
 
 function isCategoryInactive(contract: Contract): boolean {
-  const id = contract.category?.id
-  if (id == null) return false
-  if (contract.category?.is_active === false) return true
-  const found = (categoriesData.value?.data ?? []).find((c) => c.id === id)
-  return found ? !found.is_active : false
+  return contract.category?.is_active === false
 }
 </script>
 
@@ -424,13 +449,27 @@ function isCategoryInactive(contract: Contract): boolean {
         />
       </div>
       <AppSelect v-model="filters.status" :options="statusOptions" />
-      <AppSelect v-model="filters.category_id" :options="categoryFilterOptions" searchable />
+      <AppRemoteSelect
+        :model-value="filters.category_id"
+        query-key="contract-categories"
+        :fetcher="fetchCategories"
+        :map-option="namedCodeOption"
+        :empty-option="emptyCategory"
+        @update:model-value="filters.category_id = toSelectId($event)"
+      />
       <AppSelect
         v-model="filters.organization_unit_id"
         :options="orgUnitFilterOptions"
         searchable
       />
-      <AppSelect v-model="filters.employee_id" :options="employeeFilterOptions" searchable />
+      <AppRemoteSelect
+        :model-value="filters.employee_id"
+        query-key="employees-active"
+        :fetcher="fetchActiveEmployees"
+        :map-option="employeeSelectOption"
+        :empty-option="emptyEmployee"
+        @update:model-value="filters.employee_id = toSelectId($event)"
+      />
       <label
         class="inline-flex h-11 cursor-pointer items-center gap-2 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text"
       >
@@ -476,54 +515,60 @@ function isCategoryInactive(contract: Contract): boolean {
     </div>
     <div
       v-else
-      class="overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-[0_1px_2px_rgba(23,32,29,0.03)]"
+      ref="tableRoot"
+      class="overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-[0_1px_2px_rgba(23,32,29,0.03)] outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25"
+      tabindex="0"
+      role="grid"
+      :aria-rowcount="contracts.length"
+      :aria-label="t('contracts.title')"
+      @keydown="onTableKeydown"
     >
       <div class="overflow-x-auto">
         <table class="min-w-full border-separate border-spacing-0 text-sm">
           <thead>
             <tr class="bg-[#F4F6F5]">
               <th
-                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-start text-xs font-bold tracking-wide text-brand-text-muted"
+                class="whitespace-nowrap border-b border-s-[3px] border-brand-border border-s-transparent px-5 py-3.5 text-start text-xs font-bold tracking-wide text-brand-text"
               >
                 {{ t('contracts.columns.contractNumber') }}
               </th>
               <th
-                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-start text-xs font-bold tracking-wide text-brand-text-muted"
+                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-start text-xs font-bold tracking-wide text-brand-text"
               >
                 {{ t('contracts.columns.title') }}
               </th>
               <th
-                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
+                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text"
               >
                 {{ t('contracts.columns.category') }}
               </th>
               <th
-                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
+                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text"
               >
                 {{ t('contracts.columns.counterparty') }}
               </th>
               <th
-                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
+                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text"
               >
                 {{ t('contracts.columns.startDate') }}
               </th>
               <th
-                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
+                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text"
               >
                 {{ t('contracts.columns.endDate') }}
               </th>
               <th
-                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
+                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text"
               >
                 {{ t('contracts.columns.status') }}
               </th>
               <th
-                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
+                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text"
               >
                 {{ t('contracts.columns.value') }}
               </th>
               <th
-                class="w-28 whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
+                class="w-28 whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text"
               >
                 {{ t('contracts.columns.actions') }}
               </th>
@@ -533,33 +578,34 @@ function isCategoryInactive(contract: Contract): boolean {
             <tr
               v-for="(contract, index) in contracts"
               :key="contract.id"
-              class="group transition-colors duration-150"
-              :class="index % 2 === 1 ? 'bg-[#FAFBFA]' : 'bg-brand-surface'"
+              class="group"
+              :class="rowToneClass(index)"
+              role="row"
+              :aria-selected="focusedRowIndex === index"
+              @mouseenter="focusedRowIndex = index"
             >
               <td
-                class="whitespace-nowrap border-b border-brand-border/80 px-5 py-3.5 font-mono text-xs text-brand-text-secondary group-hover:bg-[#EEF2F0]"
-                dir="ltr"
+                class="whitespace-nowrap border-b border-brand-border/80 border-s-[3px] px-5 py-3.5 transition-colors duration-150 group-hover:border-s-brand-primary group-hover:bg-[#EDF6F1]"
+                :class="rowAccentClass(index)"
               >
                 <RouterLink
                   :to="`/app/contracts/${contract.id}`"
-                  class="font-semibold text-brand-primary-dark hover:underline"
+                  class="inline-flex items-center gap-1.5 rounded-lg border border-brand-border bg-brand-bg px-2.5 py-1 font-mono text-[12px] font-bold tracking-wide text-brand-primary-dark shadow-[0_1px_0_rgba(23,32,29,0.04)] transition group-hover:border-brand-primary/30 group-hover:bg-brand-surface hover:border-brand-primary/35 hover:bg-brand-primary-soft hover:text-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25"
+                  :title="t('contracts.actions.view')"
+                  dir="ltr"
                 >
                   {{ contract.contract_number }}
                 </RouterLink>
               </td>
-              <td
-                class="border-b border-brand-border/80 px-5 py-3.5 font-semibold text-brand-text group-hover:bg-[#EEF2F0]"
-              >
+              <td class="border-b border-brand-border/80 px-5 py-3.5 font-semibold text-brand-text transition-colors duration-150 group-hover:bg-[#EDF6F1]">
                 <RouterLink
                   :to="`/app/contracts/${contract.id}`"
-                  class="hover:text-brand-primary-dark"
+                  class="transition group-hover:text-brand-primary-dark hover:underline hover:underline-offset-2"
                 >
                   {{ contract.title }}
                 </RouterLink>
               </td>
-              <td
-                class="border-b border-brand-border/80 px-5 py-3.5 text-center text-brand-text-secondary group-hover:bg-[#EEF2F0]"
-              >
+              <td class="border-b border-brand-border/80 px-5 py-3.5 text-center text-brand-text transition-colors duration-150 group-hover:bg-[#EDF6F1]">
                 <span>{{ contract.category?.name ?? '—' }}</span>
                 <span
                   v-if="isCategoryInactive(contract)"
@@ -568,55 +614,54 @@ function isCategoryInactive(contract: Contract): boolean {
                   {{ t('contracts.categoryInactive') }}
                 </span>
               </td>
-              <td
-                class="border-b border-brand-border/80 px-5 py-3.5 text-center text-brand-text-secondary group-hover:bg-[#EEF2F0]"
-              >
+              <td class="border-b border-brand-border/80 px-5 py-3.5 text-center text-brand-text transition-colors duration-150 group-hover:bg-[#EDF6F1]">
                 {{ contract.counterparty_name }}
               </td>
               <td
-                class="border-b border-brand-border/80 px-5 py-3.5 text-center text-brand-text-secondary group-hover:bg-[#EEF2F0]"
+                class="border-b border-brand-border/80 px-5 py-3.5 text-center text-brand-text transition-colors duration-150 group-hover:bg-[#EDF6F1]"
                 dir="ltr"
               >
                 {{ contract.start_date }}
               </td>
               <td
-                class="border-b border-brand-border/80 px-5 py-3.5 text-center text-brand-text-secondary group-hover:bg-[#EEF2F0]"
+                class="border-b border-brand-border/80 px-5 py-3.5 text-center text-brand-text transition-colors duration-150 group-hover:bg-[#EDF6F1]"
                 dir="ltr"
               >
                 {{ contract.end_date ?? '—' }}
               </td>
-              <td
-                class="border-b border-brand-border/80 px-5 py-3.5 text-center group-hover:bg-[#EEF2F0]"
-              >
+              <td class="border-b border-brand-border/80 px-5 py-3.5 text-center transition-colors duration-150 group-hover:bg-[#EDF6F1]">
                 <div class="flex flex-wrap items-center justify-center gap-1.5">
                   <span
-                    class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold"
+                    class="inline-flex min-w-[7.25rem] items-center justify-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold tracking-wide shadow-sm"
                     :class="contractStatusBadgeClass(contract.status)"
                   >
+                    <span
+                      class="h-1.5 w-1.5 shrink-0 rounded-full"
+                      :class="contractStatusDotClass(contract.status)"
+                      aria-hidden="true"
+                    />
                     {{ t(`contracts.status.${contract.status}`) }}
                   </span>
                   <span
                     v-if="contract.is_expiring_soon"
-                    class="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-900 ring-1 ring-amber-200/70"
+                    class="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-900 ring-1 ring-inset ring-amber-200/80"
                   >
                     {{ t('contracts.expiringSoonBadge') }}
                   </span>
                 </div>
               </td>
               <td
-                class="border-b border-brand-border/80 px-5 py-3.5 text-center text-brand-text-secondary group-hover:bg-[#EEF2F0]"
+                class="border-b border-brand-border/80 px-5 py-3.5 text-center text-brand-text transition-colors duration-150 group-hover:bg-[#EDF6F1]"
                 dir="ltr"
               >
                 {{ formatValue(contract) }}
               </td>
-              <td
-                class="border-b border-brand-border/80 px-5 py-3.5 text-center group-hover:bg-[#EEF2F0]"
-              >
-                <div class="inline-flex items-center justify-center gap-0.5">
+              <td class="border-b border-brand-border/80 px-5 py-3.5 text-center transition-colors duration-150 group-hover:bg-[#EDF6F1]">
+                <div class="inline-flex items-center justify-center gap-0.5 opacity-70 transition group-hover:opacity-100">
                   <AppTooltip :text="t('contracts.actions.view')">
                     <RouterLink
                       :to="`/app/contracts/${contract.id}`"
-                      class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-brand-text-secondary transition hover:bg-brand-bg"
+                      class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-brand-text transition hover:bg-brand-surface hover:text-brand-primary-dark"
                       :aria-label="t('contracts.actions.view')"
                     >
                       <Eye class="h-4 w-4" :stroke-width="2" />
@@ -629,7 +674,7 @@ function isCategoryInactive(contract: Contract): boolean {
                     <AppTooltip :text="t('contracts.actions.edit')">
                       <button
                         type="button"
-                        class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-brand-primary-dark transition hover:bg-brand-primary-soft"
+                        class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-brand-primary-dark transition hover:bg-brand-surface"
                         :aria-label="t('contracts.actions.edit')"
                         @click="openEdit(contract)"
                       >
@@ -678,8 +723,6 @@ function isCategoryInactive(contract: Contract): boolean {
       :form-error="formError"
       :field-errors="fieldErrors"
       :submitting="isFormSubmitting"
-      :category-options="categoryFormOptions"
-      :employee-options="employeeFormOptions"
       :org-unit-options="orgUnitFormOptions"
       :counterparty-kind-options="counterpartyKindOptions"
       @close="closeDrawer"

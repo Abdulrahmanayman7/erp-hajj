@@ -21,12 +21,24 @@ export function resolveInventoryListState(input: {
 export function stockStateBadgeClass(state: StockState): string {
   switch (state) {
     case 'low':
-      return 'bg-amber-50 text-amber-900 ring-1 ring-amber-200/80'
+      return 'bg-amber-100 text-brand-text ring-1 ring-inset ring-amber-300/80'
     case 'out_of_stock':
-      return 'bg-red-50 text-red-800 ring-1 ring-red-200/70'
+      return 'bg-red-100 text-brand-text ring-1 ring-inset ring-red-300/80'
     case 'normal':
     default:
-      return 'bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200/70'
+      return 'bg-emerald-100 text-brand-text ring-1 ring-inset ring-emerald-300/80'
+  }
+}
+
+export function stockStateDotClass(state: StockState): string {
+  switch (state) {
+    case 'low':
+      return 'bg-amber-500'
+    case 'out_of_stock':
+      return 'bg-red-500'
+    case 'normal':
+    default:
+      return 'bg-emerald-500'
   }
 }
 
@@ -36,14 +48,14 @@ export function movementTypeBadgeClass(type: MovementType): string {
     case 'receipt':
     case 'return':
     case 'transfer_in':
-      return 'bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200/70'
+      return 'bg-emerald-100 text-brand-text ring-1 ring-inset ring-emerald-300/80'
     case 'issue':
     case 'transfer_out':
-      return 'bg-amber-50 text-amber-900 ring-1 ring-amber-200/80'
+      return 'bg-amber-100 text-brand-text ring-1 ring-inset ring-amber-300/80'
     case 'adjustment':
-      return 'bg-violet-50 text-violet-800 ring-1 ring-violet-200/70'
+      return 'bg-violet-100 text-brand-text ring-1 ring-inset ring-violet-300/80'
     default:
-      return 'bg-neutral-100 text-neutral-700 ring-1 ring-neutral-200/80'
+      return 'bg-neutral-100 text-brand-text ring-1 ring-inset ring-neutral-300/80'
   }
 }
 

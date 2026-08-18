@@ -3,7 +3,10 @@ import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Loader2, X } from 'lucide-vue-next'
 
+import { listPositions } from '../api/positionsApi'
+import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
+import { positionSelectOption, toSelectId } from '@/shared/lookups/selectOptions'
 
 import type { Employee, EmployeeFormState } from '../types/employees'
 
@@ -15,7 +18,6 @@ const props = defineProps<{
   fieldErrors: Record<string, string>
   submitting: boolean
   orgUnitOptions: AppSelectOption[]
-  positionOptions: AppSelectOption[]
 }>()
 
 const emit = defineEmits<{
@@ -29,6 +31,12 @@ const nameInputRef = ref<HTMLInputElement | null>(null)
 let previouslyFocused: HTMLElement | null = null
 
 const isEdit = computed(() => props.editing != null)
+const fetchActivePositions = (params: { search?: string; page: number; per_page: number }) =>
+  listPositions({ ...params, is_active: true })
+const emptyPosition = computed<AppSelectOption>(() => ({ value: '', label: t('employees.noPosition') }))
+const selectedPosition = computed(() =>
+  props.editing?.position ? positionSelectOption(props.editing.position) : null,
+)
 const title = computed(() => (isEdit.value ? t('employees.editTitle') : t('employees.createTitle')))
 const subtitle = computed(() =>
   isEdit.value ? t('employees.editSubtitle') : t('employees.createSubtitle'),
@@ -182,18 +190,21 @@ onUnmounted(() => {
                 <span class="mb-2 block text-sm font-semibold text-brand-text">
                   {{ t('employees.fields.position') }}
                 </span>
-                <AppSelect
+                <AppRemoteSelect
                   :model-value="form.position_id"
-                  :options="positionOptions"
+                  query-key="positions-active"
+                  :fetcher="fetchActivePositions"
+                  :map-option="positionSelectOption"
+                  :empty-option="emptyPosition"
+                  :selected-option="selectedPosition"
                   :placeholder="t('employees.selectPosition')"
                   :disabled="submitting"
-                  searchable
-                  @update:model-value="
-                    patch({
-                      position_id: $event === null || $event === '' ? '' : Number($event),
-                    })
-                  "
+                  :enabled="open"
+                  @update:model-value="patch({ position_id: toSelectId($event) })"
                 />
+                <p v-if="fieldErrors.position_id" class="mt-1.5 text-xs text-red-600">
+                  {{ fieldErrors.position_id }}
+                </p>
               </div>
 
               <label class="block">

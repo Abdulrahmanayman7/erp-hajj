@@ -49,6 +49,25 @@ test('permission cache invalidates on role assignment change', function (): void
     });
 });
 
+test('in-request permission memo is cleared by forgetUser', function (): void {
+    $tenant = Tenant::factory()->create();
+    $user = provisionTenantRbac($tenant);
+
+    withTenant($tenant, function () use ($user): void {
+        $effective = app(EffectivePermissions::class);
+
+        expect($effective->hasPermission($user->fresh(), 'dashboard.view'))->toBeTrue();
+
+        $user->roles()->detach();
+
+        expect($effective->hasPermission($user->fresh(), 'dashboard.view'))->toBeTrue();
+
+        $effective->forgetUser($user->fresh());
+
+        expect($effective->hasPermission($user->fresh(), 'dashboard.view'))->toBeFalse();
+    });
+});
+
 test('catalog synchronizer is idempotent', function (): void {
     $sync = app(PermissionCatalogSynchronizer::class);
     $first = $sync->sync();

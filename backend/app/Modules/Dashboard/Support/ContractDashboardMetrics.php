@@ -46,8 +46,8 @@ final class ContractDashboardMetrics
         $expiringQuery = Contract::query()
             ->where('status', ContractStatus::Executing)
             ->whereNotNull('end_date')
-            ->whereDate('end_date', '>=', $todayDate)
-            ->whereDate('end_date', '<=', $until);
+            ->where('end_date', '>=', $todayDate)
+            ->where('end_date', '<=', $until);
 
         $expiringCount = (clone $expiringQuery)->count();
         $expiringEntities = (clone $expiringQuery)

@@ -3,13 +3,19 @@ import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Loader2, Upload, X } from 'lucide-vue-next'
 
-import { useContractsQuery } from '@/modules/contracts/queries/useContractsQuery'
-import { useDecisionsQuery } from '@/modules/decisions/queries/useDecisionsQuery'
-import { useEmployeesQuery } from '@/modules/employees/queries/useEmployeesQuery'
-import { useMeetingsQuery } from '@/modules/meetings/queries/useMeetingsQuery'
+import { listContracts } from '@/modules/contracts/api/contractsApi'
+import { listDecisions } from '@/modules/decisions/api/decisionsApi'
+import { listEmployees } from '@/modules/employees/api/employeesApi'
+import { listMeetings } from '@/modules/meetings/api/meetingsApi'
 import { useOrganizationUnitsFlatQuery } from '@/modules/organization/queries/useOrganizationUnitsQuery'
-import { useTasksQuery } from '@/modules/tasks/queries/useTasksQuery'
+import { listTasks } from '@/modules/tasks/api/tasksApi'
+import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
+import {
+  employeeSelectOption,
+  numberedEntityOption,
+  toSelectId,
+} from '@/shared/lookups/selectOptions'
 
 import { useDocumentCategoriesQuery } from '../queries/useCategoriesQuery'
 import type { DocumentUploadFormState, LockedDocumentLink } from '../types/documents'
@@ -65,59 +71,27 @@ const linkTypeOptions = computed<AppSelectOption[]>(() => [
   })),
 ])
 
-const linkType = computed(() => props.lockedLink?.type ?? props.form.linkable_type)
 const linkLocked = computed(() => props.lockedLink != null)
 
-const listParams = computed(() => ({ per_page: 100 }))
-
-const { data: contractsData } = useContractsQuery(listParams)
-const { data: meetingsData } = useMeetingsQuery(listParams)
-const { data: decisionsData } = useDecisionsQuery(listParams)
-const { data: tasksData } = useTasksQuery(listParams)
-const { data: employeesData } = useEmployeesQuery(
-  computed(() => ({ status: 'active' as const, per_page: 100 })),
-)
 const { data: orgUnitsData } = useOrganizationUnitsFlatQuery({ status: 'active' })
+const orgUnitOptions = computed<AppSelectOption[]>(() =>
+  (orgUnitsData.value?.data ?? []).map((x) => ({
+    value: x.id,
+    label: x.name,
+    hint: x.code,
+  })),
+)
 
-const entityOptions = computed<AppSelectOption[]>(() => {
-  const type = linkType.value
-  if (!type) return []
-
-  switch (type) {
-    case 'contract':
-      return (contractsData.value?.data ?? []).map((x) => ({
-        value: x.id,
-        label: `${x.contract_number} — ${x.title}`,
-      }))
-    case 'meeting':
-      return (meetingsData.value?.data ?? []).map((x) => ({
-        value: x.id,
-        label: `${x.meeting_number} — ${x.title}`,
-      }))
-    case 'decision':
-      return (decisionsData.value?.data ?? []).map((x) => ({
-        value: x.id,
-        label: `${x.decision_number} — ${x.title}`,
-      }))
-    case 'task':
-      return (tasksData.value?.data ?? []).map((x) => ({
-        value: x.id,
-        label: `${x.task_number} — ${x.title}`,
-      }))
-    case 'employee':
-      return (employeesData.value?.data ?? []).map((x) => ({
-        value: x.id,
-        label: `${x.employee_number} — ${x.full_name}`,
-      }))
-    case 'organization_unit':
-      return (orgUnitsData.value?.data ?? []).map((x) => ({
-        value: x.id,
-        label: `${x.code} — ${x.name}`,
-      }))
-    default:
-      return []
-  }
-})
+const fetchContracts = (params: { search?: string; page: number; per_page: number }) =>
+  listContracts(params)
+const fetchMeetings = (params: { search?: string; page: number; per_page: number }) =>
+  listMeetings(params)
+const fetchDecisions = (params: { search?: string; page: number; per_page: number }) =>
+  listDecisions(params)
+const fetchTasks = (params: { search?: string; page: number; per_page: number }) =>
+  listTasks(params)
+const fetchActiveEmployees = (params: { search?: string; page: number; per_page: number }) =>
+  listEmployees({ ...params, status: 'active' })
 
 function patch(partial: Partial<DocumentUploadFormState>): void {
   emit('update:form', { ...props.form, ...partial })
@@ -274,14 +248,63 @@ onUnmounted(() => {
                 </label>
                 <label v-if="form.linkable_type" class="block space-y-1.5">
                   <span class="text-sm font-medium">{{ t('documents.fields.linkableId') }}</span>
-                  <AppSelect
+                  <AppRemoteSelect
+                    v-if="form.linkable_type === 'contract'"
                     :model-value="form.linkable_id"
-                    :options="entityOptions"
+                    query-key="document-link-contracts"
+                    :fetcher="fetchContracts"
+                    :map-option="numberedEntityOption"
+                    :enabled="open"
+                    :disabled="submitting"
+                    @update:model-value="patch({ linkable_id: toSelectId($event) })"
+                  />
+                  <AppRemoteSelect
+                    v-else-if="form.linkable_type === 'meeting'"
+                    :model-value="form.linkable_id"
+                    query-key="document-link-meetings"
+                    :fetcher="fetchMeetings"
+                    :map-option="numberedEntityOption"
+                    :enabled="open"
+                    :disabled="submitting"
+                    @update:model-value="patch({ linkable_id: toSelectId($event) })"
+                  />
+                  <AppRemoteSelect
+                    v-else-if="form.linkable_type === 'decision'"
+                    :model-value="form.linkable_id"
+                    query-key="document-link-decisions"
+                    :fetcher="fetchDecisions"
+                    :map-option="numberedEntityOption"
+                    :enabled="open"
+                    :disabled="submitting"
+                    @update:model-value="patch({ linkable_id: toSelectId($event) })"
+                  />
+                  <AppRemoteSelect
+                    v-else-if="form.linkable_type === 'task'"
+                    :model-value="form.linkable_id"
+                    query-key="document-link-tasks"
+                    :fetcher="fetchTasks"
+                    :map-option="numberedEntityOption"
+                    :enabled="open"
+                    :disabled="submitting"
+                    @update:model-value="patch({ linkable_id: toSelectId($event) })"
+                  />
+                  <AppRemoteSelect
+                    v-else-if="form.linkable_type === 'employee'"
+                    :model-value="form.linkable_id"
+                    query-key="employees-active"
+                    :fetcher="fetchActiveEmployees"
+                    :map-option="employeeSelectOption"
+                    :enabled="open"
+                    :disabled="submitting"
+                    @update:model-value="patch({ linkable_id: toSelectId($event) })"
+                  />
+                  <AppSelect
+                    v-else-if="form.linkable_type === 'organization_unit'"
+                    :model-value="form.linkable_id"
+                    :options="orgUnitOptions"
                     searchable
                     :disabled="submitting"
-                    @update:model-value="
-                      patch({ linkable_id: $event === '' || $event == null ? '' : Number($event) })
-                    "
+                    @update:model-value="patch({ linkable_id: toSelectId($event) })"
                   />
                   <p v-if="fieldErrors.linkable_id" class="text-sm text-red-700">
                     {{ fieldErrors.linkable_id }}

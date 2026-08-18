@@ -3,7 +3,10 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Loader2, X } from 'lucide-vue-next'
 
+import { listEmployees } from '@/modules/employees/api/employeesApi'
+import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
+import { employeeSelectOption, toSelectId } from '@/shared/lookups/selectOptions'
 
 import type { AssignCustodyFormState } from '../types/assets'
 import { ASSET_CONDITIONS } from '../types/assets'
@@ -14,7 +17,6 @@ const props = defineProps<{
   formError: string
   fieldErrors: Record<string, string>
   submitting: boolean
-  employeeOptions: AppSelectOption[]
 }>()
 
 const emit = defineEmits<{
@@ -24,6 +26,8 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const fetchActiveEmployees = (params: { search?: string; page: number; per_page: number }) =>
+  listEmployees({ ...params, status: 'active' })
 
 const conditionOptions = computed<AppSelectOption[]>(() =>
   ASSET_CONDITIONS.map((condition) => ({
@@ -66,12 +70,15 @@ function patch(part: Partial<AssignCustodyFormState>): void {
         <form class="space-y-4 px-5 py-5" @submit.prevent="emit('submit')">
           <label class="block">
             <span class="text-sm font-medium">{{ t('assets.fields.employee') }}</span>
-            <AppSelect
+            <AppRemoteSelect
               class="mt-1"
               searchable
               :model-value="form.employee_id"
-              :options="employeeOptions"
-              @update:model-value="patch({ employee_id: $event as number | '' })"
+              query-key="employees-active"
+              :fetcher="fetchActiveEmployees"
+              :map-option="employeeSelectOption"
+              :enabled="open"
+              @update:model-value="patch({ employee_id: toSelectId($event) })"
             />
             <p v-if="fieldErrors.employee_id" class="mt-1 text-xs text-red-600">
               {{ t(`assets.validation.${fieldErrors.employee_id}`) }}

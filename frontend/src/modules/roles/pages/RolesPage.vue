@@ -19,6 +19,7 @@ import AppTooltip from '@/shared/components/AppTooltip.vue'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
 import { useConfirm } from '@/shared/composables/useConfirm'
 import { useToast } from '@/shared/composables/useToast'
+import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
 
 import RoleFormDrawer from '../components/RoleFormDrawer.vue'
 import {
@@ -41,7 +42,8 @@ const filters = reactive({
   per_page: 20,
 })
 
-const queryParams = computed(() => ({ ...filters }))
+const committedSearch = useDebouncedRef(() => filters.search)
+const queryParams = computed(() => ({ ...filters, search: committedSearch.value }))
 const { data, isLoading, isError, refetch, isFetching } = useRolesQuery(queryParams)
 const createMutation = useCreateRoleMutation()
 const updateMutation = useUpdateRoleMutation()
@@ -66,7 +68,7 @@ const isSubmitting = computed(
 )
 
 watch(
-  () => filters.search,
+  committedSearch,
   () => {
     filters.page = 1
   },

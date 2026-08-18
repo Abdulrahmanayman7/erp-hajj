@@ -4,8 +4,11 @@ import { useI18n } from 'vue-i18n'
 import { RouterLink, useRouter } from 'vue-router'
 import { Loader2, Pencil, Plus, Trash2 } from 'lucide-vue-next'
 
+import { listEmployees } from '@/modules/employees/api/employeesApi'
 import { ApiError } from '@/shared/api/http'
+import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
+import { employeeSelectOption } from '@/shared/lookups/selectOptions'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
 import { useConfirm } from '@/shared/composables/useConfirm'
 import { usePermissions } from '@/shared/composables/usePermissions'
@@ -32,7 +35,6 @@ import {
 
 const props = defineProps<{
   meeting: Meeting
-  employeeOptions: AppSelectOption[]
 }>()
 
 const emit = defineEmits<{
@@ -80,6 +82,13 @@ const statusOptions = computed<AppSelectOption[]>(() =>
     value: status,
     label: t(`meetings.recommendationStatus.${status}`),
   })),
+)
+
+const fetchActiveEmployees = (params: { search?: string; page: number; per_page: number }) =>
+  listEmployees({ ...params, status: 'active' })
+const emptyEmployee = computed<AppSelectOption>(() => ({ value: '', label: t('meetings.noEmployee') }))
+const selectedOwner = computed(() =>
+  editing.value?.owner ? employeeSelectOption(editing.value.owner) : null,
 )
 
 const isPending = computed(
@@ -265,11 +274,16 @@ function canCreateLinkedDecision(item: MeetingRecommendation): boolean {
           <span class="mb-1.5 block text-sm font-semibold text-brand-text">
             {{ t('meetings.fields.recommendationOwner') }}
           </span>
-          <AppSelect
-            v-model="form.owner_employee_id"
-            :options="employeeOptions"
-            searchable
+          <AppRemoteSelect
+            :model-value="form.owner_employee_id"
+            query-key="employees-active"
+            :fetcher="fetchActiveEmployees"
+            :map-option="employeeSelectOption"
+            :empty-option="emptyEmployee"
+            :selected-option="selectedOwner"
             :disabled="isPending"
+            :enabled="formOpen"
+            @update:model-value="form.owner_employee_id = $event === '' || $event == null ? '' : Number($event)"
           />
         </div>
         <div>

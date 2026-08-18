@@ -6,6 +6,7 @@ use App\Core\Audit\Listeners\PersistAuthorizationSecurityAudit;
 use App\Core\Audit\Listeners\PersistAuthSecurityAudit;
 use App\Core\Auth\Events\AuthSecurityEvent;
 use App\Core\Auth\Listeners\LogAuthSecurityEvent;
+use App\Core\Authorization\EffectivePermissions;
 use App\Core\Authorization\Events\AuthorizationSecurityEvent;
 use App\Core\Authorization\Listeners\LogAuthorizationSecurityEvent;
 use App\Core\Shared\CorrelationId;
@@ -67,6 +68,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->scoped(CorrelationId::class);
+        $this->app->scoped(EffectivePermissions::class);
     }
 
     public function boot(): void

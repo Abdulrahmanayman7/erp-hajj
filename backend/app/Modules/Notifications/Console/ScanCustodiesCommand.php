@@ -46,9 +46,13 @@ class ScanCustodiesCommand extends Command
                             ->where('expected_return_at', '<=', $until)
                             ->orderBy('id')
                             ->chunkById(100, function ($custodies) use ($dispatcher, $recipients, $bucket, &$soonCount): void {
+                                $usersByEmployeeId = $recipients->activeUsersByEmployeeIds(
+                                    $custodies->pluck('employee_id')->map(fn ($id): int => (int) $id),
+                                );
+
                                 foreach ($custodies as $custody) {
                                     /** @var AssetCustody $custody */
-                                    $user = $recipients->resolveUserFromEmployeeId((int) $custody->employee_id);
+                                    $user = $usersByEmployeeId[(int) $custody->employee_id] ?? null;
                                     if ($user === null) {
                                         continue;
                                     }
@@ -71,9 +75,13 @@ class ScanCustodiesCommand extends Command
                             ->where('expected_return_at', '<', $now)
                             ->orderBy('id')
                             ->chunkById(100, function ($custodies) use ($dispatcher, $recipients, $bucket, &$overdueCount): void {
+                                $usersByEmployeeId = $recipients->activeUsersByEmployeeIds(
+                                    $custodies->pluck('employee_id')->map(fn ($id): int => (int) $id),
+                                );
+
                                 foreach ($custodies as $custody) {
                                     /** @var AssetCustody $custody */
-                                    $user = $recipients->resolveUserFromEmployeeId((int) $custody->employee_id);
+                                    $user = $usersByEmployeeId[(int) $custody->employee_id] ?? null;
                                     if ($user === null) {
                                         continue;
                                     }

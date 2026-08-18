@@ -38,6 +38,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withCommands([
         __DIR__.'/../app/Core/Authorization/Console',
+        __DIR__.'/../app/Core/Demo/Console',
         __DIR__.'/../app/Modules/Contracts/Console',
         __DIR__.'/../app/Modules/Notifications/Console',
     ])

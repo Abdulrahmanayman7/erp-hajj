@@ -35,7 +35,7 @@ final class TaskDashboardMetrics
         $overdueQuery = Task::query()
             ->whereIn('status', $open)
             ->whereNotNull('due_date')
-            ->whereDate('due_date', '<', $today);
+            ->where('due_date', '<', $today);
 
         $overdueCount = (clone $overdueQuery)->count();
         $overdueEntities = (clone $overdueQuery)
@@ -47,8 +47,8 @@ final class TaskDashboardMetrics
         $dueSoonQuery = Task::query()
             ->whereIn('status', $open)
             ->whereNotNull('due_date')
-            ->whereDate('due_date', '>=', $today)
-            ->whereDate('due_date', '<=', $dueSoonUntil);
+            ->where('due_date', '>=', $today)
+            ->where('due_date', '<=', $dueSoonUntil);
 
         $dueSoonCount = (clone $dueSoonQuery)->count();
         $dueSoonEntities = (clone $dueSoonQuery)
@@ -60,7 +60,7 @@ final class TaskDashboardMetrics
         $dueToday = Task::query()
             ->whereIn('status', $open)
             ->whereNotNull('due_date')
-            ->whereDate('due_date', '=', $today)
+            ->where('due_date', '=', $today)
             ->orderBy('due_date')
             ->orderBy('id')
             ->limit(8)
@@ -76,7 +76,7 @@ final class TaskDashboardMetrics
             $myOpenCount = (clone $myOpen)->count();
             $myOverdue = (clone $myOpen)
                 ->whereNotNull('due_date')
-                ->whereDate('due_date', '<', $today)
+                ->where('due_date', '<', $today)
                 ->count();
 
             $myTasks = [

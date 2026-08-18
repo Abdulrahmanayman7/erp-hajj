@@ -2,7 +2,16 @@
 import { computed, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
-import { ArrowRight, Pencil } from 'lucide-vue-next'
+import {
+  ArrowRight,
+  Barcode,
+  FileText,
+  Package,
+  Pencil,
+  Tag,
+  UserRound,
+  Warehouse,
+} from 'lucide-vue-next'
 
 import EntityDocumentsSection from '@/modules/documents/components/EntityDocumentsSection.vue'
 import { ApiError } from '@/shared/api/http'
@@ -23,6 +32,7 @@ import {
   mapInventoryErrorCode,
   movementTypeBadgeClass,
   stockStateBadgeClass,
+  stockStateDotClass,
   validateInventoryItemForm,
 } from '../validation/inventoryValidation'
 
@@ -32,18 +42,47 @@ const router = useRouter()
 const { can } = usePermissions()
 const toast = useToast()
 
-const id = computed(() => Number(route.params.id))
+const id = computed(() => {
+  const raw = route.params.id
+  const value = Number(Array.isArray(raw) ? raw[0] : raw)
+  return Number.isFinite(value) ? value : null
+})
+
 const { data, isLoading, isError, refetch } = useInventoryItemQuery(id)
 const item = computed(() => data.value ?? null)
 
 const { data: balancesData } = useItemBalancesQuery(id)
 const { data: movementsData } = useInventoryMovementsQuery(
-  computed(() => ({ inventory_item_id: id.value, per_page: 15 })),
+  computed(() => ({
+    inventory_item_id: id.value ?? undefined,
+    per_page: 15,
+  })),
 )
 const { data: categoriesData } = useInventoryCategoriesQuery({})
 
 const balances = computed(() => balancesData.value ?? [])
 const movements = computed(() => movementsData.value?.data ?? [])
+
+const kpis = computed(() => {
+  let lowStock = 0
+  let outOfStock = 0
+  let totalOnHand = 0
+
+  for (const balance of balances.value) {
+    if (balance.stock_state === 'low') lowStock += 1
+    if (balance.stock_state === 'out_of_stock') outOfStock += 1
+    const qty = Number(balance.on_hand)
+    if (Number.isFinite(qty)) totalOnHand += qty
+  }
+
+  return {
+    warehouses: balances.value.length,
+    lowStock,
+    outOfStock,
+    totalOnHand,
+  }
+})
+
 const categoryFormOptions = computed<AppSelectOption[]>(() => [
   { value: '', label: t('inventory.noCategory') },
   ...(categoriesData.value ?? [])
@@ -52,6 +91,7 @@ const categoryFormOptions = computed<AppSelectOption[]>(() => [
 ])
 
 const updateMutation = useUpdateInventoryItemMutation()
+const isFormSubmitting = computed(() => updateMutation.isPending.value)
 const drawerOpen = ref(false)
 const formError = ref('')
 const fieldErrors = reactive<Record<string, string>>({})
@@ -67,7 +107,7 @@ const form = reactive<InventoryItemFormState>({
 })
 
 function openEdit(): void {
-  if (!item.value) return
+  if (!item.value || !can('inventory.manage_items')) return
   Object.assign(form, {
     name: item.value.name,
     description: item.value.description ?? '',
@@ -89,6 +129,7 @@ async function submitForm(): Promise<void> {
   Object.keys(fieldErrors).forEach((k) => delete fieldErrors[k])
   Object.assign(fieldErrors, validateInventoryItemForm(form))
   if (Object.keys(fieldErrors).length) return
+
   try {
     await updateMutation.mutateAsync({
       id: item.value.id,
@@ -105,140 +146,429 @@ async function submitForm(): Promise<void> {
     })
     toast.success(t('inventory.toasts.itemUpdated'))
     drawerOpen.value = false
+    await refetch()
   } catch (error) {
     if (error instanceof ApiError) {
       const mapped = mapInventoryErrorCode(error.code)
       formError.value =
-        mapped !== 'generic' ? t(`inventory.errors.${mapped}`) : error.message || t('inventory.errors.generic')
+        mapped !== 'generic'
+          ? t(`inventory.errors.${mapped}`)
+          : error.message || t('inventory.errors.generic')
     } else {
       formError.value = t('inventory.errors.generic')
     }
   }
 }
+
+function assignForm(next: InventoryItemFormState): void {
+  Object.assign(form, next)
+}
 </script>
 
 <template>
-  <div class="space-y-6">
-    <button type="button" class="rounded-lg border px-3 py-2 text-sm" @click="router.push('/app/inventory/items')">
-      <ArrowRight class="inline h-4 w-4" />
-      {{ t('inventory.items.backToList') }}
-    </button>
+  <div class="mx-auto max-w-[1200px] space-y-5">
+    <div class="flex flex-wrap items-center gap-3">
+      <button
+        type="button"
+        class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text transition hover:bg-brand-bg"
+        @click="router.push('/app/inventory/items')"
+      >
+        <ArrowRight class="h-4 w-4" />
+        {{ t('inventory.items.backToList') }}
+      </button>
+    </div>
 
-    <div v-if="isLoading" class="rounded-2xl border p-10 text-center">{{ t('inventory.loadingDetails') }}</div>
-    <div v-else-if="isError || !item" class="rounded-2xl border p-10 text-center">
-      {{ t('inventory.errors.loadDetails') }}
-      <button type="button" class="ms-2 underline" @click="() => refetch()">{{ t('inventory.retry') }}</button>
+    <div
+      v-if="isLoading"
+      class="rounded-2xl border border-brand-border bg-brand-surface p-10 text-center text-sm text-brand-text-muted"
+    >
+      {{ t('inventory.loadingDetails') }}
+    </div>
+
+    <div
+      v-else-if="isError || !item"
+      class="rounded-2xl border border-red-200 bg-red-50 p-10 text-center"
+    >
+      <p class="text-sm text-red-700">{{ t('inventory.errors.loadDetails') }}</p>
+      <button
+        type="button"
+        class="mt-3 text-sm font-semibold text-brand-primary-dark underline"
+        @click="() => refetch()"
+      >
+        {{ t('inventory.retry') }}
+      </button>
     </div>
 
     <template v-else>
-      <div class="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <div class="flex flex-wrap items-center gap-2">
-            <span class="font-mono text-sm">{{ item.item_number }}</span>
-            <span
-              class="rounded-full px-2 py-0.5 text-xs font-semibold"
-              :class="item.is_active ? 'bg-emerald-50 text-emerald-800' : 'bg-neutral-100 text-neutral-600'"
-            >
-              {{ item.is_active ? t('inventory.status.active') : t('inventory.status.inactive') }}
-            </span>
-          </div>
-          <h2 class="mt-2 text-2xl font-bold">{{ item.name }}</h2>
-        </div>
-        <PermissionGuard v-if="can('inventory.manage_items')" permission="inventory.manage_items">
-          <button type="button" class="rounded-xl border px-4 py-2 text-sm font-semibold" @click="openEdit">
-            <Pencil class="inline h-4 w-4" />
-            {{ t('inventory.actions.edit') }}
-          </button>
-        </PermissionGuard>
-      </div>
-
-      <section>
-        <h3 class="mb-3 font-bold">{{ t('inventory.sections.overview') }}</h3>
-        <div class="grid gap-4 md:grid-cols-3">
-          <div
-            v-for="row in [
-              { label: 'category', value: item.category?.name },
-              { label: 'unit', value: t(`inventory.units.${item.unit}`) },
-              { label: 'barcode', value: item.barcode },
-              { label: 'minimumStock', value: formatQuantity(item.minimum_stock) },
-              { label: 'createdBy', value: item.created_by?.name },
-            ]"
-            :key="row.label"
-            class="rounded-2xl border bg-brand-surface p-4"
-          >
-            <p class="text-xs text-brand-text-muted">{{ t(`inventory.fields.${row.label}`) }}</p>
-            <p class="mt-1 font-semibold">{{ row.value || '—' }}</p>
-          </div>
-        </div>
-        <div class="mt-4 rounded-2xl border p-4">
-          <p class="text-xs text-brand-text-muted">{{ t('inventory.fields.description') }}</p>
-          <p class="mt-2 whitespace-pre-wrap">{{ item.description || '—' }}</p>
-        </div>
-      </section>
-
-      <section class="rounded-2xl border p-5">
-        <h3 class="mb-3 font-bold">{{ t('inventory.sections.balancesByWarehouse') }}</h3>
-        <div v-if="!balances.length" class="text-sm text-brand-text-muted">{{ t('inventory.balances.empty') }}</div>
-        <div v-else class="overflow-x-auto">
-          <table class="min-w-full text-sm">
-            <thead>
-              <tr class="text-xs text-brand-text-muted">
-                <th class="py-2 pe-4 text-start">{{ t('inventory.columns.warehouse') }}</th>
-                <th class="py-2 pe-4 text-start">{{ t('inventory.columns.onHand') }}</th>
-                <th class="py-2 text-start">{{ t('inventory.columns.stockState') }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="balance in balances" :key="balance.id" class="border-t">
-                <td class="py-2 pe-4">
-                  <RouterLink
-                    v-if="balance.warehouse"
-                    :to="`/app/warehouses/${balance.warehouse.id}`"
-                    class="hover:underline"
-                  >
-                    {{ balance.warehouse.name }}
-                  </RouterLink>
-                </td>
-                <td class="py-2 pe-4 font-semibold">{{ formatQuantity(balance.on_hand) }}</td>
-                <td class="py-2">
-                  <span class="rounded-full px-2 py-0.5 text-xs font-semibold" :class="stockStateBadgeClass(balance.stock_state)">
-                    {{ t(`inventory.stockState.${balance.stock_state}`) }}
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section class="rounded-2xl border p-5">
-        <h3 class="mb-3 font-bold">{{ t('inventory.sections.recentMovements') }}</h3>
-        <div v-if="!movements.length" class="text-sm text-brand-text-muted">{{ t('inventory.movements.empty') }}</div>
-        <ul v-else class="space-y-2">
-          <li
-            v-for="movement in movements"
-            :key="movement.id"
-            class="flex flex-wrap items-center justify-between gap-2 rounded-xl border px-3 py-2 text-sm"
-          >
-            <div>
-              <span class="font-mono text-xs">{{ movement.movement_number }}</span>
-              <span class="ms-2 rounded-full px-2 py-0.5 text-xs font-semibold" :class="movementTypeBadgeClass(movement.type)">
-                {{ t(`inventory.movementType.${movement.type}`) }}
+      <section class="rounded-2xl border border-brand-border bg-brand-surface px-5 py-5 sm:px-6">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+          <div class="min-w-0 flex-1">
+            <div class="flex flex-wrap items-center gap-2">
+              <p
+                class="font-mono text-xs font-semibold tracking-wide text-brand-text-muted"
+                dir="ltr"
+              >
+                {{ item.item_number }}
+              </p>
+              <span
+                class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold tracking-wide text-brand-text ring-1 ring-inset"
+                :class="
+                  item.is_active
+                    ? 'bg-emerald-100 ring-emerald-300/80'
+                    : 'bg-neutral-100 ring-neutral-300/80'
+                "
+              >
+                <span
+                  class="h-1.5 w-1.5 shrink-0 rounded-full"
+                  :class="item.is_active ? 'bg-emerald-500' : 'bg-neutral-400'"
+                  aria-hidden="true"
+                />
+                {{ item.is_active ? t('inventory.status.active') : t('inventory.status.inactive') }}
               </span>
-              <span class="ms-2">{{ movement.warehouse?.name }}</span>
             </div>
-            <div class="font-semibold" :class="movement.direction === 'out' ? 'text-amber-800' : 'text-emerald-800'">
-              {{ formatSignedQuantity(movement.quantity, movement.direction) }}
-            </div>
-          </li>
-        </ul>
+            <h2 class="mt-2 text-[1.65rem] font-bold leading-snug text-brand-text sm:text-[1.85rem]">
+              {{ item.name }}
+            </h2>
+            <p class="mt-2 text-sm text-brand-text-secondary">
+              <span class="font-semibold text-brand-text">
+                {{ item.category?.name ?? t('inventory.noCategory') }}
+              </span>
+              <span class="mx-1.5 text-brand-text-muted">·</span>
+              {{ t(`inventory.units.${item.unit}`) }}
+              <template v-if="item.barcode">
+                <span class="mx-1.5 text-brand-text-muted">·</span>
+                <span dir="ltr">{{ item.barcode }}</span>
+              </template>
+            </p>
+          </div>
+
+          <PermissionGuard
+            v-if="can('inventory.manage_items')"
+            permission="inventory.manage_items"
+          >
+            <button
+              type="button"
+              class="inline-flex h-10 items-center gap-2 rounded-xl border border-brand-border bg-brand-surface px-4 text-sm font-semibold text-brand-primary-dark transition hover:bg-brand-primary-soft"
+              @click="openEdit"
+            >
+              <Pencil class="h-4 w-4" />
+              {{ t('inventory.actions.edit') }}
+            </button>
+          </PermissionGuard>
+        </div>
       </section>
 
-      <EntityDocumentsSection
-        linkable-type="inventory_item"
-        :linkable-id="item.id"
-        :link-label="`${item.item_number} — ${item.name}`"
-      />
+      <div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <div class="space-y-5">
+          <section class="rounded-2xl border border-brand-border bg-brand-surface">
+            <header class="border-b border-brand-border px-5 py-4">
+              <h3 class="text-sm font-bold text-brand-text">
+                {{ t('inventory.items.detailsSummary') }}
+              </h3>
+            </header>
+            <dl class="grid gap-0 sm:grid-cols-2">
+              <div class="flex gap-3 border-b border-brand-border/80 px-5 py-4 sm:border-e">
+                <span
+                  class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-bg text-brand-primary"
+                >
+                  <Tag class="h-4 w-4" :stroke-width="1.75" />
+                </span>
+                <div class="min-w-0">
+                  <dt class="text-xs font-semibold text-brand-text-muted">
+                    {{ t('inventory.fields.category') }}
+                  </dt>
+                  <dd class="mt-1 text-sm font-semibold text-brand-text">
+                    {{ item.category?.name || '—' }}
+                  </dd>
+                </div>
+              </div>
+
+              <div class="flex gap-3 border-b border-brand-border/80 px-5 py-4">
+                <span
+                  class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-bg text-brand-primary"
+                >
+                  <Package class="h-4 w-4" :stroke-width="1.75" />
+                </span>
+                <div class="min-w-0">
+                  <dt class="text-xs font-semibold text-brand-text-muted">
+                    {{ t('inventory.fields.unit') }}
+                  </dt>
+                  <dd class="mt-1 text-sm font-semibold text-brand-text">
+                    {{ t(`inventory.units.${item.unit}`) }}
+                  </dd>
+                </div>
+              </div>
+
+              <div class="flex gap-3 border-b border-brand-border/80 px-5 py-4 sm:border-e">
+                <span
+                  class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-bg text-brand-primary"
+                >
+                  <Barcode class="h-4 w-4" :stroke-width="1.75" />
+                </span>
+                <div class="min-w-0">
+                  <dt class="text-xs font-semibold text-brand-text-muted">
+                    {{ t('inventory.fields.barcode') }}
+                  </dt>
+                  <dd class="mt-1 text-sm font-semibold text-brand-text" dir="ltr">
+                    {{ item.barcode || '—' }}
+                  </dd>
+                </div>
+              </div>
+
+              <div class="flex gap-3 border-b border-brand-border/80 px-5 py-4">
+                <span
+                  class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-bg text-brand-primary"
+                >
+                  <Package class="h-4 w-4" :stroke-width="1.75" />
+                </span>
+                <div class="min-w-0">
+                  <dt class="text-xs font-semibold text-brand-text-muted">
+                    {{ t('inventory.fields.minimumStock') }}
+                  </dt>
+                  <dd class="mt-1 text-sm font-semibold text-brand-text" dir="ltr">
+                    {{ formatQuantity(item.minimum_stock) }}
+                  </dd>
+                </div>
+              </div>
+
+              <div class="flex gap-3 px-5 py-4 sm:col-span-2">
+                <span
+                  class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-bg text-brand-primary"
+                >
+                  <UserRound class="h-4 w-4" :stroke-width="1.75" />
+                </span>
+                <div class="min-w-0">
+                  <dt class="text-xs font-semibold text-brand-text-muted">
+                    {{ t('inventory.fields.createdBy') }}
+                  </dt>
+                  <dd class="mt-1 text-sm font-semibold text-brand-text">
+                    {{ item.created_by?.name || '—' }}
+                  </dd>
+                </div>
+              </div>
+            </dl>
+          </section>
+
+          <section
+            v-if="item.description"
+            class="rounded-2xl border border-brand-border bg-brand-surface"
+          >
+            <header class="flex items-center gap-2 border-b border-brand-border px-5 py-4">
+              <FileText class="h-4 w-4 text-brand-primary" :stroke-width="1.75" />
+              <h3 class="text-sm font-bold text-brand-text">
+                {{ t('inventory.fields.description') }}
+              </h3>
+            </header>
+            <p class="whitespace-pre-wrap px-5 py-4 text-sm leading-relaxed text-brand-text">
+              {{ item.description }}
+            </p>
+          </section>
+
+          <section
+            v-if="item.notes"
+            class="rounded-2xl border border-brand-border bg-brand-surface"
+          >
+            <header class="flex items-center gap-2 border-b border-brand-border px-5 py-4">
+              <FileText class="h-4 w-4 text-brand-primary" :stroke-width="1.75" />
+              <h3 class="text-sm font-bold text-brand-text">{{ t('inventory.fields.notes') }}</h3>
+            </header>
+            <p class="whitespace-pre-wrap px-5 py-4 text-sm leading-relaxed text-brand-text-secondary">
+              {{ item.notes }}
+            </p>
+          </section>
+
+          <section class="rounded-2xl border border-brand-border bg-brand-surface">
+            <header class="flex items-center gap-2 border-b border-brand-border px-5 py-4">
+              <Warehouse class="h-4 w-4 text-brand-primary" :stroke-width="1.75" />
+              <h3 class="text-sm font-bold text-brand-text">
+                {{ t('inventory.sections.balancesByWarehouse') }}
+              </h3>
+            </header>
+
+            <p
+              v-if="!balances.length"
+              class="px-5 py-8 text-center text-sm text-brand-text-muted"
+            >
+              {{ t('inventory.balances.empty') }}
+            </p>
+            <div v-else class="overflow-x-auto">
+              <table class="min-w-full border-separate border-spacing-0 text-sm">
+                <thead>
+                  <tr class="bg-[#F4F6F5]">
+                    <th
+                      v-for="key in ['warehouse', 'onHand', 'stockState']"
+                      :key="key"
+                      class="whitespace-nowrap border-b border-brand-border px-5 py-3 text-center text-xs font-bold text-brand-text"
+                    >
+                      {{ t(`inventory.columns.${key}`) }}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="(balance, index) in balances"
+                    :key="balance.id"
+                    class="group"
+                    :class="index % 2 === 1 ? 'bg-[#FAFBFA]' : 'bg-brand-surface'"
+                  >
+                    <td
+                      class="max-w-[14rem] whitespace-nowrap border-b border-brand-border/80 px-5 py-3 text-center transition-colors group-hover:bg-[#EDF6F1]"
+                    >
+                      <RouterLink
+                        v-if="balance.warehouse"
+                        :to="`/app/warehouses/${balance.warehouse.id}`"
+                        class="inline-flex max-w-full items-center justify-center gap-2"
+                        :title="balance.warehouse.name"
+                      >
+                        <span
+                          class="inline-flex shrink-0 items-center rounded-lg border border-brand-border bg-brand-bg px-2 py-1 font-mono text-[11px] font-bold text-brand-text"
+                          dir="ltr"
+                        >
+                          {{ balance.warehouse.warehouse_number }}
+                        </span>
+                        <span
+                          class="truncate font-semibold text-brand-text transition hover:text-brand-primary-dark hover:underline"
+                        >
+                          {{ balance.warehouse.name }}
+                        </span>
+                      </RouterLink>
+                      <span v-else class="text-brand-text">—</span>
+                    </td>
+                    <td
+                      class="whitespace-nowrap border-b border-brand-border/80 px-5 py-3 text-center font-semibold text-brand-text transition-colors group-hover:bg-[#EDF6F1]"
+                      dir="ltr"
+                    >
+                      {{ formatQuantity(balance.on_hand) }}
+                    </td>
+                    <td
+                      class="whitespace-nowrap border-b border-brand-border/80 px-5 py-3 text-center transition-colors group-hover:bg-[#EDF6F1]"
+                    >
+                      <span
+                        class="inline-flex min-w-[6.25rem] items-center justify-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold shadow-sm"
+                        :class="stockStateBadgeClass(balance.stock_state)"
+                      >
+                        <span
+                          class="h-1.5 w-1.5 shrink-0 rounded-full"
+                          :class="stockStateDotClass(balance.stock_state)"
+                          aria-hidden="true"
+                        />
+                        {{ t(`inventory.stockState.${balance.stock_state}`) }}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="rounded-2xl border border-brand-border bg-brand-surface">
+            <header
+              class="flex flex-wrap items-center justify-between gap-3 border-b border-brand-border px-5 py-4"
+            >
+              <h3 class="text-sm font-bold text-brand-text">
+                {{ t('inventory.sections.recentMovements') }}
+              </h3>
+              <RouterLink
+                to="/app/inventory/movements"
+                class="text-xs font-semibold text-brand-primary-dark hover:underline"
+              >
+                {{ t('inventory.items.viewMovements') }}
+              </RouterLink>
+            </header>
+
+            <p
+              v-if="!movements.length"
+              class="px-5 py-8 text-center text-sm text-brand-text-muted"
+            >
+              {{ t('inventory.movements.empty') }}
+            </p>
+            <ul v-else class="divide-y divide-brand-border/80">
+              <li
+                v-for="movement in movements"
+                :key="movement.id"
+                class="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 transition hover:bg-[#EDF6F1]/60"
+              >
+                <div class="flex min-w-0 flex-wrap items-center gap-2">
+                  <span
+                    class="inline-flex items-center rounded-lg border border-brand-border bg-brand-bg px-2 py-1 font-mono text-[11px] font-bold text-brand-text"
+                    dir="ltr"
+                  >
+                    {{ movement.movement_number }}
+                  </span>
+                  <span
+                    class="inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-bold"
+                    :class="movementTypeBadgeClass(movement.type)"
+                  >
+                    {{ t(`inventory.movementType.${movement.type}`) }}
+                  </span>
+                  <span class="truncate text-sm font-semibold text-brand-text">
+                    {{ movement.warehouse?.name ?? '—' }}
+                  </span>
+                </div>
+                <span
+                  class="shrink-0 text-sm font-bold tabular-nums text-brand-text"
+                  dir="ltr"
+                >
+                  {{ formatSignedQuantity(movement.quantity, movement.direction) }}
+                </span>
+              </li>
+            </ul>
+          </section>
+
+          <EntityDocumentsSection
+            linkable-type="inventory_item"
+            :linkable-id="item.id"
+            :link-label="`${item.item_number} — ${item.name}`"
+          />
+        </div>
+
+        <aside class="space-y-5 xl:sticky xl:top-4 xl:self-start">
+          <section class="rounded-2xl border border-brand-border bg-brand-surface">
+            <header class="border-b border-brand-border px-5 py-4">
+              <h3 class="text-sm font-bold text-brand-text">
+                {{ t('inventory.items.kpiTitle') }}
+              </h3>
+              <p class="mt-1 text-xs text-brand-text-secondary">
+                {{ t('inventory.items.kpiHint') }}
+              </p>
+            </header>
+            <div class="space-y-3 px-4 py-4">
+              <div class="rounded-xl border border-brand-border bg-brand-bg/50 px-4 py-3">
+                <p class="text-xs font-semibold text-brand-text-muted">
+                  {{ t('inventory.items.warehousesCount') }}
+                </p>
+                <p class="mt-1 text-2xl font-bold tabular-nums text-brand-text">
+                  {{ kpis.warehouses }}
+                </p>
+              </div>
+              <div class="rounded-xl border border-brand-border bg-brand-bg/50 px-4 py-3">
+                <p class="text-xs font-semibold text-brand-text-muted">
+                  {{ t('inventory.items.totalOnHand') }}
+                </p>
+                <p class="mt-1 text-2xl font-bold tabular-nums text-brand-text">
+                  {{ formatQuantity(kpis.totalOnHand) }}
+                </p>
+              </div>
+              <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+                <p class="text-xs font-semibold text-brand-text-muted">
+                  {{ t('inventory.kpis.lowStock') }}
+                </p>
+                <p class="mt-1 text-2xl font-bold tabular-nums text-brand-text">
+                  {{ kpis.lowStock }}
+                </p>
+              </div>
+              <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+                <p class="text-xs font-semibold text-brand-text-muted">
+                  {{ t('inventory.kpis.outOfStock') }}
+                </p>
+                <p class="mt-1 text-2xl font-bold tabular-nums text-brand-text">
+                  {{ kpis.outOfStock }}
+                </p>
+              </div>
+            </div>
+          </section>
+        </aside>
+      </div>
     </template>
 
     <InventoryItemFormDrawer
@@ -247,11 +577,11 @@ async function submitForm(): Promise<void> {
       :form="form"
       :form-error="formError"
       :field-errors="fieldErrors"
-      :submitting="updateMutation.isPending.value"
+      :submitting="isFormSubmitting"
       :category-options="categoryFormOptions"
       @close="drawerOpen = false"
       @submit="submitForm"
-      @update:form="Object.assign(form, $event)"
+      @update:form="assignForm"
     />
   </div>
 </template>

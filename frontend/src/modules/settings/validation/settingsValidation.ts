@@ -62,50 +62,92 @@ export function buildSettingsPatch(
   return Object.keys(payload).length > 0 ? payload : null
 }
 
-export function validateSettingsForm(form: SettingsFormState): Record<string, string> {
+export function validateSettingsForm(
+  form: SettingsFormState,
+  options?: { allowTimezone?: string },
+): Record<string, string> {
   const errors: Record<string, string> = {}
   if (!form.name.trim()) {
     errors.name = 'اسم المنشأة مطلوب'
+  } else if (form.name.trim().length > 255) {
+    errors.name = 'اسم المنشأة يجب ألا يتجاوز 255 حرفًا'
   } else if (form.name.includes('<') || form.name.includes('>')) {
     errors.name = 'لا يُسمح بوسوم HTML'
   }
-  if (form.contact_email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.contact_email.trim())) {
-    errors.contact_email = 'البريد الإلكتروني غير صالح'
+  if (form.contact_name.trim().length > 255) {
+    errors.contact_name = 'جهة الاتصال الرئيسية يجب ألا تتجاوز 255 حرفًا'
+  } else if (form.contact_name.includes('<') || form.contact_name.includes('>')) {
+    errors.contact_name = 'لا يُسمح بوسوم HTML'
+  }
+  if (form.contact_email.trim()) {
+    if (form.contact_email.trim().length > 255) {
+      errors.contact_email = 'البريد الإلكتروني يجب ألا يتجاوز 255 حرفًا'
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.contact_email.trim())) {
+      errors.contact_email = 'البريد الإلكتروني غير صالح'
+    }
   }
   if (form.contact_phone.trim().length > 50) {
     errors.contact_phone = 'رقم الهاتف طويل جداً'
   }
   if (!form.timezone.trim()) {
     errors.timezone = 'المنطقة الزمنية مطلوبة'
+  } else if (
+    !isSupportedTimezone(form.timezone) &&
+    form.timezone !== options?.allowTimezone
+  ) {
+    errors.timezone = 'المنطقة الزمنية غير صالحة. استخدم معرف IANA فقط.'
   }
   return errors
 }
 
-export function listTimezones(): string[] {
-  try {
-    const intl = Intl as unknown as { supportedValuesOf?: (key: string) => string[] }
-    if (typeof intl.supportedValuesOf === 'function') {
-      return intl.supportedValuesOf('timeZone')
-    }
-  } catch {
-    // fall through
-  }
+/**
+ * Curated IANA catalog verified against PHP `timezone_identifiers_list()`.
+ * Do not use `Intl.supportedValuesOf('timeZone')` here — browser lists can
+ * include identifiers the backend rejects (`SETTINGS_INVALID_TIMEZONE`).
+ */
+export const CURATED_IANA_TIMEZONES: readonly string[] = [
+  'Africa/Algiers',
+  'Africa/Cairo',
+  'Africa/Casablanca',
+  'Africa/Khartoum',
+  'Africa/Tripoli',
+  'Africa/Tunis',
+  'America/Chicago',
+  'America/Los_Angeles',
+  'America/New_York',
+  'America/Toronto',
+  'Asia/Aden',
+  'Asia/Amman',
+  'Asia/Baghdad',
+  'Asia/Bahrain',
+  'Asia/Beirut',
+  'Asia/Damascus',
+  'Asia/Dubai',
+  'Asia/Gaza',
+  'Asia/Hebron',
+  'Asia/Jerusalem',
+  'Asia/Kuwait',
+  'Asia/Muscat',
+  'Asia/Qatar',
+  'Asia/Riyadh',
+  'Europe/Berlin',
+  'Europe/Istanbul',
+  'Europe/London',
+  'Europe/Madrid',
+  'Europe/Paris',
+  'Europe/Rome',
+  'UTC',
+]
 
-  return [
-    'Asia/Riyadh',
-    'Asia/Dubai',
-    'Asia/Kuwait',
-    'Asia/Bahrain',
-    'Asia/Qatar',
-    'Asia/Muscat',
-    'Asia/Jordan',
-    'Asia/Beirut',
-    'Africa/Cairo',
-    'Africa/Khartoum',
-    'Europe/Istanbul',
-    'Europe/London',
-    'Europe/Paris',
-    'America/New_York',
-    'UTC',
-  ]
+export function isSupportedTimezone(timezone: string): boolean {
+  return CURATED_IANA_TIMEZONES.includes(timezone)
+}
+
+export function listTimezones(ensureTimezone?: string): string[] {
+  const zones = [...CURATED_IANA_TIMEZONES]
+  if (ensureTimezone && !zones.includes(ensureTimezone)) {
+    zones.push(ensureTimezone)
+    zones.sort((a, b) => a.localeCompare(b))
+  }
+  return zones
 }

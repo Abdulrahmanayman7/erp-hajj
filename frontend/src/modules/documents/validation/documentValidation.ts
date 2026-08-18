@@ -143,6 +143,10 @@ export function documentStatusBadgeClass(status: DocumentStatus): string {
   return 'bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200/70'
 }
 
+export function documentStatusDotClass(status: DocumentStatus): string {
+  return status === 'archived' ? 'bg-neutral-500' : 'bg-emerald-500'
+}
+
 export function formatDocumentSize(bytes: number): string {
   if (bytes < 1024) {
     return `${bytes} B`

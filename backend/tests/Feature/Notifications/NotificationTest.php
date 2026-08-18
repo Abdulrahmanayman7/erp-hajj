@@ -3,6 +3,9 @@
 use App\Core\Auth\UserStatus;
 use App\Core\Tenancy\Models\Tenant;
 use App\Models\User;
+use App\Modules\Assets\Enums\CustodyStatus;
+use App\Modules\Assets\Models\Asset;
+use App\Modules\Assets\Models\AssetCustody;
 use App\Modules\Employees\Models\Employee;
 use App\Modules\Notifications\Enums\NotificationSeverity;
 use App\Modules\Notifications\Enums\NotificationType;
@@ -14,6 +17,7 @@ use App\Modules\Notifications\Support\NotificationRecipientResolver;
 use App\Modules\OrganizationStructure\Models\OrganizationUnit;
 use App\Modules\Tasks\Enums\TaskStatus;
 use App\Modules\Tasks\Models\Task;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Laravel\Sanctum\Sanctum;
 
@@ -245,6 +249,45 @@ test('employee without user and disabled user are skipped', function (): void {
     });
 });
 
+test('batch employee recipient resolution is tenant-scoped and constant-query', function (): void {
+    $owner = actingAsTenantOwner();
+    $tenant = $owner->tenant;
+
+    withTenant($tenant, function () use ($tenant): void {
+        $unit = OrganizationUnit::factory()->create();
+        $active = User::factory()->forTenant($tenant)->create(['status' => UserStatus::Active]);
+        $disabled = User::factory()->forTenant($tenant)->create(['status' => UserStatus::Disabled]);
+        $activeEmployee = Employee::factory()->create([
+            'organization_unit_id' => $unit->id,
+            'user_id' => $active->id,
+        ]);
+        $disabledEmployee = Employee::factory()->create([
+            'organization_unit_id' => $unit->id,
+            'user_id' => $disabled->id,
+        ]);
+        $unlinkedEmployee = Employee::factory()->create([
+            'organization_unit_id' => $unit->id,
+            'user_id' => null,
+        ]);
+
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+        $resolved = app(NotificationRecipientResolver::class)->activeUsersByEmployeeIds([
+            $activeEmployee->id,
+            $disabledEmployee->id,
+            $unlinkedEmployee->id,
+        ]);
+        $queries = DB::getQueryLog();
+        DB::disableQueryLog();
+
+        expect($resolved)->toHaveCount(1)
+            ->and($resolved[(int) $activeEmployee->id]->id)->toBe($active->id)
+            ->and(isset($resolved[(int) $disabledEmployee->id]))->toBeFalse()
+            ->and(isset($resolved[(int) $unlinkedEmployee->id]))->toBeFalse()
+            ->and($queries)->toHaveCount(1);
+    });
+});
+
 test('dedupe key format matches documented pattern', function (): void {
     $key = NotificationDedupe::buildKey(
         NotificationType::StockBelowMinimum,
@@ -319,5 +362,175 @@ test('scanner scan-tasks is idempotent for due-soon', function (): void {
                 ->where('type', NotificationType::TaskDueSoon->value)
                 ->count()
         )->toBe(1);
+    });
+});
+
+/**
+ * @param  list<array{query: string}>  $queries
+ * @return array{employee_only: int, user_by_id: int, batched: int}
+ */
+function notificationRecipientQueryCounts(array $queries): array
+{
+    $employeeOnly = 0;
+    $userById = 0;
+    $batched = 0;
+
+    foreach ($queries as $query) {
+        $sql = strtolower($query['query']);
+        if (str_contains($sql, 'join') && str_contains($sql, 'employees') && str_contains($sql, 'users')) {
+            $batched++;
+
+            continue;
+        }
+        if (str_contains($sql, 'from') && str_contains($sql, 'employees') && ! str_contains($sql, 'join')) {
+            $employeeOnly++;
+        }
+        if (preg_match('/from ["`]?users["`]? where .*["`]?id["`]? = \?/', $sql) === 1) {
+            $userById++;
+        }
+    }
+
+    return [
+        'employee_only' => $employeeOnly,
+        'user_by_id' => $userById,
+        'batched' => $batched,
+    ];
+}
+
+test('scan-tasks recipient resolution stays constant across chunks', function (): void {
+    $owner = actingAsTenantOwner();
+    $tenant = $owner->tenant;
+    $timezone = $tenant->timezone ?: 'Asia/Riyadh';
+
+    withTenant($tenant, function () use ($owner, $timezone): void {
+        $unit = OrganizationUnit::factory()->create();
+        $employee = Employee::factory()->create([
+            'organization_unit_id' => $unit->id,
+            'user_id' => $owner->id,
+        ]);
+        $unlinked = Employee::factory()->create([
+            'organization_unit_id' => $unit->id,
+            'user_id' => null,
+        ]);
+
+        Task::factory()->count(101)->create([
+            'created_by' => $owner->id,
+            'organization_unit_id' => $unit->id,
+            'assigned_to_employee_id' => $employee->id,
+            'status' => TaskStatus::Assigned,
+            'due_date' => now($timezone)->toDateString(),
+        ]);
+        Task::factory()->create([
+            'created_by' => $owner->id,
+            'organization_unit_id' => $unit->id,
+            'assigned_to_employee_id' => $unlinked->id,
+            'status' => TaskStatus::Assigned,
+            'due_date' => now($timezone)->toDateString(),
+        ]);
+    });
+
+    DB::flushQueryLog();
+    DB::enableQueryLog();
+    $this->artisan('notifications:scan-tasks')->assertSuccessful();
+    $counts = notificationRecipientQueryCounts(DB::getQueryLog());
+    DB::disableQueryLog();
+
+    expect($counts['employee_only'])->toBe(0)
+        ->and($counts['user_by_id'])->toBe(0)
+        ->and($counts['batched'])->toBe(2);
+
+    withTenant($tenant, function () use ($owner): void {
+        expect(
+            Notification::query()
+                ->where('recipient_user_id', $owner->id)
+                ->where('type', NotificationType::TaskDueSoon->value)
+                ->count()
+        )->toBe(101);
+    });
+});
+
+test('scan-custodies batches recipients and is idempotent', function (): void {
+    $owner = actingAsTenantOwner();
+    $tenant = $owner->tenant;
+    $timezone = $tenant->timezone ?: 'Asia/Riyadh';
+
+    withTenant($tenant, function () use ($owner, $tenant, $timezone): void {
+        $unit = OrganizationUnit::factory()->create();
+        $employee = Employee::factory()->create([
+            'organization_unit_id' => $unit->id,
+            'user_id' => $owner->id,
+        ]);
+        $unlinked = Employee::factory()->create([
+            'organization_unit_id' => $unit->id,
+            'user_id' => null,
+        ]);
+        $disabled = User::factory()->forTenant($tenant)->create(['status' => UserStatus::Disabled]);
+        $disabledEmployee = Employee::factory()->create([
+            'organization_unit_id' => $unit->id,
+            'user_id' => $disabled->id,
+        ]);
+
+        $assets = Asset::factory()->count(5)->create(['created_by' => $owner->id]);
+        $now = now($timezone);
+
+        AssetCustody::factory()->create([
+            'asset_id' => $assets[0]->id,
+            'employee_id' => $employee->id,
+            'assigned_by' => $owner->id,
+            'status' => CustodyStatus::Active,
+            'expected_return_at' => $now->copy()->addDay(),
+        ]);
+        AssetCustody::factory()->create([
+            'asset_id' => $assets[1]->id,
+            'employee_id' => $employee->id,
+            'assigned_by' => $owner->id,
+            'status' => CustodyStatus::Active,
+            'expected_return_at' => $now->copy()->addDay(),
+        ]);
+        AssetCustody::factory()->create([
+            'asset_id' => $assets[2]->id,
+            'employee_id' => $employee->id,
+            'assigned_by' => $owner->id,
+            'status' => CustodyStatus::Active,
+            'expected_return_at' => $now->copy()->subDay(),
+        ]);
+        AssetCustody::factory()->create([
+            'asset_id' => $assets[3]->id,
+            'employee_id' => $unlinked->id,
+            'assigned_by' => $owner->id,
+            'status' => CustodyStatus::Active,
+            'expected_return_at' => $now->copy()->subDay(),
+        ]);
+        AssetCustody::factory()->create([
+            'asset_id' => $assets[4]->id,
+            'employee_id' => $disabledEmployee->id,
+            'assigned_by' => $owner->id,
+            'status' => CustodyStatus::Active,
+            'expected_return_at' => $now->copy()->addDay(),
+        ]);
+    });
+
+    DB::flushQueryLog();
+    DB::enableQueryLog();
+    $this->artisan('notifications:scan-custodies')->assertSuccessful();
+    $counts = notificationRecipientQueryCounts(DB::getQueryLog());
+    DB::disableQueryLog();
+
+    expect($counts['employee_only'])->toBe(0)
+        ->and($counts['user_by_id'])->toBe(0)
+        ->and($counts['batched'])->toBe(2);
+
+    $this->artisan('notifications:scan-custodies')->assertSuccessful();
+
+    withTenant($tenant, function () use ($owner): void {
+        expect(
+            Notification::query()
+                ->where('recipient_user_id', $owner->id)
+                ->whereIn('type', [
+                    NotificationType::CustodyExpectedReturnSoon->value,
+                    NotificationType::CustodyOverdue->value,
+                ])
+                ->count()
+        )->toBe(3);
     });
 });

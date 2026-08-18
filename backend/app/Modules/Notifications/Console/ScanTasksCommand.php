@@ -47,13 +47,17 @@ class ScanTasksCommand extends Command
                             ->whereIn('status', $open)
                             ->whereNotNull('due_date')
                             ->whereNotNull('assigned_to_employee_id')
-                            ->whereDate('due_date', '>=', $today->toDateString())
-                            ->whereDate('due_date', '<=', $until)
+                            ->where('due_date', '>=', $today->toDateString())
+                            ->where('due_date', '<=', $until)
                             ->orderBy('id')
                             ->chunkById(100, function ($tasks) use ($dispatcher, $recipients, $bucket, &$dueSoonCount): void {
+                                $usersByEmployeeId = $recipients->activeUsersByEmployeeIds(
+                                    $tasks->pluck('assigned_to_employee_id')->filter()->map(fn ($id): int => (int) $id),
+                                );
+
                                 foreach ($tasks as $task) {
                                     /** @var Task $task */
-                                    $user = $recipients->resolveUserFromEmployeeId($task->assigned_to_employee_id);
+                                    $user = $usersByEmployeeId[(int) $task->assigned_to_employee_id] ?? null;
                                     if ($user === null) {
                                         continue;
                                     }
@@ -77,12 +81,16 @@ class ScanTasksCommand extends Command
                             ->whereIn('status', $open)
                             ->whereNotNull('due_date')
                             ->whereNotNull('assigned_to_employee_id')
-                            ->whereDate('due_date', '<', $today->toDateString())
+                            ->where('due_date', '<', $today->toDateString())
                             ->orderBy('id')
                             ->chunkById(100, function ($tasks) use ($dispatcher, $recipients, $bucket, &$overdueCount): void {
+                                $usersByEmployeeId = $recipients->activeUsersByEmployeeIds(
+                                    $tasks->pluck('assigned_to_employee_id')->filter()->map(fn ($id): int => (int) $id),
+                                );
+
                                 foreach ($tasks as $task) {
                                     /** @var Task $task */
-                                    $user = $recipients->resolveUserFromEmployeeId($task->assigned_to_employee_id);
+                                    $user = $usersByEmployeeId[(int) $task->assigned_to_employee_id] ?? null;
                                     if ($user === null) {
                                         continue;
                                     }

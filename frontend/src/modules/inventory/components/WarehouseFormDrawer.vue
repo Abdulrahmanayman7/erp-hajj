@@ -3,7 +3,10 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Loader2, X } from 'lucide-vue-next'
 
+import { listEmployees } from '@/modules/employees/api/employeesApi'
+import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
+import { employeeSelectOption, toSelectId } from '@/shared/lookups/selectOptions'
 
 import type { Warehouse, WarehouseFormState } from '../types/warehouses'
 
@@ -15,7 +18,6 @@ const props = defineProps<{
   fieldErrors: Record<string, string>
   submitting: boolean
   orgUnitOptions: AppSelectOption[]
-  employeeOptions: AppSelectOption[]
 }>()
 
 const emit = defineEmits<{
@@ -30,6 +32,18 @@ const isEdit = computed(() => props.editing != null)
 function patch(part: Partial<WarehouseFormState>): void {
   emit('update:form', { ...props.form, ...part })
 }
+
+const fetchActiveEmployees = (params: { search?: string; page: number; per_page: number }) =>
+  listEmployees({ ...params, status: 'active' })
+const emptyEmployee = computed<AppSelectOption>(() => ({
+  value: '',
+  label: t('inventory.noEmployee'),
+}))
+const selectedEmployee = computed(() =>
+  props.editing?.responsible_employee
+    ? employeeSelectOption(props.editing.responsible_employee)
+    : null,
+)
 </script>
 
 <template>
@@ -122,16 +136,16 @@ function patch(part: Partial<WarehouseFormState>): void {
 
             <label class="block">
               <span class="text-sm font-medium text-brand-text">{{ t('inventory.fields.responsibleEmployee') }}</span>
-              <AppSelect
+              <AppRemoteSelect
                 class="mt-1"
                 :model-value="form.responsible_employee_id"
-                :options="employeeOptions"
-                searchable
-                @update:model-value="
-                  patch({
-                    responsible_employee_id: $event === '' || $event === null ? '' : Number($event),
-                  })
-                "
+                query-key="employees-active"
+                :fetcher="fetchActiveEmployees"
+                :map-option="employeeSelectOption"
+                :empty-option="emptyEmployee"
+                :selected-option="selectedEmployee"
+                :enabled="open"
+                @update:model-value="patch({ responsible_employee_id: toSelectId($event) })"
               />
             </label>
 

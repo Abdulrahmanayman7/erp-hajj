@@ -24,6 +24,41 @@ body {
   background-color: var(--color-brand-bg);
 }
 
+/* Shared scrollbar — matches the app sidebar on every overflow region. */
+:root {
+  --scrollbar-size: 6px;
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: rgb(198 161 91 / 0.4);
+  --scrollbar-thumb-hover: rgb(198 161 91 / 0.65);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+*::-webkit-scrollbar {
+  width: var(--scrollbar-size);
+  height: var(--scrollbar-size);
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+*::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: var(--scrollbar-thumb);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 /* Keep login fields clean under browser autofill (avoid bright yellow wash). */
 .login-field:-webkit-autofill,
 .login-field:-webkit-autofill:hover,

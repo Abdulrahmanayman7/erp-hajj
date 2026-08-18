@@ -1,7 +1,7 @@
 # System Settings — UI
 
 > **Status:** Implemented (Sprint 020)
-> **Last updated:** 2026-08-13
+> **Last updated:** 2026-08-16
 
 ## Route
 
@@ -22,8 +22,8 @@ Single canonical page — no scattered settings screens.
 
 One page, two sections (no unrelated tabs):
 
-1. **عام** — name + contact fields
-2. **المنطقة والوقت** — timezone select; locale shown read-only (`العربية` / `ar`)
+1. **معلومات المنشأة** — name + contact fields, with a responsive two-column form where suitable.
+2. **المنطقة واللغة** — searchable timezone select with a human-friendly display label and IANA ID hint; locale shown as a read-only setting (`العربية` / `ar`).
 
 No Operations section until tenant-configurable thresholds are approved.
 
@@ -34,13 +34,16 @@ No Operations section until tenant-configurable thresholds are approved.
 - Success toast (Arabic).
 - Server 422: keep dirty form; map field errors.
 - **No** auto-save on blur.
-- Confirm dialog **not** required for MVP (low risk vs destroy actions); optional soft warning if timezone changes (“يؤثر على التواريخ والتنبيهات”).
+- Route navigation and browser unload confirm before discarding dirty edits.
+- Show an inline soft warning only when the timezone differs from the loaded/saved value.
+- View-only users see readable values and an explanatory banner; they do not see editable-looking disabled controls or Save.
 
 ## Timezone control
 
-- Searchable select/combobox of IANA zones (curated common list + full IANA search acceptable).
+- Searchable select/combobox of IANA zones (**curated PHP-compatible catalog** on the frontend, verified against `timezone_identifiers_list()`). Full browser `Intl` lists are intentionally **not** used as the offer list because they can include identifiers PHP rejects.
 - Persist canonical id (`Asia/Riyadh`), never `+03:00`.
 - Friendly Arabic/English labels optional; value is IANA.
+- If the tenant already stores a valid IANA id outside the curated offer list, the UI still includes that value so it remains selectable until changed.
 
 ## View-only mode
 
@@ -54,7 +57,7 @@ If `view` without `update`:
 
 | State | UX |
 |---|---|
-| Loading | Skeleton / spinner on page |
+| Loading | Header/card-shaped skeletons without an empty form flash |
 | GET error | Arabic error + **إعادة المحاولة** |
 | Empty | N/A — always show effective defaults |
 | Saving | Button loading; prevent double submit |
