@@ -3,8 +3,11 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Loader2, Plus, Trash2 } from 'lucide-vue-next'
 
+import { listEmployees } from '@/modules/employees/api/employeesApi'
 import { ApiError } from '@/shared/api/http'
+import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
+import { employeeSelectOption, toSelectId } from '@/shared/lookups/selectOptions'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
 import { useConfirm } from '@/shared/composables/useConfirm'
 import { usePermissions } from '@/shared/composables/usePermissions'
@@ -24,7 +27,6 @@ import {
 
 const props = defineProps<{
   meeting: Meeting
-  employeeOptions: AppSelectOption[]
 }>()
 
 const emit = defineEmits<{
@@ -47,6 +49,9 @@ const readOnly = computed(() => isMeetingLocked(props.meeting.status))
 const canManage = computed(() => can('meetings.manage_attendees') && !readOnly.value)
 
 const attendees = computed(() => props.meeting.attendees ?? [])
+const takenEmployeeIds = computed(() => attendees.value.map((a) => a.employee.id))
+const fetchActiveEmployees = (params: { search?: string; page: number; per_page: number }) =>
+  listEmployees({ ...params, status: 'active' })
 
 const attendanceOptions = computed<AppSelectOption[]>(() =>
   ATTENDANCE_STATUSES.map((status) => ({
@@ -55,20 +60,14 @@ const attendanceOptions = computed<AppSelectOption[]>(() =>
   })),
 )
 
-const availableEmployeeOptions = computed(() => {
-  const taken = new Set(attendees.value.map((a) => a.employee.id))
-  return props.employeeOptions.filter((opt) => {
-    if (opt.value === '' || opt.value == null) return false
-    return !taken.has(Number(opt.value))
-  })
-})
-
 const isPending = computed(
   () =>
     addMutation.isPending.value ||
     updateMutation.isPending.value ||
     removeMutation.isPending.value,
 )
+
+const isAdding = computed(() => addMutation.isPending.value)
 
 function apiMessage(error: unknown): string {
   if (!(error instanceof ApiError)) {
@@ -164,14 +163,15 @@ async function removeAttendee(attendee: MeetingAttendee): Promise<void> {
           <span class="mb-1.5 block text-sm font-semibold text-brand-text">
             {{ t('meetings.fields.addAttendee') }}
           </span>
-          <AppSelect
-            v-model="selectedEmployeeId"
-            :options="[
-              { value: '', label: t('meetings.selectEmployee') },
-              ...availableEmployeeOptions,
-            ]"
-            searchable
+          <AppRemoteSelect
+            :model-value="selectedEmployeeId"
+            query-key="employees-active"
+            :fetcher="fetchActiveEmployees"
+            :map-option="employeeSelectOption"
+            :empty-option="{ value: '', label: t('meetings.selectEmployee') }"
+            :exclude-values="takenEmployeeIds"
             :disabled="isPending"
+            @update:model-value="selectedEmployeeId = toSelectId($event)"
           />
         </div>
         <button
@@ -180,7 +180,7 @@ async function removeAttendee(attendee: MeetingAttendee): Promise<void> {
           :disabled="isPending"
           @click="addAttendee"
         >
-          <Loader2 v-if="addMutation.isPending" class="h-4 w-4 animate-spin" />
+          <Loader2 v-if="isAdding" class="h-4 w-4 animate-spin" />
           <Plus v-else class="h-4 w-4" />
           {{ t('meetings.actions.addAttendee') }}
         </button>

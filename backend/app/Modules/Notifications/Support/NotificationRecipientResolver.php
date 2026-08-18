@@ -6,6 +6,7 @@ use App\Core\Auth\UserStatus;
 use App\Core\Tenancy\TenantContext;
 use App\Models\User;
 use App\Modules\Employees\Models\Employee;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 final class NotificationRecipientResolver
@@ -42,6 +43,39 @@ final class NotificationRecipientResolver
         }
 
         return $this->resolveActiveUser((int) $employee->user_id);
+    }
+
+    /**
+     * Resolve current-tenant active users indexed by employee ID in one query.
+     *
+     * @param  iterable<int>  $employeeIds
+     * @return array<int, User>
+     */
+    public function activeUsersByEmployeeIds(iterable $employeeIds): array
+    {
+        $ids = array_values(array_unique(array_filter(
+            array_map('intval', is_array($employeeIds) ? $employeeIds : iterator_to_array($employeeIds)),
+            static fn (int $id): bool => $id > 0,
+        )));
+        if ($ids === []) {
+            return [];
+        }
+
+        $tenant = $this->tenantContext->require();
+
+        /** @var Collection<int, User> $users */
+        $users = User::query()
+            ->join('employees', 'employees.user_id', '=', 'users.id')
+            ->where('users.tenant_id', $tenant->id)
+            ->where('employees.tenant_id', $tenant->id)
+            ->whereIn('employees.id', $ids)
+            ->where('users.status', UserStatus::Active)
+            ->select('users.*', 'employees.id as notification_employee_id')
+            ->get();
+
+        return $users
+            ->mapWithKeys(fn (User $user): array => [(int) $user->getAttribute('notification_employee_id') => $user])
+            ->all();
     }
 
     /**

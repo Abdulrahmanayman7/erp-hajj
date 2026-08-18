@@ -7,6 +7,7 @@ import type {
   ReturnCustodyFormState,
 } from '../types/assets'
 import {
+  assetStatusDotClass,
   assetsSidebarItems,
   availableAssetLifecycleActions,
   canShowAssignAction,
@@ -52,6 +53,17 @@ describe('validateAssetForm', () => {
       purchase_value: 'invalid',
     })
     expect(validateAssetForm(assetForm({ name: 'أصل', purchase_value: '10.5' }))).toEqual({})
+  })
+})
+
+describe('assetStatusDotClass', () => {
+  it('returns a distinct visual dot for each lifecycle status', () => {
+    expect(assetStatusDotClass('available')).toBe('bg-emerald-500')
+    expect(assetStatusDotClass('in_use')).toBe('bg-sky-500')
+    expect(assetStatusDotClass('maintenance')).toBe('bg-amber-500')
+    expect(assetStatusDotClass('damaged')).toBe('bg-orange-500')
+    expect(assetStatusDotClass('retired')).toBe('bg-slate-500')
+    expect(assetStatusDotClass('lost')).toBe('bg-red-500')
   })
 })
 

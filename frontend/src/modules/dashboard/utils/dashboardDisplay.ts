@@ -30,16 +30,49 @@ export const RESOURCE_ASSET_KPI_KEYS: readonly DashboardKpiKey[] = [
   'custodies_due_soon',
 ] as const
 
+/** Work-section KPI groups — only present keys are rendered */
+export const WORK_TASK_KPI_KEYS: readonly DashboardKpiKey[] = [
+  'tasks_open',
+  'tasks_overdue',
+  'tasks_due_soon',
+] as const
+
+export const WORK_DECISION_KPI_KEYS: readonly DashboardKpiKey[] = [
+  'decisions_pending_approval',
+  'decisions_approved_open',
+  'decisions_with_open_tasks',
+] as const
+
+export const WORK_MEETING_KPI_KEYS: readonly DashboardKpiKey[] = [
+  'meetings_today',
+  'meetings_in_progress',
+] as const
+
+export const WORK_CONTRACT_KPI_KEYS: readonly DashboardKpiKey[] = [
+  'contracts_executing',
+  'contracts_expiring_soon',
+  'contracts_expired',
+] as const
+
 export interface TopKpiEntry {
   key: DashboardKpiKey
   kpi: DashboardKpi
 }
 
-export function getTopKpis(kpis: DashboardKpis | undefined | null): TopKpiEntry[] {
-  if (!kpis) return []
+/** Backend may encode empty maps as `[]`; treat those as absent. */
+export function asSparseRecord<T extends object>(value: unknown): T | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null
+  }
+  return value as T
+}
+
+export function getTopKpis(kpis: unknown): TopKpiEntry[] {
+  const map = asSparseRecord<DashboardKpis>(kpis)
+  if (!map) return []
   const result: TopKpiEntry[] = []
   for (const key of TOP_KPI_ORDER) {
-    const kpi = kpis[key]
+    const kpi = map[key]
     if (kpi) {
       result.push({ key, kpi })
     }
@@ -48,18 +81,32 @@ export function getTopKpis(kpis: DashboardKpis | undefined | null): TopKpiEntry[
 }
 
 export function pickKpis(
-  kpis: DashboardKpis | undefined | null,
+  kpis: unknown,
   keys: readonly DashboardKpiKey[],
 ): TopKpiEntry[] {
-  if (!kpis) return []
+  const map = asSparseRecord<DashboardKpis>(kpis)
+  if (!map) return []
   const result: TopKpiEntry[] = []
   for (const key of keys) {
-    const kpi = kpis[key]
+    const kpi = map[key]
     if (kpi) {
       result.push({ key, kpi })
     }
   }
   return result
+}
+
+export function hasWorkMetrics(kpis: unknown, work: unknown): boolean {
+  const map = asSparseRecord<DashboardKpis>(kpis)
+  const workMap = asSparseRecord<DashboardData['work'] & object>(work)
+  if (workMap?.my_tasks) return true
+  if (!map) return false
+  return (
+    WORK_TASK_KPI_KEYS.some((key) => Boolean(map[key])) ||
+    WORK_DECISION_KPI_KEYS.some((key) => Boolean(map[key])) ||
+    WORK_MEETING_KPI_KEYS.some((key) => Boolean(map[key])) ||
+    WORK_CONTRACT_KPI_KEYS.some((key) => Boolean(map[key]))
+  )
 }
 
 /** Only allow internal app paths from API hrefs */
@@ -83,6 +130,18 @@ export function severityCardClass(severity: DashboardSeverity | string): string 
     default:
       return 'border-brand-border bg-brand-surface'
   }
+}
+
+/** A zero count is calm even when its semantic category is normally urgent. */
+export function effectiveSeverity(
+  severity: DashboardSeverity | string,
+  value: number,
+): DashboardSeverity {
+  if (value <= 0) return 'info'
+  if (severity === 'critical' || severity === 'warning' || severity === 'info') {
+    return severity
+  }
+  return 'info'
 }
 
 export function severityBadgeClass(severity: DashboardSeverity | string): string {
@@ -123,6 +182,38 @@ export function formatDashboardDate(timezone?: string | null): string {
     }).format(new Date())
   } catch {
     return new Intl.DateTimeFormat('ar-SA', options).format(new Date())
+  }
+}
+
+export function friendlyTimezone(timezone?: string | null): string {
+  const labels: Record<string, string> = {
+    'Asia/Riyadh': 'الرياض',
+    'Asia/Dubai': 'دبي',
+    'Africa/Cairo': 'القاهرة',
+    UTC: 'التوقيت العالمي',
+  }
+  return labels[timezone ?? ''] ?? (timezone || 'الرياض').replace(/_/g, ' ')
+}
+
+export function formatDashboardGeneratedAt(
+  generatedAt?: string | null,
+  timezone?: string | null,
+): string {
+  if (!generatedAt) return 'منذ لحظات'
+  const date = new Date(generatedAt)
+  if (Number.isNaN(date.getTime())) return 'منذ لحظات'
+  const seconds = Math.max(0, Math.round((Date.now() - date.getTime()) / 1000))
+  if (seconds < 60) return 'منذ لحظات'
+  const minutes = Math.floor(seconds / 60)
+  if (minutes < 60) return `منذ ${minutes} دقيقة`
+  try {
+    return new Intl.DateTimeFormat('ar-SA', {
+      hour: 'numeric',
+      minute: '2-digit',
+      timeZone: timezone || undefined,
+    }).format(date)
+  } catch {
+    return new Intl.DateTimeFormat('ar-SA', { hour: 'numeric', minute: '2-digit' }).format(date)
   }
 }
 
@@ -174,12 +265,16 @@ export function isOperationallyEmpty(data: Pick<
   DashboardData,
   'kpis' | 'attention' | 'today' | 'work' | 'resources'
 >): boolean {
-  const kpiCount = data.kpis ? Object.keys(data.kpis).length : 0
+  const kpis = asSparseRecord<DashboardKpis>(data.kpis)
+  const kpiCount = kpis ? Object.keys(kpis).length : 0
   if (kpiCount > 0) return false
-  if (data.attention && data.attention.length > 0) return false
+  if (Array.isArray(data.attention) && data.attention.length > 0) return false
   // Presence of today subsection keys means module access (arrays may be empty)
-  if (data.today && Object.keys(data.today).length > 0) return false
-  if (data.work && Object.keys(data.work).length > 0) return false
-  if (data.resources && Object.keys(data.resources).length > 0) return false
+  const today = asSparseRecord<DashboardData['today'] & object>(data.today)
+  if (today && Object.keys(today).length > 0) return false
+  const work = asSparseRecord<DashboardData['work'] & object>(data.work)
+  if (work && Object.keys(work).length > 0) return false
+  const resources = asSparseRecord<DashboardData['resources'] & object>(data.resources)
+  if (resources && Object.keys(resources).length > 0) return false
   return true
 }

@@ -3,7 +3,11 @@ import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Loader2, X } from 'lucide-vue-next'
 
+import { listCategories } from '../api/categoriesApi'
+import { listEmployees } from '@/modules/employees/api/employeesApi'
+import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
+import { employeeSelectOption, namedCodeOption, toSelectId } from '@/shared/lookups/selectOptions'
 
 import type { Contract, ContractFormState } from '../types/contracts'
 
@@ -14,8 +18,6 @@ const props = defineProps<{
   formError: string
   fieldErrors: Record<string, string>
   submitting: boolean
-  categoryOptions: AppSelectOption[]
-  employeeOptions: AppSelectOption[]
   orgUnitOptions: AppSelectOption[]
   counterpartyKindOptions: AppSelectOption[]
 }>()
@@ -49,6 +51,18 @@ const contractNumberDisplay = computed(() => {
 function patch(partial: Partial<ContractFormState>): void {
   emit('update:form', { ...props.form, ...partial })
 }
+
+const fetchActiveEmployees = (params: { search?: string; page: number; per_page: number }) =>
+  listEmployees({ ...params, status: 'active' })
+const fetchActiveCategories = (params: { search?: string; page: number; per_page: number }) =>
+  listCategories({ ...params, is_active: true })
+const emptyEmployee = computed<AppSelectOption>(() => ({ value: '', label: t('contracts.noEmployee') }))
+const selectedEmployee = computed(() =>
+  props.editing?.employee ? employeeSelectOption(props.editing.employee) : null,
+)
+const selectedCategory = computed(() =>
+  props.editing?.category ? namedCodeOption(props.editing.category) : null,
+)
 
 function onKeydown(event: KeyboardEvent): void {
   if (event.key === 'Escape' && props.open && !props.submitting) {
@@ -165,18 +179,16 @@ onUnmounted(() => {
                   <span class="mb-2 block text-sm font-semibold text-brand-text">
                     {{ t('contracts.fields.category') }}
                   </span>
-                  <AppSelect
+                  <AppRemoteSelect
                     :model-value="form.contract_category_id"
-                    :options="categoryOptions"
+                    query-key="contract-categories-active"
+                    :fetcher="fetchActiveCategories"
+                    :map-option="namedCodeOption"
+                    :selected-option="selectedCategory"
                     :placeholder="t('contracts.selectCategory')"
                     :disabled="submitting"
-                    searchable
-                    @update:model-value="
-                      patch({
-                        contract_category_id:
-                          $event === null || $event === '' ? '' : Number($event),
-                      })
-                    "
+                    :enabled="open"
+                    @update:model-value="patch({ contract_category_id: toSelectId($event) })"
                   />
                   <p v-if="fieldErrors.contract_category_id" class="mt-1.5 text-xs text-red-600">
                     {{ fieldErrors.contract_category_id }}
@@ -227,17 +239,17 @@ onUnmounted(() => {
                   <span class="mb-2 block text-sm font-semibold text-brand-text">
                     {{ t('contracts.fields.employee') }}
                   </span>
-                  <AppSelect
+                  <AppRemoteSelect
                     :model-value="form.employee_id"
-                    :options="employeeOptions"
+                    query-key="employees-active"
+                    :fetcher="fetchActiveEmployees"
+                    :map-option="employeeSelectOption"
+                    :empty-option="emptyEmployee"
+                    :selected-option="selectedEmployee"
                     :placeholder="t('contracts.selectEmployee')"
                     :disabled="submitting"
-                    searchable
-                    @update:model-value="
-                      patch({
-                        employee_id: $event === null || $event === '' ? '' : Number($event),
-                      })
-                    "
+                    :enabled="open"
+                    @update:model-value="patch({ employee_id: toSelectId($event) })"
                   />
                 </div>
               </section>

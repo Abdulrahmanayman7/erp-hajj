@@ -1,7 +1,7 @@
 # Frontend Structure
 
 > **Status:** Approved — Auth (005) through Audit Trail (018) implemented
-> **Last updated:** 2026-08-12
+> **Last updated:** 2026-08-17
 
 ## Purpose
 
@@ -40,6 +40,7 @@ src/
 │   ├── api/              # http client, envelope handling
 │   ├── components/       # generic shared components (see DESIGN_GUIDELINES.md)
 │   ├── composables/
+│   ├── lookups/          # relation-select mappers; no HTTP here
 │   ├── constants/
 │   ├── types/
 │   ├── utils/
@@ -169,6 +170,14 @@ A module may contain: pages, components, api, queries, mutations, types, validat
 - Topbar **bell** + unread badge + dropdown/panel; full page `/app/notifications` (الإشعارات).
 - Module folder: `frontend/src/modules/notifications/`.
 - MVP realtime = TanStack polling/refetch — **no** WebSockets/Reverb requirement (ADR-0013).
+
+## Relation selectors (lookup completeness)
+
+Potentially unbounded relation selectors (employees, users, inventory items, warehouses, positions, contracts, meetings, decisions, tasks, and similar growing catalogs) **must** use server-side search and pagination via the existing list APIs. They must **never** treat a fixed preload cap (`per_page=100`, first page, or a client-side filter of that slice) as a complete catalog.
+
+Use `AppRemoteSelect` / `useRemoteSelectOptions` with the module `listX` fetcher. Keep tenant isolation, RBAC (`viewAny`), and domain filters (`status=active`, approved-only, exclude-self) on the request. Do not invent `/lookup/*` endpoints when the list API already searches and paginates.
+
+Small bounded catalogs may stay client-side: enums/statuses, unpaginated category lists, and the org-unit tree/flat load (backend flat max is a documented bound, not a silent 100-cap). Role checkboxes on the user form remain a small-catalog load (`per_page=100`); the role **filter** is remote.
 
 ## TBD
 

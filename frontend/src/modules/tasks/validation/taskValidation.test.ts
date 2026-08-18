@@ -43,7 +43,7 @@ describe('task UI rules', () => {
   })
 
   it('maps status and priority to badge classes', () => {
-    expect(taskStatusBadgeClass('draft')).toContain('neutral')
+    expect(taskStatusBadgeClass('draft')).toContain('slate')
     expect(taskStatusBadgeClass('completed')).toContain('emerald')
     expect(taskPriorityBadgeClass('high')).toContain('red')
   })

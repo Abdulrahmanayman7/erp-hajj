@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onUnmounted, ref, watch, type CSSProperties } from 'vue'
-import { Check, ChevronDown } from 'lucide-vue-next'
+import { Check, ChevronDown, X } from 'lucide-vue-next'
 
 export interface AppSelectOption {
   value: string | number
@@ -17,6 +17,12 @@ const props = withDefaults(
     disabled?: boolean
     searchable?: boolean
     searchPlaceholder?: string
+    remote?: boolean
+    loading?: boolean
+    error?: boolean
+    hasMore?: boolean
+    selectedOption?: AppSelectOption | null
+    clearable?: boolean
     size?: 'sm' | 'md'
     teleport?: boolean
   }>(),
@@ -27,6 +33,12 @@ const props = withDefaults(
     disabled: false,
     searchable: false,
     searchPlaceholder: 'بحث…',
+    remote: false,
+    loading: false,
+    error: false,
+    hasMore: false,
+    selectedOption: null,
+    clearable: false,
     size: 'md',
     teleport: true,
   },
@@ -34,28 +46,67 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   'update:modelValue': [value: string | number | null]
+  search: [value: string]
+  'load-more': []
+  retry: []
 }>()
 
 const root = ref<HTMLElement | null>(null)
 const triggerRef = ref<HTMLButtonElement | null>(null)
 const open = ref(false)
 const search = ref('')
+const remembered = ref<AppSelectOption | null>(null)
 const activeIndex = ref(-1)
-const menuPosition = ref({ top: 0, left: 0, width: 0, openUp: false })
+const menuPosition = ref({
+  top: 0,
+  start: 0,
+  minWidth: 0,
+  maxWidth: 560,
+  openUp: false,
+  rtl: false,
+})
 
-const selected = computed(
-  () => props.options.find((option) => String(option.value) === String(props.modelValue)) ?? null,
-)
+function matchesValue(option: AppSelectOption | null | undefined): boolean {
+  return option != null && String(option.value) === String(props.modelValue)
+}
+
+const selected = computed(() => {
+  const fromOptions = props.options.find((option) => matchesValue(option))
+  if (fromOptions) return fromOptions
+  if (matchesValue(props.selectedOption)) return props.selectedOption ?? null
+  if (matchesValue(remembered.value)) return remembered.value
+  return null
+})
 
 const filteredOptions = computed(() => {
   const query = search.value.trim().toLowerCase()
-  if (!props.searchable || !query) return props.options
-  return props.options.filter((option) => {
-    const label = String(option.label ?? '').toLowerCase()
-    const hint = String(option.hint ?? '').toLowerCase()
-    return label.includes(query) || hint.includes(query)
-  })
+  const source = props.remote
+    ? props.options
+    : !props.searchable || !query
+      ? props.options
+      : props.options.filter((option) => {
+          const label = String(option.label ?? '').toLowerCase()
+          const hint = String(option.hint ?? '').toLowerCase()
+          return label.includes(query) || hint.includes(query)
+        })
+
+  const current = selected.value
+  if (!current || source.some((option) => String(option.value) === String(current.value))) {
+    return source
+  }
+  return [current, ...source]
 })
+
+watch(search, (value) => {
+  if (props.remote && open.value) emit('search', String(value).trim())
+})
+
+watch(
+  () => props.modelValue,
+  (value) => {
+    if (value === '' || value == null) remembered.value = null
+  },
+)
 
 const displayLabel = computed(() => selected.value?.label ?? props.placeholder)
 const hasValue = computed(() => selected.value != null)
@@ -76,15 +127,24 @@ function syncMenuPosition(): void {
   if (!el) return
   const rect = el.getBoundingClientRect()
   const viewportH = window.innerHeight
-  const menuMaxH = 280
+  const viewportW = window.innerWidth
+  const menuMaxH = 320
   const spaceBelow = viewportH - rect.bottom
   const openUp = spaceBelow < menuMaxH && rect.top > spaceBelow
+  const rtl = getComputedStyle(el).direction === 'rtl'
+
+  // Anchor to the trigger's start edge and let the menu grow toward the viewport.
+  const available = rtl ? rect.right - 12 : viewportW - rect.left - 12
+  const maxWidth = Math.min(560, Math.max(available, 160))
+  const minWidth = Math.min(Math.max(rect.width, 160), maxWidth)
 
   menuPosition.value = {
     top: openUp ? rect.top - 6 : rect.bottom + 6,
-    left: rect.left,
-    width: rect.width,
+    start: rtl ? viewportW - rect.right : rect.left,
+    minWidth,
+    maxWidth,
     openUp,
+    rtl,
   }
 }
 
@@ -100,11 +160,16 @@ function unbindPositionListeners(): void {
 
 function toggle(): void {
   if (props.disabled) return
-  open.value = !open.value
+  if (open.value) close()
+  else open.value = true
 }
 
 function close(): void {
   if (!open.value) return
+  if (props.remote && search.value !== '') {
+    search.value = ''
+    emit('search', '')
+  }
   open.value = false
   search.value = ''
   activeIndex.value = -1
@@ -113,8 +178,21 @@ function close(): void {
 
 function pick(option: AppSelectOption): void {
   if (option.disabled) return
+  remembered.value = option
   emit('update:modelValue', option.value)
   close()
+}
+
+function clear(event: MouseEvent): void {
+  event.preventDefault()
+  event.stopPropagation()
+  if (props.disabled || !props.clearable) return
+  remembered.value = null
+  emit('update:modelValue', null)
+}
+
+function loadMore(): void {
+  if (props.remote && props.hasMore && !props.loading) emit('load-more')
 }
 
 function onDocumentClick(event: MouseEvent): void {
@@ -150,22 +228,27 @@ function onDocumentKeydown(event: KeyboardEvent): void {
 const menuStyle = computed((): CSSProperties | undefined => {
   if (!props.teleport) return undefined
   const pos = menuPosition.value
-  if (pos.openUp) {
-    return {
-      position: 'fixed',
-      bottom: `${window.innerHeight - pos.top}px`,
-      left: `${pos.left}px`,
-      width: `${pos.width}px`,
-      zIndex: 250,
-    }
-  }
-  return {
+  const style: CSSProperties = {
     position: 'fixed',
-    top: `${pos.top}px`,
-    left: `${pos.left}px`,
-    width: `${pos.width}px`,
+    minWidth: `${pos.minWidth}px`,
+    maxWidth: `${pos.maxWidth}px`,
+    width: 'max-content',
     zIndex: 250,
   }
+
+  if (pos.rtl) {
+    style.right = `${pos.start}px`
+  } else {
+    style.left = `${pos.start}px`
+  }
+
+  if (pos.openUp) {
+    style.bottom = `${window.innerHeight - pos.top}px`
+  } else {
+    style.top = `${pos.top}px`
+  }
+
+  return style
 })
 
 watch(open, async (isOpen) => {
@@ -223,6 +306,15 @@ onUnmounted(() => {
       >
         {{ displayLabel }}
       </span>
+      <button
+        v-if="clearable && hasValue && !disabled"
+        type="button"
+        class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-brand-text-muted hover:bg-brand-bg hover:text-brand-text"
+        aria-label="مسح الاختيار"
+        @click="clear"
+      >
+        <X class="h-3.5 w-3.5" :stroke-width="2.25" />
+      </button>
       <ChevronDown
         class="h-4 w-4 shrink-0 text-brand-text-muted transition"
         :class="open ? 'rotate-180 text-brand-primary' : ''"
@@ -243,11 +335,11 @@ onUnmounted(() => {
           v-if="open"
           data-app-select-menu
           class="overflow-hidden rounded-xl border border-brand-border bg-brand-surface shadow-xl ring-1 ring-black/5"
-          :class="teleport ? '' : 'absolute inset-x-0 z-[250] mt-1.5'"
+          :class="teleport ? '' : 'absolute start-0 z-[250] mt-1.5 min-w-full w-max max-w-[min(35rem,calc(100vw-1.5rem))]'"
           :style="menuStyle"
           role="listbox"
         >
-          <div v-if="searchable" class="border-b border-brand-border p-2">
+          <div v-if="searchable || remote" class="border-b border-brand-border p-2">
             <input
               v-model="search"
               data-select-search
@@ -258,9 +350,16 @@ onUnmounted(() => {
             />
           </div>
 
-          <ul class="max-h-52 overflow-y-auto p-1.5">
+          <ul class="max-h-72 overflow-y-auto p-1.5">
+            <li v-if="error" class="px-3 py-6 text-center text-xs font-semibold text-red-700">
+              <p>تعذر تحميل الخيارات</p>
+              <button type="button" class="mt-2 underline" data-select-retry @click="emit('retry')">إعادة المحاولة</button>
+            </li>
+            <li v-else-if="loading && !filteredOptions.length" class="px-3 py-6 text-center text-xs font-semibold text-brand-text-muted">
+              جارٍ التحميل…
+            </li>
             <li
-              v-if="!filteredOptions.length"
+              v-else-if="!filteredOptions.length"
               class="px-3 py-6 text-center text-xs font-semibold text-brand-text-muted"
             >
               لا توجد نتائج
@@ -273,7 +372,7 @@ onUnmounted(() => {
             >
               <button
                 type="button"
-                class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-start text-sm transition"
+                class="flex w-full items-start gap-2.5 rounded-lg px-3 py-2.5 text-start text-sm transition"
                 :class="
                   option.disabled
                     ? 'cursor-not-allowed opacity-45'
@@ -287,7 +386,7 @@ onUnmounted(() => {
                 @click="pick(option)"
               >
                 <span
-                  class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border"
+                  class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border"
                   :class="
                     String(option.value) === String(modelValue)
                       ? 'border-brand-primary bg-brand-primary text-white'
@@ -301,14 +400,27 @@ onUnmounted(() => {
                   />
                 </span>
                 <span class="min-w-0 flex-1">
-                  <span class="block truncate font-bold">{{ option.label }}</span>
+                  <span class="block whitespace-normal break-words font-bold leading-snug">
+                    {{ option.label }}
+                  </span>
                   <span
                     v-if="option.hint"
-                    class="mt-0.5 block truncate text-[11px] font-semibold text-brand-text-muted"
+                    class="mt-0.5 block whitespace-normal break-words text-[11px] font-semibold leading-snug text-brand-text-muted"
                   >
                     {{ option.hint }}
                   </span>
                 </span>
+              </button>
+            </li>
+            <li v-if="remote && hasMore && !error" class="px-1 pt-1">
+              <button
+                type="button"
+                class="w-full rounded-lg px-3 py-2 text-xs font-bold text-brand-primary-dark hover:bg-brand-primary-soft disabled:opacity-60"
+                :disabled="loading"
+                data-select-load-more
+                @click="loadMore"
+              >
+                {{ loading ? 'جارٍ التحميل…' : 'تحميل المزيد' }}
               </button>
             </li>
           </ul>

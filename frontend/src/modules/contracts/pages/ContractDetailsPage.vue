@@ -2,9 +2,17 @@
 import { computed, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
-import { ArrowRight, Pencil } from 'lucide-vue-next'
+import {
+  ArrowRight,
+  Building2,
+  CalendarRange,
+  Coins,
+  FileText,
+  Pencil,
+  Tag,
+  UserRound,
+} from 'lucide-vue-next'
 
-import { useEmployeesQuery } from '@/modules/employees/queries/useEmployeesQuery'
 import EntityDocumentsSection from '@/modules/documents/components/EntityDocumentsSection.vue'
 import { useOrganizationUnitsFlatQuery } from '@/modules/organization/queries/useOrganizationUnitsQuery'
 import { ApiError } from '@/shared/api/http'
@@ -17,11 +25,11 @@ import ContractFormDrawer from '../components/ContractFormDrawer.vue'
 import ContractLifecycleActions from '../components/ContractLifecycleActions.vue'
 import ContractTimeline from '../components/ContractTimeline.vue'
 import { useUpdateContractMutation } from '../mutations/useContractMutations'
-import { useCategoriesQuery } from '../queries/useCategoriesQuery'
 import { useContractQuery } from '../queries/useContractQuery'
 import type { ContractFormState } from '../types/contracts'
 import {
   contractStatusBadgeClass,
+  contractStatusDotClass,
   mapContractErrorCode,
   validateContractForm,
 } from '../validation/contractValidation'
@@ -42,11 +50,6 @@ const { data, isLoading, isError, refetch } = useContractQuery(contractId)
 const contract = computed(() => data.value ?? null)
 
 const { data: orgUnitsData } = useOrganizationUnitsFlatQuery({ status: 'active' })
-const { data: categoriesData } = useCategoriesQuery({ per_page: 100 })
-const { data: activeCategoriesData } = useCategoriesQuery({ is_active: true, per_page: 100 })
-const { data: employeesData } = useEmployeesQuery(
-  computed(() => ({ status: 'active' as const, per_page: 100 })),
-)
 
 const updateMutation = useUpdateContractMutation()
 const isFormSubmitting = computed(() => updateMutation.isPending.value)
@@ -72,41 +75,12 @@ const canEdit = computed(
   () => contract.value?.status === 'draft' && can('contracts.update'),
 )
 
-const categoryFormOptions = computed<AppSelectOption[]>(() => {
-  const active = activeCategoriesData.value?.data ?? []
-  const options = active.map((c) => ({
-    value: c.id,
-    label: c.name,
-    hint: c.code ?? undefined,
-  }))
-  if (contract.value?.category) {
-    const currentId = contract.value.category.id
-    if (!options.some((o) => o.value === currentId)) {
-      options.unshift({
-        value: currentId,
-        label: contract.value.category.name,
-        hint: t('contracts.categoryInactive'),
-      })
-    }
-  }
-  return options
-})
-
 const orgUnitFormOptions = computed<AppSelectOption[]>(() => [
   { value: '', label: t('contracts.noOrgUnit') },
   ...(orgUnitsData.value?.data ?? []).map((u) => ({
     value: u.id,
     label: u.name,
     hint: u.code,
-  })),
-])
-
-const employeeFormOptions = computed<AppSelectOption[]>(() => [
-  { value: '', label: t('contracts.noEmployee') },
-  ...(employeesData.value?.data ?? []).map((e) => ({
-    value: e.id,
-    label: e.full_name,
-    hint: e.employee_number,
   })),
 ])
 
@@ -117,16 +91,19 @@ const counterpartyKindOptions = computed<AppSelectOption[]>(() => [
 ])
 
 function isCategoryInactive(): boolean {
-  const current = contract.value?.category
-  if (!current) return false
-  if (current.is_active === false) return true
-  const found = (categoriesData.value?.data ?? []).find((c) => c.id === current.id)
-  return found ? !found.is_active : false
+  return contract.value?.category?.is_active === false
 }
 
 function formatValue(): string {
   if (!contract.value?.value) return '—'
   return `${contract.value.value} ${contract.value.currency}`
+}
+
+function formatDateRange(): string {
+  if (!contract.value) return '—'
+  const start = contract.value.start_date || '—'
+  const end = contract.value.end_date || '—'
+  return `${start} — ${end}`
 }
 
 function openEdit(): void {
@@ -227,11 +204,11 @@ async function onLifecycleRefreshed(): Promise<void> {
 </script>
 
 <template>
-  <div class="space-y-6">
+  <div class="mx-auto max-w-[1200px] space-y-5">
     <div class="flex flex-wrap items-center gap-3">
       <button
         type="button"
-        class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text hover:bg-brand-bg"
+        class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text transition hover:bg-brand-bg"
         @click="router.push('/app/contracts')"
       >
         <ArrowRight class="h-4 w-4" />
@@ -261,153 +238,224 @@ async function onLifecycleRefreshed(): Promise<void> {
     </div>
 
     <template v-else>
-      <div class="flex flex-wrap items-start justify-between gap-4">
-        <div class="min-w-0">
-          <div class="flex flex-wrap items-center gap-2">
-            <p class="font-mono text-sm text-brand-text-muted" dir="ltr">
-              {{ contract.contract_number }}
+      <section class="rounded-2xl border border-brand-border bg-brand-surface px-5 py-5 sm:px-6">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+          <div class="min-w-0 flex-1">
+            <div class="flex flex-wrap items-center gap-2">
+              <p class="font-mono text-xs font-semibold tracking-wide text-brand-text-muted" dir="ltr">
+                {{ contract.contract_number }}
+              </p>
+              <span
+                class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold tracking-wide"
+                :class="contractStatusBadgeClass(contract.status)"
+              >
+                <span
+                  class="h-1.5 w-1.5 shrink-0 rounded-full"
+                  :class="contractStatusDotClass(contract.status)"
+                  aria-hidden="true"
+                />
+                {{ t(`contracts.status.${contract.status}`) }}
+              </span>
+              <span
+                v-if="contract.is_expiring_soon"
+                class="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-900 ring-1 ring-amber-200/70"
+              >
+                {{ t('contracts.expiringSoonBadge') }}
+              </span>
+            </div>
+            <h2 class="mt-2 text-[1.65rem] font-bold leading-snug text-brand-text sm:text-[1.85rem]">
+              {{ contract.title }}
+            </h2>
+            <p class="mt-2 text-sm text-brand-text-secondary">
+              <span class="font-semibold text-brand-text">{{ contract.counterparty_name }}</span>
+              <span class="mx-1.5 text-brand-text-muted">·</span>
+              {{ t(`contracts.counterpartyKind.${contract.counterparty_kind}`) }}
             </p>
-            <span
-              class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold"
-              :class="contractStatusBadgeClass(contract.status)"
-            >
-              {{ t(`contracts.status.${contract.status}`) }}
-            </span>
-            <span
-              v-if="contract.is_expiring_soon"
-              class="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-900 ring-1 ring-amber-200/70"
-            >
-              {{ t('contracts.expiringSoonBadge') }}
-            </span>
           </div>
-          <h2 class="mt-2 text-[1.75rem] font-bold leading-tight text-brand-text">
-            {{ contract.title }}
-          </h2>
+
+          <PermissionGuard v-if="canEdit" permission="contracts.update">
+            <button
+              type="button"
+              class="inline-flex h-10 items-center gap-2 rounded-xl border border-brand-border bg-brand-surface px-4 text-sm font-semibold text-brand-primary-dark transition hover:bg-brand-primary-soft"
+              @click="openEdit"
+            >
+              <Pencil class="h-4 w-4" />
+              {{ t('contracts.actions.edit') }}
+            </button>
+          </PermissionGuard>
         </div>
-        <PermissionGuard v-if="canEdit" permission="contracts.update">
-          <button
-            type="button"
-            class="inline-flex h-11 items-center gap-2 rounded-xl border border-brand-border bg-brand-surface px-4 text-sm font-semibold text-brand-primary-dark hover:bg-brand-primary-soft"
-            @click="openEdit"
+      </section>
+
+      <div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <div class="space-y-5">
+          <section class="rounded-2xl border border-brand-border bg-brand-surface">
+            <header class="border-b border-brand-border px-5 py-4">
+              <h3 class="text-sm font-bold text-brand-text">{{ t('contracts.detailsSummary') }}</h3>
+            </header>
+            <dl class="grid gap-0 sm:grid-cols-2">
+              <div class="flex gap-3 border-b border-brand-border/80 px-5 py-4 sm:border-e">
+                <span class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-bg text-brand-primary">
+                  <Building2 class="h-4 w-4" :stroke-width="1.75" />
+                </span>
+                <div class="min-w-0">
+                  <dt class="text-xs font-semibold text-brand-text-muted">
+                    {{ t('contracts.fields.counterpartyName') }}
+                  </dt>
+                  <dd class="mt-1 text-sm font-semibold text-brand-text">
+                    {{ contract.counterparty_name }}
+                  </dd>
+                  <dd class="mt-0.5 text-xs text-brand-text-secondary">
+                    {{ t(`contracts.counterpartyKind.${contract.counterparty_kind}`) }}
+                  </dd>
+                </div>
+              </div>
+
+              <div class="flex gap-3 border-b border-brand-border/80 px-5 py-4">
+                <span class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-bg text-brand-primary">
+                  <Tag class="h-4 w-4" :stroke-width="1.75" />
+                </span>
+                <div class="min-w-0">
+                  <dt class="text-xs font-semibold text-brand-text-muted">
+                    {{ t('contracts.fields.category') }}
+                  </dt>
+                  <dd class="mt-1 text-sm font-semibold text-brand-text">
+                    {{ contract.category?.name ?? '—' }}
+                    <span
+                      v-if="isCategoryInactive()"
+                      class="ms-1 inline-flex rounded-full bg-neutral-100 px-1.5 py-0.5 text-[10px] font-semibold text-neutral-600"
+                    >
+                      {{ t('contracts.categoryInactive') }}
+                    </span>
+                  </dd>
+                </div>
+              </div>
+
+              <div class="flex gap-3 border-b border-brand-border/80 px-5 py-4 sm:border-e">
+                <span class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-bg text-brand-primary">
+                  <Coins class="h-4 w-4" :stroke-width="1.75" />
+                </span>
+                <div class="min-w-0">
+                  <dt class="text-xs font-semibold text-brand-text-muted">
+                    {{ t('contracts.fields.value') }}
+                  </dt>
+                  <dd class="mt-1 text-sm font-semibold text-brand-text" dir="ltr">
+                    {{ formatValue() }}
+                  </dd>
+                </div>
+              </div>
+
+              <div class="flex gap-3 border-b border-brand-border/80 px-5 py-4">
+                <span class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-bg text-brand-primary">
+                  <CalendarRange class="h-4 w-4" :stroke-width="1.75" />
+                </span>
+                <div class="min-w-0">
+                  <dt class="text-xs font-semibold text-brand-text-muted">
+                    {{ t('contracts.fields.startDate') }} / {{ t('contracts.fields.endDate') }}
+                  </dt>
+                  <dd class="mt-1 text-sm font-semibold text-brand-text" dir="ltr">
+                    {{ formatDateRange() }}
+                  </dd>
+                </div>
+              </div>
+
+              <div class="flex gap-3 border-b border-brand-border/80 px-5 py-4 sm:border-e sm:border-b-0">
+                <span class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-bg text-brand-primary">
+                  <Building2 class="h-4 w-4" :stroke-width="1.75" />
+                </span>
+                <div class="min-w-0">
+                  <dt class="text-xs font-semibold text-brand-text-muted">
+                    {{ t('contracts.fields.organizationUnit') }}
+                  </dt>
+                  <dd class="mt-1 text-sm font-semibold text-brand-text">
+                    {{ contract.organization_unit?.name ?? '—' }}
+                  </dd>
+                </div>
+              </div>
+
+              <div class="flex gap-3 px-5 py-4">
+                <span class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-bg text-brand-primary">
+                  <UserRound class="h-4 w-4" :stroke-width="1.75" />
+                </span>
+                <div class="min-w-0">
+                  <dt class="text-xs font-semibold text-brand-text-muted">
+                    {{ t('contracts.fields.employee') }}
+                  </dt>
+                  <dd class="mt-1 text-sm font-semibold text-brand-text">
+                    {{ contract.employee?.full_name ?? '—' }}
+                  </dd>
+                </div>
+              </div>
+            </dl>
+          </section>
+
+          <section
+            v-if="contract.notes"
+            class="rounded-2xl border border-brand-border bg-brand-surface"
           >
-            <Pencil class="h-4 w-4" />
-            {{ t('contracts.actions.edit') }}
-          </button>
-        </PermissionGuard>
+            <header class="flex items-center gap-2 border-b border-brand-border px-5 py-4">
+              <FileText class="h-4 w-4 text-brand-primary" :stroke-width="1.75" />
+              <h3 class="text-sm font-bold text-brand-text">{{ t('contracts.fields.notes') }}</h3>
+            </header>
+            <p class="whitespace-pre-wrap px-5 py-4 text-sm leading-relaxed text-brand-text-secondary">
+              {{ contract.notes }}
+            </p>
+          </section>
+
+          <section class="rounded-2xl border border-brand-border bg-brand-surface">
+            <header class="border-b border-brand-border px-5 py-4">
+              <h3 class="text-sm font-bold text-brand-text">{{ t('contracts.renewalLineage') }}</h3>
+            </header>
+            <div class="space-y-2 px-5 py-4 text-sm text-brand-text-secondary">
+              <p v-if="contract.renewed_from_contract_id">
+                {{ t('contracts.renewedFrom') }}:
+                <RouterLink
+                  :to="`/app/contracts/${contract.renewed_from_contract_id}`"
+                  class="font-semibold text-brand-primary-dark hover:underline"
+                >
+                  #{{ contract.renewed_from_contract_id }}
+                </RouterLink>
+              </p>
+              <p v-if="contract.renewal_child">
+                {{ t('contracts.renewalChild') }}:
+                <RouterLink
+                  :to="`/app/contracts/${contract.renewal_child.id}`"
+                  class="font-semibold text-brand-primary-dark hover:underline"
+                >
+                  {{ contract.renewal_child.contract_number }}
+                </RouterLink>
+              </p>
+              <p
+                v-if="!contract.renewed_from_contract_id && !contract.renewal_child"
+                class="text-brand-text-muted"
+              >
+                {{ t('contracts.noRenewalLineage') }}
+              </p>
+            </div>
+          </section>
+
+          <ContractTimeline :transitions="contract.transitions ?? []" />
+
+          <EntityDocumentsSection
+            linkable-type="contract"
+            :linkable-id="contract.id"
+            :link-label="`${contract.contract_number} — ${contract.title}`"
+          />
+        </div>
+
+        <aside class="space-y-5 xl:sticky xl:top-4 xl:self-start">
+          <section class="rounded-2xl border border-brand-border bg-brand-surface">
+            <header class="border-b border-brand-border px-5 py-4">
+              <h3 class="text-sm font-bold text-brand-text">{{ t('contracts.lifecycleTitle') }}</h3>
+              <p class="mt-1 text-xs text-brand-text-secondary">
+                {{ t('contracts.lifecycleHint') }}
+              </p>
+            </header>
+            <div class="px-4 py-4">
+              <ContractLifecycleActions :contract="contract" @refreshed="onLifecycleRefreshed" />
+            </div>
+          </section>
+        </aside>
       </div>
-
-      <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <div class="rounded-2xl border border-brand-border bg-brand-surface p-4">
-          <p class="text-xs font-bold text-brand-text-muted">
-            {{ t('contracts.fields.counterpartyName') }}
-          </p>
-          <p class="mt-1.5 text-sm font-semibold text-brand-text">
-            {{ contract.counterparty_name }}
-          </p>
-          <p class="mt-1 text-xs text-brand-text-secondary">
-            {{ t(`contracts.counterpartyKind.${contract.counterparty_kind}`) }}
-          </p>
-        </div>
-        <div class="rounded-2xl border border-brand-border bg-brand-surface p-4">
-          <p class="text-xs font-bold text-brand-text-muted">
-            {{ t('contracts.fields.category') }}
-          </p>
-          <p class="mt-1.5 text-sm font-semibold text-brand-text">
-            {{ contract.category?.name ?? '—' }}
-            <span
-              v-if="isCategoryInactive()"
-              class="ms-1 inline-flex rounded-full bg-neutral-100 px-1.5 py-0.5 text-[10px] font-semibold text-neutral-600"
-            >
-              {{ t('contracts.categoryInactive') }}
-            </span>
-          </p>
-        </div>
-        <div class="rounded-2xl border border-brand-border bg-brand-surface p-4">
-          <p class="text-xs font-bold text-brand-text-muted">
-            {{ t('contracts.fields.value') }}
-          </p>
-          <p class="mt-1.5 text-sm font-semibold text-brand-text" dir="ltr">{{ formatValue() }}</p>
-        </div>
-        <div class="rounded-2xl border border-brand-border bg-brand-surface p-4">
-          <p class="text-xs font-bold text-brand-text-muted">
-            {{ t('contracts.fields.startDate') }} / {{ t('contracts.fields.endDate') }}
-          </p>
-          <p class="mt-1.5 text-sm font-semibold text-brand-text" dir="ltr">
-            {{ contract.start_date }} — {{ contract.end_date ?? '—' }}
-          </p>
-        </div>
-        <div class="rounded-2xl border border-brand-border bg-brand-surface p-4">
-          <p class="text-xs font-bold text-brand-text-muted">
-            {{ t('contracts.fields.organizationUnit') }}
-          </p>
-          <p class="mt-1.5 text-sm font-semibold text-brand-text">
-            {{ contract.organization_unit?.name ?? '—' }}
-          </p>
-        </div>
-        <div class="rounded-2xl border border-brand-border bg-brand-surface p-4">
-          <p class="text-xs font-bold text-brand-text-muted">
-            {{ t('contracts.fields.employee') }}
-          </p>
-          <p class="mt-1.5 text-sm font-semibold text-brand-text">
-            {{ contract.employee?.full_name ?? '—' }}
-          </p>
-        </div>
-      </div>
-
-      <div
-        v-if="contract.notes"
-        class="rounded-2xl border border-brand-border bg-brand-surface p-4"
-      >
-        <p class="text-xs font-bold text-brand-text-muted">{{ t('contracts.fields.notes') }}</p>
-        <p class="mt-1.5 whitespace-pre-wrap text-sm text-brand-text-secondary">
-          {{ contract.notes }}
-        </p>
-      </div>
-
-      <div class="rounded-2xl border border-brand-border bg-brand-surface p-4">
-        <p class="text-xs font-bold text-brand-text-muted">
-          {{ t('contracts.renewalLineage') }}
-        </p>
-        <div class="mt-2 space-y-1.5 text-sm text-brand-text-secondary">
-          <p v-if="contract.renewed_from_contract_id">
-            {{ t('contracts.renewedFrom') }}:
-            <RouterLink
-              :to="`/app/contracts/${contract.renewed_from_contract_id}`"
-              class="font-semibold text-brand-primary-dark hover:underline"
-            >
-              #{{ contract.renewed_from_contract_id }}
-            </RouterLink>
-          </p>
-          <p v-if="contract.renewal_child">
-            {{ t('contracts.renewalChild') }}:
-            <RouterLink
-              :to="`/app/contracts/${contract.renewal_child.id}`"
-              class="font-semibold text-brand-primary-dark hover:underline"
-            >
-              {{ contract.renewal_child.contract_number }}
-            </RouterLink>
-          </p>
-          <p
-            v-if="!contract.renewed_from_contract_id && !contract.renewal_child"
-            class="text-brand-text-muted"
-          >
-            {{ t('contracts.noRenewalLineage') }}
-          </p>
-        </div>
-      </div>
-
-      <div class="rounded-2xl border border-brand-border bg-brand-surface p-4">
-        <p class="mb-3 text-sm font-bold text-brand-text">{{ t('contracts.lifecycleTitle') }}</p>
-        <ContractLifecycleActions :contract="contract" @refreshed="onLifecycleRefreshed" />
-      </div>
-
-      <ContractTimeline :transitions="contract.transitions ?? []" />
-
-      <EntityDocumentsSection
-        linkable-type="contract"
-        :linkable-id="contract.id"
-        :link-label="`${contract.contract_number} — ${contract.title}`"
-      />
     </template>
 
     <ContractFormDrawer
@@ -417,8 +465,6 @@ async function onLifecycleRefreshed(): Promise<void> {
       :form-error="formError"
       :field-errors="fieldErrors"
       :submitting="isFormSubmitting"
-      :category-options="categoryFormOptions"
-      :employee-options="employeeFormOptions"
       :org-unit-options="orgUnitFormOptions"
       :counterparty-kind-options="counterpartyKindOptions"
       @close="drawerOpen = false"

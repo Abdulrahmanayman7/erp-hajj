@@ -3,7 +3,10 @@ import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Loader2, X } from 'lucide-vue-next'
 
+import { listEmployees } from '@/modules/employees/api/employeesApi'
+import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
+import { employeeSelectOption, toSelectId } from '@/shared/lookups/selectOptions'
 
 import type { Meeting, MeetingFormState, MeetingLocationType } from '../types/meetings'
 
@@ -14,7 +17,6 @@ const props = defineProps<{
   formError: string
   fieldErrors: Record<string, string>
   submitting: boolean
-  employeeOptions: AppSelectOption[]
   orgUnitOptions: AppSelectOption[]
   locationTypeOptions: AppSelectOption[]
 }>()
@@ -47,6 +49,15 @@ const meetingNumberDisplay = computed(() => {
 
 const showMeetingLink = computed(
   () => props.form.location_type === 'remote' || props.form.location_type === 'hybrid',
+)
+const fetchActiveEmployees = (params: { search?: string; page: number; per_page: number }) =>
+  listEmployees({ ...params, status: 'active' })
+const emptyEmployee = computed<AppSelectOption>(() => ({ value: '', label: t('meetings.noEmployee') }))
+const selectedChairperson = computed(() =>
+  props.editing?.chairperson ? employeeSelectOption(props.editing.chairperson) : null,
+)
+const selectedSecretary = computed(() =>
+  props.editing?.secretary ? employeeSelectOption(props.editing.secretary) : null,
 )
 
 function patch(partial: Partial<MeetingFormState>): void {
@@ -271,18 +282,17 @@ onUnmounted(() => {
                   <span class="mb-2 block text-sm font-semibold text-brand-text">
                     {{ t('meetings.fields.chairperson') }}
                   </span>
-                  <AppSelect
+                  <AppRemoteSelect
                     :model-value="form.chairperson_employee_id"
-                    :options="employeeOptions"
+                    query-key="employees-active"
+                    :fetcher="fetchActiveEmployees"
+                    :map-option="employeeSelectOption"
+                    :empty-option="emptyEmployee"
+                    :selected-option="selectedChairperson"
                     :placeholder="t('meetings.selectChairperson')"
                     :disabled="submitting"
-                    searchable
-                    @update:model-value="
-                      patch({
-                        chairperson_employee_id:
-                          $event === null || $event === '' ? '' : Number($event),
-                      })
-                    "
+                    :enabled="open"
+                    @update:model-value="patch({ chairperson_employee_id: toSelectId($event) })"
                   />
                 </div>
 
@@ -290,18 +300,17 @@ onUnmounted(() => {
                   <span class="mb-2 block text-sm font-semibold text-brand-text">
                     {{ t('meetings.fields.secretary') }}
                   </span>
-                  <AppSelect
+                  <AppRemoteSelect
                     :model-value="form.secretary_employee_id"
-                    :options="employeeOptions"
+                    query-key="employees-active"
+                    :fetcher="fetchActiveEmployees"
+                    :map-option="employeeSelectOption"
+                    :empty-option="emptyEmployee"
+                    :selected-option="selectedSecretary"
                     :placeholder="t('meetings.selectSecretary')"
                     :disabled="submitting"
-                    searchable
-                    @update:model-value="
-                      patch({
-                        secretary_employee_id:
-                          $event === null || $event === '' ? '' : Number($event),
-                      })
-                    "
+                    :enabled="open"
+                    @update:model-value="patch({ secretary_employee_id: toSelectId($event) })"
                   />
                 </div>
               </section>

@@ -75,21 +75,21 @@ final class ListContracts
 
             $query->where('status', ContractStatus::Executing->value)
                 ->whereNotNull('end_date')
-                ->whereDate('end_date', '>=', $today)
-                ->whereDate('end_date', '<=', $until);
+                ->where('end_date', '>=', $today)
+                ->where('end_date', '<=', $until);
         }
 
         if (! empty($filters['start_date_from'])) {
-            $query->whereDate('start_date', '>=', (string) $filters['start_date_from']);
+            $query->where('start_date', '>=', (string) $filters['start_date_from']);
         }
         if (! empty($filters['start_date_to'])) {
-            $query->whereDate('start_date', '<=', (string) $filters['start_date_to']);
+            $query->where('start_date', '<=', (string) $filters['start_date_to']);
         }
         if (! empty($filters['end_date_from'])) {
-            $query->whereDate('end_date', '>=', (string) $filters['end_date_from']);
+            $query->where('end_date', '>=', (string) $filters['end_date_from']);
         }
         if (! empty($filters['end_date_to'])) {
-            $query->whereDate('end_date', '<=', (string) $filters['end_date_to']);
+            $query->where('end_date', '<=', (string) $filters['end_date_to']);
         }
 
         $sort = $filters['sort'] ?? 'created_at';

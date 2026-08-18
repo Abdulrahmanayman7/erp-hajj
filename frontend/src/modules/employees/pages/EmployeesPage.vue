@@ -17,15 +17,22 @@ import {
 
 import EntityDocumentsSection from '@/modules/documents/components/EntityDocumentsSection.vue'
 import { useOrganizationUnitsFlatQuery } from '@/modules/organization/queries/useOrganizationUnitsQuery'
-import { listUsers } from '@/modules/users/api/usersApi'
+import { listPositions } from '../api/positionsApi'
+import { listEmployees } from '../api/employeesApi'
 import { ApiError } from '@/shared/api/http'
+import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
+import {
+  employeeSelectOption,
+  positionSelectOption,
+  toSelectId,
+} from '@/shared/lookups/selectOptions'
 import AppTooltip from '@/shared/components/AppTooltip.vue'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
 import { useConfirm } from '@/shared/composables/useConfirm'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import { useToast } from '@/shared/composables/useToast'
-import { useQuery } from '@tanstack/vue-query'
+import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
 
 import EmployeeFormDrawer from '../components/EmployeeFormDrawer.vue'
 import PositionsManagerDrawer from '../components/PositionsManagerDrawer.vue'
@@ -40,11 +47,8 @@ import {
   useUpdateEmployeeMutation,
 } from '../mutations/useEmployeeMutations'
 import { useEmployeesQuery } from '../queries/useEmployeesQuery'
-import { usePositionsQuery } from '../queries/usePositionsQuery'
 import type { Employee, EmployeeFormState } from '../types/employees'
 import {
-  filterLinkableUsers,
-  filterSupervisorCandidates,
   mapEmployeeErrorCode,
   resolveEmployeesListState,
   validateEmployeeForm,
@@ -67,8 +71,9 @@ const filters = reactive({
   direction: 'asc',
 })
 
+const committedSearch = useDebouncedRef(() => filters.search)
 const queryParams = computed(() => ({
-  search: filters.search || undefined,
+  search: committedSearch.value || undefined,
   status: filters.status,
   organization_unit_id: filters.organization_unit_id,
   position_id: filters.position_id,
@@ -82,13 +87,10 @@ const queryParams = computed(() => ({
 const { data, isLoading, isError, refetch, isFetching } = useEmployeesQuery(queryParams)
 
 const { data: orgUnitsData } = useOrganizationUnitsFlatQuery({ status: 'active' })
-const { data: positionsData } = usePositionsQuery(
-  { is_active: true, per_page: 100 },
-  { enabled: computed(() => can('positions.view') || can('employees.create') || can('employees.update')) },
-)
-const { data: activeEmployeesData } = useEmployeesQuery(
-  computed(() => ({ status: 'active' as const, per_page: 100 })),
-)
+const fetchActiveEmployees = (params: { search?: string; page: number; per_page: number }) =>
+  listEmployees({ ...params, status: 'active' })
+const fetchActivePositions = (params: { search?: string; page: number; per_page: number }) =>
+  listPositions({ ...params, is_active: true })
 
 const createMutation = useCreateEmployeeMutation()
 const updateMutation = useUpdateEmployeeMutation()
@@ -134,23 +136,6 @@ const userLinkTarget = ref<Employee | null>(null)
 const userId = ref<number | ''>('')
 const userLinkError = ref('')
 
-const usersQuery = useQuery({
-  queryKey: ['users', 'employee-link-options'],
-  queryFn: () => listUsers({ status: 'active', per_page: 100 }),
-  enabled: computed(() => userLinkOpen.value),
-})
-
-const linkedUserIds = computed(() => {
-  const ids = new Set<number>()
-  for (const emp of activeEmployeesData.value?.data ?? []) {
-    if (emp.user?.id != null) ids.add(emp.user.id)
-  }
-  for (const emp of employees.value) {
-    if (emp.user?.id != null) ids.add(emp.user.id)
-  }
-  return ids
-})
-
 const statusOptions = computed<AppSelectOption[]>(() => [
   { value: 'all', label: t('employees.filters.allStatuses') },
   { value: 'active', label: t('employees.status.active') },
@@ -174,65 +159,14 @@ const orgUnitFormOptions = computed<AppSelectOption[]>(() =>
   })),
 )
 
-const positionFilterOptions = computed<AppSelectOption[]>(() => [
-  { value: '', label: t('employees.filters.allPositions') },
-  ...(positionsData.value?.data ?? []).map((p) => ({
-    value: p.id,
-    label: p.name,
-    hint: p.code ?? undefined,
-  })),
-])
-
-const positionFormOptions = computed<AppSelectOption[]>(() => [
-  { value: '', label: t('employees.noPosition') },
-  ...(positionsData.value?.data ?? []).map((p) => ({
-    value: p.id,
-    label: p.name,
-    hint: p.code ?? undefined,
-  })),
-])
-
-const supervisorFilterOptions = computed<AppSelectOption[]>(() => [
-  { value: '', label: t('employees.filters.allSupervisors') },
-  ...(activeEmployeesData.value?.data ?? []).map((e) => ({
-    value: e.id,
-    label: e.full_name,
-    hint: e.employee_number,
-  })),
-])
-
-const supervisorDialogOptions = computed<AppSelectOption[]>(() => {
-  const selfId = supervisorTarget.value?.id ?? -1
-  const candidates = filterSupervisorCandidates(
-    activeEmployeesData.value?.data ?? [],
-    selfId,
-  )
-  return [
-    { value: '', label: t('employees.noSupervisor') },
-    ...candidates.map((e) => ({
-      value: e.id,
-      label: e.full_name,
-      hint: `${e.employee_number}${e.organization_unit ? ` · ${e.organization_unit.name}` : ''}`,
-    })),
-  ]
-})
-
-const userLinkOptions = computed<AppSelectOption[]>(() => {
-  const currentId = userLinkTarget.value?.user?.id ?? null
-  const users = filterLinkableUsers(
-    usersQuery.data.value?.data ?? [],
-    linkedUserIds.value,
-    currentId,
-  )
-  return [
-    { value: '', label: t('employees.selectUser') },
-    ...users.map((u) => ({
-      value: u.id,
-      label: u.name,
-      hint: u.email,
-    })),
-  ]
-})
+const emptyPositionFilter = computed<AppSelectOption>(() => ({
+  value: '',
+  label: t('employees.filters.allPositions'),
+}))
+const emptySupervisorFilter = computed<AppSelectOption>(() => ({
+  value: '',
+  label: t('employees.filters.allSupervisors'),
+}))
 
 const isFormSubmitting = computed(
   () => createMutation.isPending.value || updateMutation.isPending.value,
@@ -242,7 +176,7 @@ const isUserLinkSubmitting = computed(() => linkUserMutation.isPending.value)
 
 watch(
   () => [
-    filters.search,
+    committedSearch.value,
     filters.status,
     filters.organization_unit_id,
     filters.position_id,
@@ -527,16 +461,22 @@ async function unlinkUser(): Promise<void> {
         :options="orgUnitFilterOptions"
         searchable
       />
-      <AppSelect
+      <AppRemoteSelect
         v-if="can('positions.view')"
-        v-model="filters.position_id"
-        :options="positionFilterOptions"
-        searchable
+        :model-value="filters.position_id"
+        query-key="positions-active"
+        :fetcher="fetchActivePositions"
+        :map-option="positionSelectOption"
+        :empty-option="emptyPositionFilter"
+        @update:model-value="filters.position_id = toSelectId($event)"
       />
-      <AppSelect
-        v-model="filters.supervisor_id"
-        :options="supervisorFilterOptions"
-        searchable
+      <AppRemoteSelect
+        :model-value="filters.supervisor_id"
+        query-key="employees-active"
+        :fetcher="fetchActiveEmployees"
+        :map-option="employeeSelectOption"
+        :empty-option="emptySupervisorFilter"
+        @update:model-value="filters.supervisor_id = toSelectId($event)"
       />
     </div>
 
@@ -800,7 +740,6 @@ async function unlinkUser(): Promise<void> {
       :field-errors="fieldErrors"
       :submitting="isFormSubmitting"
       :org-unit-options="orgUnitFormOptions"
-      :position-options="positionFormOptions"
       @close="closeDrawer"
       @submit="submitForm"
       @update:form="assignForm"
@@ -810,7 +749,6 @@ async function unlinkUser(): Promise<void> {
       :open="supervisorOpen"
       :employee="supervisorTarget"
       :supervisor-id="supervisorId"
-      :supervisor-options="supervisorDialogOptions"
       :form-error="supervisorError"
       :submitting="isSupervisorSubmitting"
       @close="supervisorOpen = false"
@@ -822,7 +760,6 @@ async function unlinkUser(): Promise<void> {
       :open="userLinkOpen"
       :employee="userLinkTarget"
       :user-id="userId"
-      :user-options="userLinkOptions"
       :form-error="userLinkError"
       :submitting="isUserLinkSubmitting"
       @close="userLinkOpen = false"

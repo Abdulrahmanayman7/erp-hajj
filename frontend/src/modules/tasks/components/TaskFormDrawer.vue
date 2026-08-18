@@ -2,7 +2,11 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Loader2, X } from 'lucide-vue-next'
+import { listDecisions } from '@/modules/decisions/api/decisionsApi'
+import { listEmployees } from '@/modules/employees/api/employeesApi'
+import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
+import { employeeSelectOption, numberedEntityOption, toSelectId } from '@/shared/lookups/selectOptions'
 import type { Task, TaskFormState } from '../types/tasks'
 import { TASK_PRIORITIES } from '../validation/taskValidation'
 
@@ -13,19 +17,33 @@ const props = defineProps<{
   formError: string
   fieldErrors: Record<string, string>
   submitting: boolean
-  employeeOptions: AppSelectOption[]
   orgUnitOptions: AppSelectOption[]
-  decisionOptions: AppSelectOption[]
   lockedDecisionId?: number | null
+  lockedDecisionLabel?: string
 }>()
 const emit = defineEmits<{ close: []; submit: []; 'update:form': [TaskFormState] }>()
 const { t } = useI18n()
 const isEdit = computed(() => props.editing != null)
 const patch = (part: Partial<TaskFormState>) => emit('update:form', { ...props.form, ...part })
-const priorityOptions = computed<AppSelectOption[]>(() => TASK_PRIORITIES.map((x) => ({ value: x, label: t(`tasks.priority.${x}`) })))
-const decisionSelectOptions = computed<AppSelectOption[]>(() => [{ value: '', label: t('tasks.standaloneSource') }, ...props.decisionOptions])
+const priorityOptions = computed<AppSelectOption[]>(() =>
+  TASK_PRIORITIES.map((x) => ({ value: x, label: t(`tasks.priority.${x}`) })),
+)
 const isDecisionLocked = computed(() => props.lockedDecisionId != null)
-const lockedDecisionLabel = computed(() => props.decisionOptions.find((x) => String(x.value) === String(props.lockedDecisionId))?.label ?? props.editing?.decision?.title ?? '')
+const lockedLabel = computed(
+  () =>
+    props.lockedDecisionLabel ||
+    props.editing?.decision?.title ||
+    t('tasks.standaloneSource'),
+)
+const fetchActiveEmployees = (params: { search?: string; page: number; per_page: number }) =>
+  listEmployees({ ...params, status: 'active' })
+const fetchApprovedDecisions = (params: { search?: string; page: number; per_page: number }) =>
+  listDecisions({ ...params, status: 'approved' })
+const emptyEmployee = computed<AppSelectOption>(() => ({ value: '', label: t('tasks.noEmployee') }))
+const emptyDecision = computed<AppSelectOption>(() => ({
+  value: '',
+  label: t('tasks.standaloneSource'),
+}))
 </script>
 <template>
   <Teleport to="body"><div v-if="open" class="fixed inset-0 z-50" role="presentation">
@@ -46,15 +64,34 @@ const lockedDecisionLabel = computed(() => props.decisionOptions.find((x) => Str
         </section>
         <section class="space-y-2">
           <h4 class="font-bold">{{ t('tasks.sections.source') }}</h4>
-          <p v-if="isDecisionLocked" class="rounded-xl bg-brand-bg p-3 text-sm text-brand-text-secondary">{{ lockedDecisionLabel || t('tasks.standaloneSource') }}</p>
+          <p v-if="isDecisionLocked" class="rounded-xl bg-brand-bg p-3 text-sm text-brand-text-secondary">{{ lockedLabel }}</p>
           <p v-else-if="isEdit" class="rounded-xl bg-brand-bg p-3 text-sm text-brand-text-secondary">{{ editing?.decision?.title ?? t('tasks.standaloneSource') }}</p>
-          <AppSelect v-else :model-value="form.decision_id" :options="decisionSelectOptions" searchable @update:model-value="patch({ decision_id: $event === '' || $event === null ? '' : Number($event) })" />
+          <AppRemoteSelect
+            v-else
+            :model-value="form.decision_id"
+            query-key="approved-decisions"
+            :fetcher="fetchApprovedDecisions"
+            :map-option="numberedEntityOption"
+            :empty-option="emptyDecision"
+            :enabled="open"
+            @update:model-value="patch({ decision_id: toSelectId($event) })"
+          />
         </section>
         <section class="space-y-3">
           <h4 class="font-bold">{{ t('tasks.sections.assignment') }}</h4>
-          <label class="block"><span>{{ t('tasks.fields.organizationUnit') }}</span><AppSelect class="mt-1" :model-value="form.organization_unit_id" :options="orgUnitOptions" searchable @update:model-value="patch({ organization_unit_id: $event === '' || $event === null ? '' : Number($event) })" /></label>
+          <label class="block"><span>{{ t('tasks.fields.organizationUnit') }}</span><AppSelect class="mt-1" :model-value="form.organization_unit_id" :options="orgUnitOptions" searchable @update:model-value="patch({ organization_unit_id: toSelectId($event) })" /></label>
           <label class="block"><span>{{ t('tasks.fields.assignee') }}</span>
-            <AppSelect v-if="!isEdit" class="mt-1" :model-value="form.assigned_to_employee_id" :options="employeeOptions" searchable @update:model-value="patch({ assigned_to_employee_id: $event === '' || $event === null ? '' : Number($event) })" />
+            <AppRemoteSelect
+              v-if="!isEdit"
+              class="mt-1"
+              :model-value="form.assigned_to_employee_id"
+              query-key="employees-active"
+              :fetcher="fetchActiveEmployees"
+              :map-option="employeeSelectOption"
+              :empty-option="emptyEmployee"
+              :enabled="open"
+              @update:model-value="patch({ assigned_to_employee_id: toSelectId($event) })"
+            />
             <p v-else class="mt-1 rounded-xl bg-brand-bg p-3 text-sm text-brand-text-secondary">{{ editing?.assigned_to_employee?.full_name ?? t('tasks.noEmployee') }} — {{ t('tasks.assigneeChangeHint') }}</p>
           </label>
         </section>

@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
+import { CheckCircle2, CircleAlert } from 'lucide-vue-next'
 
 import type { AttentionItem } from '../types/dashboard'
 import { isSafeAppHref, severityBadgeClass } from '../utils/dashboardDisplay'
@@ -19,12 +20,16 @@ const isEmpty = computed(() => list.value.length === 0)
 
 <template>
   <DashboardSectionCard :title="t('dashboard.attention')">
-    <p
+    <div
       v-if="isEmpty"
-      class="text-sm text-brand-text-muted"
+      class="flex items-start gap-3 rounded-xl bg-emerald-50/70 p-4"
     >
-      {{ t('dashboard.emptyAttention') }}
-    </p>
+      <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-emerald-700" aria-hidden="true" />
+      <div>
+        <p class="text-sm font-bold text-emerald-900">{{ t('dashboard.attentionClearTitle') }}</p>
+        <p class="mt-1 text-xs leading-5 text-emerald-800">{{ t('dashboard.attentionClearDescription') }}</p>
+      </div>
+    </div>
     <ul
       v-else
       class="divide-y divide-brand-border"
@@ -41,14 +46,11 @@ const isEmpty = computed(() => list.value.length === 0)
           :class="isSafeAppHref(item.href) ? 'hover:bg-brand-primary-soft/40 rounded-xl px-2 -mx-2' : 'px-0'"
         >
           <span
-            class="mt-0.5 shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold"
+            class="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
             :class="severityBadgeClass(item.severity)"
+            :aria-label="t(`dashboard.severity.${item.severity}`)"
           >
-            {{
-              item.severity === 'critical' || item.severity === 'warning' || item.severity === 'info'
-                ? t(`dashboard.severity.${item.severity}`)
-                : item.severity
-            }}
+            <CircleAlert class="h-4 w-4" aria-hidden="true" />
           </span>
           <div class="min-w-0 flex-1">
             <p class="text-sm font-semibold text-brand-text">
@@ -63,7 +65,7 @@ const isEmpty = computed(() => list.value.length === 0)
           </div>
           <span
             v-if="item.count != null"
-            class="shrink-0 rounded-lg bg-[#F4F6F5] px-2 py-0.5 text-xs font-bold tabular-nums text-brand-text"
+            class="shrink-0 rounded-lg bg-brand-bg px-2 py-0.5 text-xs font-bold tabular-nums text-brand-text"
           >
             {{ item.count }}
           </span>

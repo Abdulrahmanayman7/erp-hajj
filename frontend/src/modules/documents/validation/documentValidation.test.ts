@@ -9,6 +9,7 @@ import {
   assertNoStorageLeak,
   canShowDocumentAction,
   documentStatusBadgeClass,
+  documentStatusDotClass,
   fileExtension,
   formatDocumentSize,
   hostRouteForLink,
@@ -139,6 +140,8 @@ describe('archive / restore / delete UX visibility', () => {
   it('maps status badge classes', () => {
     expect(documentStatusBadgeClass('active')).toContain('emerald')
     expect(documentStatusBadgeClass('archived')).toContain('neutral')
+    expect(documentStatusDotClass('active')).toContain('emerald')
+    expect(documentStatusDotClass('archived')).toContain('neutral')
   })
 })
 

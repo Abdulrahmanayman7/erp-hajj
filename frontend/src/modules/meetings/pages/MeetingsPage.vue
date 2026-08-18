@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 import { ChevronLeft, ChevronRight, Eye, Pencil, Plus, Search } from 'lucide-vue-next'
 
-import { useEmployeesQuery } from '@/modules/employees/queries/useEmployeesQuery'
 import { useOrganizationUnitsFlatQuery } from '@/modules/organization/queries/useOrganizationUnitsQuery'
 import { ApiError } from '@/shared/api/http'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
@@ -12,6 +11,7 @@ import AppTooltip from '@/shared/components/AppTooltip.vue'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import { useToast } from '@/shared/composables/useToast'
+import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
 
 import MeetingFormDrawer from '../components/MeetingFormDrawer.vue'
 import {
@@ -28,14 +28,18 @@ import {
   isMeetingToday,
   mapMeetingErrorCode,
   meetingStatusBadgeClass,
+  meetingStatusDotClass,
   resolveMeetingsListState,
   toDatetimeLocalValue,
   validateMeetingForm,
 } from '../validation/meetingValidation'
 
 const { t } = useI18n()
+const router = useRouter()
 const { permissions } = usePermissions()
 const toast = useToast()
+
+const focusedRowIndex = ref(-1)
 
 const filters = reactive({
   search: '',
@@ -50,8 +54,9 @@ const filters = reactive({
   direction: 'desc',
 })
 
+const committedSearch = useDebouncedRef(() => filters.search)
 const queryParams = computed(() => ({
-  search: filters.search || undefined,
+  search: committedSearch.value || undefined,
   status: filters.status === 'all' ? undefined : filters.status,
   organization_unit_id: filters.organization_unit_id,
   date_from: filters.date_from || undefined,
@@ -66,9 +71,6 @@ const queryParams = computed(() => ({
 const { data, isLoading, isError, refetch, isFetching } = useMeetingsQuery(queryParams)
 
 const { data: orgUnitsData } = useOrganizationUnitsFlatQuery({ status: 'active' })
-const { data: employeesData } = useEmployeesQuery(
-  computed(() => ({ status: 'active' as const, per_page: 100 })),
-)
 
 const createMutation = useCreateMeetingMutation()
 const updateMutation = useUpdateMeetingMutation()
@@ -126,15 +128,6 @@ const orgUnitFormOptions = computed<AppSelectOption[]>(() => [
   })),
 ])
 
-const employeeFormOptions = computed<AppSelectOption[]>(() => [
-  { value: '', label: t('meetings.noEmployee') },
-  ...(employeesData.value?.data ?? []).map((e) => ({
-    value: e.id,
-    label: e.full_name,
-    hint: e.employee_number,
-  })),
-])
-
 const locationTypeOptions = computed<AppSelectOption[]>(() =>
   MEETING_LOCATION_TYPES.map((type) => ({
     value: type,
@@ -150,7 +143,7 @@ const permissionList = computed(() => permissions.value ?? [])
 
 watch(
   () => [
-    filters.search,
+    committedSearch.value,
     filters.status,
     filters.organization_unit_id,
     filters.date_from,
@@ -161,6 +154,88 @@ watch(
     filters.page = 1
   },
 )
+
+watch(
+  meetings,
+  (rows) => {
+    if (rows.length === 0) {
+      focusedRowIndex.value = -1
+      return
+    }
+    if (focusedRowIndex.value >= rows.length) {
+      focusedRowIndex.value = rows.length - 1
+    }
+  },
+  { deep: false },
+)
+
+function focusRow(index: number): void {
+  if (meetings.value.length === 0) {
+    focusedRowIndex.value = -1
+    return
+  }
+  focusedRowIndex.value = Math.min(Math.max(index, 0), meetings.value.length - 1)
+}
+
+function openFocusedMeeting(): void {
+  const meeting = meetings.value[focusedRowIndex.value]
+  if (!meeting) return
+  void router.push(`/app/meetings/${meeting.id}`)
+}
+
+function onTableKeydown(event: KeyboardEvent): void {
+  if (drawerOpen.value || meetings.value.length === 0) return
+
+  const target = event.target as HTMLElement | null
+  if (target) {
+    const tag = target.tagName
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable) {
+      return
+    }
+  }
+
+  if (event.key === 'ArrowDown') {
+    event.preventDefault()
+    focusRow(focusedRowIndex.value < 0 ? 0 : focusedRowIndex.value + 1)
+    return
+  }
+
+  if (event.key === 'ArrowUp') {
+    event.preventDefault()
+    focusRow(focusedRowIndex.value < 0 ? 0 : focusedRowIndex.value - 1)
+    return
+  }
+
+  if (event.key === 'Home') {
+    event.preventDefault()
+    focusRow(0)
+    return
+  }
+
+  if (event.key === 'End') {
+    event.preventDefault()
+    focusRow(meetings.value.length - 1)
+    return
+  }
+
+  if (event.key === 'Enter' && focusedRowIndex.value >= 0) {
+    event.preventDefault()
+    openFocusedMeeting()
+  }
+}
+
+function rowToneClass(index: number): string {
+  if (focusedRowIndex.value === index) {
+    return 'bg-[#EDF6F1]'
+  }
+  return index % 2 === 1 ? 'bg-[#FAFBFA]' : 'bg-brand-surface'
+}
+
+function rowAccentClass(index: number): string {
+  return focusedRowIndex.value === index
+    ? 'border-s-brand-primary'
+    : 'border-s-transparent'
+}
 
 function emptyForm(): MeetingFormState {
   return {
@@ -272,15 +347,25 @@ async function submitForm(): Promise<void> {
   }
 }
 
-function formatScheduledAt(value: string | null): string {
+function formatScheduledDate(value: string | null): string {
   if (!value) return '—'
   try {
     return new Intl.DateTimeFormat('ar-SA', {
       dateStyle: 'medium',
-      timeStyle: 'short',
     }).format(new Date(value))
   } catch {
     return value
+  }
+}
+
+function formatScheduledTime(value: string | null): string {
+  if (!value) return ''
+  try {
+    return new Intl.DateTimeFormat('ar-SA', {
+      timeStyle: 'short',
+    }).format(new Date(value))
+  } catch {
+    return ''
   }
 }
 
@@ -402,49 +487,55 @@ function canEditRow(meeting: Meeting): boolean {
     </div>
     <div
       v-else
-      class="overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-[0_1px_2px_rgba(23,32,29,0.03)]"
+      ref="tableRoot"
+      class="overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-[0_1px_2px_rgba(23,32,29,0.03)] outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25"
+      tabindex="0"
+      role="grid"
+      :aria-rowcount="meetings.length"
+      :aria-label="t('meetings.title')"
+      @keydown="onTableKeydown"
     >
       <div class="overflow-x-auto">
         <table class="min-w-full border-separate border-spacing-0 text-sm">
           <thead>
             <tr class="bg-[#F4F6F5]">
               <th
-                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-start text-xs font-bold tracking-wide text-brand-text-muted"
+                class="whitespace-nowrap border-b border-s-[3px] border-brand-border border-s-transparent px-5 py-3.5 text-start text-xs font-bold tracking-wide text-brand-text"
               >
                 {{ t('meetings.columns.meetingNumber') }}
               </th>
               <th
-                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-start text-xs font-bold tracking-wide text-brand-text-muted"
+                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-start text-xs font-bold tracking-wide text-brand-text"
               >
                 {{ t('meetings.columns.title') }}
               </th>
               <th
-                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
+                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text"
               >
                 {{ t('meetings.columns.scheduledAt') }}
               </th>
               <th
-                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
+                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text"
               >
                 {{ t('meetings.columns.chairperson') }}
               </th>
               <th
-                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
+                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text"
               >
                 {{ t('meetings.columns.organizationUnit') }}
               </th>
               <th
-                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
+                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text"
               >
                 {{ t('meetings.columns.status') }}
               </th>
               <th
-                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
+                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text"
               >
                 {{ t('meetings.columns.attendeeCount') }}
               </th>
               <th
-                class="w-28 whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
+                class="w-28 whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text"
               >
                 {{ t('meetings.columns.actions') }}
               </th>
@@ -454,82 +545,103 @@ function canEditRow(meeting: Meeting): boolean {
             <tr
               v-for="(meeting, index) in meetings"
               :key="meeting.id"
-              class="group transition-colors duration-150"
-              :class="index % 2 === 1 ? 'bg-[#FAFBFA]' : 'bg-brand-surface'"
+              class="group"
+              :class="rowToneClass(index)"
+              role="row"
+              :aria-selected="focusedRowIndex === index"
+              @mouseenter="focusedRowIndex = index"
             >
               <td
-                class="whitespace-nowrap border-b border-brand-border/80 px-5 py-3.5 font-mono text-xs text-brand-text-secondary group-hover:bg-[#EEF2F0]"
-                dir="ltr"
+                class="whitespace-nowrap border-b border-brand-border/80 border-s-[3px] px-5 py-3.5 transition-colors duration-150 group-hover:border-s-brand-primary group-hover:bg-[#EDF6F1]"
+                :class="rowAccentClass(index)"
               >
                 <RouterLink
                   :to="`/app/meetings/${meeting.id}`"
-                  class="font-semibold text-brand-primary-dark hover:underline"
+                  class="inline-flex items-center gap-1.5 rounded-lg border border-brand-border bg-brand-bg px-2.5 py-1 font-mono text-[12px] font-bold tracking-wide text-brand-primary-dark shadow-[0_1px_0_rgba(23,32,29,0.04)] transition group-hover:border-brand-primary/30 group-hover:bg-brand-surface hover:border-brand-primary/35 hover:bg-brand-primary-soft hover:text-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25"
+                  :title="t('meetings.actions.view')"
+                  dir="ltr"
                 >
                   {{ meeting.meeting_number }}
                 </RouterLink>
               </td>
               <td
-                class="border-b border-brand-border/80 px-5 py-3.5 font-semibold text-brand-text group-hover:bg-[#EEF2F0]"
+                class="border-b border-brand-border/80 px-5 py-3.5 font-semibold text-brand-text transition-colors duration-150 group-hover:bg-[#EDF6F1]"
               >
                 <RouterLink
                   :to="`/app/meetings/${meeting.id}`"
-                  class="hover:text-brand-primary-dark"
+                  class="transition group-hover:text-brand-primary-dark hover:underline hover:underline-offset-2"
                 >
                   {{ meeting.title }}
                 </RouterLink>
               </td>
               <td
-                class="border-b border-brand-border/80 px-5 py-3.5 text-center text-brand-text-secondary group-hover:bg-[#EEF2F0]"
+                class="border-b border-brand-border/80 px-5 py-3.5 text-center text-brand-text transition-colors duration-150 group-hover:bg-[#EDF6F1]"
               >
-                {{ formatScheduledAt(meeting.scheduled_at) }}
+                <div
+                  v-if="meeting.scheduled_at"
+                  class="inline-flex flex-col items-center gap-0.5 leading-tight"
+                >
+                  <span class="font-semibold">{{ formatScheduledDate(meeting.scheduled_at) }}</span>
+                  <span class="text-xs text-brand-text" dir="ltr">{{
+                    formatScheduledTime(meeting.scheduled_at)
+                  }}</span>
+                </div>
+                <span v-else>—</span>
               </td>
               <td
-                class="border-b border-brand-border/80 px-5 py-3.5 text-center text-brand-text-secondary group-hover:bg-[#EEF2F0]"
+                class="border-b border-brand-border/80 px-5 py-3.5 text-center text-brand-text transition-colors duration-150 group-hover:bg-[#EDF6F1]"
               >
                 {{ meeting.chairperson?.full_name ?? '—' }}
               </td>
               <td
-                class="border-b border-brand-border/80 px-5 py-3.5 text-center text-brand-text-secondary group-hover:bg-[#EEF2F0]"
+                class="border-b border-brand-border/80 px-5 py-3.5 text-center text-brand-text transition-colors duration-150 group-hover:bg-[#EDF6F1]"
               >
                 {{ meeting.organization_unit?.name ?? '—' }}
               </td>
               <td
-                class="border-b border-brand-border/80 px-5 py-3.5 text-center group-hover:bg-[#EEF2F0]"
+                class="border-b border-brand-border/80 px-5 py-3.5 text-center transition-colors duration-150 group-hover:bg-[#EDF6F1]"
               >
                 <div class="flex flex-wrap items-center justify-center gap-1.5">
                   <span
-                    class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold"
+                    class="inline-flex min-w-[7.25rem] items-center justify-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold tracking-wide shadow-sm"
                     :class="meetingStatusBadgeClass(meeting.status)"
                   >
+                    <span
+                      class="h-1.5 w-1.5 shrink-0 rounded-full"
+                      :class="meetingStatusDotClass(meeting.status)"
+                      aria-hidden="true"
+                    />
                     {{ t(`meetings.status.${meeting.status}`) }}
                   </span>
                   <span
                     v-if="meeting.is_upcoming"
-                    class="inline-flex items-center rounded-full bg-sky-50 px-2 py-0.5 text-[11px] font-semibold text-sky-900 ring-1 ring-sky-200/70"
+                    class="inline-flex items-center rounded-full bg-sky-50 px-2 py-0.5 text-[11px] font-semibold text-sky-900 ring-1 ring-inset ring-sky-200/80"
                   >
                     {{ t('meetings.upcomingBadge') }}
                   </span>
                   <span
                     v-else-if="isMeetingToday(meeting.scheduled_at)"
-                    class="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-900 ring-1 ring-amber-200/70"
+                    class="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-900 ring-1 ring-inset ring-amber-200/80"
                   >
                     {{ t('meetings.todayBadge') }}
                   </span>
                 </div>
               </td>
               <td
-                class="border-b border-brand-border/80 px-5 py-3.5 text-center text-brand-text-secondary group-hover:bg-[#EEF2F0]"
+                class="border-b border-brand-border/80 px-5 py-3.5 text-center text-brand-text transition-colors duration-150 group-hover:bg-[#EDF6F1]"
               >
                 {{ meeting.attendee_count ?? '—' }}
               </td>
               <td
-                class="border-b border-brand-border/80 px-5 py-3.5 text-center group-hover:bg-[#EEF2F0]"
+                class="border-b border-brand-border/80 px-5 py-3.5 text-center transition-colors duration-150 group-hover:bg-[#EDF6F1]"
               >
-                <div class="inline-flex items-center justify-center gap-0.5">
+                <div
+                  class="inline-flex items-center justify-center gap-0.5 opacity-70 transition group-hover:opacity-100"
+                >
                   <AppTooltip :text="t('meetings.actions.view')">
                     <RouterLink
                       :to="`/app/meetings/${meeting.id}`"
-                      class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-brand-text-secondary transition hover:bg-brand-bg"
+                      class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-brand-text transition hover:bg-brand-surface hover:text-brand-primary-dark"
                       :aria-label="t('meetings.actions.view')"
                     >
                       <Eye class="h-4 w-4" :stroke-width="2" />
@@ -539,7 +651,7 @@ function canEditRow(meeting: Meeting): boolean {
                     <AppTooltip :text="t('meetings.actions.edit')">
                       <button
                         type="button"
-                        class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-brand-primary-dark transition hover:bg-brand-primary-soft"
+                        class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-brand-primary-dark transition hover:bg-brand-surface"
                         :aria-label="t('meetings.actions.edit')"
                         @click="openEdit(meeting)"
                       >
@@ -588,7 +700,6 @@ function canEditRow(meeting: Meeting): boolean {
       :form-error="formError"
       :field-errors="fieldErrors"
       :submitting="isFormSubmitting"
-      :employee-options="employeeFormOptions"
       :org-unit-options="orgUnitFormOptions"
       :location-type-options="locationTypeOptions"
       @close="closeDrawer"

@@ -225,6 +225,39 @@ test('E07 E08 E09 E10 list search filters sort pagination', function (): void {
     expect($list[0]['employee_number'])->toBe('EMP-000001');
 });
 
+test('employee list search finds a record beyond the first 100 rows', function (): void {
+    $owner = actingAsTenantOwner();
+    $unit = createOrgUnit();
+
+    withTenant($owner->tenant, function () use ($unit): void {
+        Employee::factory()->count(100)->create([
+            'organization_unit_id' => $unit->id,
+            'full_name' => 'موظف عام',
+        ]);
+        Employee::factory()->create([
+            'organization_unit_id' => $unit->id,
+            'full_name' => 'نورة النقل',
+        ]);
+    });
+
+    spaGetJson('/api/v1/employees?per_page=200')
+        ->assertOk()
+        ->assertJsonPath('meta.per_page', 100)
+        ->assertJsonPath('meta.total', 101);
+
+    $firstPage = spaGetJson('/api/v1/employees?per_page=20&sort=employee_number')
+        ->assertOk()
+        ->assertJsonCount(20, 'data')
+        ->json('data');
+
+    expect(collect($firstPage)->pluck('full_name'))->not->toContain('نورة النقل');
+
+    spaGetJson('/api/v1/employees?search='.rawurlencode('نورة النقل').'&per_page=20')
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.full_name', 'نورة النقل');
+});
+
 test('E20-E25 user link rules', function (): void {
     Event::fake([AuthorizationSecurityEvent::class]);
     $owner = actingAsTenantOwner();

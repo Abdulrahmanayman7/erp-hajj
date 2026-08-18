@@ -4,10 +4,14 @@ import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
 import { ChevronLeft, ChevronRight, Search } from 'lucide-vue-next'
 
+import { listWarehouses } from '../api/warehousesApi'
+import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
+import { toSelectId, warehouseSelectOption } from '@/shared/lookups/selectOptions'
+
+import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
 
 import { useInventoryMovementsQuery } from '../queries/useMovementsQuery'
-import { useWarehousesQuery } from '../queries/useWarehousesQuery'
 import type { ListInventoryMovementsParams, MovementType } from '../types/movements'
 import { MOVEMENT_TYPES } from '../types/movements'
 import {
@@ -29,8 +33,9 @@ const filters = reactive({
   per_page: 15,
 })
 
+const committedSearch = useDebouncedRef(() => filters.search)
 const params = computed<ListInventoryMovementsParams>(() => ({
-  search: filters.search || undefined,
+  search: committedSearch.value || undefined,
   warehouse_id: filters.warehouse_id,
   type: filters.type,
   occurred_from: filters.occurred_from || undefined,
@@ -50,18 +55,19 @@ const listState = computed(() =>
   }),
 )
 
-const { data: warehousesData } = useWarehousesQuery(computed(() => ({ per_page: 100 })))
-const warehouseOptions = computed<AppSelectOption[]>(() => [
-  { value: '', label: t('inventory.filters.allWarehouses') },
-  ...(warehousesData.value?.data ?? []).map((w) => ({ value: w.id, label: w.name })),
-])
+const fetchWarehouses = (params: { search?: string; page: number; per_page: number }) =>
+  listWarehouses(params)
+const emptyWarehouse = computed<AppSelectOption>(() => ({
+  value: '',
+  label: t('inventory.filters.allWarehouses'),
+}))
 const typeOptions = computed<AppSelectOption[]>(() => [
   { value: '', label: t('inventory.filters.allTypes') },
   ...MOVEMENT_TYPES.map((type) => ({ value: type, label: t(`inventory.movementType.${type}`) })),
 ])
 
 watch(
-  () => [filters.search, filters.warehouse_id, filters.type, filters.occurred_from, filters.occurred_to],
+  () => [committedSearch.value, filters.warehouse_id, filters.type, filters.occurred_from, filters.occurred_to],
   () => {
     filters.page = 1
   },
@@ -79,26 +85,33 @@ function formatDateTime(value: string | null): string {
 
 <template>
   <div class="space-y-6">
-    <div>
+    <div class="rounded-2xl border border-brand-border bg-brand-surface px-5 py-5 shadow-sm">
       <h2 class="text-[1.75rem] font-bold">{{ t('inventory.movements.title') }}</h2>
       <p class="mt-1.5 text-sm text-brand-text-secondary">{{ t('inventory.movements.subtitle') }}</p>
-      <p class="mt-2 text-xs text-brand-text-muted">{{ t('inventory.movements.immutableHint') }}</p>
+      <p class="mt-2 inline-flex rounded-lg bg-brand-bg px-2.5 py-1 text-xs font-medium text-brand-text-muted">{{ t('inventory.movements.immutableHint') }}</p>
     </div>
 
-    <div class="flex flex-wrap items-center gap-3 rounded-2xl border bg-brand-surface p-4">
+    <div class="flex flex-wrap items-center gap-3 rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-sm">
       <div class="relative min-w-48 flex-1">
         <Search class="pointer-events-none absolute inset-s-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text-muted" />
         <input
           v-model="filters.search"
           type="search"
-          class="h-11 w-full rounded-xl border pe-3 ps-10 text-sm"
+          class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface pe-3 ps-10 text-sm outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/10"
           :placeholder="t('inventory.movements.searchPlaceholder')"
         />
       </div>
-      <AppSelect v-model="filters.warehouse_id" :options="warehouseOptions" searchable />
+      <AppRemoteSelect
+        :model-value="filters.warehouse_id"
+        query-key="warehouses"
+        :fetcher="fetchWarehouses"
+        :map-option="warehouseSelectOption"
+        :empty-option="emptyWarehouse"
+        @update:model-value="filters.warehouse_id = toSelectId($event)"
+      />
       <AppSelect v-model="filters.type" :options="typeOptions" />
-      <input v-model="filters.occurred_from" type="date" class="h-11 rounded-xl border px-3 text-sm" />
-      <input v-model="filters.occurred_to" type="date" class="h-11 rounded-xl border px-3 text-sm" />
+      <input v-model="filters.occurred_from" type="date" class="h-11 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/10" />
+      <input v-model="filters.occurred_to" type="date" class="h-11 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/10" />
     </div>
 
     <div v-if="listState === 'loading'" class="rounded-2xl border p-10 text-center text-sm text-brand-text-muted">
@@ -108,11 +121,11 @@ function formatDateTime(value: string | null): string {
       <p class="text-sm text-red-700">{{ t('inventory.errors.load') }}</p>
       <button type="button" class="mt-3 underline" @click="() => refetch()">{{ t('inventory.retry') }}</button>
     </div>
-    <div v-else-if="listState === 'empty'" class="rounded-2xl border p-10 text-center text-sm text-brand-text-muted">
+    <div v-else-if="listState === 'empty'" class="rounded-2xl border border-dashed border-brand-border bg-brand-surface p-10 text-center text-sm text-brand-text-muted">
       {{ t('inventory.movements.empty') }}
     </div>
     <template v-else>
-      <div class="hidden overflow-hidden rounded-2xl border bg-brand-surface md:block">
+      <div class="hidden overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-sm md:block">
         <table class="min-w-full text-sm">
           <thead>
             <tr class="bg-[#F4F6F5]">
@@ -129,7 +142,7 @@ function formatDateTime(value: string | null): string {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="movement in movements" :key="movement.id" class="border-t align-top">
+            <tr v-for="movement in movements" :key="movement.id" class="border-t border-brand-border align-top transition-colors hover:bg-brand-primary-dark/[0.025]">
               <td class="px-4 py-3">
                 <div class="font-mono text-xs">{{ movement.movement_number }}</div>
                 <div v-if="movement.transfer_group_id" class="mt-1 text-[11px] text-brand-text-muted">
@@ -178,7 +191,7 @@ function formatDateTime(value: string | null): string {
       </div>
 
       <div class="space-y-3 md:hidden">
-        <article v-for="movement in movements" :key="movement.id" class="rounded-2xl border bg-brand-surface p-4">
+        <article v-for="movement in movements" :key="movement.id" class="rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-sm">
           <div class="flex items-start justify-between gap-2">
             <div>
               <p class="font-mono text-xs">{{ movement.movement_number }}</p>

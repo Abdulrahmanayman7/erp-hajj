@@ -3,7 +3,9 @@ import { computed, nextTick, onUnmounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Loader2, X } from 'lucide-vue-next'
 
-import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
+import { listUsers } from '@/modules/users/api/usersApi'
+import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
+import { toSelectId, userSelectOption } from '@/shared/lookups/selectOptions'
 
 import type { Employee } from '../types/employees'
 
@@ -11,7 +13,6 @@ const props = defineProps<{
   open: boolean
   employee: Employee | null
   userId: number | ''
-  userOptions: AppSelectOption[]
   formError: string
   submitting: boolean
 }>()
@@ -28,6 +29,12 @@ let previouslyFocused: HTMLElement | null = null
 
 const title = computed(() => t('employees.userLinkTitle'))
 const hasLinkedUser = computed(() => props.employee?.user != null)
+const fetchActiveUsers = (params: { search?: string; page: number; per_page: number }) =>
+  listUsers({ ...params, status: 'active' })
+const emptyUser = computed(() => ({ value: '', label: t('employees.selectUser') }))
+const selectedUser = computed(() =>
+  props.employee?.user ? userSelectOption(props.employee.user) : null,
+)
 
 function onKeydown(event: KeyboardEvent): void {
   if (event.key === 'Escape' && props.open && !props.submitting) {
@@ -109,15 +116,17 @@ onUnmounted(() => {
           <span class="mb-1.5 block text-sm font-medium text-brand-text">
             {{ t('employees.fields.user') }}
           </span>
-          <AppSelect
+          <AppRemoteSelect
             :model-value="userId"
-            :options="userOptions"
+            query-key="users-active"
+            :fetcher="fetchActiveUsers"
+            :map-option="userSelectOption"
+            :empty-option="emptyUser"
+            :selected-option="selectedUser"
             :placeholder="t('employees.selectUser')"
             :disabled="submitting"
-            searchable
-            @update:model-value="
-              emit('update:userId', $event === null || $event === '' ? '' : Number($event))
-            "
+            :enabled="open"
+            @update:model-value="emit('update:userId', toSelectId($event))"
           />
           <p class="mt-2 text-xs leading-relaxed text-brand-text-muted">
             {{ t('employees.userLinkNoCreate') }}

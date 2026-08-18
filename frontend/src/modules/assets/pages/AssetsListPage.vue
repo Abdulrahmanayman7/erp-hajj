@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 import {
   ChevronLeft,
   ChevronRight,
@@ -12,15 +12,19 @@ import {
   Trash2,
 } from 'lucide-vue-next'
 
-import { useEmployeesQuery } from '@/modules/employees/queries/useEmployeesQuery'
-import { useWarehousesQuery } from '@/modules/inventory/queries/useWarehousesQuery'
+import { listEmployees } from '@/modules/employees/api/employeesApi'
+import { listWarehouses } from '@/modules/inventory/api/warehousesApi'
 import { useOrganizationUnitsFlatQuery } from '@/modules/organization/queries/useOrganizationUnitsQuery'
 import { ApiError } from '@/shared/api/http'
+import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
+import { employeeSelectOption, toSelectId, warehouseSelectOption } from '@/shared/lookups/selectOptions'
+import AppTooltip from '@/shared/components/AppTooltip.vue'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
 import { useConfirm } from '@/shared/composables/useConfirm'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import { useToast } from '@/shared/composables/useToast'
+import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
 
 import AssetCategoriesManagerDrawer from '../components/AssetCategoriesManagerDrawer.vue'
 import AssetFormDrawer from '../components/AssetFormDrawer.vue'
@@ -35,6 +39,7 @@ import type { Asset, AssetFormState, AssetStatus, ListAssetsParams } from '../ty
 import { ASSET_STATUSES } from '../types/assets'
 import {
   assetStatusBadgeClass,
+  assetStatusDotClass,
   canDeleteAsset,
   canEditAsset,
   canShowCategoriesButton,
@@ -63,7 +68,11 @@ const filters = reactive({
   per_page: 15,
 })
 
-const params = computed<ListAssetsParams>(() => filterAssetsListParams(filters))
+const committedSearch = useDebouncedRef(() => filters.search)
+const params = computed<ListAssetsParams>(() => filterAssetsListParams({
+  ...filters,
+  search: committedSearch.value,
+}))
 
 const { data, isLoading, isError, refetch } = useAssetsQuery(params)
 const assets = computed(() => data.value?.data ?? [])
@@ -77,13 +86,11 @@ const listState = computed(() =>
 )
 
 const { data: categoriesData } = useAssetCategoriesQuery({})
-const { data: warehousesData } = useWarehousesQuery(
-  computed(() => ({ is_active: true, per_page: 100 })),
-)
 const { data: orgUnitsData } = useOrganizationUnitsFlatQuery({ status: 'active' })
-const { data: employeesData } = useEmployeesQuery(
-  computed(() => ({ status: 'active' as const, per_page: 100 })),
-)
+const fetchActiveWarehouses = (params: { search?: string; page: number; per_page: number }) =>
+  listWarehouses({ ...params, is_active: true })
+const fetchActiveEmployees = (params: { search?: string; page: number; per_page: number }) =>
+  listEmployees({ ...params, status: 'active' })
 
 const categoryFilterOptions = computed<AppSelectOption[]>(() => [
   { value: '', label: t('assets.filters.allCategories') },
@@ -102,22 +109,14 @@ const statusOptions = computed<AppSelectOption[]>(() => [
     label: t(`assets.status.${status}`),
   })),
 ])
-const warehouseFilterOptions = computed<AppSelectOption[]>(() => [
-  { value: '', label: t('assets.filters.allWarehouses') },
-  ...(warehousesData.value?.data ?? []).map((w) => ({
-    value: w.id,
-    label: w.name,
-    hint: w.warehouse_number ?? undefined,
-  })),
-])
-const warehouseFormOptions = computed<AppSelectOption[]>(() => [
-  { value: '', label: t('assets.noWarehouse') },
-  ...(warehousesData.value?.data ?? []).map((w) => ({
-    value: w.id,
-    label: w.name,
-    hint: w.warehouse_number ?? undefined,
-  })),
-])
+const emptyWarehouse = computed<AppSelectOption>(() => ({
+  value: '',
+  label: t('assets.filters.allWarehouses'),
+}))
+const emptyEmployee = computed<AppSelectOption>(() => ({
+  value: '',
+  label: t('assets.filters.allEmployees'),
+}))
 const orgUnitFilterOptions = computed<AppSelectOption[]>(() => [
   { value: '', label: t('assets.filters.allOrgUnits') },
   ...(orgUnitsData.value?.data ?? []).map((u) => ({ value: u.id, label: u.name, hint: u.code })),
@@ -126,18 +125,10 @@ const orgUnitFormOptions = computed<AppSelectOption[]>(() => [
   { value: '', label: t('assets.noOrgUnit') },
   ...(orgUnitsData.value?.data ?? []).map((u) => ({ value: u.id, label: u.name, hint: u.code })),
 ])
-const employeeFilterOptions = computed<AppSelectOption[]>(() => [
-  { value: '', label: t('assets.filters.allEmployees') },
-  ...(employeesData.value?.data ?? []).map((e) => ({
-    value: e.id,
-    label: e.full_name,
-    hint: e.employee_number,
-  })),
-])
 
 watch(
   () => [
-    filters.search,
+    committedSearch.value,
     filters.status,
     filters.category_id,
     filters.warehouse_id,
@@ -260,15 +251,22 @@ async function removeAsset(asset: Asset): Promise<void> {
 <template>
   <div class="space-y-6">
     <div class="flex flex-wrap items-end justify-between gap-4">
-      <div>
-        <h2 class="text-[1.75rem] font-bold">{{ t('assets.list.title') }}</h2>
+      <div class="min-w-0">
+        <h2 class="text-[1.75rem] font-bold leading-tight text-brand-text">
+          {{ t('assets.list.title') }}
+        </h2>
         <p class="mt-1.5 text-sm text-brand-text-secondary">{{ t('assets.list.subtitle') }}</p>
+        <p v-if="meta" class="mt-2">
+          <span class="inline-flex items-center rounded-full bg-brand-primary-soft px-2.5 py-0.5 text-xs font-semibold text-brand-primary-dark">
+            {{ meta.total }}
+          </span>
+        </p>
       </div>
-      <div class="flex flex-wrap gap-2">
+      <div class="flex flex-wrap items-center gap-2">
         <PermissionGuard v-if="showCategories" permission="assets.update">
           <button
             type="button"
-            class="inline-flex h-11 items-center gap-2 rounded-xl border px-4 text-sm font-semibold"
+            class="inline-flex h-11 items-center gap-2 rounded-xl border border-brand-border bg-brand-surface px-4 text-sm font-semibold text-brand-text transition hover:bg-brand-bg"
             @click="categoriesOpen = true"
           >
             <FolderTree class="h-4 w-4" />
@@ -278,7 +276,7 @@ async function removeAsset(asset: Asset): Promise<void> {
         <PermissionGuard v-if="showCreate" permission="assets.create">
           <button
             type="button"
-            class="inline-flex h-11 items-center gap-2 rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white"
+            class="inline-flex h-11 items-center gap-2 rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white transition hover:bg-brand-primary"
             @click="openCreate"
           >
             <Plus class="h-4 w-4" />
@@ -288,7 +286,7 @@ async function removeAsset(asset: Asset): Promise<void> {
       </div>
     </div>
 
-    <div class="flex flex-wrap items-center gap-3 rounded-2xl border bg-brand-surface p-4">
+    <div class="flex flex-wrap items-center gap-3 rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)]">
       <div class="relative min-w-48 flex-1">
         <Search
           class="pointer-events-none absolute inset-s-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text-muted"
@@ -296,20 +294,34 @@ async function removeAsset(asset: Asset): Promise<void> {
         <input
           v-model="filters.search"
           type="search"
-          class="h-11 w-full rounded-xl border pe-3 ps-10 text-sm"
+          class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface pe-3 ps-10 text-sm text-brand-text outline-none transition placeholder:text-brand-text-muted focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
           :placeholder="t('assets.list.searchPlaceholder')"
         />
       </div>
       <AppSelect v-model="filters.status" :options="statusOptions" />
       <AppSelect v-model="filters.category_id" :options="categoryFilterOptions" searchable />
-      <AppSelect v-model="filters.warehouse_id" :options="warehouseFilterOptions" searchable />
+      <AppRemoteSelect
+        :model-value="filters.warehouse_id"
+        query-key="warehouses-active"
+        :fetcher="fetchActiveWarehouses"
+        :map-option="warehouseSelectOption"
+        :empty-option="emptyWarehouse"
+        @update:model-value="filters.warehouse_id = toSelectId($event)"
+      />
       <AppSelect v-model="filters.organization_unit_id" :options="orgUnitFilterOptions" searchable />
-      <AppSelect v-model="filters.employee_id" :options="employeeFilterOptions" searchable />
+      <AppRemoteSelect
+        :model-value="filters.employee_id"
+        query-key="employees-active"
+        :fetcher="fetchActiveEmployees"
+        :map-option="employeeSelectOption"
+        :empty-option="emptyEmployee"
+        @update:model-value="filters.employee_id = toSelectId($event)"
+      />
     </div>
 
     <div
       v-if="listState === 'loading'"
-      class="rounded-2xl border p-10 text-center text-sm text-brand-text-muted"
+      class="rounded-2xl border border-brand-border bg-brand-surface p-10 text-center text-sm text-brand-text-muted"
     >
       {{ t('assets.loading') }}
     </div>
@@ -324,98 +336,113 @@ async function removeAsset(asset: Asset): Promise<void> {
     </div>
     <div
       v-else-if="listState === 'empty'"
-      class="rounded-2xl border p-10 text-center text-sm text-brand-text-muted"
+      class="rounded-2xl border border-brand-border bg-brand-surface p-10 text-center text-sm text-brand-text-muted"
     >
       {{ t('assets.list.empty') }}
     </div>
     <template v-else>
-      <div class="hidden overflow-hidden rounded-2xl border bg-brand-surface md:block">
-        <table class="min-w-full text-sm">
+      <div class="hidden overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-[0_1px_2px_rgba(23,32,29,0.03)] md:block">
+        <div class="overflow-x-auto">
+        <table class="min-w-full border-separate border-spacing-0 text-sm">
           <thead>
             <tr class="bg-[#F4F6F5]">
-              <th class="px-5 py-3.5 text-start text-xs font-bold text-brand-text-muted">
+              <th class="whitespace-nowrap border-b border-s-[3px] border-brand-border border-s-transparent px-5 py-3.5 text-start text-xs font-bold tracking-wide text-brand-text">
                 {{ t('assets.columns.number') }}
               </th>
-              <th class="px-5 py-3.5 text-start text-xs font-bold text-brand-text-muted">
+              <th class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-start text-xs font-bold tracking-wide text-brand-text">
                 {{ t('assets.columns.name') }}
               </th>
-              <th class="px-5 py-3.5 text-start text-xs font-bold text-brand-text-muted">
+              <th class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-start text-xs font-bold tracking-wide text-brand-text">
                 {{ t('assets.columns.category') }}
               </th>
-              <th class="px-5 py-3.5 text-start text-xs font-bold text-brand-text-muted">
+              <th class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-start text-xs font-bold tracking-wide text-brand-text">
                 {{ t('assets.columns.serial') }}
               </th>
-              <th class="px-5 py-3.5 text-start text-xs font-bold text-brand-text-muted">
+              <th class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-start text-xs font-bold tracking-wide text-brand-text">
                 {{ t('assets.columns.status') }}
               </th>
-              <th class="px-5 py-3.5 text-start text-xs font-bold text-brand-text-muted">
+              <th class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-start text-xs font-bold tracking-wide text-brand-text">
                 {{ t('assets.columns.warehouse') }}
               </th>
-              <th class="px-5 py-3.5 text-start text-xs font-bold text-brand-text-muted">
+              <th class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-start text-xs font-bold tracking-wide text-brand-text">
                 {{ t('assets.columns.employee') }}
               </th>
-              <th class="px-5 py-3.5 text-start text-xs font-bold text-brand-text-muted">
+              <th class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-start text-xs font-bold tracking-wide text-brand-text">
                 {{ t('assets.columns.orgUnit') }}
               </th>
-              <th class="px-5 py-3.5 text-start text-xs font-bold text-brand-text-muted">
+              <th class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-start text-xs font-bold tracking-wide text-brand-text">
                 {{ t('assets.columns.actions') }}
               </th>
             </tr>
           </thead>
           <tbody>
             <tr
-              v-for="asset in assets"
+              v-for="(asset, index) in assets"
               :key="asset.id"
-              class="cursor-pointer border-t hover:bg-brand-bg/60"
+              class="group cursor-pointer"
+              :class="index % 2 === 1 ? 'bg-[#FAFBFA]' : 'bg-brand-surface'"
               @click="router.push(`/app/assets/${asset.id}`)"
             >
-              <td class="px-5 py-3 font-mono text-xs">{{ asset.asset_number }}</td>
-              <td class="px-5 py-3 font-semibold">{{ asset.name }}</td>
-              <td class="px-5 py-3">{{ asset.category?.name || '—' }}</td>
-              <td class="px-5 py-3">{{ asset.serial_number || '—' }}</td>
-              <td class="px-5 py-3">
+              <td class="whitespace-nowrap border-b border-s-[3px] border-brand-border/80 border-s-transparent px-5 py-3.5 transition-colors duration-150 group-hover:border-s-brand-primary group-hover:bg-[#EDF6F1]">
+                <RouterLink
+                  :to="`/app/assets/${asset.id}`"
+                  class="inline-flex items-center rounded-lg border border-brand-border bg-brand-bg px-2.5 py-1 font-mono text-[12px] font-bold tracking-wide text-brand-primary-dark shadow-[0_1px_0_rgba(23,32,29,0.04)] transition group-hover:border-brand-primary/30 group-hover:bg-brand-surface hover:border-brand-primary/35 hover:bg-brand-primary-soft hover:text-brand-primary"
+                  dir="ltr"
+                  @click.stop
+                >{{ asset.asset_number }}</RouterLink>
+              </td>
+              <td class="border-b border-brand-border/80 px-5 py-3.5 font-semibold text-brand-text transition-colors duration-150 group-hover:bg-[#EDF6F1]">{{ asset.name }}</td>
+              <td class="border-b border-brand-border/80 px-5 py-3.5 text-brand-text transition-colors duration-150 group-hover:bg-[#EDF6F1]">{{ asset.category?.name || '—' }}</td>
+              <td class="border-b border-brand-border/80 px-5 py-3.5 text-brand-text transition-colors duration-150 group-hover:bg-[#EDF6F1]">{{ asset.serial_number || '—' }}</td>
+              <td class="border-b border-brand-border/80 px-5 py-3.5 transition-colors duration-150 group-hover:bg-[#EDF6F1]">
                 <span
-                  class="rounded-full px-2 py-0.5 text-xs font-semibold"
+                  class="inline-flex min-w-[6.75rem] items-center justify-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold tracking-wide"
                   :class="assetStatusBadgeClass(asset.status)"
                 >
+                  <span class="h-1.5 w-1.5 shrink-0 rounded-full" :class="assetStatusDotClass(asset.status)" />
                   {{ t(`assets.status.${asset.status}`) }}
                 </span>
               </td>
-              <td class="px-5 py-3">{{ asset.warehouse?.name || '—' }}</td>
-              <td class="px-5 py-3">{{ asset.current_custody?.employee?.full_name || '—' }}</td>
-              <td class="px-5 py-3">{{ asset.organization_unit?.name || '—' }}</td>
-              <td class="px-5 py-3" @click.stop>
-                <div class="flex items-center gap-1">
+              <td class="border-b border-brand-border/80 px-5 py-3.5 text-brand-text transition-colors duration-150 group-hover:bg-[#EDF6F1]">{{ asset.warehouse?.name || '—' }}</td>
+              <td class="border-b border-brand-border/80 px-5 py-3.5 text-brand-text transition-colors duration-150 group-hover:bg-[#EDF6F1]">{{ asset.current_custody?.employee?.full_name || '—' }}</td>
+              <td class="border-b border-brand-border/80 px-5 py-3.5 text-brand-text transition-colors duration-150 group-hover:bg-[#EDF6F1]">{{ asset.organization_unit?.name || '—' }}</td>
+              <td class="border-b border-brand-border/80 px-5 py-3.5 transition-colors duration-150 group-hover:bg-[#EDF6F1]" @click.stop>
+                <div class="inline-flex items-center justify-center gap-0.5 opacity-70 transition group-hover:opacity-100">
                   <PermissionGuard v-if="canEditAsset(permissions)" permission="assets.update">
-                    <button
-                      type="button"
-                      class="rounded-lg p-2 hover:bg-brand-bg"
-                      @click="openEdit(asset)"
-                    >
-                      <Pencil class="h-4 w-4" />
-                    </button>
+                    <AppTooltip :text="t('assets.actions.edit')">
+                      <button
+                        type="button"
+                        class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-brand-primary-dark transition hover:bg-brand-surface"
+                        @click="openEdit(asset)"
+                      >
+                        <Pencil class="h-4 w-4" />
+                      </button>
+                    </AppTooltip>
                   </PermissionGuard>
                   <PermissionGuard v-if="canDeleteAsset(permissions)" permission="assets.delete">
-                    <button
-                      type="button"
-                      class="rounded-lg p-2 text-red-700 hover:bg-red-50"
-                      @click="removeAsset(asset)"
-                    >
-                      <Trash2 class="h-4 w-4" />
-                    </button>
+                    <AppTooltip :text="t('assets.actions.delete')">
+                      <button
+                        type="button"
+                        class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-red-700 transition hover:bg-red-50"
+                        @click="removeAsset(asset)"
+                      >
+                        <Trash2 class="h-4 w-4" />
+                      </button>
+                    </AppTooltip>
                   </PermissionGuard>
                 </div>
               </td>
             </tr>
           </tbody>
         </table>
+        </div>
       </div>
 
       <div class="space-y-3 md:hidden">
         <article
           v-for="asset in assets"
           :key="asset.id"
-          class="rounded-2xl border bg-brand-surface p-4"
+          class="rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)] transition active:bg-brand-bg"
           @click="router.push(`/app/assets/${asset.id}`)"
         >
           <div class="flex items-start justify-between gap-2">
@@ -427,9 +454,10 @@ async function removeAsset(asset: Asset): Promise<void> {
               </p>
             </div>
             <span
-              class="rounded-full px-2 py-0.5 text-xs font-semibold"
+              class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold"
               :class="assetStatusBadgeClass(asset.status)"
             >
+              <span class="h-1.5 w-1.5 shrink-0 rounded-full" :class="assetStatusDotClass(asset.status)" />
               {{ t(`assets.status.${asset.status}`) }}
             </span>
           </div>
@@ -479,7 +507,6 @@ async function removeAsset(asset: Asset): Promise<void> {
       :field-errors="fieldErrors"
       :submitting="submitting"
       :category-options="categoryFormOptions"
-      :warehouse-options="warehouseFormOptions"
       :org-unit-options="orgUnitFormOptions"
       @close="drawerOpen = false"
       @submit="submitForm"

@@ -17,6 +17,9 @@ final class EffectivePermissions
 {
     private const CACHE_TTL_SECONDS = 3600;
 
+    /** @var array<int, list<string>> */
+    private array $resolved = [];
+
     public function __construct(
         private readonly TenantCache $cache,
         private readonly TenantContext $tenantContext,
@@ -31,16 +34,23 @@ final class EffectivePermissions
             return [];
         }
 
-        if (! $this->tenantContext->has() || $this->tenantContext->id() !== (int) $user->tenant_id) {
-            return $this->resolveFromDatabase($user);
+        $userId = (int) $user->id;
+        if (array_key_exists($userId, $this->resolved)) {
+            return $this->resolved[$userId];
         }
 
-        /** @var list<string> */
-        return $this->cache->remember(
-            $this->cacheKey((int) $user->id),
+        if (! $this->tenantContext->has() || $this->tenantContext->id() !== (int) $user->tenant_id) {
+            return $this->resolved[$userId] = $this->resolveFromDatabase($user);
+        }
+
+        /** @var list<string> $names */
+        $names = $this->cache->remember(
+            $this->cacheKey($userId),
             self::CACHE_TTL_SECONDS,
             fn (): array => $this->resolveFromDatabase($user),
         );
+
+        return $this->resolved[$userId] = $names;
     }
 
     public function hasPermission(User $user, string $permission): bool
@@ -82,6 +92,8 @@ final class EffectivePermissions
 
     public function forgetUser(User $user): void
     {
+        unset($this->resolved[(int) $user->id]);
+
         if ($user->tenant_id === null) {
             return;
         }
@@ -114,7 +126,9 @@ final class EffectivePermissions
 
         $forgetAll = function () use ($userIds): void {
             foreach ($userIds as $userId) {
-                $this->cache->forget($this->cacheKey((int) $userId));
+                $id = (int) $userId;
+                unset($this->resolved[$id]);
+                $this->cache->forget($this->cacheKey($id));
             }
         };
 

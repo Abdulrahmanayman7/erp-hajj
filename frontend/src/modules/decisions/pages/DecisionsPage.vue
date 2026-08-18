@@ -1,28 +1,629 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { RouterLink } from 'vue-router'
-import { Eye, Pencil, Plus } from 'lucide-vue-next'
-import { useEmployeesQuery } from '@/modules/employees/queries/useEmployeesQuery'
+import { RouterLink, useRouter } from 'vue-router'
+import { ChevronLeft, ChevronRight, Eye, Pencil, Plus, Search } from 'lucide-vue-next'
+
+import { listEmployees } from '@/modules/employees/api/employeesApi'
 import { useOrganizationUnitsFlatQuery } from '@/modules/organization/queries/useOrganizationUnitsQuery'
+import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
+import { employeeSelectOption, toSelectId } from '@/shared/lookups/selectOptions'
+import AppTooltip from '@/shared/components/AppTooltip.vue'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import { useToast } from '@/shared/composables/useToast'
+import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
+
 import DecisionFormDrawer from '../components/DecisionFormDrawer.vue'
-import { useCreateDecisionMutation, useUpdateDecisionMutation } from '../mutations/useDecisionMutations'
+import {
+  useCreateDecisionMutation,
+  useUpdateDecisionMutation,
+} from '../mutations/useDecisionMutations'
 import { useDecisionsQuery } from '../queries/useDecisionsQuery'
-import type { Decision, DecisionFormState, DecisionStatus, ListDecisionsParams } from '../types/decisions'
-import { DECISION_STATUSES, decisionStatusBadgeClass, validateDecisionForm } from '../validation/decisionValidation'
-const { t } = useI18n(); const { can } = usePermissions(); const toast = useToast()
-const filters = reactive({ search: '', status: 'all' as DecisionStatus | 'all', organization_unit_id: '' as number | '', responsible_employee_id: '' as number | '', has_source_recommendation: '' as '' | '1' | '0', meeting_id: '' as number | '', effective_date_from: '', effective_date_to: '', due_date_from: '', due_date_to: '', page: 1, per_page: 15, sort: 'decision_number', direction: 'desc' })
-const params = computed<ListDecisionsParams>(() => ({ ...filters, status: filters.status === 'all' ? '' : filters.status, has_source_recommendation: filters.has_source_recommendation === '' ? '' : filters.has_source_recommendation === '1' }))
-const { data, isLoading, isError, refetch } = useDecisionsQuery(params); const decisions = computed(() => data.value?.data ?? [])
-const { data: orgs } = useOrganizationUnitsFlatQuery({ status: 'active' }); const { data: employees } = useEmployeesQuery(computed(() => ({ status: 'active' as const, per_page: 100 })))
-const orgOptions = computed<AppSelectOption[]>(() => [{ value: '', label: t('decisions.filters.allOrgUnits') }, ...(orgs.value?.data ?? []).map(x => ({ value: x.id, label: x.name }))]); const employeeOptions = computed<AppSelectOption[]>(() => [{ value: '', label: t('decisions.noEmployee') }, ...(employees.value?.data ?? []).map(x => ({ value: x.id, label: x.full_name, hint: x.employee_number }))]); const statusOptions = computed<AppSelectOption[]>(() => [{ value: 'all', label: t('decisions.filters.allStatuses') }, ...DECISION_STATUSES.map(x => ({ value: x, label: t(`decisions.status.${x}`) }))]); const sourceOptions = computed<AppSelectOption[]>(() => [{ value: '', label: t('decisions.filters.allSources') }, { value: '1', label: t('decisions.filters.withSource') }, { value: '0', label: t('decisions.filters.standalone') }])
-const create = useCreateDecisionMutation(); const update = useUpdateDecisionMutation(); const drawerOpen = ref(false); const editing = ref<Decision | null>(null); const error = ref(''); const fieldErrors = reactive<Record<string, string>>({}); const form = reactive<DecisionFormState>({ title: '', body: '', notes: '', organization_unit_id: '', issued_by_employee_id: '', responsible_employee_id: '', effective_date: '', due_date: '' })
-watch(() => [filters.search, filters.status, filters.organization_unit_id, filters.responsible_employee_id, filters.has_source_recommendation, filters.meeting_id, filters.effective_date_from, filters.effective_date_to, filters.due_date_from, filters.due_date_to], () => { filters.page = 1 })
-function assignForm(v: DecisionFormState) { Object.assign(form, v) }; function openCreate() { editing.value = null; assignForm({ title: '', body: '', notes: '', organization_unit_id: '', issued_by_employee_id: '', responsible_employee_id: '', effective_date: '', due_date: '' }); error.value = ''; drawerOpen.value = true }; function openEdit(v: Decision) { if (v.status !== 'draft' || !can('decisions.update')) return; editing.value = v; assignForm({ title: v.title, body: v.body, notes: v.notes ?? '', organization_unit_id: v.organization_unit_id ?? '', issued_by_employee_id: v.issued_by_employee_id ?? '', responsible_employee_id: v.responsible_employee_id ?? '', effective_date: v.effective_date ?? '', due_date: v.due_date ?? '' }); drawerOpen.value = true }
-async function save() { Object.keys(fieldErrors).forEach(x => delete fieldErrors[x]); Object.assign(fieldErrors, validateDecisionForm(form)); if (Object.keys(fieldErrors).length) return; const payload = { title: form.title.trim(), body: form.body.trim(), notes: form.notes.trim() || null, organization_unit_id: form.organization_unit_id || null, issued_by_employee_id: form.issued_by_employee_id || null, responsible_employee_id: form.responsible_employee_id || null, effective_date: form.effective_date || null, due_date: form.due_date || null }; try { editing.value ? await update.mutateAsync({ id: editing.value.id, payload }) : await create.mutateAsync(payload); toast.success(t(editing.value ? 'decisions.toasts.updated' : 'decisions.toasts.created')); drawerOpen.value = false } catch { error.value = t('decisions.errors.generic') } }
+import type {
+  Decision,
+  DecisionFormState,
+  DecisionStatus,
+  ListDecisionsParams,
+} from '../types/decisions'
+import {
+  DECISION_STATUSES,
+  decisionStatusBadgeClass,
+  decisionStatusDotClass,
+  resolveDecisionsListState,
+  validateDecisionForm,
+} from '../validation/decisionValidation'
+
+const { t } = useI18n()
+const router = useRouter()
+const { can } = usePermissions()
+const toast = useToast()
+
+const focusedRowIndex = ref(-1)
+
+const filters = reactive({
+  search: '',
+  status: 'all' as DecisionStatus | 'all',
+  organization_unit_id: '' as number | '',
+  responsible_employee_id: '' as number | '',
+  has_source_recommendation: '' as '' | '1' | '0',
+  meeting_id: '' as number | '',
+  effective_date_from: '',
+  effective_date_to: '',
+  due_date_from: '',
+  due_date_to: '',
+  page: 1,
+  per_page: 15,
+  sort: 'decision_number',
+  direction: 'desc',
+})
+
+const committedSearch = useDebouncedRef(() => filters.search)
+const params = computed<ListDecisionsParams>(() => ({
+  ...filters,
+  search: committedSearch.value,
+  status: filters.status === 'all' ? '' : filters.status,
+  has_source_recommendation:
+    filters.has_source_recommendation === ''
+      ? ''
+      : filters.has_source_recommendation === '1',
+}))
+
+const { data, isLoading, isError, refetch, isFetching } = useDecisionsQuery(params)
+const decisions = computed(() => data.value?.data ?? [])
+const meta = computed(() => data.value?.meta)
+const listState = computed(() =>
+  resolveDecisionsListState({
+    isLoading: isLoading.value,
+    isError: isError.value,
+    count: decisions.value.length,
+  }),
+)
+
+const { data: orgs } = useOrganizationUnitsFlatQuery({ status: 'active' })
+const fetchActiveEmployees = (params: { search?: string; page: number; per_page: number }) =>
+  listEmployees({ ...params, status: 'active' })
+
+const orgOptions = computed<AppSelectOption[]>(() => [
+  { value: '', label: t('decisions.filters.allOrgUnits') },
+  ...(orgs.value?.data ?? []).map((x) => ({ value: x.id, label: x.name, hint: x.code })),
+])
+
+const emptyEmployee = computed<AppSelectOption>(() => ({ value: '', label: t('decisions.noEmployee') }))
+
+const statusOptions = computed<AppSelectOption[]>(() => [
+  { value: 'all', label: t('decisions.filters.allStatuses') },
+  ...DECISION_STATUSES.map((x) => ({ value: x, label: t(`decisions.status.${x}`) })),
+])
+
+const sourceOptions = computed<AppSelectOption[]>(() => [
+  { value: '', label: t('decisions.filters.allSources') },
+  { value: '1', label: t('decisions.filters.withSource') },
+  { value: '0', label: t('decisions.filters.standalone') },
+])
+
+const create = useCreateDecisionMutation()
+const update = useUpdateDecisionMutation()
+const drawerOpen = ref(false)
+const editing = ref<Decision | null>(null)
+const error = ref('')
+const fieldErrors = reactive<Record<string, string>>({})
+const form = reactive<DecisionFormState>({
+  title: '',
+  body: '',
+  notes: '',
+  organization_unit_id: '',
+  issued_by_employee_id: '',
+  responsible_employee_id: '',
+  effective_date: '',
+  due_date: '',
+})
+
+const isFormSubmitting = computed(() => create.isPending.value || update.isPending.value)
+
+watch(
+  () => [
+    committedSearch.value,
+    filters.status,
+    filters.organization_unit_id,
+    filters.responsible_employee_id,
+    filters.has_source_recommendation,
+    filters.meeting_id,
+    filters.effective_date_from,
+    filters.effective_date_to,
+    filters.due_date_from,
+    filters.due_date_to,
+  ],
+  () => {
+    filters.page = 1
+  },
+)
+
+watch(
+  decisions,
+  (rows) => {
+    if (rows.length === 0) {
+      focusedRowIndex.value = -1
+      return
+    }
+    if (focusedRowIndex.value >= rows.length) {
+      focusedRowIndex.value = rows.length - 1
+    }
+  },
+  { deep: false },
+)
+
+function focusRow(index: number): void {
+  if (decisions.value.length === 0) {
+    focusedRowIndex.value = -1
+    return
+  }
+  focusedRowIndex.value = Math.min(Math.max(index, 0), decisions.value.length - 1)
+}
+
+function openFocusedDecision(): void {
+  const decision = decisions.value[focusedRowIndex.value]
+  if (!decision) return
+  void router.push(`/app/decisions/${decision.id}`)
+}
+
+function onTableKeydown(event: KeyboardEvent): void {
+  if (drawerOpen.value || decisions.value.length === 0) return
+
+  const target = event.target as HTMLElement | null
+  if (target) {
+    const tag = target.tagName
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable) {
+      return
+    }
+  }
+
+  if (event.key === 'ArrowDown') {
+    event.preventDefault()
+    focusRow(focusedRowIndex.value < 0 ? 0 : focusedRowIndex.value + 1)
+    return
+  }
+
+  if (event.key === 'ArrowUp') {
+    event.preventDefault()
+    focusRow(focusedRowIndex.value < 0 ? 0 : focusedRowIndex.value - 1)
+    return
+  }
+
+  if (event.key === 'Home') {
+    event.preventDefault()
+    focusRow(0)
+    return
+  }
+
+  if (event.key === 'End') {
+    event.preventDefault()
+    focusRow(decisions.value.length - 1)
+    return
+  }
+
+  if (event.key === 'Enter' && focusedRowIndex.value >= 0) {
+    event.preventDefault()
+    openFocusedDecision()
+  }
+}
+
+function rowToneClass(index: number): string {
+  if (focusedRowIndex.value === index) {
+    return 'bg-[#EDF6F1]'
+  }
+  return index % 2 === 1 ? 'bg-[#FAFBFA]' : 'bg-brand-surface'
+}
+
+function rowAccentClass(index: number): string {
+  return focusedRowIndex.value === index
+    ? 'border-s-brand-primary'
+    : 'border-s-transparent'
+}
+
+function assignForm(v: DecisionFormState): void {
+  Object.assign(form, v)
+}
+
+function openCreate(): void {
+  editing.value = null
+  assignForm({
+    title: '',
+    body: '',
+    notes: '',
+    organization_unit_id: '',
+    issued_by_employee_id: '',
+    responsible_employee_id: '',
+    effective_date: '',
+    due_date: '',
+  })
+  error.value = ''
+  Object.keys(fieldErrors).forEach((k) => delete fieldErrors[k])
+  drawerOpen.value = true
+}
+
+function openEdit(v: Decision): void {
+  if (v.status !== 'draft' || !can('decisions.update')) return
+  editing.value = v
+  assignForm({
+    title: v.title,
+    body: v.body,
+    notes: v.notes ?? '',
+    organization_unit_id: v.organization_unit_id ?? '',
+    issued_by_employee_id: v.issued_by_employee_id ?? '',
+    responsible_employee_id: v.responsible_employee_id ?? '',
+    effective_date: v.effective_date ?? '',
+    due_date: v.due_date ?? '',
+  })
+  error.value = ''
+  Object.keys(fieldErrors).forEach((k) => delete fieldErrors[k])
+  drawerOpen.value = true
+}
+
+async function save(): Promise<void> {
+  Object.keys(fieldErrors).forEach((x) => delete fieldErrors[x])
+  Object.assign(fieldErrors, validateDecisionForm(form))
+  if (Object.keys(fieldErrors).length) return
+
+  const payload = {
+    title: form.title.trim(),
+    body: form.body.trim(),
+    notes: form.notes.trim() || null,
+    organization_unit_id: form.organization_unit_id || null,
+    issued_by_employee_id: form.issued_by_employee_id || null,
+    responsible_employee_id: form.responsible_employee_id || null,
+    effective_date: form.effective_date || null,
+    due_date: form.due_date || null,
+  }
+
+  try {
+    if (editing.value) {
+      await update.mutateAsync({ id: editing.value.id, payload })
+      toast.success(t('decisions.toasts.updated'))
+    } else {
+      await create.mutateAsync(payload)
+      toast.success(t('decisions.toasts.created'))
+    }
+    drawerOpen.value = false
+  } catch {
+    error.value = t('decisions.errors.generic')
+  }
+}
 </script>
-<template><div class="space-y-6"><div class="flex flex-wrap justify-between gap-4"><div><h2 class="text-2xl font-bold">{{ t('decisions.title') }}</h2><p class="text-sm text-brand-text-secondary">{{ t('decisions.subtitle') }}</p></div><PermissionGuard permission="decisions.create"><button class="rounded-xl bg-brand-primary-dark px-4 py-2 text-white" @click="openCreate"><Plus class="inline h-4 w-4" /> {{ t('decisions.add') }}</button></PermissionGuard></div><div class="flex flex-wrap gap-3 rounded-2xl border border-brand-border bg-brand-surface p-4"><input v-model="filters.search" class="h-11 min-w-48 flex-1 rounded-xl border border-brand-border px-3" :placeholder="t('decisions.searchPlaceholder')" /><AppSelect v-model="filters.status" :options="statusOptions" /><AppSelect v-model="filters.organization_unit_id" :options="orgOptions" searchable /><AppSelect v-model="filters.responsible_employee_id" :options="employeeOptions" searchable /><AppSelect v-model="filters.has_source_recommendation" :options="sourceOptions" /><input v-model.number="filters.meeting_id" type="number" min="1" class="h-11 w-28 rounded-xl border px-3" :placeholder="t('decisions.filters.meetingId')" /><input v-model="filters.effective_date_from" type="date" class="h-11 rounded-xl border px-3" /><input v-model="filters.effective_date_to" type="date" class="h-11 rounded-xl border px-3" /><input v-model="filters.due_date_from" type="date" class="h-11 rounded-xl border px-3" /><input v-model="filters.due_date_to" type="date" class="h-11 rounded-xl border px-3" /></div><div v-if="isLoading" class="rounded-2xl border p-10 text-center">{{ t('decisions.loading') }}</div><div v-else-if="isError" class="rounded-2xl border p-10 text-center"><p>{{ t('decisions.errors.load') }}</p><button @click="() => refetch()">{{ t('decisions.retry') }}</button></div><div v-else-if="!decisions.length" class="rounded-2xl border p-10 text-center">{{ t('decisions.empty') }}</div><div v-else class="overflow-x-auto rounded-2xl border border-brand-border bg-brand-surface"><table class="min-w-full text-sm"><thead><tr class="bg-brand-bg"><th v-for="key in ['number','title','source','responsible','organizationUnit','effectiveDate','dueDate','status','actions']" :key="key" class="px-4 py-3 text-start">{{ t(`decisions.columns.${key}`) }}</th></tr></thead><tbody><tr v-for="decision in decisions" :key="decision.id" class="border-t"><td class="px-4 py-3 font-mono"><RouterLink :to="`/app/decisions/${decision.id}`">{{ decision.decision_number }}</RouterLink></td><td class="px-4 py-3">{{ decision.title }}</td><td class="px-4 py-3">{{ decision.source_recommendation?.title ?? t('decisions.standaloneSource') }}</td><td class="px-4 py-3">{{ decision.responsible_employee?.full_name ?? '—' }}</td><td class="px-4 py-3">{{ decision.organization_unit?.name ?? '—' }}</td><td class="px-4 py-3">{{ decision.effective_date ?? '—' }}</td><td class="px-4 py-3">{{ decision.due_date ?? '—' }}</td><td class="px-4 py-3"><span class="rounded-full px-2 py-1 text-xs" :class="decisionStatusBadgeClass(decision.status)">{{ t(`decisions.status.${decision.status}`) }}</span></td><td class="px-4 py-3"><RouterLink :to="`/app/decisions/${decision.id}`"><Eye class="inline h-4 w-4" /></RouterLink><button v-if="decision.status === 'draft' && can('decisions.update')" class="ms-2" @click="openEdit(decision)"><Pencil class="inline h-4 w-4" /></button></td></tr></tbody></table></div><DecisionFormDrawer :open="drawerOpen" :editing="editing" :form="form" :form-error="error" :field-errors="fieldErrors" :submitting="create.isPending.value || update.isPending.value" :employee-options="employeeOptions" :org-unit-options="orgOptions" @close="drawerOpen = false" @submit="save" @update:form="assignForm" /></div></template>
+
+<template>
+  <div class="space-y-6">
+    <div class="flex flex-wrap items-end justify-between gap-4">
+      <div class="min-w-0">
+        <h2 class="text-[1.75rem] font-bold leading-tight text-brand-text">
+          {{ t('decisions.title') }}
+        </h2>
+        <p class="mt-1.5 text-sm text-brand-text-secondary">
+          {{ t('decisions.subtitle') }}
+        </p>
+        <p v-if="meta" class="mt-2">
+          <span
+            class="inline-flex items-center rounded-full bg-brand-primary-soft px-2.5 py-0.5 text-xs font-semibold text-brand-primary-dark"
+          >
+            {{ t('decisions.total', { count: meta.total }) }}
+          </span>
+        </p>
+      </div>
+      <PermissionGuard permission="decisions.create">
+        <button
+          type="button"
+          class="inline-flex h-11 items-center gap-2 rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white transition hover:bg-brand-primary"
+          @click="openCreate"
+        >
+          <Plus class="h-4 w-4" :stroke-width="2.25" />
+          <span>{{ t('decisions.add') }}</span>
+        </button>
+      </PermissionGuard>
+    </div>
+
+    <div
+      class="flex flex-wrap items-center gap-3 rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)]"
+    >
+      <div class="relative min-w-48 flex-1">
+        <Search
+          class="pointer-events-none absolute inset-s-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text-muted"
+          :stroke-width="1.75"
+          aria-hidden="true"
+        />
+        <input
+          v-model="filters.search"
+          type="search"
+          class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface pe-3 ps-10 text-sm text-brand-text outline-none transition placeholder:text-brand-text-muted focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+          :placeholder="t('decisions.searchPlaceholder')"
+        />
+      </div>
+      <AppSelect v-model="filters.status" :options="statusOptions" />
+      <AppSelect v-model="filters.organization_unit_id" :options="orgOptions" searchable />
+      <AppRemoteSelect
+        :model-value="filters.responsible_employee_id"
+        query-key="employees-active"
+        :fetcher="fetchActiveEmployees"
+        :map-option="employeeSelectOption"
+        :empty-option="emptyEmployee"
+        @update:model-value="filters.responsible_employee_id = toSelectId($event)"
+      />
+      <AppSelect v-model="filters.has_source_recommendation" :options="sourceOptions" />
+      <input
+        v-model.number="filters.meeting_id"
+        type="number"
+        min="1"
+        class="h-11 w-28 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+        :placeholder="t('decisions.filters.meetingId')"
+      />
+      <input
+        v-model="filters.effective_date_from"
+        type="date"
+        class="h-11 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+      />
+      <input
+        v-model="filters.effective_date_to"
+        type="date"
+        class="h-11 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+      />
+      <input
+        v-model="filters.due_date_from"
+        type="date"
+        class="h-11 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+      />
+      <input
+        v-model="filters.due_date_to"
+        type="date"
+        class="h-11 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+      />
+    </div>
+
+    <div
+      v-if="listState === 'loading'"
+      class="rounded-2xl border border-brand-border bg-brand-surface p-10 text-center text-sm text-brand-text-muted"
+    >
+      {{ t('decisions.loading') }}
+    </div>
+    <div
+      v-else-if="listState === 'error'"
+      class="rounded-2xl border border-red-200 bg-red-50 p-10 text-center"
+    >
+      <p class="text-sm text-red-700">{{ t('decisions.errors.load') }}</p>
+      <button
+        type="button"
+        class="mt-3 text-sm font-semibold text-brand-primary-dark underline"
+        @click="() => refetch()"
+      >
+        {{ t('decisions.retry') }}
+      </button>
+    </div>
+    <div
+      v-else-if="listState === 'empty'"
+      class="rounded-2xl border border-brand-border bg-brand-surface p-10 text-center"
+    >
+      <p class="text-sm text-brand-text-muted">{{ t('decisions.empty') }}</p>
+      <PermissionGuard permission="decisions.create">
+        <button
+          type="button"
+          class="mt-4 inline-flex h-10 items-center gap-2 rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white"
+          @click="openCreate"
+        >
+          <Plus class="h-4 w-4" />
+          {{ t('decisions.add') }}
+        </button>
+      </PermissionGuard>
+    </div>
+    <div
+      v-else
+      ref="tableRoot"
+      class="overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-[0_1px_2px_rgba(23,32,29,0.03)] outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25"
+      tabindex="0"
+      role="grid"
+      :aria-rowcount="decisions.length"
+      :aria-label="t('decisions.title')"
+      @keydown="onTableKeydown"
+    >
+      <div class="overflow-x-auto">
+        <table class="min-w-full border-separate border-spacing-0 text-sm">
+          <thead>
+            <tr class="bg-[#F4F6F5]">
+              <th
+                class="whitespace-nowrap border-b border-s-[3px] border-brand-border border-s-transparent px-5 py-3.5 text-start text-xs font-bold tracking-wide text-brand-text"
+              >
+                {{ t('decisions.columns.number') }}
+              </th>
+              <th
+                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-start text-xs font-bold tracking-wide text-brand-text"
+              >
+                {{ t('decisions.columns.title') }}
+              </th>
+              <th
+                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text"
+              >
+                {{ t('decisions.columns.source') }}
+              </th>
+              <th
+                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text"
+              >
+                {{ t('decisions.columns.responsible') }}
+              </th>
+              <th
+                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text"
+              >
+                {{ t('decisions.columns.organizationUnit') }}
+              </th>
+              <th
+                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text"
+              >
+                {{ t('decisions.columns.effectiveDate') }}
+              </th>
+              <th
+                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text"
+              >
+                {{ t('decisions.columns.dueDate') }}
+              </th>
+              <th
+                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text"
+              >
+                {{ t('decisions.columns.status') }}
+              </th>
+              <th
+                class="w-28 whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text"
+              >
+                {{ t('decisions.columns.actions') }}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="(decision, index) in decisions"
+              :key="decision.id"
+              class="group"
+              :class="rowToneClass(index)"
+              role="row"
+              :aria-selected="focusedRowIndex === index"
+              @mouseenter="focusedRowIndex = index"
+            >
+              <td
+                class="whitespace-nowrap border-b border-brand-border/80 border-s-[3px] px-5 py-3.5 transition-colors duration-150 group-hover:border-s-brand-primary group-hover:bg-[#EDF6F1]"
+                :class="rowAccentClass(index)"
+              >
+                <RouterLink
+                  :to="`/app/decisions/${decision.id}`"
+                  class="inline-flex items-center gap-1.5 rounded-lg border border-brand-border bg-brand-bg px-2.5 py-1 font-mono text-[12px] font-bold tracking-wide text-brand-primary-dark shadow-[0_1px_0_rgba(23,32,29,0.04)] transition group-hover:border-brand-primary/30 group-hover:bg-brand-surface hover:border-brand-primary/35 hover:bg-brand-primary-soft hover:text-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25"
+                  :title="t('decisions.actions.view')"
+                  dir="ltr"
+                >
+                  {{ decision.decision_number }}
+                </RouterLink>
+              </td>
+              <td
+                class="border-b border-brand-border/80 px-5 py-3.5 font-semibold text-brand-text transition-colors duration-150 group-hover:bg-[#EDF6F1]"
+              >
+                <RouterLink
+                  :to="`/app/decisions/${decision.id}`"
+                  class="transition group-hover:text-brand-primary-dark hover:underline hover:underline-offset-2"
+                >
+                  {{ decision.title }}
+                </RouterLink>
+              </td>
+              <td
+                class="border-b border-brand-border/80 px-5 py-3.5 text-center text-brand-text transition-colors duration-150 group-hover:bg-[#EDF6F1]"
+              >
+                {{ decision.source_recommendation?.title ?? t('decisions.standaloneSource') }}
+              </td>
+              <td
+                class="border-b border-brand-border/80 px-5 py-3.5 text-center text-brand-text transition-colors duration-150 group-hover:bg-[#EDF6F1]"
+              >
+                {{ decision.responsible_employee?.full_name ?? '—' }}
+              </td>
+              <td
+                class="border-b border-brand-border/80 px-5 py-3.5 text-center text-brand-text transition-colors duration-150 group-hover:bg-[#EDF6F1]"
+              >
+                {{ decision.organization_unit?.name ?? '—' }}
+              </td>
+              <td
+                class="border-b border-brand-border/80 px-5 py-3.5 text-center text-brand-text transition-colors duration-150 group-hover:bg-[#EDF6F1]"
+                dir="ltr"
+              >
+                {{ decision.effective_date ?? '—' }}
+              </td>
+              <td
+                class="border-b border-brand-border/80 px-5 py-3.5 text-center text-brand-text transition-colors duration-150 group-hover:bg-[#EDF6F1]"
+                dir="ltr"
+              >
+                {{ decision.due_date ?? '—' }}
+              </td>
+              <td
+                class="border-b border-brand-border/80 px-5 py-3.5 text-center transition-colors duration-150 group-hover:bg-[#EDF6F1]"
+              >
+                <span
+                  class="inline-flex min-w-[7.25rem] items-center justify-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold tracking-wide shadow-sm"
+                  :class="decisionStatusBadgeClass(decision.status)"
+                >
+                  <span
+                    class="h-1.5 w-1.5 shrink-0 rounded-full"
+                    :class="decisionStatusDotClass(decision.status)"
+                    aria-hidden="true"
+                  />
+                  {{ t(`decisions.status.${decision.status}`) }}
+                </span>
+              </td>
+              <td
+                class="border-b border-brand-border/80 px-5 py-3.5 text-center transition-colors duration-150 group-hover:bg-[#EDF6F1]"
+              >
+                <div
+                  class="inline-flex items-center justify-center gap-0.5 opacity-70 transition group-hover:opacity-100"
+                >
+                  <AppTooltip :text="t('decisions.actions.view')">
+                    <RouterLink
+                      :to="`/app/decisions/${decision.id}`"
+                      class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-brand-text transition hover:bg-brand-surface hover:text-brand-primary-dark"
+                      :aria-label="t('decisions.actions.view')"
+                    >
+                      <Eye class="h-4 w-4" :stroke-width="2" />
+                    </RouterLink>
+                  </AppTooltip>
+                  <PermissionGuard
+                    v-if="decision.status === 'draft'"
+                    permission="decisions.update"
+                  >
+                    <AppTooltip :text="t('decisions.actions.edit')">
+                      <button
+                        type="button"
+                        class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-brand-primary-dark transition hover:bg-brand-surface"
+                        :aria-label="t('decisions.actions.edit')"
+                        @click="openEdit(decision)"
+                      >
+                        <Pencil class="h-4 w-4" :stroke-width="2" />
+                      </button>
+                    </AppTooltip>
+                  </PermissionGuard>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div
+        v-if="meta && meta.last_page > 1"
+        class="flex items-center justify-between gap-3 border-t border-brand-border bg-[#F7F8F6] px-5 py-3 text-sm"
+      >
+        <button
+          type="button"
+          class="inline-flex h-9 items-center gap-1 rounded-lg border border-brand-border bg-brand-surface px-3 font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
+          :disabled="filters.page <= 1 || isFetching"
+          @click="filters.page -= 1"
+        >
+          <ChevronRight class="h-4 w-4" :stroke-width="2" />
+          <span>{{ t('decisions.prev') }}</span>
+        </button>
+        <span class="text-xs font-semibold text-brand-text-muted">
+          {{ filters.page }} / {{ meta.last_page }}
+        </span>
+        <button
+          type="button"
+          class="inline-flex h-9 items-center gap-1 rounded-lg border border-brand-border bg-brand-surface px-3 font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
+          :disabled="filters.page >= meta.last_page || isFetching"
+          @click="filters.page += 1"
+        >
+          <span>{{ t('decisions.next') }}</span>
+          <ChevronLeft class="h-4 w-4" :stroke-width="2" />
+        </button>
+      </div>
+    </div>
+
+    <DecisionFormDrawer
+      :open="drawerOpen"
+      :editing="editing"
+      :form="form"
+      :form-error="error"
+      :field-errors="fieldErrors"
+      :submitting="isFormSubmitting"
+      :org-unit-options="orgOptions"
+      @close="drawerOpen = false"
+      @submit="save"
+      @update:form="assignForm"
+    />
+  </div>
+</template>

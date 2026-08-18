@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
+import { CalendarClock, CheckCircle2 } from 'lucide-vue-next'
 
 import type { DashboardToday, TodayListItem } from '../types/dashboard'
 import {
@@ -63,6 +64,7 @@ const subsections = computed(() => {
 
   return blocks.filter((b) => b.present)
 })
+const hasItems = computed(() => subsections.value.some((block) => (block.items?.length ?? 0) > 0))
 
 function itemMeta(item: TodayListItem): string {
   if (item.scheduled_at) {
@@ -84,10 +86,14 @@ function itemMeta(item: TodayListItem): string {
     :title="t('dashboard.todaySoon')"
   >
     <div
-      v-if="subsections.length === 0"
-      class="text-sm text-brand-text-muted"
+      v-if="subsections.length === 0 || !hasItems"
+      class="flex items-start gap-3 rounded-xl bg-brand-bg p-4"
     >
-      {{ t('dashboard.emptyUpcoming') }}
+      <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-brand-success" aria-hidden="true" />
+      <div>
+        <p class="text-sm font-bold text-brand-text">{{ t('dashboard.todayClearTitle') }}</p>
+        <p class="mt-1 text-xs leading-5 text-brand-text-secondary">{{ t('dashboard.todayClearDescription') }}</p>
+      </div>
     </div>
     <div
       v-else
@@ -97,12 +103,13 @@ function itemMeta(item: TodayListItem): string {
         v-for="block in subsections"
         :key="block.key"
       >
-        <h4 class="mb-2 text-sm font-semibold text-brand-text">
+        <h4 class="mb-2 flex items-center gap-2 text-sm font-semibold text-brand-text">
+          <CalendarClock class="h-4 w-4 text-brand-primary" aria-hidden="true" />
           {{ block.title }}
         </h4>
         <p
           v-if="!block.items || block.items.length === 0"
-          class="text-sm text-brand-text-muted"
+          class="hidden text-sm text-brand-text-muted"
         >
           {{ block.empty }}
         </p>

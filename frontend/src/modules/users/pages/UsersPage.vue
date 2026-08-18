@@ -11,14 +11,18 @@ import {
   UserX,
 } from 'lucide-vue-next'
 
+import { listRoles } from '@/modules/roles/api/rolesApi'
 import { ApiError } from '@/shared/api/http'
-import AppSelect from '@/shared/components/AppSelect.vue'
+import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
+import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
+import { roleSelectOption, toSelectId } from '@/shared/lookups/selectOptions'
 import AppTooltip from '@/shared/components/AppTooltip.vue'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
 import UserAvatar from '@/shared/components/UserAvatar.vue'
 import { useConfirm } from '@/shared/composables/useConfirm'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import { useToast } from '@/shared/composables/useToast'
+import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
 import { useRolesQuery } from '@/modules/roles/queries/useRolesQuery'
 
 import UserFormDrawer from '../components/UserFormDrawer.vue'
@@ -47,9 +51,15 @@ const filters = reactive({
   direction: 'asc',
 })
 
-const queryParams = computed(() => ({ ...filters }))
+const committedSearch = useDebouncedRef(() => filters.search)
+const queryParams = computed(() => ({ ...filters, search: committedSearch.value }))
 const { data, isLoading, isError, refetch, isFetching } = useUsersQuery(queryParams)
 const { data: rolesData } = useRolesQuery({ per_page: 100 })
+const fetchRoles = (params: { search?: string; page: number; per_page: number }) => listRoles(params)
+const emptyRoleFilter = computed<AppSelectOption>(() => ({
+  value: '',
+  label: t('users.filters.allRoles'),
+}))
 
 const createMutation = useCreateUserMutation()
 const updateMutation = useUpdateUserMutation()
@@ -80,10 +90,6 @@ const statusOptions = computed(() => [
   { value: 'disabled', label: t('users.status.disabled') },
 ])
 
-const roleOptions = computed(() => [
-  { value: '', label: t('users.filters.allRoles') },
-  ...roles.value.map((role) => ({ value: role.id, label: role.name })),
-])
 
 const isSubmitting = computed(
   () =>
@@ -93,7 +99,7 @@ const isSubmitting = computed(
 )
 
 watch(
-  () => [filters.search, filters.status, filters.role_id],
+  () => [committedSearch.value, filters.status, filters.role_id],
   () => {
     filters.page = 1
   },
@@ -255,7 +261,14 @@ function formatDate(value: string | null): string {
         />
       </div>
       <AppSelect v-model="filters.status" :options="statusOptions" />
-      <AppSelect v-model="filters.role_id" :options="roleOptions" />
+      <AppRemoteSelect
+        :model-value="filters.role_id"
+        query-key="roles"
+        :fetcher="fetchRoles"
+        :map-option="roleSelectOption"
+        :empty-option="emptyRoleFilter"
+        @update:model-value="filters.role_id = toSelectId($event)"
+      />
     </div>
 
     <div

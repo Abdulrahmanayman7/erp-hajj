@@ -3,7 +3,9 @@ import { computed, nextTick, onUnmounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Loader2, X } from 'lucide-vue-next'
 
-import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
+import { listEmployees } from '@/modules/employees/api/employeesApi'
+import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
+import { employeeSelectOption, toSelectId } from '@/shared/lookups/selectOptions'
 
 import type { Employee } from '../types/employees'
 
@@ -11,7 +13,6 @@ const props = defineProps<{
   open: boolean
   employee: Employee | null
   supervisorId: number | ''
-  supervisorOptions: AppSelectOption[]
   formError: string
   submitting: boolean
 }>()
@@ -26,6 +27,13 @@ const { t } = useI18n()
 let previouslyFocused: HTMLElement | null = null
 
 const title = computed(() => t('employees.supervisorTitle'))
+const fetchActiveEmployees = (params: { search?: string; page: number; per_page: number }) =>
+  listEmployees({ ...params, status: 'active' })
+const emptySupervisor = computed(() => ({ value: '', label: t('employees.noSupervisor') }))
+const selectedSupervisor = computed(() =>
+  props.employee?.supervisor ? employeeSelectOption(props.employee.supervisor) : null,
+)
+const excludeSelf = computed(() => (props.employee ? [props.employee.id] : []))
 
 function onKeydown(event: KeyboardEvent): void {
   if (event.key === 'Escape' && props.open && !props.submitting) {
@@ -93,15 +101,18 @@ onUnmounted(() => {
           <span class="mb-1.5 block text-sm font-medium text-brand-text">
             {{ t('employees.fields.supervisor') }}
           </span>
-          <AppSelect
+          <AppRemoteSelect
             :model-value="supervisorId"
-            :options="supervisorOptions"
+            query-key="employees-active"
+            :fetcher="fetchActiveEmployees"
+            :map-option="employeeSelectOption"
+            :empty-option="emptySupervisor"
+            :selected-option="selectedSupervisor"
+            :exclude-values="excludeSelf"
             :placeholder="t('employees.selectSupervisor')"
             :disabled="submitting"
-            searchable
-            @update:model-value="
-              emit('update:supervisorId', $event === null || $event === '' ? '' : Number($event))
-            "
+            :enabled="open"
+            @update:model-value="emit('update:supervisorId', toSelectId($event))"
           />
           <p class="mt-2 text-xs leading-relaxed text-brand-text-muted">
             {{ t('employees.supervisorHint') }}

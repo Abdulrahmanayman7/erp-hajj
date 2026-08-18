@@ -8,11 +8,11 @@ import AppTopbar from './AppTopbar.vue'
 </script>
 
 <template>
-  <div class="flex min-h-screen gap-3 bg-brand-bg p-3 text-brand-text lg:gap-4 lg:p-4">
+  <div class="flex h-dvh overflow-hidden gap-3 bg-brand-bg p-3 text-brand-text lg:gap-4 lg:p-4">
     <!-- First in RTL flex = right side -->
     <AppSidebar />
 
-    <div class="flex min-w-0 flex-1 flex-col gap-3 lg:gap-4">
+    <div class="flex min-h-0 min-w-0 flex-1 flex-col gap-3 lg:gap-4">
       <AppTopbar />
 
       <main class="min-h-0 flex-1 overflow-auto">

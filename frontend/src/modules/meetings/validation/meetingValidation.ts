@@ -170,17 +170,34 @@ export function availableLifecycleActions(status: MeetingStatus): LifecycleActio
 export function meetingStatusBadgeClass(status: MeetingStatus): string {
   switch (status) {
     case 'draft':
-      return 'bg-neutral-100 text-neutral-700 ring-1 ring-neutral-200/80'
+      return 'bg-slate-100 text-slate-800 ring-1 ring-inset ring-slate-300/80'
     case 'scheduled':
-      return 'bg-sky-50 text-sky-900 ring-1 ring-sky-200/70'
+      return 'bg-sky-100 text-sky-950 ring-1 ring-inset ring-sky-300/80'
     case 'in_progress':
-      return 'bg-amber-50 text-amber-900 ring-1 ring-amber-200/70'
+      return 'bg-amber-100 text-amber-950 ring-1 ring-inset ring-amber-300/80'
     case 'completed':
-      return 'bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200/70'
+      return 'bg-emerald-100 text-emerald-950 ring-1 ring-inset ring-emerald-300/80'
     case 'cancelled':
-      return 'bg-red-50 text-red-800 ring-1 ring-red-200/70'
+      return 'bg-red-100 text-red-950 ring-1 ring-inset ring-red-300/80'
     default:
-      return 'bg-neutral-100 text-neutral-600 ring-1 ring-neutral-200/80'
+      return 'bg-neutral-100 text-neutral-700 ring-1 ring-inset ring-neutral-300/80'
+  }
+}
+
+export function meetingStatusDotClass(status: MeetingStatus): string {
+  switch (status) {
+    case 'draft':
+      return 'bg-slate-500'
+    case 'scheduled':
+      return 'bg-sky-500'
+    case 'in_progress':
+      return 'bg-amber-500'
+    case 'completed':
+      return 'bg-emerald-500'
+    case 'cancelled':
+      return 'bg-red-500'
+    default:
+      return 'bg-neutral-400'
   }
 }
 

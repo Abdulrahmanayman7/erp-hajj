@@ -5,10 +5,16 @@ import { RouterLink, useRoute, useRouter } from 'vue-router'
 import {
   Archive,
   ArrowRight,
+  CalendarRange,
   Download,
+  FileText,
+  Hash,
+  Link,
   Pencil,
   RotateCcw,
+  Tag,
   Trash2,
+  UserRound,
 } from 'lucide-vue-next'
 
 import { ApiError } from '@/shared/api/http'
@@ -32,6 +38,7 @@ import { DOCUMENT_LINKABLE_TYPES } from '../types/documents'
 import {
   canShowDocumentAction,
   documentStatusBadgeClass,
+  documentStatusDotClass,
   formatDocumentSize,
   hostRouteForLink,
   mapDocumentErrorCode,
@@ -202,169 +209,126 @@ const hostLink = computed(() => {
 </script>
 
 <template>
-  <div class="space-y-6">
-    <button
-      type="button"
-      class="rounded-lg border px-3 py-2"
-      @click="router.push('/app/documents')"
-    >
-      <ArrowRight class="inline h-4 w-4" />
-      {{ t('documents.backToList') }}
-    </button>
+  <div class="mx-auto max-w-[1200px] space-y-5">
+    <div class="flex flex-wrap items-center gap-3">
+      <button type="button" class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text transition hover:bg-brand-bg" @click="router.push('/app/documents')">
+        <ArrowRight class="h-4 w-4" />
+        {{ t('documents.backToList') }}
+      </button>
+    </div>
 
-    <div v-if="isLoading" class="rounded-2xl border p-10 text-center">
+    <div v-if="isLoading" class="rounded-2xl border border-brand-border bg-brand-surface p-10 text-center text-sm text-brand-text-muted">
       {{ t('documents.loadingDetails') }}
     </div>
-    <div v-else-if="isError || !document" class="rounded-2xl border p-10 text-center">
-      {{ t('documents.errors.loadDetails') }}
-      <button type="button" class="ms-2 underline" @click="() => refetch()">
+    <div v-else-if="isError || !document" class="rounded-2xl border border-red-200 bg-red-50 p-10 text-center">
+      <p class="text-sm text-red-700">{{ t('documents.errors.loadDetails') }}</p>
+      <button type="button" class="mt-3 text-sm font-semibold text-brand-primary-dark underline" @click="() => refetch()">
         {{ t('documents.retry') }}
       </button>
     </div>
     <template v-else>
-      <div class="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <div class="flex flex-wrap items-center gap-2">
-            <span class="font-mono">{{ document.document_number }}</span>
-            <span
-              class="rounded-full px-2 py-1 text-xs"
-              :class="documentStatusBadgeClass(document.status)"
-            >
-              {{ t(`documents.status.${document.status}`) }}
-            </span>
+      <section class="rounded-2xl border border-brand-border bg-brand-surface px-5 py-5 sm:px-6">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+          <div class="min-w-0 flex-1">
+            <div class="flex flex-wrap items-center gap-2">
+              <p class="font-mono text-xs font-semibold tracking-wide text-brand-text-muted" dir="ltr">{{ document.document_number }}</p>
+              <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold tracking-wide" :class="documentStatusBadgeClass(document.status)">
+                <span class="h-1.5 w-1.5 shrink-0 rounded-full" :class="documentStatusDotClass(document.status)" aria-hidden="true" />
+                {{ t(`documents.status.${document.status}`) }}
+              </span>
+            </div>
+            <h2 class="mt-2 text-[1.65rem] font-bold leading-snug text-brand-text sm:text-[1.85rem]">{{ document.title }}</h2>
+            <p class="mt-2 text-sm text-brand-text-secondary">{{ document.original_filename }}</p>
           </div>
-          <h2 class="mt-2 text-2xl font-bold">{{ document.title }}</h2>
+          <div class="flex flex-wrap gap-2">
+            <PermissionGuard permission="documents.update">
+              <button type="button" class="inline-flex h-10 items-center gap-2 rounded-xl border border-brand-border bg-brand-surface px-4 text-sm font-semibold text-brand-primary-dark transition hover:bg-brand-primary-soft" @click="startEdit">
+                <Pencil class="h-4 w-4" />
+                {{ t('documents.actions.edit') }}
+              </button>
+            </PermissionGuard>
+            <PermissionGuard permission="documents.download">
+              <button type="button" class="inline-flex h-10 items-center gap-2 rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white transition hover:bg-brand-primary" @click="onDownload">
+                <Download class="h-4 w-4" />
+                {{ t('documents.actions.download') }}
+              </button>
+            </PermissionGuard>
+          </div>
         </div>
-        <div class="flex flex-wrap gap-2">
-          <PermissionGuard permission="documents.update">
-            <button
-              type="button"
-              class="inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold"
-              @click="startEdit"
-            >
-              <Pencil class="h-4 w-4" />
-              {{ t('documents.actions.edit') }}
-            </button>
-          </PermissionGuard>
-          <PermissionGuard permission="documents.download">
-            <button
-              type="button"
-              class="inline-flex items-center gap-2 rounded-xl bg-brand-primary-dark px-4 py-2 text-sm font-semibold text-white"
-              @click="onDownload"
-            >
-              <Download class="h-4 w-4" />
-              {{ t('documents.actions.download') }}
-            </button>
-          </PermissionGuard>
+      </section>
+
+      <div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <div class="space-y-5">
+          <section class="rounded-2xl border border-brand-border bg-brand-surface">
+            <header class="border-b border-brand-border px-5 py-4">
+              <h3 class="text-sm font-bold text-brand-text">{{ t('documents.sections.overview') }}</h3>
+            </header>
+            <dl class="grid gap-0 sm:grid-cols-2">
+              <div class="flex gap-3 border-b border-brand-border/80 px-5 py-4 sm:border-e">
+                <span class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-bg text-brand-primary"><Tag class="h-4 w-4" :stroke-width="1.75" /></span>
+                <div class="min-w-0"><dt class="text-xs font-semibold text-brand-text-muted">{{ t('documents.fields.category') }}</dt><dd class="mt-1 text-sm font-semibold text-brand-text">{{ document.category?.name ?? '—' }}</dd></div>
+              </div>
+              <div class="flex gap-3 border-b border-brand-border/80 px-5 py-4">
+                <span class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-bg text-brand-primary"><FileText class="h-4 w-4" :stroke-width="1.75" /></span>
+                <div class="min-w-0"><dt class="text-xs font-semibold text-brand-text-muted">{{ t('documents.fields.mime') }} / {{ t('documents.fields.size') }}</dt><dd class="mt-1 text-sm font-semibold text-brand-text">{{ document.mime_type }} <span class="text-brand-text-muted">·</span> {{ formatDocumentSize(document.size_bytes) }}</dd></div>
+              </div>
+              <div class="flex gap-3 border-b border-brand-border/80 px-5 py-4 sm:border-e sm:border-b-0">
+                <span class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-bg text-brand-primary"><UserRound class="h-4 w-4" :stroke-width="1.75" /></span>
+                <div class="min-w-0"><dt class="text-xs font-semibold text-brand-text-muted">{{ t('documents.fields.uploader') }}</dt><dd class="mt-1 text-sm font-semibold text-brand-text">{{ document.uploaded_by?.name ?? '—' }}</dd></div>
+              </div>
+              <div class="flex gap-3 px-5 py-4">
+                <span class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-bg text-brand-primary"><CalendarRange class="h-4 w-4" :stroke-width="1.75" /></span>
+                <div class="min-w-0"><dt class="text-xs font-semibold text-brand-text-muted">{{ t('documents.fields.createdAt') }}</dt><dd class="mt-1 text-sm font-semibold text-brand-text" dir="ltr">{{ document.created_at ? document.created_at.slice(0, 10) : '—' }}</dd></div>
+              </div>
+            </dl>
+          </section>
+
+          <section class="rounded-2xl border border-brand-border bg-brand-surface">
+            <header class="flex items-center gap-2 border-b border-brand-border px-5 py-4">
+              <FileText class="h-4 w-4 text-brand-primary" :stroke-width="1.75" />
+              <h3 class="text-sm font-bold text-brand-text">{{ t('documents.fields.description') }}</h3>
+            </header>
+            <p class="whitespace-pre-wrap px-5 py-4 text-sm leading-relaxed text-brand-text-secondary">{{ document.description || '—' }}</p>
+          </section>
+
+          <section class="rounded-2xl border border-brand-border bg-brand-surface">
+            <header class="flex items-center gap-2 border-b border-brand-border px-5 py-4">
+              <FileText class="h-4 w-4 text-brand-primary" :stroke-width="1.75" />
+              <h3 class="text-sm font-bold text-brand-text">{{ t('documents.sections.file') }}</h3>
+            </header>
+            <div class="flex flex-wrap items-center justify-between gap-4 px-5 py-4">
+              <div class="min-w-0"><p class="truncate text-sm font-semibold text-brand-text" :title="document.original_filename">{{ document.original_filename }}</p><p class="mt-1 text-xs text-brand-text-muted">{{ formatDocumentSize(document.size_bytes) }}</p></div>
+              <PermissionGuard permission="documents.download"><button type="button" class="inline-flex h-10 items-center gap-2 rounded-xl border border-brand-border bg-brand-surface px-4 text-sm font-semibold text-brand-primary-dark transition hover:bg-brand-primary-soft" @click="onDownload"><Download class="h-4 w-4" />{{ t('documents.actions.download') }}</button></PermissionGuard>
+            </div>
+          </section>
+
+          <section class="rounded-2xl border border-brand-border bg-brand-surface">
+            <header class="flex items-center gap-2 border-b border-brand-border px-5 py-4"><Link class="h-4 w-4 text-brand-primary" :stroke-width="1.75" /><h3 class="text-sm font-bold text-brand-text">{{ t('documents.sections.link') }}</h3></header>
+            <div class="px-5 py-4">
+              <p v-if="!document.link" class="text-sm text-brand-text-muted">{{ t('documents.link.standalone') }}</p>
+              <template v-else>
+                <p class="text-sm text-brand-text"><span class="font-semibold">{{ t(`documents.link.types.${document.link.type}`) }}</span><span class="mx-1.5 text-brand-text-muted">·</span>{{ document.link.label ?? `#${document.link.id}` }}</p>
+                <RouterLink v-if="hostLink" :to="hostLink" class="mt-2 inline-block text-sm font-semibold text-brand-primary-dark hover:underline">{{ t('documents.link.openHost') }}</RouterLink>
+              </template>
+            </div>
+          </section>
         </div>
+
+        <aside class="space-y-5">
+          <section class="rounded-2xl border border-brand-border bg-brand-surface">
+            <header class="flex items-center gap-2 border-b border-brand-border px-5 py-4"><Hash class="h-4 w-4 text-brand-primary" :stroke-width="1.75" /><h3 class="text-sm font-bold text-brand-text">{{ t('documents.fields.checksum') }}</h3></header>
+            <p class="px-5 py-4 font-mono text-sm text-brand-text" :title="document.checksum_sha256">{{ truncateChecksum(document.checksum_sha256) }}</p>
+          </section>
+          <section class="rounded-2xl border border-brand-border bg-brand-surface">
+            <header class="border-b border-brand-border px-5 py-4"><h3 class="text-sm font-bold text-brand-text">{{ t('documents.sections.archive') }}</h3></header>
+            <div class="flex flex-wrap gap-2 px-4 py-4">
+              <button v-if="canShowDocumentAction('archive', can, document)" type="button" class="inline-flex h-10 items-center gap-2 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text transition hover:bg-brand-bg" @click="onArchive"><Archive class="h-4 w-4" />{{ t('documents.actions.archive') }}</button>
+              <button v-if="canShowDocumentAction('restore', can, document)" type="button" class="inline-flex h-10 items-center gap-2 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text transition hover:bg-brand-bg" @click="onRestore"><RotateCcw class="h-4 w-4" />{{ t('documents.actions.restore') }}</button>
+              <button v-if="canShowDocumentAction('delete', can)" type="button" class="inline-flex h-10 items-center gap-2 rounded-xl border border-red-200 bg-red-50/40 px-3 text-sm font-semibold text-red-700 transition hover:bg-red-50" @click="onDelete"><Trash2 class="h-4 w-4" />{{ t('documents.actions.delete') }}</button>
+            </div>
+          </section>
+        </aside>
       </div>
-
-      <section>
-        <h3 class="mb-3 font-bold">{{ t('documents.sections.overview') }}</h3>
-        <div class="grid gap-4 md:grid-cols-3">
-          <div class="rounded-2xl border border-brand-border bg-brand-surface p-4">
-            <p class="text-xs text-brand-text-muted">{{ t('documents.fields.category') }}</p>
-            <p class="mt-1 font-semibold">{{ document.category?.name ?? '—' }}</p>
-          </div>
-          <div class="rounded-2xl border border-brand-border bg-brand-surface p-4">
-            <p class="text-xs text-brand-text-muted">{{ t('documents.fields.mime') }}</p>
-            <p class="mt-1 font-semibold">{{ document.mime_type }}</p>
-          </div>
-          <div class="rounded-2xl border border-brand-border bg-brand-surface p-4">
-            <p class="text-xs text-brand-text-muted">{{ t('documents.fields.size') }}</p>
-            <p class="mt-1 font-semibold">{{ formatDocumentSize(document.size_bytes) }}</p>
-          </div>
-          <div class="rounded-2xl border border-brand-border bg-brand-surface p-4">
-            <p class="text-xs text-brand-text-muted">{{ t('documents.fields.checksum') }}</p>
-            <p class="mt-1 font-mono text-sm" :title="document.checksum_sha256">
-              {{ truncateChecksum(document.checksum_sha256) }}
-            </p>
-          </div>
-          <div class="rounded-2xl border border-brand-border bg-brand-surface p-4">
-            <p class="text-xs text-brand-text-muted">{{ t('documents.fields.uploader') }}</p>
-            <p class="mt-1 font-semibold">{{ document.uploaded_by?.name ?? '—' }}</p>
-          </div>
-          <div class="rounded-2xl border border-brand-border bg-brand-surface p-4">
-            <p class="text-xs text-brand-text-muted">{{ t('documents.fields.createdAt') }}</p>
-            <p class="mt-1 font-semibold">
-              {{ document.created_at ? document.created_at.slice(0, 10) : '—' }}
-            </p>
-          </div>
-        </div>
-        <div class="mt-4 rounded-2xl border p-4">
-          <p class="text-xs text-brand-text-muted">{{ t('documents.fields.description') }}</p>
-          <p class="mt-2 whitespace-pre-wrap">{{ document.description || '—' }}</p>
-        </div>
-      </section>
-
-      <section class="rounded-2xl border p-5">
-        <h3 class="font-bold">{{ t('documents.sections.file') }}</h3>
-        <p class="mt-2 text-sm">{{ document.original_filename }}</p>
-        <PermissionGuard permission="documents.download">
-          <button
-            type="button"
-            class="mt-3 inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold"
-            @click="onDownload"
-          >
-            <Download class="h-4 w-4" />
-            {{ t('documents.actions.download') }}
-          </button>
-        </PermissionGuard>
-      </section>
-
-      <section class="rounded-2xl border p-5">
-        <h3 class="font-bold">{{ t('documents.sections.link') }}</h3>
-        <p v-if="!document.link" class="mt-2 text-sm text-brand-text-muted">
-          {{ t('documents.link.standalone') }}
-        </p>
-        <template v-else>
-          <p class="mt-2">
-            {{ t(`documents.link.types.${document.link.type}`) }}
-            <span class="text-brand-text-muted"> · </span>
-            {{ document.link.label ?? `#${document.link.id}` }}
-          </p>
-          <RouterLink
-            v-if="hostLink"
-            :to="hostLink"
-            class="mt-2 inline-block text-sm text-brand-primary-dark underline"
-          >
-            {{ t('documents.link.openHost') }}
-          </RouterLink>
-        </template>
-      </section>
-
-      <section class="rounded-2xl border p-5">
-        <h3 class="mb-3 font-bold">{{ t('documents.sections.archive') }}</h3>
-        <div class="flex flex-wrap gap-2">
-          <button
-            v-if="canShowDocumentAction('archive', can, document)"
-            type="button"
-            class="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold"
-            @click="onArchive"
-          >
-            <Archive class="h-4 w-4" />
-            {{ t('documents.actions.archive') }}
-          </button>
-          <button
-            v-if="canShowDocumentAction('restore', can, document)"
-            type="button"
-            class="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold"
-            @click="onRestore"
-          >
-            <RotateCcw class="h-4 w-4" />
-            {{ t('documents.actions.restore') }}
-          </button>
-          <button
-            v-if="canShowDocumentAction('delete', can)"
-            type="button"
-            class="inline-flex items-center gap-2 rounded-xl border border-red-200 px-3 py-2 text-sm font-semibold text-red-700"
-            @click="onDelete"
-          >
-            <Trash2 class="h-4 w-4" />
-            {{ t('documents.actions.delete') }}
-          </button>
-        </div>
-      </section>
 
       <div
         v-if="editing"

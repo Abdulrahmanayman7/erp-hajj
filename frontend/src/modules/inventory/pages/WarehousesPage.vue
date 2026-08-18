@@ -2,16 +2,20 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
-import { ChevronLeft, ChevronRight, Pencil, Plus, Power, PowerOff, Search, Trash2 } from 'lucide-vue-next'
+import { ChevronLeft, ChevronRight, Eye, Pencil, Plus, Power, PowerOff, Search, Trash2 } from 'lucide-vue-next'
 
-import { useEmployeesQuery } from '@/modules/employees/queries/useEmployeesQuery'
+import { listEmployees } from '@/modules/employees/api/employeesApi'
 import { useOrganizationUnitsFlatQuery } from '@/modules/organization/queries/useOrganizationUnitsQuery'
 import { ApiError } from '@/shared/api/http'
+import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
+import { employeeSelectOption, toSelectId } from '@/shared/lookups/selectOptions'
+import AppTooltip from '@/shared/components/AppTooltip.vue'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
 import { useConfirm } from '@/shared/composables/useConfirm'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import { useToast } from '@/shared/composables/useToast'
+import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
 
 import WarehouseFormDrawer from '../components/WarehouseFormDrawer.vue'
 import {
@@ -44,8 +48,9 @@ const filters = reactive({
   per_page: 15,
 })
 
+const committedSearch = useDebouncedRef(() => filters.search)
 const params = computed<ListWarehousesParams>(() => ({
-  search: filters.search || undefined,
+  search: committedSearch.value || undefined,
   is_active: filters.is_active === '' ? '' : filters.is_active === '1',
   organization_unit_id: filters.organization_unit_id,
   responsible_employee_id: filters.responsible_employee_id,
@@ -65,7 +70,8 @@ const listState = computed(() =>
 )
 
 const { data: orgUnitsData } = useOrganizationUnitsFlatQuery({ status: 'active' })
-const { data: employeesData } = useEmployeesQuery(computed(() => ({ status: 'active' as const, per_page: 100 })))
+const fetchActiveEmployees = (params: { search?: string; page: number; per_page: number }) =>
+  listEmployees({ ...params, status: 'active' })
 
 const statusOptions = computed<AppSelectOption[]>(() => [
   { value: '', label: t('inventory.filters.allStatuses') },
@@ -82,27 +88,13 @@ const orgUnitFormOptions = computed<AppSelectOption[]>(() => [
   { value: '', label: t('inventory.noOrgUnit') },
   ...(orgUnitsData.value?.data ?? []).map((u) => ({ value: u.id, label: u.name, hint: u.code })),
 ])
-
-const employeeFilterOptions = computed<AppSelectOption[]>(() => [
-  { value: '', label: t('inventory.filters.allEmployees') },
-  ...(employeesData.value?.data ?? []).map((e) => ({
-    value: e.id,
-    label: e.full_name,
-    hint: e.employee_number,
-  })),
-])
-
-const employeeFormOptions = computed<AppSelectOption[]>(() => [
-  { value: '', label: t('inventory.noEmployee') },
-  ...(employeesData.value?.data ?? []).map((e) => ({
-    value: e.id,
-    label: e.full_name,
-    hint: e.employee_number,
-  })),
-])
+const emptyEmployeeFilter = computed<AppSelectOption>(() => ({
+  value: '',
+  label: t('inventory.filters.allEmployees'),
+}))
 
 watch(
-  () => [filters.search, filters.is_active, filters.organization_unit_id, filters.responsible_employee_id],
+  () => [committedSearch.value, filters.is_active, filters.organization_unit_id, filters.responsible_employee_id],
   () => {
     filters.page = 1
   },
@@ -243,7 +235,7 @@ async function removeWarehouse(warehouse: Warehouse): Promise<void> {
 
 <template>
   <div class="space-y-6">
-    <div class="flex flex-wrap items-end justify-between gap-4">
+    <div class="flex flex-wrap items-end justify-between gap-4 rounded-2xl border border-brand-border bg-brand-surface px-5 py-5 shadow-sm">
       <div>
         <h2 class="text-[1.75rem] font-bold text-brand-text">{{ t('inventory.warehouses.title') }}</h2>
         <p class="mt-1.5 text-sm text-brand-text-secondary">{{ t('inventory.warehouses.subtitle') }}</p>
@@ -251,7 +243,7 @@ async function removeWarehouse(warehouse: Warehouse): Promise<void> {
       <PermissionGuard permission="warehouses.create">
         <button
           type="button"
-          class="inline-flex h-11 items-center gap-2 rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white"
+          class="inline-flex h-11 items-center gap-2 rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
           @click="openCreate"
         >
           <Plus class="h-4 w-4" />
@@ -260,22 +252,29 @@ async function removeWarehouse(warehouse: Warehouse): Promise<void> {
       </PermissionGuard>
     </div>
 
-    <div class="flex flex-wrap items-center gap-3 rounded-2xl border border-brand-border bg-brand-surface p-4">
+    <div class="flex flex-wrap items-center gap-3 rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-sm">
       <div class="relative min-w-48 flex-1">
         <Search class="pointer-events-none absolute inset-s-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text-muted" />
         <input
           v-model="filters.search"
           type="search"
-          class="h-11 w-full rounded-xl border border-brand-border pe-3 ps-10 text-sm"
+          class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface pe-3 ps-10 text-sm outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/10"
           :placeholder="t('inventory.warehouses.searchPlaceholder')"
         />
       </div>
       <AppSelect v-model="filters.is_active" :options="statusOptions" />
       <AppSelect v-model="filters.organization_unit_id" :options="orgUnitOptions" searchable />
-      <AppSelect v-model="filters.responsible_employee_id" :options="employeeFilterOptions" searchable />
+      <AppRemoteSelect
+        :model-value="filters.responsible_employee_id"
+        query-key="employees-active"
+        :fetcher="fetchActiveEmployees"
+        :map-option="employeeSelectOption"
+        :empty-option="emptyEmployeeFilter"
+        @update:model-value="filters.responsible_employee_id = toSelectId($event)"
+      />
     </div>
 
-    <div v-if="listState === 'loading'" class="rounded-2xl border p-10 text-center text-sm text-brand-text-muted">
+    <div v-if="listState === 'loading'" class="rounded-2xl border border-brand-border bg-brand-surface p-10 text-center text-sm text-brand-text-muted shadow-sm">
       {{ t('inventory.loading') }}
     </div>
     <div v-else-if="listState === 'error'" class="rounded-2xl border border-red-200 bg-red-50 p-10 text-center">
@@ -284,103 +283,208 @@ async function removeWarehouse(warehouse: Warehouse): Promise<void> {
         {{ t('inventory.retry') }}
       </button>
     </div>
-    <div v-else-if="listState === 'empty'" class="rounded-2xl border p-10 text-center text-sm text-brand-text-muted">
+    <div v-else-if="listState === 'empty'" class="rounded-2xl border border-dashed border-brand-border bg-brand-surface p-10 text-center text-sm text-brand-text-muted">
       {{ t('inventory.warehouses.empty') }}
     </div>
     <template v-else>
-      <div class="hidden overflow-hidden rounded-2xl border border-brand-border bg-brand-surface md:block">
-        <table class="min-w-full text-sm">
-          <thead>
-            <tr class="bg-[#F4F6F5]">
-              <th class="px-5 py-3.5 text-start text-xs font-bold text-brand-text-muted">{{ t('inventory.columns.number') }}</th>
-              <th class="px-5 py-3.5 text-start text-xs font-bold text-brand-text-muted">{{ t('inventory.columns.name') }}</th>
-              <th class="px-5 py-3.5 text-start text-xs font-bold text-brand-text-muted">{{ t('inventory.columns.location') }}</th>
-              <th class="px-5 py-3.5 text-start text-xs font-bold text-brand-text-muted">{{ t('inventory.columns.orgUnit') }}</th>
-              <th class="px-5 py-3.5 text-start text-xs font-bold text-brand-text-muted">{{ t('inventory.columns.responsible') }}</th>
-              <th class="px-5 py-3.5 text-start text-xs font-bold text-brand-text-muted">{{ t('inventory.columns.status') }}</th>
-              <th class="px-5 py-3.5 text-start text-xs font-bold text-brand-text-muted">{{ t('inventory.columns.actions') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="warehouse in warehouses"
-              :key="warehouse.id"
-              class="cursor-pointer border-t border-brand-border hover:bg-brand-bg/60"
-              @click="router.push(`/app/warehouses/${warehouse.id}`)"
-            >
-              <td class="px-5 py-3 font-mono text-xs">{{ warehouse.warehouse_number }}</td>
-              <td class="px-5 py-3 font-semibold">{{ warehouse.name }}</td>
-              <td class="px-5 py-3">{{ warehouse.location || '—' }}</td>
-              <td class="px-5 py-3">{{ warehouse.organization_unit?.name || '—' }}</td>
-              <td class="px-5 py-3">{{ warehouse.responsible_employee?.full_name || '—' }}</td>
-              <td class="px-5 py-3">
-                <span
-                  class="rounded-full px-2 py-0.5 text-xs font-semibold"
-                  :class="warehouse.is_active ? 'bg-emerald-50 text-emerald-800' : 'bg-neutral-100 text-neutral-600'"
+      <div class="hidden overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-[0_1px_2px_rgba(23,32,29,0.03)] md:block">
+        <div class="overflow-x-auto">
+          <table class="min-w-full border-separate border-spacing-0 text-sm">
+            <thead>
+              <tr class="bg-[#F4F6F5]">
+                <th
+                  v-for="(key, columnIndex) in ['number', 'name', 'location', 'orgUnit', 'responsible', 'status', 'actions']"
+                  :key="key"
+                  class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text"
+                  :class="columnIndex === 0 ? 'border-s-[3px] border-s-transparent' : ''"
                 >
-                  {{ warehouse.is_active ? t('inventory.status.active') : t('inventory.status.inactive') }}
-                </span>
-              </td>
-              <td class="px-5 py-3" @click.stop>
-                <div class="flex items-center gap-1">
-                  <PermissionGuard permission="warehouses.update">
-                    <button type="button" class="rounded-lg p-2 hover:bg-brand-bg" @click="openEdit(warehouse)">
-                      <Pencil class="h-4 w-4" />
-                    </button>
-                    <button type="button" class="rounded-lg p-2 hover:bg-brand-bg" @click="toggleActive(warehouse)">
-                      <PowerOff v-if="warehouse.is_active" class="h-4 w-4" />
-                      <Power v-else class="h-4 w-4" />
-                    </button>
-                  </PermissionGuard>
-                  <PermissionGuard permission="warehouses.delete">
-                    <button type="button" class="rounded-lg p-2 text-red-700 hover:bg-red-50" @click="removeWarehouse(warehouse)">
-                      <Trash2 class="h-4 w-4" />
-                    </button>
-                  </PermissionGuard>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                  {{ t(`inventory.columns.${key}`) }}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="(warehouse, index) in warehouses"
+                :key="warehouse.id"
+                class="group cursor-pointer"
+                :class="index % 2 === 1 ? 'bg-[#FAFBFA]' : 'bg-brand-surface'"
+                @click="router.push(`/app/warehouses/${warehouse.id}`)"
+              >
+                <td
+                  class="whitespace-nowrap border-b border-s-[3px] border-brand-border/80 border-s-transparent px-5 py-3.5 text-center transition-colors duration-150 group-hover:border-s-brand-primary group-hover:bg-[#EDF6F1]"
+                >
+                  <span
+                    class="inline-flex items-center rounded-lg border border-brand-border bg-brand-bg px-2.5 py-1 font-mono text-[12px] font-bold tracking-wide text-brand-text shadow-[0_1px_0_rgba(23,32,29,0.04)] transition group-hover:border-brand-primary/30 group-hover:bg-brand-surface"
+                    dir="ltr"
+                  >
+                    {{ warehouse.warehouse_number }}
+                  </span>
+                </td>
+                <td
+                  class="max-w-[14rem] whitespace-nowrap border-b border-brand-border/80 px-5 py-3.5 text-center font-semibold text-brand-text transition-colors duration-150 group-hover:bg-[#EDF6F1]"
+                >
+                  <span class="block truncate" :title="warehouse.name">{{ warehouse.name }}</span>
+                </td>
+                <td
+                  class="max-w-[12rem] whitespace-nowrap border-b border-brand-border/80 px-5 py-3.5 text-center text-brand-text transition-colors duration-150 group-hover:bg-[#EDF6F1]"
+                >
+                  <span class="block truncate" :title="warehouse.location || undefined">{{ warehouse.location || '—' }}</span>
+                </td>
+                <td
+                  class="max-w-[12rem] whitespace-nowrap border-b border-brand-border/80 px-5 py-3.5 text-center text-brand-text transition-colors duration-150 group-hover:bg-[#EDF6F1]"
+                >
+                  <span class="block truncate" :title="warehouse.organization_unit?.name || undefined">
+                    {{ warehouse.organization_unit?.name || '—' }}
+                  </span>
+                </td>
+                <td
+                  class="max-w-[12rem] whitespace-nowrap border-b border-brand-border/80 px-5 py-3.5 text-center text-brand-text transition-colors duration-150 group-hover:bg-[#EDF6F1]"
+                >
+                  <span class="block truncate" :title="warehouse.responsible_employee?.full_name || undefined">
+                    {{ warehouse.responsible_employee?.full_name || '—' }}
+                  </span>
+                </td>
+                <td
+                  class="whitespace-nowrap border-b border-brand-border/80 px-5 py-3.5 text-center transition-colors duration-150 group-hover:bg-[#EDF6F1]"
+                >
+                  <span
+                    class="inline-flex min-w-[6.5rem] items-center justify-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold tracking-wide text-brand-text shadow-sm ring-1 ring-inset"
+                    :class="
+                      warehouse.is_active
+                        ? 'bg-emerald-100 ring-emerald-300/80'
+                        : 'bg-neutral-100 ring-neutral-300/80'
+                    "
+                  >
+                    <span
+                      class="h-1.5 w-1.5 shrink-0 rounded-full"
+                      :class="warehouse.is_active ? 'bg-emerald-500' : 'bg-neutral-400'"
+                      aria-hidden="true"
+                    />
+                    {{ warehouse.is_active ? t('inventory.status.active') : t('inventory.status.inactive') }}
+                  </span>
+                </td>
+                <td
+                  class="whitespace-nowrap border-b border-brand-border/80 px-5 py-3.5 text-center transition-colors duration-150 group-hover:bg-[#EDF6F1]"
+                  @click.stop
+                >
+                  <div
+                    class="mx-auto grid w-[4.75rem] grid-cols-2 place-items-center gap-0.5 opacity-70 transition group-hover:opacity-100"
+                  >
+                    <div>
+                      <AppTooltip :text="t('inventory.actions.view')">
+                        <button
+                          type="button"
+                          class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-brand-text transition hover:bg-brand-surface hover:text-brand-primary-dark"
+                          :aria-label="t('inventory.actions.view')"
+                          @click="router.push(`/app/warehouses/${warehouse.id}`)"
+                        >
+                          <Eye class="h-4 w-4" :stroke-width="2" />
+                        </button>
+                      </AppTooltip>
+                    </div>
+                    <div v-if="can('warehouses.update')">
+                      <AppTooltip :text="t('inventory.actions.edit')">
+                        <button
+                          type="button"
+                          class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-brand-text transition hover:bg-brand-surface"
+                          :aria-label="t('inventory.actions.edit')"
+                          @click="openEdit(warehouse)"
+                        >
+                          <Pencil class="h-4 w-4" :stroke-width="2" />
+                        </button>
+                      </AppTooltip>
+                    </div>
+                    <div v-if="can('warehouses.update')">
+                      <AppTooltip
+                        :text="
+                          warehouse.is_active
+                            ? t('inventory.actions.deactivate')
+                            : t('inventory.actions.activate')
+                        "
+                      >
+                        <button
+                          type="button"
+                          class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-brand-text transition hover:bg-brand-surface"
+                          :aria-label="
+                            warehouse.is_active
+                              ? t('inventory.actions.deactivate')
+                              : t('inventory.actions.activate')
+                          "
+                          @click="toggleActive(warehouse)"
+                        >
+                          <PowerOff v-if="warehouse.is_active" class="h-4 w-4" :stroke-width="2" />
+                          <Power v-else class="h-4 w-4" :stroke-width="2" />
+                        </button>
+                      </AppTooltip>
+                    </div>
+                    <div v-if="can('warehouses.delete')">
+                      <AppTooltip :text="t('inventory.actions.delete')">
+                        <button
+                          type="button"
+                          class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-brand-text transition hover:bg-red-50 hover:text-red-700"
+                          :aria-label="t('inventory.actions.delete')"
+                          @click="removeWarehouse(warehouse)"
+                        >
+                          <Trash2 class="h-4 w-4" :stroke-width="2" />
+                        </button>
+                      </AppTooltip>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div class="space-y-3 md:hidden">
         <article
           v-for="warehouse in warehouses"
           :key="warehouse.id"
-          class="rounded-2xl border border-brand-border bg-brand-surface p-4"
+          class="rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)] transition hover:border-brand-primary/30"
           @click="router.push(`/app/warehouses/${warehouse.id}`)"
         >
           <div class="flex items-start justify-between gap-2">
-            <div>
-              <p class="font-mono text-xs text-brand-text-muted">{{ warehouse.warehouse_number }}</p>
-              <h3 class="font-bold">{{ warehouse.name }}</h3>
-              <p class="mt-1 text-sm text-brand-text-secondary">{{ warehouse.location || '—' }}</p>
+            <div class="min-w-0">
+              <p class="font-mono text-xs font-bold text-brand-text">{{ warehouse.warehouse_number }}</p>
+              <h3 class="mt-1 truncate font-bold text-brand-text">{{ warehouse.name }}</h3>
+              <p class="mt-1 truncate text-sm text-brand-text">{{ warehouse.location || '—' }}</p>
             </div>
             <span
-              class="rounded-full px-2 py-0.5 text-xs font-semibold"
-              :class="warehouse.is_active ? 'bg-emerald-50 text-emerald-800' : 'bg-neutral-100 text-neutral-600'"
+              class="inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold text-brand-text ring-1 ring-inset"
+              :class="
+                warehouse.is_active
+                  ? 'bg-emerald-100 ring-emerald-300/80'
+                  : 'bg-neutral-100 ring-neutral-300/80'
+              "
             >
+              <span
+                class="h-1.5 w-1.5 rounded-full"
+                :class="warehouse.is_active ? 'bg-emerald-500' : 'bg-neutral-400'"
+              />
               {{ warehouse.is_active ? t('inventory.status.active') : t('inventory.status.inactive') }}
             </span>
           </div>
         </article>
       </div>
 
-      <div v-if="meta && meta.last_page > 1" class="flex items-center justify-between gap-3">
+      <div
+        v-if="meta && meta.last_page > 1"
+        class="flex items-center justify-between gap-3 rounded-2xl border border-brand-border bg-[#F7F8F6] px-5 py-3 text-sm"
+      >
         <button
           type="button"
-          class="inline-flex items-center gap-1 rounded-xl border px-3 py-2 text-sm disabled:opacity-40"
+          class="inline-flex h-9 items-center gap-1 rounded-lg border border-brand-border bg-brand-surface px-3 font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
           :disabled="filters.page <= 1"
           @click="filters.page -= 1"
         >
           <ChevronRight class="h-4 w-4" />
           {{ t('inventory.prev') }}
         </button>
-        <span class="text-sm text-brand-text-muted">{{ filters.page }} / {{ meta.last_page }}</span>
+        <span class="text-xs font-semibold text-brand-text">{{ filters.page }} / {{ meta.last_page }}</span>
         <button
           type="button"
-          class="inline-flex items-center gap-1 rounded-xl border px-3 py-2 text-sm disabled:opacity-40"
+          class="inline-flex h-9 items-center gap-1 rounded-lg border border-brand-border bg-brand-surface px-3 font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
           :disabled="filters.page >= meta.last_page"
           @click="filters.page += 1"
         >
@@ -398,7 +502,6 @@ async function removeWarehouse(warehouse: Warehouse): Promise<void> {
       :field-errors="fieldErrors"
       :submitting="submitting"
       :org-unit-options="orgUnitFormOptions"
-      :employee-options="employeeFormOptions"
       @close="drawerOpen = false"
       @submit="submitForm"
       @update:form="Object.assign(form, $event)"

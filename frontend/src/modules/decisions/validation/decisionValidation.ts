@@ -9,7 +9,37 @@ export function validateDecisionForm(form: DecisionFormState): Record<string, st
   return errors
 }
 export function decisionStatusBadgeClass(status: DecisionStatus): string {
-  return ({ draft: 'bg-neutral-100 text-neutral-700 ring-1 ring-neutral-200/80', pending_approval: 'bg-amber-50 text-amber-900 ring-1 ring-amber-200/70', approved: 'bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200/70', closed: 'bg-sky-50 text-sky-900 ring-1 ring-sky-200/70', cancelled: 'bg-red-50 text-red-800 ring-1 ring-red-200/70' } as const)[status]
+  switch (status) {
+    case 'draft':
+      return 'bg-slate-100 text-slate-800 ring-1 ring-inset ring-slate-300/80'
+    case 'pending_approval':
+      return 'bg-amber-100 text-amber-950 ring-1 ring-inset ring-amber-300/80'
+    case 'approved':
+      return 'bg-emerald-100 text-emerald-950 ring-1 ring-inset ring-emerald-300/80'
+    case 'closed':
+      return 'bg-sky-100 text-sky-950 ring-1 ring-inset ring-sky-300/80'
+    case 'cancelled':
+      return 'bg-red-100 text-red-950 ring-1 ring-inset ring-red-300/80'
+    default:
+      return 'bg-neutral-100 text-neutral-700 ring-1 ring-inset ring-neutral-300/80'
+  }
+}
+
+export function decisionStatusDotClass(status: DecisionStatus): string {
+  switch (status) {
+    case 'draft':
+      return 'bg-slate-500'
+    case 'pending_approval':
+      return 'bg-amber-500'
+    case 'approved':
+      return 'bg-emerald-500'
+    case 'closed':
+      return 'bg-sky-500'
+    case 'cancelled':
+      return 'bg-red-500'
+    default:
+      return 'bg-neutral-400'
+  }
 }
 export function availableLifecycleActions(status: DecisionStatus): { action: DecisionLifecycleAction; permission: string; comment?: boolean }[] {
   if (status === 'draft') return [{ action: 'submit', permission: 'decisions.update' }, { action: 'cancel', permission: 'decisions.update' }]

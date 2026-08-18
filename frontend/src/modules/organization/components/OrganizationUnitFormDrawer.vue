@@ -3,7 +3,10 @@ import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Loader2, X } from 'lucide-vue-next'
 
+import { listUsers } from '@/modules/users/api/usersApi'
+import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
+import { toSelectNullableId, userSelectOption } from '@/shared/lookups/selectOptions'
 
 import type { OrganizationUnit, OrganizationUnitType } from '../types/organization'
 
@@ -23,7 +26,6 @@ const props = defineProps<{
   formError: string
   submitting: boolean
   parentOptions: AppSelectOption[]
-  managerOptions: AppSelectOption[]
 }>()
 
 const emit = defineEmits<{
@@ -37,6 +39,12 @@ const nameInputRef = ref<HTMLInputElement | null>(null)
 let previouslyFocused: HTMLElement | null = null
 
 const isEdit = computed(() => props.editing != null)
+const fetchActiveUsers = (params: { search?: string; page: number; per_page: number }) =>
+  listUsers({ ...params, status: 'active' })
+const emptyManager = computed(() => ({ value: '', label: t('organization.noManager') }))
+const selectedManager = computed(() =>
+  props.editing?.manager ? userSelectOption(props.editing.manager) : null,
+)
 const title = computed(() =>
   isEdit.value ? t('organization.editTitle') : t('organization.createTitle'),
 )
@@ -189,16 +197,16 @@ onUnmounted(() => {
                 <span class="mb-1.5 block text-sm font-medium text-brand-ink">{{
                   t('organization.fields.manager')
                 }}</span>
-                <AppSelect
+                <AppRemoteSelect
                   :model-value="form.manager_user_id"
-                  :options="managerOptions"
-                  searchable
+                  query-key="users-active"
+                  :fetcher="fetchActiveUsers"
+                  :map-option="userSelectOption"
+                  :empty-option="emptyManager"
+                  :selected-option="selectedManager"
                   :placeholder="t('organization.noManager')"
-                  @update:model-value="
-                    patch({
-                      manager_user_id: $event === null || $event === '' ? null : Number($event),
-                    })
-                  "
+                  :enabled="open"
+                  @update:model-value="patch({ manager_user_id: toSelectNullableId($event) })"
                 />
                 <span class="mt-1 block text-xs text-brand-muted">{{
                   t('organization.managerHint')

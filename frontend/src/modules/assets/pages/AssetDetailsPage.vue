@@ -2,11 +2,25 @@
 import { computed, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
-import { ArrowRight, Pencil, Trash2 } from 'lucide-vue-next'
+import {
+  ArrowLeft,
+  ArrowRight,
+  Barcode,
+  Building2,
+  CalendarRange,
+  FileText,
+  MapPin,
+  MessageSquareText,
+  Package,
+  Pencil,
+  ShieldCheck,
+  Tag,
+  Trash2,
+  UserRound,
+  Warehouse,
+} from 'lucide-vue-next'
 
 import EntityDocumentsSection from '@/modules/documents/components/EntityDocumentsSection.vue'
-import { useEmployeesQuery } from '@/modules/employees/queries/useEmployeesQuery'
-import { useWarehousesQuery } from '@/modules/inventory/queries/useWarehousesQuery'
 import { useOrganizationUnitsFlatQuery } from '@/modules/organization/queries/useOrganizationUnitsQuery'
 import { ApiError } from '@/shared/api/http'
 import type { AppSelectOption } from '@/shared/components/AppSelect.vue'
@@ -40,6 +54,7 @@ import type {
 } from '../types/assets'
 import {
   assetStatusBadgeClass,
+  assetStatusDotClass,
   availableAssetLifecycleActions,
   canDeleteAsset,
   canEditAsset,
@@ -65,7 +80,12 @@ const { permissions } = usePermissions()
 const toast = useToast()
 const { confirm } = useConfirm()
 
-const id = computed(() => Number(route.params.id))
+const id = computed(() => {
+  const raw = route.params.id
+  const value = Number(Array.isArray(raw) ? raw[0] : raw)
+  return Number.isFinite(value) ? value : null
+})
+
 const { data, isLoading, isError, refetch } = useAssetQuery(id)
 const asset = computed(() => data.value ?? null)
 
@@ -82,16 +102,16 @@ const visibleLifecycleActions = computed(() => {
 })
 
 const custodies = computed(() => asset.value?.custodies ?? [])
-const transitions = computed(() => asset.value?.transitions ?? [])
+const transitions = computed(() =>
+  [...(asset.value?.transitions ?? [])].sort((a, b) => {
+    const aTime = a.created_at ? Date.parse(a.created_at) : 0
+    const bTime = b.created_at ? Date.parse(b.created_at) : 0
+    return aTime - bTime
+  }),
+)
 
 const { data: categoriesData } = useAssetCategoriesQuery({})
-const { data: warehousesData } = useWarehousesQuery(
-  computed(() => ({ is_active: true, per_page: 100 })),
-)
 const { data: orgUnitsData } = useOrganizationUnitsFlatQuery({ status: 'active' })
-const { data: employeesData } = useEmployeesQuery(
-  computed(() => ({ status: 'active' as const, per_page: 100 })),
-)
 
 const categoryFormOptions = computed<AppSelectOption[]>(() => [
   { value: '', label: t('assets.noCategory') },
@@ -99,25 +119,10 @@ const categoryFormOptions = computed<AppSelectOption[]>(() => [
     .filter((c) => c.is_active)
     .map((c) => ({ value: c.id, label: c.name })),
 ])
-const warehouseFormOptions = computed<AppSelectOption[]>(() => [
-  { value: '', label: t('assets.noWarehouse') },
-  ...(warehousesData.value?.data ?? []).map((w) => ({
-    value: w.id,
-    label: w.name,
-    hint: w.warehouse_number ?? undefined,
-  })),
-])
 const orgUnitFormOptions = computed<AppSelectOption[]>(() => [
   { value: '', label: t('assets.noOrgUnit') },
   ...(orgUnitsData.value?.data ?? []).map((u) => ({ value: u.id, label: u.name, hint: u.code })),
 ])
-const employeeOptions = computed<AppSelectOption[]>(() =>
-  (employeesData.value?.data ?? []).map((e) => ({
-    value: e.id,
-    label: e.full_name,
-    hint: e.employee_number,
-  })),
-)
 
 const updateMutation = useUpdateAssetMutation()
 const deleteMutation = useDeleteAssetMutation()
@@ -150,6 +155,17 @@ const reasonForm = reactive<LifecycleReasonFormState>({ reason: '' })
 const reasonFormError = ref('')
 const reasonFieldErrors = reactive<Record<string, string>>({})
 
+const isLifecyclePending = computed(
+  () =>
+    assignMutation.isPending.value ||
+    returnMutation.isPending.value ||
+    maintenanceMutation.isPending.value ||
+    restoreMutation.isPending.value ||
+    retireMutation.isPending.value ||
+    lostMutation.isPending.value ||
+    deleteMutation.isPending.value,
+)
+
 function apiMessage(error: unknown): string {
   if (!(error instanceof ApiError)) return t('assets.errors.generic')
   const mapped = mapAssetErrorCode(error.code)
@@ -157,8 +173,12 @@ function apiMessage(error: unknown): string {
   return error.message || t('assets.errors.generic')
 }
 
+async function refresh(): Promise<void> {
+  await refetch()
+}
+
 function openEdit(): void {
-  if (!asset.value) return
+  if (!asset.value || !canEditAsset(permissions.value)) return
   Object.assign(form, {
     name: asset.value.name,
     description: asset.value.description ?? '',
@@ -204,6 +224,7 @@ async function submitEdit(): Promise<void> {
     })
     toast.success(t('assets.toasts.assetUpdated'))
     drawerOpen.value = false
+    await refresh()
   } catch (error) {
     formError.value = apiMessage(error)
   }
@@ -221,7 +242,7 @@ async function removeAsset(): Promise<void> {
   try {
     await deleteMutation.mutateAsync(asset.value.id)
     toast.success(t('assets.toasts.assetDeleted'))
-    router.push('/app/assets')
+    await router.push('/app/assets')
   } catch (error) {
     toast.error(apiMessage(error))
   }
@@ -275,6 +296,7 @@ async function runLifecycleAction(action: AssetLifecycleAction): Promise<void> {
       try {
         await maintenanceMutation.mutateAsync(asset.value.id)
         toast.success(t('assets.toasts.sentToMaintenance'))
+        await refresh()
       } catch (error) {
         toast.error(apiMessage(error))
       }
@@ -291,6 +313,7 @@ async function runLifecycleAction(action: AssetLifecycleAction): Promise<void> {
       try {
         await restoreMutation.mutateAsync(asset.value.id)
         toast.success(t('assets.toasts.restored'))
+        await refresh()
       } catch (error) {
         toast.error(apiMessage(error))
       }
@@ -316,6 +339,7 @@ async function submitAssign(): Promise<void> {
     })
     toast.success(t('assets.toasts.assigned'))
     assignOpen.value = false
+    await refresh()
   } catch (error) {
     assignFormError.value = apiMessage(error)
   }
@@ -338,6 +362,7 @@ async function submitReturn(): Promise<void> {
     })
     toast.success(t('assets.toasts.returned'))
     returnOpen.value = false
+    await refresh()
   } catch (error) {
     returnFormError.value = apiMessage(error)
   }
@@ -358,6 +383,7 @@ async function submitReason(): Promise<void> {
       toast.success(t('assets.toasts.declaredLost'))
     }
     reasonOpen.value = false
+    await refresh()
   } catch (error) {
     reasonFormError.value = apiMessage(error)
   }
@@ -381,264 +407,606 @@ function actionLabel(action: AssetLifecycleAction): string {
 }
 
 function actionButtonClass(action: AssetLifecycleAction): string {
-  if (action === 'retire' || action === 'declare_lost') {
-    return 'border-red-200 bg-red-50 text-red-800 hover:bg-red-100'
+  switch (action) {
+    case 'assign':
+      return 'border-sky-200 bg-sky-50 text-sky-950 hover:bg-sky-100'
+    case 'return':
+      return 'border-emerald-200 bg-emerald-50 text-emerald-950 hover:bg-emerald-100'
+    case 'maintenance':
+      return 'border-amber-200 bg-amber-50 text-amber-950 hover:bg-amber-100'
+    case 'restore':
+      return 'border-teal-200 bg-teal-50 text-teal-950 hover:bg-teal-100'
+    case 'retire':
+    case 'declare_lost':
+      return 'border-red-200 bg-red-50 text-red-800 hover:bg-red-100'
+    default:
+      return 'border-brand-border bg-brand-surface text-brand-text hover:bg-brand-bg'
   }
-  if (action === 'assign' || action === 'return') {
-    return 'bg-brand-primary-dark text-white hover:opacity-90'
-  }
-  return 'border border-brand-border bg-brand-surface hover:bg-brand-bg'
 }
 </script>
 
 <template>
-  <div class="space-y-6">
-    <button
-      type="button"
-      class="rounded-lg border px-3 py-2 text-sm"
-      @click="router.push('/app/assets')"
-    >
-      <ArrowRight class="inline h-4 w-4" />
-      {{ t('assets.details.backToList') }}
-    </button>
+  <div class="mx-auto max-w-[1200px] space-y-5">
+    <div class="flex flex-wrap items-center gap-3">
+      <button
+        type="button"
+        class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text transition hover:bg-brand-bg"
+        @click="router.push('/app/assets')"
+      >
+        <ArrowRight class="h-4 w-4" />
+        {{ t('assets.details.backToList') }}
+      </button>
+    </div>
 
-    <div v-if="isLoading" class="rounded-2xl border p-10 text-center">
+    <div
+      v-if="isLoading"
+      class="rounded-2xl border border-brand-border bg-brand-surface p-10 text-center text-sm text-brand-text-muted"
+    >
       {{ t('assets.loadingDetails') }}
     </div>
-    <div v-else-if="isError || !asset" class="rounded-2xl border p-10 text-center">
-      {{ t('assets.errors.loadDetails') }}
-      <button type="button" class="ms-2 underline" @click="() => refetch()">
+
+    <div
+      v-else-if="isError || !asset"
+      class="rounded-2xl border border-red-200 bg-red-50 p-10 text-center"
+    >
+      <p class="text-sm text-red-700">{{ t('assets.errors.loadDetails') }}</p>
+      <button
+        type="button"
+        class="mt-3 text-sm font-semibold text-brand-primary-dark underline"
+        @click="() => refetch()"
+      >
         {{ t('assets.retry') }}
       </button>
     </div>
 
     <template v-else>
-      <div class="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <div class="flex flex-wrap items-center gap-2">
-            <span class="font-mono text-sm">{{ asset.asset_number }}</span>
-            <span
-              class="rounded-full px-2 py-0.5 text-xs font-semibold"
-              :class="assetStatusBadgeClass(asset.status)"
-            >
-              {{ t(`assets.status.${asset.status}`) }}
-            </span>
-          </div>
-          <h2 class="mt-2 text-2xl font-bold">{{ asset.name }}</h2>
-        </div>
-        <div class="flex flex-wrap gap-2">
-          <PermissionGuard v-if="canEditAsset(permissions)" permission="assets.update">
-            <button
-              type="button"
-              class="rounded-xl border px-4 py-2 text-sm font-semibold"
-              @click="openEdit"
-            >
-              <Pencil class="inline h-4 w-4" />
-              {{ t('assets.actions.edit') }}
-            </button>
-          </PermissionGuard>
-          <PermissionGuard v-if="canDeleteAsset(permissions)" permission="assets.delete">
-            <button
-              type="button"
-              class="rounded-xl border border-red-200 px-4 py-2 text-sm font-semibold text-red-700"
-              @click="removeAsset"
-            >
-              <Trash2 class="inline h-4 w-4" />
-              {{ t('assets.actions.delete') }}
-            </button>
-          </PermissionGuard>
-        </div>
-      </div>
-
-      <div v-if="visibleLifecycleActions.length" class="flex flex-wrap gap-2">
-        <button
-          v-for="def in visibleLifecycleActions"
-          :key="def.action"
-          type="button"
-          class="inline-flex h-11 items-center rounded-xl px-4 text-sm font-semibold"
-          :class="actionButtonClass(def.action)"
-          @click="runLifecycleAction(def.action)"
-        >
-          {{ actionLabel(def.action) }}
-        </button>
-      </div>
-
-      <section>
-        <h3 class="mb-3 font-bold">{{ t('assets.details.overview') }}</h3>
-        <div class="grid gap-4 md:grid-cols-3">
-          <div
-            v-for="row in [
-              { label: 'category', value: asset.category?.name },
-              { label: 'serialNumber', value: asset.serial_number },
-              { label: 'barcode', value: asset.barcode },
-              {
-                label: 'condition',
-                value: asset.condition ? t(`assets.condition.${asset.condition}`) : null,
-              },
-              { label: 'purchaseValue', value: formatMoney(asset.purchase_value) },
-              { label: 'acquisitionDate', value: formatDate(asset.acquisition_date) },
-              { label: 'createdBy', value: asset.created_by?.name },
-            ]"
-            :key="row.label"
-            class="rounded-2xl border bg-brand-surface p-4"
-          >
-            <p class="text-xs text-brand-text-muted">{{ t(`assets.fields.${row.label}`) }}</p>
-            <p class="mt-1 font-semibold">
+      <section class="rounded-2xl border border-brand-border bg-brand-surface px-5 py-5 sm:px-6">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+          <div class="min-w-0 flex-1">
+            <div class="flex flex-wrap items-center gap-2">
+              <p
+                class="font-mono text-xs font-semibold tracking-wide text-brand-text-muted"
+                dir="ltr"
+              >
+                {{ asset.asset_number }}
+              </p>
               <span
-                v-if="row.label === 'condition' && asset.condition"
-                class="rounded-full px-2 py-0.5 text-xs font-semibold"
+                class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold tracking-wide"
+                :class="assetStatusBadgeClass(asset.status)"
+              >
+                <span
+                  class="h-1.5 w-1.5 shrink-0 rounded-full"
+                  :class="assetStatusDotClass(asset.status)"
+                  aria-hidden="true"
+                />
+                {{ t(`assets.status.${asset.status}`) }}
+              </span>
+              <span
+                v-if="asset.condition"
+                class="inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold"
                 :class="conditionBadgeClass(asset.condition)"
               >
-                {{ row.value }}
-              </span>
-              <template v-else>{{ row.value || '—' }}</template>
-            </p>
-          </div>
-        </div>
-        <div class="mt-4 rounded-2xl border p-4">
-          <p class="text-xs text-brand-text-muted">{{ t('assets.fields.notes') }}</p>
-          <p class="mt-2 whitespace-pre-wrap">{{ asset.notes || '—' }}</p>
-        </div>
-        <div v-if="asset.description" class="mt-4 rounded-2xl border p-4">
-          <p class="text-xs text-brand-text-muted">{{ t('assets.fields.description') }}</p>
-          <p class="mt-2 whitespace-pre-wrap">{{ asset.description }}</p>
-        </div>
-      </section>
-
-      <section class="rounded-2xl border p-5">
-        <h3 class="mb-3 font-bold">{{ t('assets.details.statusLocation') }}</h3>
-        <div class="grid gap-4 md:grid-cols-3">
-          <div>
-            <p class="text-xs text-brand-text-muted">{{ t('assets.fields.status') }}</p>
-            <span
-              class="mt-1 inline-flex rounded-full px-2 py-0.5 text-xs font-semibold"
-              :class="assetStatusBadgeClass(asset.status)"
-            >
-              {{ t(`assets.status.${asset.status}`) }}
-            </span>
-          </div>
-          <div>
-            <p class="text-xs text-brand-text-muted">{{ t('assets.fields.warehouse') }}</p>
-            <p class="mt-1 font-semibold">{{ asset.warehouse?.name || '—' }}</p>
-          </div>
-          <div>
-            <p class="text-xs text-brand-text-muted">{{ t('assets.fields.organizationUnit') }}</p>
-            <p class="mt-1 font-semibold">{{ asset.organization_unit?.name || '—' }}</p>
-          </div>
-        </div>
-      </section>
-
-      <section class="rounded-2xl border p-5">
-        <h3 class="mb-3 font-bold">{{ t('assets.details.currentCustody') }}</h3>
-        <div v-if="!asset.current_custody" class="text-sm text-brand-text-muted">
-          {{ t('assets.details.noCurrentCustody') }}
-        </div>
-        <div v-else class="grid gap-3 md:grid-cols-2">
-          <div>
-            <p class="text-xs text-brand-text-muted">{{ t('assets.fields.custodyNumber') }}</p>
-            <p class="mt-1 font-mono text-sm font-semibold">
-              {{ asset.current_custody.custody_number }}
-            </p>
-          </div>
-          <div>
-            <p class="text-xs text-brand-text-muted">{{ t('assets.fields.employee') }}</p>
-            <p class="mt-1 font-semibold">
-              {{ asset.current_custody.employee?.full_name || '—' }}
-            </p>
-          </div>
-          <div>
-            <p class="text-xs text-brand-text-muted">{{ t('assets.fields.assignedAt') }}</p>
-            <p class="mt-1 font-semibold">
-              {{ formatDateTime(asset.current_custody.assigned_at) }}
-            </p>
-          </div>
-          <div>
-            <p class="text-xs text-brand-text-muted">{{ t('assets.fields.expectedReturnAt') }}</p>
-            <p class="mt-1 font-semibold">
-              {{ formatDateTime(asset.current_custody.expected_return_at) }}
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section class="rounded-2xl border p-5">
-        <h3 class="mb-3 font-bold">{{ t('assets.details.custodyHistory') }}</h3>
-        <div v-if="!custodies.length" class="text-sm text-brand-text-muted">
-          {{ t('assets.details.noCustodyHistory') }}
-        </div>
-        <div v-else class="overflow-x-auto">
-          <table class="min-w-full text-sm">
-            <thead>
-              <tr class="text-xs text-brand-text-muted">
-                <th class="py-2 pe-4 text-start">{{ t('assets.columns.custodyNumber') }}</th>
-                <th class="py-2 pe-4 text-start">{{ t('assets.columns.employee') }}</th>
-                <th class="py-2 pe-4 text-start">{{ t('assets.columns.status') }}</th>
-                <th class="py-2 pe-4 text-start">{{ t('assets.columns.assignedAt') }}</th>
-                <th class="py-2 text-start">{{ t('assets.columns.returnedAt') }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="custody in custodies" :key="custody.id" class="border-t">
-                <td class="py-2 pe-4 font-mono text-xs">{{ custody.custody_number }}</td>
-                <td class="py-2 pe-4">{{ custody.employee?.full_name || '—' }}</td>
-                <td class="py-2 pe-4">
-                  <span
-                    class="rounded-full px-2 py-0.5 text-xs font-semibold"
-                    :class="custodyStatusBadgeClass(custody.status)"
-                  >
-                    {{ t(`assets.custodyStatus.${custody.status}`) }}
-                  </span>
-                </td>
-                <td class="py-2 pe-4">{{ formatDateTime(custody.assigned_at) }}</td>
-                <td class="py-2">{{ formatDateTime(custody.returned_at) }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section class="rounded-2xl border p-5">
-        <h3 class="mb-3 font-bold">{{ t('assets.details.statusTransitions') }}</h3>
-        <div v-if="!transitions.length" class="text-sm text-brand-text-muted">
-          {{ t('assets.details.noTransitions') }}
-        </div>
-        <ul v-else class="space-y-2">
-          <li
-            v-for="transition in transitions"
-            :key="transition.id"
-            class="rounded-xl border px-3 py-3 text-sm"
-          >
-            <div class="flex flex-wrap items-center gap-2">
-              <span
-                v-if="transition.from_status"
-                class="rounded-full px-2 py-0.5 text-xs font-semibold"
-                :class="assetStatusBadgeClass(transition.from_status)"
-              >
-                {{ t(`assets.status.${transition.from_status}`) }}
-              </span>
-              <span v-else class="text-xs text-brand-text-muted">—</span>
-              <span class="text-brand-text-muted">→</span>
-              <span
-                class="rounded-full px-2 py-0.5 text-xs font-semibold"
-                :class="assetStatusBadgeClass(transition.to_status)"
-              >
-                {{ t(`assets.status.${transition.to_status}`) }}
+                {{ t(`assets.condition.${asset.condition}`) }}
               </span>
             </div>
-            <p class="mt-2 text-xs text-brand-text-secondary">
-              {{ formatDateTime(transition.created_at) }}
-              <span v-if="transition.performed_by"> · {{ transition.performed_by.name }}</span>
+            <h2 class="mt-2 text-[1.65rem] font-bold leading-snug text-brand-text sm:text-[1.85rem]">
+              {{ asset.name }}
+            </h2>
+            <p class="mt-2 text-sm text-brand-text-secondary">
+              <span class="font-semibold text-brand-text">
+                {{
+                  asset.current_custody?.employee?.full_name ??
+                  asset.warehouse?.name ??
+                  t('assets.noWarehouse')
+                }}
+              </span>
+              <span class="mx-1.5 text-brand-text-muted">·</span>
+              {{ asset.organization_unit?.name ?? t('assets.noOrgUnit') }}
+              <template v-if="asset.category?.name">
+                <span class="mx-1.5 text-brand-text-muted">·</span>
+                {{ asset.category.name }}
+              </template>
             </p>
-            <p v-if="transition.reason" class="mt-1 text-sm">{{ transition.reason }}</p>
-          </li>
-        </ul>
+          </div>
+
+          <div class="flex flex-wrap gap-2">
+            <PermissionGuard v-if="canEditAsset(permissions)" permission="assets.update">
+              <button
+                type="button"
+                class="inline-flex h-10 items-center gap-2 rounded-xl border border-brand-border bg-brand-surface px-4 text-sm font-semibold text-brand-primary-dark transition hover:bg-brand-primary-soft"
+                @click="openEdit"
+              >
+                <Pencil class="h-4 w-4" />
+                {{ t('assets.actions.edit') }}
+              </button>
+            </PermissionGuard>
+            <PermissionGuard v-if="canDeleteAsset(permissions)" permission="assets.delete">
+              <button
+                type="button"
+                class="inline-flex h-10 items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 text-sm font-semibold text-red-800 transition hover:bg-red-100"
+                :disabled="isLifecyclePending"
+                @click="removeAsset"
+              >
+                <Trash2 class="h-4 w-4" />
+                {{ t('assets.actions.delete') }}
+              </button>
+            </PermissionGuard>
+          </div>
+        </div>
       </section>
 
-      <EntityDocumentsSection
-        linkable-type="asset"
-        :linkable-id="asset.id"
-        :link-label="`${asset.asset_number} — ${asset.name}`"
-      />
+      <div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <div class="space-y-5">
+          <section class="rounded-2xl border border-brand-border bg-brand-surface">
+            <header class="border-b border-brand-border px-5 py-4">
+              <h3 class="text-sm font-bold text-brand-text">
+                {{ t('assets.details.detailsSummary') }}
+              </h3>
+            </header>
+            <dl class="grid gap-0 sm:grid-cols-2">
+              <div class="flex gap-3 border-b border-brand-border/80 px-5 py-4 sm:border-e">
+                <span
+                  class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-bg text-brand-primary"
+                >
+                  <Tag class="h-4 w-4" :stroke-width="1.75" />
+                </span>
+                <div class="min-w-0">
+                  <dt class="text-xs font-semibold text-brand-text-muted">
+                    {{ t('assets.fields.category') }}
+                  </dt>
+                  <dd class="mt-1 text-sm font-semibold text-brand-text">
+                    {{ asset.category?.name || '—' }}
+                  </dd>
+                </div>
+              </div>
+
+              <div class="flex gap-3 border-b border-brand-border/80 px-5 py-4">
+                <span
+                  class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-bg text-brand-primary"
+                >
+                  <Package class="h-4 w-4" :stroke-width="1.75" />
+                </span>
+                <div class="min-w-0">
+                  <dt class="text-xs font-semibold text-brand-text-muted">
+                    {{ t('assets.fields.serialNumber') }}
+                  </dt>
+                  <dd class="mt-1 text-sm font-semibold text-brand-text" dir="ltr">
+                    {{ asset.serial_number || '—' }}
+                  </dd>
+                </div>
+              </div>
+
+              <div class="flex gap-3 border-b border-brand-border/80 px-5 py-4 sm:border-e">
+                <span
+                  class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-bg text-brand-primary"
+                >
+                  <Barcode class="h-4 w-4" :stroke-width="1.75" />
+                </span>
+                <div class="min-w-0">
+                  <dt class="text-xs font-semibold text-brand-text-muted">
+                    {{ t('assets.fields.barcode') }}
+                  </dt>
+                  <dd class="mt-1 text-sm font-semibold text-brand-text" dir="ltr">
+                    {{ asset.barcode || '—' }}
+                  </dd>
+                </div>
+              </div>
+
+              <div class="flex gap-3 border-b border-brand-border/80 px-5 py-4">
+                <span
+                  class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-bg text-brand-primary"
+                >
+                  <ShieldCheck class="h-4 w-4" :stroke-width="1.75" />
+                </span>
+                <div class="min-w-0">
+                  <dt class="text-xs font-semibold text-brand-text-muted">
+                    {{ t('assets.fields.condition') }}
+                  </dt>
+                  <dd class="mt-1">
+                    <span
+                      v-if="asset.condition"
+                      class="inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold"
+                      :class="conditionBadgeClass(asset.condition)"
+                    >
+                      {{ t(`assets.condition.${asset.condition}`) }}
+                    </span>
+                    <span v-else class="text-sm font-semibold text-brand-text">—</span>
+                  </dd>
+                </div>
+              </div>
+
+              <div class="flex gap-3 border-b border-brand-border/80 px-5 py-4 sm:border-e">
+                <span
+                  class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-bg text-brand-primary"
+                >
+                  <CalendarRange class="h-4 w-4" :stroke-width="1.75" />
+                </span>
+                <div class="min-w-0">
+                  <dt class="text-xs font-semibold text-brand-text-muted">
+                    {{ t('assets.fields.acquisitionDate') }}
+                  </dt>
+                  <dd class="mt-1 text-sm font-semibold text-brand-text" dir="ltr">
+                    {{ formatDate(asset.acquisition_date) }}
+                  </dd>
+                </div>
+              </div>
+
+              <div class="flex gap-3 border-b border-brand-border/80 px-5 py-4">
+                <span
+                  class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-bg text-brand-primary"
+                >
+                  <Tag class="h-4 w-4" :stroke-width="1.75" />
+                </span>
+                <div class="min-w-0">
+                  <dt class="text-xs font-semibold text-brand-text-muted">
+                    {{ t('assets.fields.purchaseValue') }}
+                  </dt>
+                  <dd class="mt-1 text-sm font-semibold text-brand-text">
+                    {{ formatMoney(asset.purchase_value) }}
+                  </dd>
+                </div>
+              </div>
+
+              <div class="flex gap-3 border-b border-brand-border/80 px-5 py-4 sm:border-e">
+                <span
+                  class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-bg text-brand-primary"
+                >
+                  <Warehouse class="h-4 w-4" :stroke-width="1.75" />
+                </span>
+                <div class="min-w-0">
+                  <dt class="text-xs font-semibold text-brand-text-muted">
+                    {{ t('assets.fields.warehouse') }}
+                  </dt>
+                  <dd class="mt-1 text-sm font-semibold text-brand-text">
+                    {{ asset.warehouse?.name || '—' }}
+                  </dd>
+                </div>
+              </div>
+
+              <div class="flex gap-3 border-b border-brand-border/80 px-5 py-4">
+                <span
+                  class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-bg text-brand-primary"
+                >
+                  <Building2 class="h-4 w-4" :stroke-width="1.75" />
+                </span>
+                <div class="min-w-0">
+                  <dt class="text-xs font-semibold text-brand-text-muted">
+                    {{ t('assets.fields.organizationUnit') }}
+                  </dt>
+                  <dd class="mt-1 text-sm font-semibold text-brand-text">
+                    {{ asset.organization_unit?.name || '—' }}
+                  </dd>
+                </div>
+              </div>
+
+              <div class="flex gap-3 px-5 py-4 sm:col-span-2">
+                <span
+                  class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-bg text-brand-primary"
+                >
+                  <UserRound class="h-4 w-4" :stroke-width="1.75" />
+                </span>
+                <div class="min-w-0">
+                  <dt class="text-xs font-semibold text-brand-text-muted">
+                    {{ t('assets.fields.createdBy') }}
+                  </dt>
+                  <dd class="mt-1 text-sm font-semibold text-brand-text">
+                    {{ asset.created_by?.name || '—' }}
+                  </dd>
+                </div>
+              </div>
+            </dl>
+          </section>
+
+          <section
+            v-if="asset.description"
+            class="rounded-2xl border border-brand-border bg-brand-surface"
+          >
+            <header class="flex items-center gap-2 border-b border-brand-border px-5 py-4">
+              <FileText class="h-4 w-4 text-brand-primary" :stroke-width="1.75" />
+              <h3 class="text-sm font-bold text-brand-text">{{ t('assets.fields.description') }}</h3>
+            </header>
+            <p class="whitespace-pre-wrap px-5 py-4 text-sm leading-relaxed text-brand-text">
+              {{ asset.description }}
+            </p>
+          </section>
+
+          <section
+            v-if="asset.notes"
+            class="rounded-2xl border border-brand-border bg-brand-surface"
+          >
+            <header class="flex items-center gap-2 border-b border-brand-border px-5 py-4">
+              <FileText class="h-4 w-4 text-brand-primary" :stroke-width="1.75" />
+              <h3 class="text-sm font-bold text-brand-text">{{ t('assets.fields.notes') }}</h3>
+            </header>
+            <p class="whitespace-pre-wrap px-5 py-4 text-sm leading-relaxed text-brand-text-secondary">
+              {{ asset.notes }}
+            </p>
+          </section>
+
+          <section class="rounded-2xl border border-brand-border bg-brand-surface">
+            <header class="flex items-center gap-2 border-b border-brand-border px-5 py-4">
+              <MapPin class="h-4 w-4 text-brand-primary" :stroke-width="1.75" />
+              <h3 class="text-sm font-bold text-brand-text">
+                {{ t('assets.details.currentCustody') }}
+              </h3>
+            </header>
+            <p
+              v-if="!asset.current_custody"
+              class="px-5 py-8 text-center text-sm text-brand-text-muted"
+            >
+              {{ t('assets.details.noCurrentCustody') }}
+            </p>
+            <dl v-else class="grid gap-0 sm:grid-cols-2">
+              <div class="flex gap-3 border-b border-brand-border/80 px-5 py-4 sm:border-e">
+                <span
+                  class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-bg text-brand-primary"
+                >
+                  <ShieldCheck class="h-4 w-4" :stroke-width="1.75" />
+                </span>
+                <div class="min-w-0">
+                  <dt class="text-xs font-semibold text-brand-text-muted">
+                    {{ t('assets.fields.custodyNumber') }}
+                  </dt>
+                  <dd class="mt-1 font-mono text-sm font-semibold text-brand-text" dir="ltr">
+                    {{ asset.current_custody.custody_number }}
+                  </dd>
+                </div>
+              </div>
+              <div class="flex gap-3 border-b border-brand-border/80 px-5 py-4">
+                <span
+                  class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-bg text-brand-primary"
+                >
+                  <UserRound class="h-4 w-4" :stroke-width="1.75" />
+                </span>
+                <div class="min-w-0">
+                  <dt class="text-xs font-semibold text-brand-text-muted">
+                    {{ t('assets.fields.employee') }}
+                  </dt>
+                  <dd class="mt-1 text-sm font-semibold text-brand-text">
+                    {{ asset.current_custody.employee?.full_name || '—' }}
+                  </dd>
+                </div>
+              </div>
+              <div class="flex gap-3 border-b border-brand-border/80 px-5 py-4 sm:border-e sm:border-b-0">
+                <span
+                  class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-bg text-brand-primary"
+                >
+                  <CalendarRange class="h-4 w-4" :stroke-width="1.75" />
+                </span>
+                <div class="min-w-0">
+                  <dt class="text-xs font-semibold text-brand-text-muted">
+                    {{ t('assets.fields.assignedAt') }}
+                  </dt>
+                  <dd class="mt-1 text-sm font-semibold text-brand-text">
+                    {{ formatDateTime(asset.current_custody.assigned_at) }}
+                  </dd>
+                </div>
+              </div>
+              <div class="flex gap-3 px-5 py-4">
+                <span
+                  class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-bg text-brand-primary"
+                >
+                  <CalendarRange class="h-4 w-4" :stroke-width="1.75" />
+                </span>
+                <div class="min-w-0">
+                  <dt class="text-xs font-semibold text-brand-text-muted">
+                    {{ t('assets.fields.expectedReturnAt') }}
+                  </dt>
+                  <dd class="mt-1 text-sm font-semibold text-brand-text">
+                    {{ formatDateTime(asset.current_custody.expected_return_at) }}
+                  </dd>
+                </div>
+              </div>
+            </dl>
+          </section>
+
+          <section class="rounded-2xl border border-brand-border bg-brand-surface">
+            <header class="border-b border-brand-border px-5 py-4">
+              <h3 class="text-sm font-bold text-brand-text">
+                {{ t('assets.details.custodyHistory') }}
+              </h3>
+            </header>
+            <p
+              v-if="!custodies.length"
+              class="px-5 py-8 text-center text-sm text-brand-text-muted"
+            >
+              {{ t('assets.details.noCustodyHistory') }}
+            </p>
+            <div v-else class="overflow-x-auto">
+              <table class="min-w-full border-separate border-spacing-0 text-sm">
+                <thead>
+                  <tr class="bg-[#F4F6F5]">
+                    <th
+                      v-for="key in [
+                        'custodyNumber',
+                        'employee',
+                        'status',
+                        'assignedAt',
+                        'returnedAt',
+                      ]"
+                      :key="key"
+                      class="whitespace-nowrap border-b border-brand-border px-5 py-3 text-center text-xs font-bold text-brand-text"
+                    >
+                      {{ t(`assets.columns.${key}`) }}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="(custody, index) in custodies"
+                    :key="custody.id"
+                    class="group"
+                    :class="index % 2 === 1 ? 'bg-[#FAFBFA]' : 'bg-brand-surface'"
+                  >
+                    <td
+                      class="whitespace-nowrap border-b border-brand-border/80 px-5 py-3 text-center transition-colors group-hover:bg-[#EDF6F1]"
+                    >
+                      <span
+                        class="inline-flex rounded-lg border border-brand-border bg-brand-bg px-2 py-1 font-mono text-[11px] font-bold text-brand-text"
+                        dir="ltr"
+                      >
+                        {{ custody.custody_number }}
+                      </span>
+                    </td>
+                    <td
+                      class="max-w-[12rem] whitespace-nowrap border-b border-brand-border/80 px-5 py-3 text-center text-brand-text transition-colors group-hover:bg-[#EDF6F1]"
+                    >
+                      <span class="block truncate">
+                        {{ custody.employee?.full_name || '—' }}
+                      </span>
+                    </td>
+                    <td
+                      class="whitespace-nowrap border-b border-brand-border/80 px-5 py-3 text-center transition-colors group-hover:bg-[#EDF6F1]"
+                    >
+                      <span
+                        class="inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold"
+                        :class="custodyStatusBadgeClass(custody.status)"
+                      >
+                        {{ t(`assets.custodyStatus.${custody.status}`) }}
+                      </span>
+                    </td>
+                    <td
+                      class="whitespace-nowrap border-b border-brand-border/80 px-5 py-3 text-center text-brand-text transition-colors group-hover:bg-[#EDF6F1]"
+                    >
+                      {{ formatDateTime(custody.assigned_at) }}
+                    </td>
+                    <td
+                      class="whitespace-nowrap border-b border-brand-border/80 px-5 py-3 text-center text-brand-text transition-colors group-hover:bg-[#EDF6F1]"
+                    >
+                      {{ formatDateTime(custody.returned_at) }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="rounded-2xl border border-brand-border bg-brand-surface">
+            <header class="border-b border-brand-border px-5 py-4">
+              <h3 class="text-base font-bold text-brand-text">
+                {{ t('assets.details.timelineTitle') }}
+              </h3>
+              <p class="mt-1 text-sm text-brand-text-secondary">
+                {{ t('assets.details.timelineSubtitle') }}
+              </p>
+            </header>
+
+            <div
+              v-if="!transitions.length"
+              class="px-5 py-10 text-center text-sm text-brand-text-muted"
+            >
+              {{ t('assets.details.noTransitions') }}
+            </div>
+
+            <ol v-else class="relative space-y-0 px-5 py-5">
+              <li
+                v-for="(transition, index) in transitions"
+                :key="transition.id"
+                class="relative flex gap-4 pb-6 last:pb-0"
+              >
+                <div class="relative flex w-4 shrink-0 flex-col items-center">
+                  <span
+                    class="mt-1.5 z-10 h-3 w-3 rounded-full bg-brand-primary ring-[3px] ring-brand-primary/15"
+                  />
+                  <span
+                    v-if="index < transitions.length - 1"
+                    class="absolute top-5 bottom-0 w-px bg-brand-border"
+                    aria-hidden="true"
+                  />
+                </div>
+
+                <div
+                  class="min-w-0 flex-1 rounded-xl border border-brand-border/80 bg-brand-bg/40 px-4 py-3"
+                >
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span
+                      v-if="transition.from_status"
+                      class="inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
+                      :class="assetStatusBadgeClass(transition.from_status)"
+                    >
+                      {{ t(`assets.status.${transition.from_status}`) }}
+                    </span>
+                    <ArrowLeft
+                      v-if="transition.from_status"
+                      class="h-3.5 w-3.5 shrink-0 text-brand-text-muted"
+                      :stroke-width="2"
+                      aria-hidden="true"
+                    />
+                    <span
+                      class="inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
+                      :class="assetStatusBadgeClass(transition.to_status)"
+                    >
+                      {{ t(`assets.status.${transition.to_status}`) }}
+                    </span>
+                  </div>
+
+                  <div
+                    class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-brand-text-muted"
+                  >
+                    <span class="inline-flex items-center gap-1.5 font-semibold text-brand-text">
+                      <UserRound
+                        class="h-3.5 w-3.5 text-brand-text-secondary"
+                        :stroke-width="1.75"
+                      />
+                      {{ transition.performed_by?.name ?? '—' }}
+                    </span>
+                    <span>{{ formatDateTime(transition.created_at) }}</span>
+                  </div>
+
+                  <p
+                    v-if="transition.reason"
+                    class="mt-3 flex gap-2 rounded-lg border border-brand-border/70 bg-brand-surface px-3 py-2 text-sm text-brand-text-secondary"
+                  >
+                    <MessageSquareText
+                      class="mt-0.5 h-3.5 w-3.5 shrink-0 text-brand-text-muted"
+                      :stroke-width="1.75"
+                    />
+                    <span>{{ transition.reason }}</span>
+                  </p>
+                </div>
+              </li>
+            </ol>
+          </section>
+
+          <EntityDocumentsSection
+            linkable-type="asset"
+            :linkable-id="asset.id"
+            :link-label="`${asset.asset_number} — ${asset.name}`"
+          />
+        </div>
+
+        <aside class="space-y-5 xl:sticky xl:top-4 xl:self-start">
+          <section class="rounded-2xl border border-brand-border bg-brand-surface">
+            <header class="border-b border-brand-border px-5 py-4">
+              <h3 class="text-sm font-bold text-brand-text">
+                {{ t('assets.details.lifecycleTitle') }}
+              </h3>
+              <p class="mt-1 text-xs text-brand-text-secondary">
+                {{ t('assets.details.lifecycleHint') }}
+              </p>
+            </header>
+            <div class="space-y-2 px-4 py-4">
+              <p
+                v-if="!visibleLifecycleActions.length"
+                class="px-1 py-4 text-center text-sm text-brand-text-muted"
+              >
+                {{ t('assets.details.lifecycleEmpty') }}
+              </p>
+              <button
+                v-for="def in visibleLifecycleActions"
+                :key="def.action"
+                type="button"
+                class="inline-flex h-10 w-full items-center justify-center rounded-xl border px-4 text-sm font-semibold transition disabled:opacity-50 xl:justify-start"
+                :class="actionButtonClass(def.action)"
+                :disabled="isLifecyclePending"
+                @click="runLifecycleAction(def.action)"
+              >
+                {{ actionLabel(def.action) }}
+              </button>
+            </div>
+          </section>
+        </aside>
+      </div>
     </template>
 
     <AssetFormDrawer
@@ -649,7 +1017,6 @@ function actionButtonClass(action: AssetLifecycleAction): string {
       :field-errors="fieldErrors"
       :submitting="updateMutation.isPending.value"
       :category-options="categoryFormOptions"
-      :warehouse-options="warehouseFormOptions"
       :org-unit-options="orgUnitFormOptions"
       @close="drawerOpen = false"
       @submit="submitEdit"
@@ -662,7 +1029,6 @@ function actionButtonClass(action: AssetLifecycleAction): string {
       :form-error="assignFormError"
       :field-errors="assignFieldErrors"
       :submitting="assignMutation.isPending.value"
-      :employee-options="employeeOptions"
       @close="assignOpen = false"
       @submit="submitAssign"
       @update:form="Object.assign(assignForm, $event)"

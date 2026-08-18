@@ -3,7 +3,10 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Loader2, X } from 'lucide-vue-next'
 
+import { listWarehouses } from '@/modules/inventory/api/warehousesApi'
+import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
+import { toSelectId, warehouseSelectOption } from '@/shared/lookups/selectOptions'
 
 import type { Asset, AssetFormState } from '../types/assets'
 import { ASSET_CONDITIONS } from '../types/assets'
@@ -16,7 +19,6 @@ const props = defineProps<{
   fieldErrors: Record<string, string>
   submitting: boolean
   categoryOptions: AppSelectOption[]
-  warehouseOptions: AppSelectOption[]
   orgUnitOptions: AppSelectOption[]
 }>()
 
@@ -39,6 +41,12 @@ const conditionOptions = computed<AppSelectOption[]>(() =>
 function patch(part: Partial<AssetFormState>): void {
   emit('update:form', { ...props.form, ...part })
 }
+
+const fetchActiveWarehouses = (params: { search?: string; page: number; per_page: number }) =>
+  listWarehouses({ ...params, is_active: true })
+const selectedWarehouse = computed(() =>
+  props.editing?.warehouse ? warehouseSelectOption(props.editing.warehouse) : null,
+)
 </script>
 
 <template>
@@ -151,12 +159,15 @@ function patch(part: Partial<AssetFormState>): void {
               <h4 class="text-sm font-bold text-brand-text">{{ t('assets.form.sections.location') }}</h4>
               <label class="block">
                 <span class="text-sm font-medium text-brand-text">{{ t('assets.fields.warehouse') }}</span>
-                <AppSelect
+                <AppRemoteSelect
                   class="mt-1"
-                  searchable
                   :model-value="form.warehouse_id"
-                  :options="warehouseOptions"
-                  @update:model-value="patch({ warehouse_id: $event as number | '' })"
+                  query-key="warehouses-active"
+                  :fetcher="fetchActiveWarehouses"
+                  :map-option="warehouseSelectOption"
+                  :selected-option="selectedWarehouse"
+                  :enabled="open"
+                  @update:model-value="patch({ warehouse_id: toSelectId($event) })"
                 />
               </label>
               <label class="block">

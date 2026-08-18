@@ -2,9 +2,9 @@
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
-import { useEmployeesQuery } from '@/modules/employees/queries/useEmployeesQuery'
-import type { AppSelectOption } from '@/shared/components/AppSelect.vue'
-import AppSelect from '@/shared/components/AppSelect.vue'
+import { listEmployees } from '@/modules/employees/api/employeesApi'
+import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
+import { employeeSelectOption, toSelectId } from '@/shared/lookups/selectOptions'
 import { useConfirm } from '@/shared/composables/useConfirm'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import { useToast } from '@/shared/composables/useToast'
@@ -27,8 +27,13 @@ const { confirm } = useConfirm()
 const toast = useToast()
 const router = useRouter()
 
-const { data: employees } = useEmployeesQuery(computed(() => ({ status: 'active' as const, per_page: 100 })))
-const employeeOptions = computed<AppSelectOption[]>(() => (employees.value?.data ?? []).map((x) => ({ value: x.id, label: x.full_name, hint: x.employee_number })))
+const fetchActiveEmployees = (params: { search?: string; page: number; per_page: number }) =>
+  listEmployees({ ...params, status: 'active' })
+const selectedAssignee = computed(() =>
+  props.task.assigned_to_employee
+    ? employeeSelectOption(props.task.assigned_to_employee)
+    : null,
+)
 
 const assign = useAssignTaskMutation()
 const start = useStartTaskMutation()
@@ -121,18 +126,69 @@ async function deleteIt(): Promise<void> {
 </script>
 <template>
   <div class="space-y-3">
-    <div class="flex flex-wrap gap-2">
-      <button v-if="canAssign" class="rounded-xl border border-brand-border px-4 py-2 text-sm font-semibold text-brand-primary-dark" @click="openAssign">{{ t(task.assigned_to_employee_id ? 'tasks.lifecycle.reassign' : 'tasks.lifecycle.assign') }}</button>
-      <button v-if="selfService.canStart" class="rounded-xl border border-brand-border px-4 py-2 text-sm font-semibold text-brand-primary-dark" @click="runStart">{{ t('tasks.lifecycle.start') }}</button>
-      <button v-if="selfService.canProgress" class="rounded-xl border border-brand-border px-4 py-2 text-sm font-semibold text-brand-primary-dark" @click="openProgress">{{ t('tasks.lifecycle.progress') }}</button>
-      <button v-if="selfService.canComplete" class="rounded-xl border border-brand-border px-4 py-2 text-sm font-semibold text-brand-primary-dark" @click="openComplete">{{ t('tasks.lifecycle.complete') }}</button>
-      <button v-if="canCancel" class="rounded-xl border border-red-200 px-4 py-2 text-sm text-red-700" @click="openCancel">{{ t('tasks.lifecycle.cancel') }}</button>
-      <button v-if="canDelete" class="rounded-xl border border-red-200 px-4 py-2 text-sm text-red-700" @click="deleteIt">{{ t('tasks.actions.delete') }}</button>
+    <div class="flex flex-col gap-2">
+      <button
+        v-if="canAssign"
+        type="button"
+        class="inline-flex h-10 w-full items-center justify-center rounded-xl border border-sky-200 bg-sky-50 px-4 text-sm font-semibold text-sky-950 transition hover:bg-sky-100 xl:justify-start"
+        @click="openAssign"
+      >
+        {{ t(task.assigned_to_employee_id ? 'tasks.lifecycle.reassign' : 'tasks.lifecycle.assign') }}
+      </button>
+      <button
+        v-if="selfService.canStart"
+        type="button"
+        class="inline-flex h-10 w-full items-center justify-center rounded-xl border border-brand-primary/30 bg-brand-primary-soft px-4 text-sm font-semibold text-brand-primary-dark transition hover:bg-brand-primary/15 xl:justify-start"
+        @click="runStart"
+      >
+        {{ t('tasks.lifecycle.start') }}
+      </button>
+      <button
+        v-if="selfService.canProgress"
+        type="button"
+        class="inline-flex h-10 w-full items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-4 text-sm font-semibold text-amber-950 transition hover:bg-amber-100 xl:justify-start"
+        @click="openProgress"
+      >
+        {{ t('tasks.lifecycle.progress') }}
+      </button>
+      <button
+        v-if="selfService.canComplete"
+        type="button"
+        class="inline-flex h-10 w-full items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 px-4 text-sm font-semibold text-emerald-950 transition hover:bg-emerald-100 xl:justify-start"
+        @click="openComplete"
+      >
+        {{ t('tasks.lifecycle.complete') }}
+      </button>
+      <button
+        v-if="canCancel"
+        type="button"
+        class="inline-flex h-10 w-full items-center justify-center rounded-xl border border-red-200 bg-red-50 px-4 text-sm font-semibold text-red-800 transition hover:bg-red-100 xl:justify-start"
+        @click="openCancel"
+      >
+        {{ t('tasks.lifecycle.cancel') }}
+      </button>
+      <button
+        v-if="canDelete"
+        type="button"
+        class="inline-flex h-10 w-full items-center justify-center rounded-xl border border-red-300 bg-red-50 px-4 text-sm font-semibold text-red-800 transition hover:bg-red-100 xl:justify-start"
+        @click="deleteIt"
+      >
+        {{ t('tasks.actions.delete') }}
+      </button>
     </div>
 
     <div v-if="activeDialog === 'assign'" class="rounded-xl bg-brand-bg p-3">
       <label class="block text-sm font-semibold">{{ t('tasks.fields.assignee') }}</label>
-      <AppSelect class="mt-2" :model-value="assignEmployeeId" :options="employeeOptions" searchable @update:model-value="assignEmployeeId = $event === '' || $event === null ? '' : Number($event)" />
+      <AppRemoteSelect
+        class="mt-2"
+        :model-value="assignEmployeeId"
+        query-key="employees-active"
+        :fetcher="fetchActiveEmployees"
+        :map-option="employeeSelectOption"
+        :selected-option="selectedAssignee"
+        :enabled="activeDialog === 'assign'"
+        @update:model-value="assignEmployeeId = toSelectId($event)"
+      />
       <label class="mt-3 block text-sm font-semibold">{{ t('tasks.fields.comment') }}</label>
       <textarea v-model="assignComment" rows="2" class="mt-2 w-full rounded-xl border border-brand-border p-2" />
       <div class="mt-3 flex gap-2">

@@ -12,6 +12,7 @@ class TenancyServiceProvider extends ServiceProvider
         // never leak across units of work even in long-running workers.
         $this->app->scoped(TenantContext::class);
         $this->app->scoped(PlatformContext::class);
+        $this->app->scoped(TenantCache::class);
 
         $this->app->bind(TenantResolver::class, AuthenticatedUserTenantResolver::class);
     }

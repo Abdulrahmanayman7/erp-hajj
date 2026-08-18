@@ -40,14 +40,44 @@ export function assetStatusBadgeClass(status: AssetStatus | string): string {
   }
 }
 
+export function assetStatusDotClass(status: AssetStatus | string): string {
+  switch (status) {
+    case 'available':
+      return 'bg-emerald-500'
+    case 'in_use':
+      return 'bg-sky-500'
+    case 'maintenance':
+      return 'bg-amber-500'
+    case 'damaged':
+      return 'bg-orange-500'
+    case 'retired':
+      return 'bg-slate-500'
+    case 'lost':
+      return 'bg-red-500'
+    default:
+      return 'bg-neutral-400'
+  }
+}
+
 export function custodyStatusBadgeClass(status: string): string {
   switch (status) {
     case 'active':
-      return 'bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200/70'
+      return 'bg-emerald-100 text-emerald-950 ring-1 ring-inset ring-emerald-300/80'
     case 'returned':
-      return 'bg-slate-100 text-slate-700 ring-1 ring-slate-200/80'
+      return 'bg-slate-100 text-slate-800 ring-1 ring-inset ring-slate-300/80'
     default:
-      return 'bg-neutral-100 text-neutral-600 ring-1 ring-neutral-200/80'
+      return 'bg-neutral-100 text-neutral-700 ring-1 ring-inset ring-neutral-300/80'
+  }
+}
+
+export function custodyStatusDotClass(status: string): string {
+  switch (status) {
+    case 'active':
+      return 'bg-emerald-500'
+    case 'returned':
+      return 'bg-slate-500'
+    default:
+      return 'bg-neutral-400'
   }
 }
 

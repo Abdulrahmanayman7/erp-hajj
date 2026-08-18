@@ -2,23 +2,38 @@
 import { computed, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
-import { ArrowRight, Pencil } from 'lucide-vue-next'
+import {
+  ArrowRight,
+  Building2,
+  CalendarRange,
+  FileText,
+  Link2,
+  Pencil,
+  Percent,
+  Tag,
+  UserRound,
+} from 'lucide-vue-next'
+
 import { useCurrentUserQuery } from '@/modules/auth/queries/useCurrentUserQuery'
-import { useDecisionsQuery } from '@/modules/decisions/queries/useDecisionsQuery'
 import EntityDocumentsSection from '@/modules/documents/components/EntityDocumentsSection.vue'
-import { useEmployeesQuery } from '@/modules/employees/queries/useEmployeesQuery'
 import { useOrganizationUnitsFlatQuery } from '@/modules/organization/queries/useOrganizationUnitsQuery'
 import type { AppSelectOption } from '@/shared/components/AppSelect.vue'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import { useToast } from '@/shared/composables/useToast'
+
 import TaskFormDrawer from '../components/TaskFormDrawer.vue'
 import TaskLifecycleActions from '../components/TaskLifecycleActions.vue'
 import TaskTimeline from '../components/TaskTimeline.vue'
 import { useUpdateTaskMutation } from '../mutations/useTaskMutations'
 import { useTaskQuery } from '../queries/useTasksQuery'
 import type { TaskFormState } from '../types/tasks'
-import { taskPriorityBadgeClass, taskStatusBadgeClass, validateTaskForm } from '../validation/taskValidation'
+import {
+  taskPriorityBadgeClass,
+  taskStatusBadgeClass,
+  taskStatusDotClass,
+  validateTaskForm,
+} from '../validation/taskValidation'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -28,32 +43,61 @@ const toast = useToast()
 const { data: currentUser } = useCurrentUserQuery()
 const linkedEmployeeId = computed(() => currentUser.value?.employee_id ?? null)
 
-const id = computed(() => Number(route.params.id))
+const id = computed(() => {
+  const raw = route.params.id
+  const value = Number(Array.isArray(raw) ? raw[0] : raw)
+  return Number.isFinite(value) ? value : null
+})
+
 const { data, isLoading, isError, refetch } = useTaskQuery(id)
 const task = computed(() => data.value ?? null)
 
 const { data: orgs } = useOrganizationUnitsFlatQuery({ status: 'active' })
-const { data: employees } = useEmployeesQuery(computed(() => ({ status: 'active' as const, per_page: 100 })))
-const { data: approvedDecisions } = useDecisionsQuery(computed(() => ({ status: 'approved', per_page: 100 })))
-const orgOptions = computed<AppSelectOption[]>(() => [{ value: '', label: t('tasks.noOrgUnit') }, ...(orgs.value?.data ?? []).map((x) => ({ value: x.id, label: x.name }))])
-const employeeOptions = computed<AppSelectOption[]>(() => [{ value: '', label: t('tasks.noEmployee') }, ...(employees.value?.data ?? []).map((x) => ({ value: x.id, label: x.full_name }))])
-const decisionOptions = computed<AppSelectOption[]>(() => (approvedDecisions.value?.data ?? []).map((x) => ({ value: x.id, label: `${x.decision_number} — ${x.title}` })))
+
+const orgOptions = computed<AppSelectOption[]>(() => [
+  { value: '', label: t('tasks.noOrgUnit') },
+  ...(orgs.value?.data ?? []).map((x) => ({ value: x.id, label: x.name })),
+])
 
 const update = useUpdateTaskMutation()
+const isFormSubmitting = computed(() => update.isPending.value)
 const open = ref(false)
 const error = ref('')
 const errors = reactive<Record<string, string>>({})
-const form = reactive<TaskFormState>({ title: '', description: '', notes: '', priority: 'medium', decision_id: '', organization_unit_id: '', assigned_to_employee_id: '', start_date: '', due_date: '' })
+const form = reactive<TaskFormState>({
+  title: '',
+  description: '',
+  notes: '',
+  priority: 'medium',
+  decision_id: '',
+  organization_unit_id: '',
+  assigned_to_employee_id: '',
+  start_date: '',
+  due_date: '',
+})
 
-const canEdit = computed(() => !!task.value && ['draft', 'assigned'].includes(task.value.status) && can('tasks.update'))
+const canEdit = computed(
+  () =>
+    !!task.value &&
+    ['draft', 'assigned'].includes(task.value.status) &&
+    can('tasks.update'),
+)
 
 function edit(): void {
-  if (!task.value) return
+  if (!task.value || !canEdit.value) return
   Object.assign(form, {
-    title: task.value.title, description: task.value.description ?? '', notes: task.value.notes ?? '', priority: task.value.priority,
-    decision_id: task.value.decision_id ?? '', organization_unit_id: task.value.organization_unit_id ?? '', assigned_to_employee_id: task.value.assigned_to_employee_id ?? '',
-    start_date: task.value.start_date ?? '', due_date: task.value.due_date ?? '',
+    title: task.value.title,
+    description: task.value.description ?? '',
+    notes: task.value.notes ?? '',
+    priority: task.value.priority,
+    decision_id: task.value.decision_id ?? '',
+    organization_unit_id: task.value.organization_unit_id ?? '',
+    assigned_to_employee_id: task.value.assigned_to_employee_id ?? '',
+    start_date: task.value.start_date ?? '',
+    due_date: task.value.due_date ?? '',
   })
+  error.value = ''
+  Object.keys(errors).forEach((k) => delete errors[k])
   open.value = true
 }
 
@@ -61,87 +105,378 @@ async function save(): Promise<void> {
   Object.keys(errors).forEach((x) => delete errors[x])
   Object.assign(errors, validateTaskForm(form))
   if (Object.keys(errors).length || !task.value) return
+
   try {
     await update.mutateAsync({
       id: task.value.id,
-      payload: { title: form.title.trim(), description: form.description.trim() || null, notes: form.notes.trim() || null, priority: form.priority, organization_unit_id: form.organization_unit_id || null, start_date: form.start_date || null, due_date: form.due_date || null },
+      payload: {
+        title: form.title.trim(),
+        description: form.description.trim() || null,
+        notes: form.notes.trim() || null,
+        priority: form.priority,
+        organization_unit_id: form.organization_unit_id || null,
+        start_date: form.start_date || null,
+        due_date: form.due_date || null,
+      },
     })
     toast.success(t('tasks.toasts.updated'))
     open.value = false
+    await refetch()
   } catch {
     error.value = t('tasks.errors.generic')
   }
 }
-</script>
-<template>
-  <div class="space-y-6">
-    <button class="rounded-lg border px-3 py-2" @click="router.push('/app/tasks')"><ArrowRight class="inline h-4 w-4" /> {{ t('tasks.backToList') }}</button>
 
-    <div v-if="isLoading" class="rounded-2xl border p-10 text-center">{{ t('tasks.loadingDetails') }}</div>
-    <div v-else-if="isError || !task" class="rounded-2xl border p-10 text-center">{{ t('tasks.errors.loadDetails') }} <button @click="() => refetch()">{{ t('tasks.retry') }}</button></div>
+function assignForm(next: TaskFormState): void {
+  Object.assign(form, next)
+}
+
+async function onRefreshed(): Promise<void> {
+  await refetch()
+}
+</script>
+
+<template>
+  <div class="mx-auto max-w-[1200px] space-y-5">
+    <div class="flex flex-wrap items-center gap-3">
+      <button
+        type="button"
+        class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text transition hover:bg-brand-bg"
+        @click="router.push('/app/tasks')"
+      >
+        <ArrowRight class="h-4 w-4" />
+        {{ t('tasks.backToList') }}
+      </button>
+    </div>
+
+    <div
+      v-if="isLoading"
+      class="rounded-2xl border border-brand-border bg-brand-surface p-10 text-center text-sm text-brand-text-muted"
+    >
+      {{ t('tasks.loadingDetails') }}
+    </div>
+
+    <div
+      v-else-if="isError || !task"
+      class="rounded-2xl border border-red-200 bg-red-50 p-10 text-center"
+    >
+      <p class="text-sm text-red-700">{{ t('tasks.errors.loadDetails') }}</p>
+      <button
+        type="button"
+        class="mt-3 text-sm font-semibold text-brand-primary-dark underline"
+        @click="() => refetch()"
+      >
+        {{ t('tasks.retry') }}
+      </button>
+    </div>
 
     <template v-else>
-      <div class="flex flex-wrap justify-between gap-4">
-        <div>
-          <div class="flex flex-wrap items-center gap-2">
-            <span class="font-mono">{{ task.task_number }}</span>
-            <span class="rounded-full px-2 py-1 text-xs" :class="taskStatusBadgeClass(task.status)">{{ t(`tasks.status.${task.status}`) }}</span>
-            <span class="rounded-full px-2 py-1 text-xs" :class="taskPriorityBadgeClass(task.priority)">{{ t(`tasks.priority.${task.priority}`) }}</span>
-            <span v-if="task.is_overdue" class="rounded-full bg-red-50 px-2 py-1 text-xs text-red-800 ring-1 ring-red-200/70">{{ t('tasks.overdueBadge') }}</span>
+      <section class="rounded-2xl border border-brand-border bg-brand-surface px-5 py-5 sm:px-6">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+          <div class="min-w-0 flex-1">
+            <div class="flex flex-wrap items-center gap-2">
+              <p
+                class="font-mono text-xs font-semibold tracking-wide text-brand-text-muted"
+                dir="ltr"
+              >
+                {{ task.task_number }}
+              </p>
+              <span
+                class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold tracking-wide"
+                :class="taskStatusBadgeClass(task.status)"
+              >
+                <span
+                  class="h-1.5 w-1.5 shrink-0 rounded-full"
+                  :class="taskStatusDotClass(task.status)"
+                  aria-hidden="true"
+                />
+                {{ t(`tasks.status.${task.status}`) }}
+              </span>
+              <span
+                class="inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold"
+                :class="taskPriorityBadgeClass(task.priority)"
+              >
+                {{ t(`tasks.priority.${task.priority}`) }}
+              </span>
+              <span
+                v-if="task.is_overdue"
+                class="inline-flex rounded-full bg-red-100 px-2.5 py-0.5 text-[11px] font-bold text-brand-text ring-1 ring-inset ring-red-300/80"
+              >
+                {{ t('tasks.overdueBadge') }}
+              </span>
+            </div>
+            <h2 class="mt-2 text-[1.65rem] font-bold leading-snug text-brand-text sm:text-[1.85rem]">
+              {{ task.title }}
+            </h2>
+            <p class="mt-2 text-sm text-brand-text-secondary">
+              <span class="font-semibold text-brand-text">
+                {{ task.assigned_to_employee?.full_name ?? t('tasks.noEmployee') }}
+              </span>
+              <span class="mx-1.5 text-brand-text-muted">·</span>
+              {{ task.organization_unit?.name ?? t('tasks.noOrgUnit') }}
+            </p>
           </div>
-          <h2 class="mt-2 text-2xl font-bold">{{ task.title }}</h2>
+
+          <PermissionGuard v-if="canEdit" permission="tasks.update">
+            <button
+              type="button"
+              class="inline-flex h-10 items-center gap-2 rounded-xl border border-brand-border bg-brand-surface px-4 text-sm font-semibold text-brand-primary-dark transition hover:bg-brand-primary-soft"
+              @click="edit"
+            >
+              <Pencil class="h-4 w-4" />
+              {{ t('tasks.actions.edit') }}
+            </button>
+          </PermissionGuard>
         </div>
-        <PermissionGuard v-if="canEdit" permission="tasks.update"><button class="rounded-xl border px-4 py-2" @click="edit"><Pencil class="inline h-4 w-4" /> {{ t('tasks.actions.edit') }}</button></PermissionGuard>
+      </section>
+
+      <div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <div class="space-y-5">
+          <section class="rounded-2xl border border-brand-border bg-brand-surface">
+            <header class="border-b border-brand-border px-5 py-4">
+              <h3 class="text-sm font-bold text-brand-text">{{ t('tasks.detailsSummary') }}</h3>
+            </header>
+            <dl class="grid gap-0 sm:grid-cols-2">
+              <div class="flex gap-3 border-b border-brand-border/80 px-5 py-4 sm:border-e">
+                <span
+                  class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-bg text-brand-primary"
+                >
+                  <CalendarRange class="h-4 w-4" :stroke-width="1.75" />
+                </span>
+                <div class="min-w-0">
+                  <dt class="text-xs font-semibold text-brand-text-muted">
+                    {{ t('tasks.fields.startDate') }}
+                  </dt>
+                  <dd class="mt-1 text-sm font-semibold text-brand-text" dir="ltr">
+                    {{ task.start_date ?? '—' }}
+                  </dd>
+                </div>
+              </div>
+
+              <div class="flex gap-3 border-b border-brand-border/80 px-5 py-4">
+                <span
+                  class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-bg text-brand-primary"
+                >
+                  <CalendarRange class="h-4 w-4" :stroke-width="1.75" />
+                </span>
+                <div class="min-w-0">
+                  <dt class="text-xs font-semibold text-brand-text-muted">
+                    {{ t('tasks.fields.dueDate') }}
+                  </dt>
+                  <dd class="mt-1 text-sm font-semibold text-brand-text" dir="ltr">
+                    {{ task.due_date ?? '—' }}
+                  </dd>
+                </div>
+              </div>
+
+              <div class="flex gap-3 border-b border-brand-border/80 px-5 py-4 sm:border-e">
+                <span
+                  class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-bg text-brand-primary"
+                >
+                  <Percent class="h-4 w-4" :stroke-width="1.75" />
+                </span>
+                <div class="min-w-0">
+                  <dt class="text-xs font-semibold text-brand-text-muted">
+                    {{ t('tasks.fields.progressPercent') }}
+                  </dt>
+                  <dd class="mt-1 text-sm font-semibold text-brand-text">
+                    {{ task.progress_percent }}%
+                  </dd>
+                </div>
+              </div>
+
+              <div class="flex gap-3 border-b border-brand-border/80 px-5 py-4">
+                <span
+                  class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-bg text-brand-primary"
+                >
+                  <Tag class="h-4 w-4" :stroke-width="1.75" />
+                </span>
+                <div class="min-w-0">
+                  <dt class="text-xs font-semibold text-brand-text-muted">
+                    {{ t('tasks.fields.priority') }}
+                  </dt>
+                  <dd class="mt-1">
+                    <span
+                      class="inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold"
+                      :class="taskPriorityBadgeClass(task.priority)"
+                    >
+                      {{ t(`tasks.priority.${task.priority}`) }}
+                    </span>
+                  </dd>
+                </div>
+              </div>
+
+              <div class="flex gap-3 border-b border-brand-border/80 px-5 py-4 sm:border-e">
+                <span
+                  class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-bg text-brand-primary"
+                >
+                  <Building2 class="h-4 w-4" :stroke-width="1.75" />
+                </span>
+                <div class="min-w-0">
+                  <dt class="text-xs font-semibold text-brand-text-muted">
+                    {{ t('tasks.fields.organizationUnit') }}
+                  </dt>
+                  <dd class="mt-1 text-sm font-semibold text-brand-text">
+                    {{ task.organization_unit?.name ?? '—' }}
+                  </dd>
+                </div>
+              </div>
+
+              <div class="flex gap-3 border-b border-brand-border/80 px-5 py-4">
+                <span
+                  class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-bg text-brand-primary"
+                >
+                  <UserRound class="h-4 w-4" :stroke-width="1.75" />
+                </span>
+                <div class="min-w-0">
+                  <dt class="text-xs font-semibold text-brand-text-muted">
+                    {{ t('tasks.fields.assignee') }}
+                  </dt>
+                  <dd class="mt-1 text-sm font-semibold text-brand-text">
+                    {{ task.assigned_to_employee?.full_name ?? '—' }}
+                  </dd>
+                </div>
+              </div>
+
+              <div class="flex gap-3 border-b border-brand-border/80 px-5 py-4 sm:border-e sm:border-b-0">
+                <span
+                  class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-bg text-brand-primary"
+                >
+                  <UserRound class="h-4 w-4" :stroke-width="1.75" />
+                </span>
+                <div class="min-w-0">
+                  <dt class="text-xs font-semibold text-brand-text-muted">
+                    {{ t('tasks.fields.createdBy') }}
+                  </dt>
+                  <dd class="mt-1 text-sm font-semibold text-brand-text">
+                    {{ task.created_by?.name ?? '—' }}
+                  </dd>
+                </div>
+              </div>
+
+              <div class="flex gap-3 px-5 py-4">
+                <span
+                  class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-bg text-brand-primary"
+                >
+                  <Link2 class="h-4 w-4" :stroke-width="1.75" />
+                </span>
+                <div class="min-w-0">
+                  <dt class="text-xs font-semibold text-brand-text-muted">
+                    {{ t('tasks.sections.source') }}
+                  </dt>
+                  <dd v-if="!task.decision" class="mt-1 text-sm font-semibold text-brand-text">
+                    {{ t('tasks.standaloneSource') }}
+                  </dd>
+                  <dd v-else class="mt-1">
+                    <RouterLink
+                      :to="`/app/decisions/${task.decision.id}`"
+                      class="text-sm font-semibold text-brand-primary-dark hover:underline"
+                    >
+                      {{ task.decision.decision_number }} — {{ task.decision.title }}
+                    </RouterLink>
+                  </dd>
+                </div>
+              </div>
+            </dl>
+          </section>
+
+          <section
+            v-if="task.description"
+            class="rounded-2xl border border-brand-border bg-brand-surface"
+          >
+            <header class="flex items-center gap-2 border-b border-brand-border px-5 py-4">
+              <FileText class="h-4 w-4 text-brand-primary" :stroke-width="1.75" />
+              <h3 class="text-sm font-bold text-brand-text">{{ t('tasks.fields.description') }}</h3>
+            </header>
+            <p class="whitespace-pre-wrap px-5 py-4 text-sm leading-relaxed text-brand-text">
+              {{ task.description }}
+            </p>
+          </section>
+
+          <section
+            v-if="task.notes"
+            class="rounded-2xl border border-brand-border bg-brand-surface"
+          >
+            <header class="flex items-center gap-2 border-b border-brand-border px-5 py-4">
+              <FileText class="h-4 w-4 text-brand-primary" :stroke-width="1.75" />
+              <h3 class="text-sm font-bold text-brand-text">{{ t('tasks.fields.notes') }}</h3>
+            </header>
+            <p class="whitespace-pre-wrap px-5 py-4 text-sm leading-relaxed text-brand-text-secondary">
+              {{ task.notes }}
+            </p>
+          </section>
+
+          <section
+            v-if="task.status === 'completed'"
+            class="rounded-2xl border border-brand-border bg-brand-surface"
+          >
+            <header class="flex items-center gap-2 border-b border-brand-border px-5 py-4">
+              <FileText class="h-4 w-4 text-brand-primary" :stroke-width="1.75" />
+              <h3 class="text-sm font-bold text-brand-text">{{ t('tasks.sections.outcome') }}</h3>
+            </header>
+            <div class="space-y-3 px-5 py-4">
+              <div>
+                <p class="text-xs font-semibold text-brand-text-muted">
+                  {{ t('tasks.fields.completedAt') }}
+                </p>
+                <p class="mt-1 text-sm font-semibold text-brand-text" dir="ltr">
+                  {{ task.completed_at ?? '—' }}
+                </p>
+              </div>
+              <div v-if="task.completion_notes">
+                <p class="text-xs font-semibold text-brand-text-muted">
+                  {{ t('tasks.fields.completionNotes') }}
+                </p>
+                <p class="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-brand-text">
+                  {{ task.completion_notes }}
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <TaskTimeline
+            :transitions="task.status_transitions ?? []"
+            :assignments="task.assignment_history ?? []"
+          />
+
+          <EntityDocumentsSection
+            linkable-type="task"
+            :linkable-id="task.id"
+            :link-label="`${task.task_number} — ${task.title}`"
+          />
+        </div>
+
+        <aside class="space-y-5 xl:sticky xl:top-4 xl:self-start">
+          <section class="rounded-2xl border border-brand-border bg-brand-surface">
+            <header class="border-b border-brand-border px-5 py-4">
+              <h3 class="text-sm font-bold text-brand-text">{{ t('tasks.lifecycleTitle') }}</h3>
+              <p class="mt-1 text-xs text-brand-text-secondary">
+                {{ t('tasks.lifecycleHint') }}
+              </p>
+            </header>
+            <div class="px-4 py-4">
+              <TaskLifecycleActions
+                :task="task"
+                :linked-employee-id="linkedEmployeeId"
+                @refreshed="onRefreshed"
+              />
+            </div>
+          </section>
+        </aside>
       </div>
-
-      <section>
-        <h3 class="mb-3 font-bold">{{ t('tasks.sections.overview') }}</h3>
-        <div class="grid gap-4 md:grid-cols-3">
-          <div v-for="item in [
-            { label: 'startDate', value: task.start_date },
-            { label: 'dueDate', value: task.due_date },
-            { label: 'progressPercent', value: `${task.progress_percent}%` },
-            { label: 'organizationUnit', value: task.organization_unit?.name },
-            { label: 'assignee', value: task.assigned_to_employee?.full_name },
-            { label: 'createdBy', value: task.created_by?.name },
-          ]" :key="item.label" class="rounded-2xl border border-brand-border bg-brand-surface p-4">
-            <p class="text-xs text-brand-text-muted">{{ t(`tasks.fields.${item.label}`) }}</p>
-            <p class="mt-1 font-semibold">{{ item.value ?? '—' }}</p>
-          </div>
-        </div>
-        <div class="mt-4 rounded-2xl border p-4">
-          <p class="text-xs text-brand-text-muted">{{ t('tasks.fields.description') }}</p>
-          <p class="mt-2 whitespace-pre-wrap">{{ task.description || '—' }}</p>
-          <p v-if="task.notes" class="mt-3 whitespace-pre-wrap text-sm text-brand-text-secondary">{{ task.notes }}</p>
-        </div>
-      </section>
-
-      <section class="rounded-2xl border p-5">
-        <h3 class="font-bold">{{ t('tasks.sections.source') }}</h3>
-        <p v-if="!task.decision" class="mt-2 text-sm">{{ t('tasks.standaloneSource') }}</p>
-        <RouterLink v-else :to="`/app/decisions/${task.decision.id}`" class="mt-2 inline-block text-sm text-brand-primary-dark underline">{{ task.decision.decision_number }} — {{ task.decision.title }}</RouterLink>
-      </section>
-
-      <section v-if="task.status === 'completed'" class="rounded-2xl border p-5">
-        <h3 class="font-bold">{{ t('tasks.sections.outcome') }}</h3>
-        <p class="mt-2 text-sm text-brand-text-muted">{{ t('tasks.fields.completedAt') }}: {{ task.completed_at ?? '—' }}</p>
-        <p class="mt-2 whitespace-pre-wrap">{{ task.completion_notes }}</p>
-      </section>
-
-      <section class="rounded-2xl border p-5">
-        <h3 class="mb-3 font-bold">{{ t('tasks.lifecycleTitle') }}</h3>
-        <TaskLifecycleActions :task="task" :linked-employee-id="linkedEmployeeId" @refreshed="() => refetch()" />
-      </section>
-
-      <TaskTimeline :transitions="task.status_transitions ?? []" :assignments="task.assignment_history ?? []" />
-
-      <EntityDocumentsSection
-        linkable-type="task"
-        :linkable-id="task.id"
-        :link-label="`${task.task_number} — ${task.title}`"
-      />
     </template>
 
-    <TaskFormDrawer :open="open" :editing="task" :form="form" :form-error="error" :field-errors="errors" :submitting="update.isPending.value" :employee-options="employeeOptions" :org-unit-options="orgOptions" :decision-options="decisionOptions" @close="open = false" @submit="save" @update:form="Object.assign(form, $event)" />
+    <TaskFormDrawer
+      :open="open"
+      :editing="task"
+      :form="form"
+      :form-error="error"
+      :field-errors="errors"
+      :submitting="isFormSubmitting"
+      :org-unit-options="orgOptions"
+      @close="open = false"
+      @submit="save"
+      @update:form="assignForm"
+    />
   </div>
 </template>

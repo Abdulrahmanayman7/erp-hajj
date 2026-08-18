@@ -245,12 +245,12 @@ function actionButtonClass(action: MeetingLifecycleAction): string {
 
 <template>
   <div class="space-y-3">
-    <div class="flex flex-wrap items-center gap-2">
+    <div class="flex flex-col gap-2">
       <button
         v-for="item in actions"
         :key="item.action"
         type="button"
-        class="inline-flex h-10 items-center justify-center gap-2 rounded-xl border px-4 text-sm font-semibold transition disabled:opacity-50"
+        class="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border px-4 text-sm font-semibold transition disabled:opacity-50 xl:justify-start"
         :class="actionButtonClass(item.action)"
         :disabled="isPending"
         @click="handleAction(item.action)"
@@ -262,7 +262,7 @@ function actionButtonClass(action: MeetingLifecycleAction): string {
       <PermissionGuard v-if="canDelete" permission="meetings.update">
         <button
           type="button"
-          class="inline-flex h-10 items-center justify-center rounded-xl border border-red-200 bg-white px-4 text-sm font-semibold text-red-700 transition hover:bg-red-50 disabled:opacity-50"
+          class="inline-flex h-10 w-full items-center justify-center rounded-xl border border-red-200 bg-white px-4 text-sm font-semibold text-red-700 transition hover:bg-red-50 disabled:opacity-50 xl:justify-start"
           :disabled="isPending"
           @click="handleDelete"
         >

@@ -18,6 +18,9 @@ use Illuminate\Support\Facades\Cache;
  */
 class TenantCache
 {
+    /** @var array<int, int> */
+    private array $versions = [];
+
     public function __construct(private readonly TenantContext $context) {}
 
     /**
@@ -62,13 +65,19 @@ class TenantCache
     public function flush(): void
     {
         $tenantId = $this->context->require()->id;
+        $next = $this->version($tenantId) + 1;
 
-        Cache::forever($this->versionKey($tenantId), $this->version($tenantId) + 1);
+        Cache::forever($this->versionKey($tenantId), $next);
+        $this->versions[$tenantId] = $next;
     }
 
     private function version(int $tenantId): int
     {
-        return (int) Cache::get($this->versionKey($tenantId), 1);
+        if (! array_key_exists($tenantId, $this->versions)) {
+            $this->versions[$tenantId] = (int) Cache::get($this->versionKey($tenantId), 1);
+        }
+
+        return $this->versions[$tenantId];
     }
 
     private function versionKey(int $tenantId): string

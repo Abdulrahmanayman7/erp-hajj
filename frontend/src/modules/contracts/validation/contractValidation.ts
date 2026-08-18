@@ -158,25 +158,50 @@ export function availableLifecycleActions(
 export function contractStatusBadgeClass(status: ContractStatus): string {
   switch (status) {
     case 'draft':
-      return 'bg-neutral-100 text-neutral-700 ring-1 ring-neutral-200/80'
+      return 'bg-slate-100 text-slate-800 ring-1 ring-inset ring-slate-300/80'
     case 'in_review':
-      return 'bg-amber-50 text-amber-900 ring-1 ring-amber-200/70'
+      return 'bg-amber-100 text-amber-950 ring-1 ring-inset ring-amber-300/80'
     case 'approved':
-      return 'bg-sky-50 text-sky-900 ring-1 ring-sky-200/70'
+      return 'bg-sky-100 text-sky-950 ring-1 ring-inset ring-sky-300/80'
     case 'signed':
-      return 'bg-indigo-50 text-indigo-900 ring-1 ring-indigo-200/70'
+      return 'bg-violet-100 text-violet-950 ring-1 ring-inset ring-violet-300/80'
     case 'executing':
-      return 'bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200/70'
+      return 'bg-emerald-100 text-emerald-950 ring-1 ring-inset ring-emerald-300/80'
     case 'closed':
-      return 'bg-slate-100 text-slate-700 ring-1 ring-slate-200/80'
+      return 'bg-slate-200/80 text-slate-800 ring-1 ring-inset ring-slate-400/50'
     case 'renewed':
-      return 'bg-teal-50 text-teal-900 ring-1 ring-teal-200/70'
+      return 'bg-teal-100 text-teal-950 ring-1 ring-inset ring-teal-300/80'
     case 'expired':
-      return 'bg-orange-50 text-orange-900 ring-1 ring-orange-200/70'
+      return 'bg-orange-100 text-orange-950 ring-1 ring-inset ring-orange-300/80'
     case 'cancelled':
-      return 'bg-red-50 text-red-800 ring-1 ring-red-200/70'
+      return 'bg-red-100 text-red-950 ring-1 ring-inset ring-red-300/80'
     default:
-      return 'bg-neutral-100 text-neutral-600 ring-1 ring-neutral-200/80'
+      return 'bg-neutral-100 text-neutral-700 ring-1 ring-inset ring-neutral-300/80'
+  }
+}
+
+export function contractStatusDotClass(status: ContractStatus): string {
+  switch (status) {
+    case 'draft':
+      return 'bg-slate-500'
+    case 'in_review':
+      return 'bg-amber-500'
+    case 'approved':
+      return 'bg-sky-500'
+    case 'signed':
+      return 'bg-violet-500'
+    case 'executing':
+      return 'bg-emerald-500'
+    case 'closed':
+      return 'bg-slate-600'
+    case 'renewed':
+      return 'bg-teal-500'
+    case 'expired':
+      return 'bg-orange-500'
+    case 'cancelled':
+      return 'bg-red-500'
+    default:
+      return 'bg-neutral-400'
   }
 }
 

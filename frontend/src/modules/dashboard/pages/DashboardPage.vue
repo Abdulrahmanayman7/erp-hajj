@@ -6,6 +6,7 @@ import { RouterLink } from 'vue-router'
 import { Bell, RefreshCw } from 'lucide-vue-next'
 
 import { useCurrentUserQuery } from '@/modules/auth/queries/useCurrentUserQuery'
+import { useToast } from '@/shared/composables/useToast'
 
 import DashboardAttention from '../components/DashboardAttention.vue'
 import DashboardKpiGrid from '../components/DashboardKpiGrid.vue'
@@ -16,14 +17,25 @@ import {
   dashboardQueryKey,
   useDashboardQuery,
 } from '../queries/useDashboardQuery'
+import type {
+  DashboardKpis,
+  DashboardResources as DashboardResourcesPayload,
+  DashboardToday as DashboardTodayPayload,
+  DashboardWork as DashboardWorkPayload,
+} from '../types/dashboard'
 import {
+  asSparseRecord,
   formatDashboardDate,
+  formatDashboardGeneratedAt,
+  friendlyTimezone,
+  hasWorkMetrics,
   isOperationallyEmpty,
   isSafeAppHref,
 } from '../utils/dashboardDisplay'
 
 const { t } = useI18n()
 const queryClient = useQueryClient()
+const toast = useToast()
 const { data: user } = useCurrentUserQuery()
 const { data, isLoading, isError, isFetching } = useDashboardQuery()
 
@@ -31,6 +43,10 @@ const timezone = computed(
   () => data.value?.meta?.timezone ?? user.value?.tenant?.timezone ?? 'Asia/Riyadh',
 )
 const todayLabel = computed(() => formatDashboardDate(timezone.value))
+const generatedAtLabel = computed(() =>
+  formatDashboardGeneratedAt(data.value?.meta?.generated_at, timezone.value),
+)
+const timezoneLabel = computed(() => friendlyTimezone(timezone.value))
 const tenantName = computed(() => user.value?.tenant?.name ?? null)
 
 const notifications = computed(() => data.value?.notifications)
@@ -45,12 +61,12 @@ const showEmptyModules = computed(() => {
   return isOperationallyEmpty(data.value)
 })
 
-const showAttention = computed(() => data.value?.attention !== undefined)
-const showToday = computed(() => data.value?.today != null)
-const showWork = computed(() => data.value?.work?.my_tasks != null)
+const showAttention = computed(() => Array.isArray(data.value?.attention))
+const showToday = computed(() => asSparseRecord<DashboardTodayPayload>(data.value?.today) != null)
+const showWork = computed(() => hasWorkMetrics(data.value?.kpis, data.value?.work))
 const showResources = computed(() => {
-  const kpis = data.value?.kpis
-  const resources = data.value?.resources
+  const kpis = asSparseRecord<DashboardKpis>(data.value?.kpis)
+  const resources = asSparseRecord<DashboardResourcesPayload>(data.value?.resources)
   if (resources?.my_custodies) return true
   if (!kpis) return false
   return Boolean(
@@ -62,15 +78,23 @@ const showResources = computed(() => {
       kpis.custodies_due_soon,
   )
 })
+const workPayload = computed(() => asSparseRecord<DashboardWorkPayload>(data.value?.work))
+const todayPayload = computed(() => asSparseRecord<DashboardTodayPayload>(data.value?.today))
+const resourcesPayload = computed(() => asSparseRecord<DashboardResourcesPayload>(data.value?.resources))
+const kpisPayload = computed(() => asSparseRecord<DashboardKpis>(data.value?.kpis) ?? {})
 
 async function onRefresh(): Promise<void> {
-  await queryClient.invalidateQueries({ queryKey: dashboardQueryKey })
+  try {
+    await queryClient.refetchQueries({ queryKey: dashboardQueryKey })
+  } catch {
+    toast.error(t('dashboard.refreshError'))
+  }
 }
 </script>
 
 <template>
-  <div class="space-y-6">
-    <div class="flex flex-wrap items-end justify-between gap-4">
+  <div class="mx-auto max-w-[1280px] space-y-5">
+    <div class="flex flex-wrap items-end justify-between gap-4 border-b border-brand-border pb-5">
       <div>
         <h2 class="text-[1.75rem] font-bold text-brand-text">
           {{ t('dashboard.title') }}
@@ -78,13 +102,16 @@ async function onRefresh(): Promise<void> {
         <p class="mt-1.5 text-sm text-brand-text-secondary">
           {{ t('dashboard.subtitle') }}
         </p>
-        <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-brand-text-muted">
+        <div class="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-brand-text-muted">
           <span v-if="tenantName">{{ tenantName }}</span>
+          <span v-if="tenantName" aria-hidden="true">·</span>
           <span>{{ todayLabel }}</span>
+          <span aria-hidden="true">·</span>
+          <span>{{ t('dashboard.timezoneAt', { timezone: timezoneLabel }) }}</span>
         </div>
       </div>
 
-      <div class="flex flex-wrap items-center gap-3">
+      <div class="flex flex-wrap items-center gap-2.5">
         <RouterLink
           v-if="notifications && unreadCount > 0"
           :to="notificationsHref"
@@ -94,9 +121,13 @@ async function onRefresh(): Promise<void> {
           <span>{{ t('dashboard.unreadChip', { count: unreadCount }) }}</span>
         </RouterLink>
 
-        <button
+        <div class="flex items-center gap-2 rounded-xl border border-brand-border bg-brand-surface px-2 py-1.5">
+          <span class="hidden text-xs text-brand-text-muted sm:inline">
+            {{ t('dashboard.lastUpdated', { time: generatedAtLabel }) }}
+          </span>
+          <button
           type="button"
-          class="inline-flex items-center gap-2 rounded-xl border border-brand-border bg-brand-surface px-3.5 py-2 text-sm font-semibold text-brand-text transition hover:border-brand-primary/30 hover:bg-brand-primary-soft/40 disabled:opacity-60"
+          class="inline-flex h-8 items-center gap-1.5 rounded-lg px-2 text-sm font-semibold text-brand-text transition hover:bg-brand-bg disabled:opacity-60"
           :disabled="isFetching"
           :aria-label="t('dashboard.refresh')"
           @click="onRefresh"
@@ -107,7 +138,8 @@ async function onRefresh(): Promise<void> {
             :stroke-width="1.75"
           />
           <span>{{ t('dashboard.refresh') }}</span>
-        </button>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -116,22 +148,22 @@ async function onRefresh(): Promise<void> {
       class="space-y-6"
       aria-busy="true"
     >
-      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
         <div
           v-for="n in 6"
           :key="n"
-          class="h-28 animate-pulse rounded-2xl border border-brand-border bg-[#F4F6F5]"
+          class="h-32 animate-pulse rounded-2xl border border-brand-border bg-brand-bg"
         />
       </div>
       <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
-        <div class="h-48 animate-pulse rounded-2xl border border-brand-border bg-[#F4F6F5]" />
-        <div class="h-48 animate-pulse rounded-2xl border border-brand-border bg-[#F4F6F5]" />
+        <div v-for="n in 4" :key="n" class="h-52 animate-pulse rounded-2xl border border-brand-border bg-brand-bg" />
       </div>
     </div>
 
     <div
       v-else-if="isError"
-      class="rounded-2xl border border-red-200 bg-red-50 p-10 text-center"
+        class="rounded-2xl border border-red-200 bg-red-50 p-10 text-center"
+        role="alert"
     >
       <p class="text-sm text-red-700">
         {{ t('dashboard.loadError') }}
@@ -154,16 +186,16 @@ async function onRefresh(): Promise<void> {
       </div>
 
       <template v-else>
-        <DashboardKpiGrid :kpis="data.kpis" />
+        <DashboardKpiGrid :kpis="kpisPayload" />
 
         <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
           <DashboardAttention
             v-if="showAttention"
-            :items="data.attention"
+            :items="data.attention ?? []"
           />
           <DashboardToday
             v-if="showToday"
-            :today="data.today"
+            :today="todayPayload"
             :timezone="timezone"
           />
         </div>
@@ -171,12 +203,13 @@ async function onRefresh(): Promise<void> {
         <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
           <DashboardWork
             v-if="showWork"
-            :work="data.work"
+            :work="workPayload"
+            :kpis="kpisPayload"
           />
           <DashboardResources
             v-if="showResources"
-            :kpis="data.kpis"
-            :resources="data.resources"
+            :kpis="kpisPayload"
+            :resources="resourcesPayload"
           />
         </div>
       </template>

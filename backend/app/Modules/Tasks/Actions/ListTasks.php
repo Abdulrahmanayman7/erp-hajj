@@ -8,7 +8,6 @@ use App\Modules\Tasks\Enums\TaskStatus;
 use App\Modules\Tasks\Models\Task;
 use App\Modules\Tasks\Support\TaskReferenceValidator;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\DB;
 
 final class ListTasks
 {
@@ -78,10 +77,10 @@ final class ListTasks
         }
 
         if (! empty($filters['due_date_from'])) {
-            $query->whereDate('due_date', '>=', (string) $filters['due_date_from']);
+            $query->where('due_date', '>=', (string) $filters['due_date_from']);
         }
         if (! empty($filters['due_date_to'])) {
-            $query->whereDate('due_date', '<=', (string) $filters['due_date_to']);
+            $query->where('due_date', '<=', (string) $filters['due_date_to']);
         }
 
         $overdue = $filters['overdue'] ?? null;
@@ -93,7 +92,7 @@ final class ListTasks
             );
             $query->whereIn('status', $open)
                 ->whereNotNull('due_date')
-                ->whereDate('due_date', '<', $today);
+                ->where('due_date', '<', $today);
         }
 
         $sort = $filters['sort'] ?? null;
@@ -106,24 +105,13 @@ final class ListTasks
                 TaskStatus::openStatuses(),
             ))."'";
 
-            $driver = DB::getDriverName();
-            if ($driver === 'sqlite') {
-                $query->orderByRaw(
-                    "CASE WHEN due_date IS NOT NULL AND date(due_date) < date(?) AND status IN ({$openList}) THEN 0 ELSE 1 END",
-                    [$today],
-                );
-                $query->orderByRaw('CASE WHEN due_date IS NULL THEN 1 ELSE 0 END');
-                $query->orderBy('due_date', 'asc');
-                $query->orderBy('id', 'desc');
-            } else {
-                $query->orderByRaw(
-                    "CASE WHEN due_date IS NOT NULL AND DATE(due_date) < ? AND status IN ({$openList}) THEN 0 ELSE 1 END",
-                    [$today],
-                );
-                $query->orderByRaw('CASE WHEN due_date IS NULL THEN 1 ELSE 0 END');
-                $query->orderBy('due_date', 'asc');
-                $query->orderBy('id', 'desc');
-            }
+            $query->orderByRaw(
+                "CASE WHEN due_date IS NOT NULL AND due_date < ? AND status IN ({$openList}) THEN 0 ELSE 1 END",
+                [$today],
+            );
+            $query->orderByRaw('CASE WHEN due_date IS NULL THEN 1 ELSE 0 END');
+            $query->orderBy('due_date', 'asc');
+            $query->orderBy('id', 'desc');
         }
 
         $perPage = (int) ($filters['per_page'] ?? 15);

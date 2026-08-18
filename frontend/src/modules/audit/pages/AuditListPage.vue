@@ -12,6 +12,7 @@ import {
 } from '../utils/auditDisplay'
 import type { ListAuditLogsParams } from '../types/audit'
 import { useCurrentUserQuery } from '@/modules/auth/queries/useCurrentUserQuery'
+import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -31,7 +32,8 @@ const filters = reactive<ListAuditLogsParams>({
   per_page: 20,
 })
 
-const queryParams = computed(() => ({ ...filters }))
+const committedSearch = useDebouncedRef(() => filters.search)
+const queryParams = computed(() => ({ ...filters, search: committedSearch.value }))
 const { data, isLoading, isError, refetch, isFetching } = useAuditLogsQuery(queryParams)
 
 const rows = computed(() => data.value?.data ?? [])
@@ -39,7 +41,7 @@ const meta = computed(() => data.value?.meta)
 
 watch(
   () => [
-    filters.search,
+    committedSearch.value,
     filters.event_type,
     filters.actor_user_id,
     filters.entity_type,

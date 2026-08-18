@@ -47,6 +47,14 @@ test('forget removes only the tenant-namespaced key', function (): void {
         ->and(withTenant($this->tenantB, fn (): mixed => $this->cache->get('to-forget')))->toBe('y');
 });
 
+test('repeated key generation reuses the in-request tenant version', function (): void {
+    $first = withTenant($this->tenantA, fn (): string => $this->cache->key('one'));
+    $second = withTenant($this->tenantA, fn (): string => $this->cache->key('two'));
+
+    expect($first)->toBe("tenant:{$this->tenantA->id}:v1:one")
+        ->and($second)->toBe("tenant:{$this->tenantA->id}:v1:two");
+});
+
 test('flush invalidates the whole tenant namespace without touching other namespaces', function (): void {
     withTenant($this->tenantA, function (): void {
         $this->cache->put('k1', 'a1', 60);
