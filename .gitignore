@@ -18,5 +18,9 @@ desktop.ini
 
 node_modules/
 **/node_modules/
+
+# Standalone frontend demo (own Git repository)
+erp-hajj-mvp-demo/
+
 # Backend and frontend will add their own ignores when scaffolded
 backend/erp_hajj_perf
