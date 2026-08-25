@@ -5,6 +5,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ArrowRight, Check, Loader2, Search, ShieldAlert } from 'lucide-vue-next'
 
 import { ApiError } from '@/shared/api/http'
+import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import { useToast } from '@/shared/composables/useToast'
 
@@ -64,6 +65,10 @@ const selectedCount = computed(() => selected.value.length)
 const canSave = computed(() => can('roles.assign_permissions'))
 const isSaving = computed(() => syncMutation.isPending.value)
 const hasModules = computed(() => (modules.value?.length ?? 0) > 0)
+const headerMeta = computed(() => {
+  if (!role.value) return undefined
+  return t('roles.matrix.selected', { count: selectedCount.value })
+})
 
 function isSelected(id: number): boolean {
   return selected.value.includes(id)
@@ -128,34 +133,15 @@ async function save(): Promise<void> {
 
 <template>
   <div class="space-y-6">
-    <div class="flex flex-wrap items-end justify-between gap-4">
-      <div class="min-w-0">
-        <h2 class="text-[1.75rem] font-bold leading-tight text-brand-text">
-          {{ t('roles.matrix.title') }}
-        </h2>
-        <p class="mt-1.5 text-sm text-brand-text-secondary">
-          {{ t('roles.matrix.subtitle') }}
-        </p>
-
-        <div class="mt-3 flex flex-wrap items-center gap-2">
-          <span
-            v-if="role"
-            class="inline-flex items-center rounded-full bg-brand-primary-soft px-2.5 py-0.5 text-xs font-semibold text-brand-primary-dark"
-          >
-            {{ role.name }}
-          </span>
-          <span
-            class="inline-flex items-center rounded-full bg-brand-bg px-2.5 py-0.5 text-xs font-semibold text-brand-text-secondary ring-1 ring-brand-border"
-          >
-            {{ t('roles.matrix.selected', { count: selectedCount }) }}
-          </span>
-        </div>
-      </div>
-
-      <div class="flex flex-wrap items-center gap-2.5">
+    <AppPageHeader
+      :title="role ? `${t('roles.matrix.title')} — ${role.name}` : t('roles.matrix.title')"
+      :subtitle="t('roles.matrix.subtitle')"
+      :meta="headerMeta"
+    >
+      <template #actions>
         <button
           type="button"
-          class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-brand-border bg-brand-surface px-4 text-sm font-semibold text-brand-text transition hover:bg-brand-bg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/20"
+          class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-brand-border bg-brand-surface px-4 text-sm font-semibold text-brand-text transition hover:bg-brand-bg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/20 sm:w-auto"
           @click="router.push('/app/roles')"
         >
           <ArrowRight class="h-4 w-4" :stroke-width="2" />
@@ -165,7 +151,7 @@ async function save(): Promise<void> {
         <button
           v-if="canSave"
           type="button"
-          class="inline-flex h-11 min-w-[9rem] items-center justify-center gap-2 rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white transition hover:bg-brand-primary disabled:cursor-not-allowed disabled:opacity-60"
+          class="hidden h-11 min-w-[9rem] items-center justify-center gap-2 rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white transition hover:bg-brand-primary disabled:cursor-not-allowed disabled:opacity-60 sm:inline-flex"
           :disabled="isSaving"
           @click="save"
         >
@@ -177,8 +163,8 @@ async function save(): Promise<void> {
           />
           <span>{{ isSaving ? t('roles.matrix.saving') : t('roles.matrix.save') }}</span>
         </button>
-      </div>
-    </div>
+      </template>
+    </AppPageHeader>
 
     <div
       class="flex flex-wrap items-center gap-3 rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)]"
@@ -255,7 +241,7 @@ async function save(): Promise<void> {
           <button
             v-if="canSave"
             type="button"
-            class="inline-flex h-9 items-center rounded-lg border border-brand-border bg-brand-surface px-3 text-xs font-semibold text-brand-primary-dark transition hover:bg-brand-primary-soft"
+            class="inline-flex h-11 min-h-[44px] items-center rounded-lg border border-brand-border bg-brand-surface px-3 text-xs font-semibold text-brand-primary-dark transition hover:bg-brand-primary-soft"
             @click="toggleModule(group.module)"
           >
             {{
@@ -328,6 +314,28 @@ async function save(): Promise<void> {
           </button>
         </div>
       </section>
+    </div>
+
+    <div
+      v-if="canSave && hasModules && !roleLoading && !catalogLoading"
+      class="app-sticky-form-actions sm:hidden"
+    >
+      <div class="app-sticky-form-actions__inner">
+        <button
+          type="button"
+          class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white transition hover:bg-brand-primary disabled:cursor-not-allowed disabled:opacity-60"
+          :disabled="isSaving"
+          @click="save"
+        >
+          <Loader2
+            v-if="isSaving"
+            class="h-4 w-4 animate-spin"
+            :stroke-width="2.25"
+            aria-hidden="true"
+          />
+          <span>{{ isSaving ? t('roles.matrix.saving') : t('roles.matrix.save') }}</span>
+        </button>
+      </div>
     </div>
   </div>
 </template>

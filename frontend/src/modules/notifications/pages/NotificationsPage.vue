@@ -4,6 +4,8 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { CheckCheck, ChevronLeft, ChevronRight } from 'lucide-vue-next'
 
+import AppMobileFilters from '@/shared/components/AppMobileFilters.vue'
+import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 import { useToast } from '@/shared/composables/useToast'
 
@@ -73,6 +75,20 @@ const severityOptions = computed<AppSelectOption[]>(() => [
   })),
 ])
 
+const activeFilterCount = computed(() => {
+  let count = 0
+  if (filters.unread_only) count += 1
+  if (filters.type) count += 1
+  if (filters.severity) count += 1
+  return count
+})
+
+function resetFilters(): void {
+  filters.unread_only = false
+  filters.type = ''
+  filters.severity = ''
+}
+
 watch(
   () => [filters.unread_only, filters.type, filters.severity],
   () => {
@@ -117,44 +133,58 @@ async function onMarkAll(): Promise<void> {
 
 <template>
   <div class="space-y-6">
-    <div class="flex flex-wrap items-end justify-between gap-4">
-      <div class="min-w-0">
-        <h2 class="text-[1.75rem] font-bold leading-tight text-brand-text">
-          {{ t('notifications.title') }}
-        </h2>
-        <p class="mt-1.5 text-sm text-brand-text-secondary">
-          {{ t('notifications.subtitle') }}
-          <span
-            v-if="unreadCount > 0"
-            class="ms-2 inline-flex items-center rounded-full bg-brand-primary-soft px-2.5 py-0.5 text-xs font-semibold text-brand-primary-dark"
-          >
-            {{ t('notifications.unreadCount', { count: unreadCount }) }}
-          </span>
-        </p>
-      </div>
-      <button
-        type="button"
-        class="inline-flex h-11 items-center gap-2 rounded-xl border border-brand-border bg-brand-surface px-4 text-sm font-semibold text-brand-primary-dark transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
-        :disabled="unreadCount <= 0 || markAll.isPending.value"
-        @click="onMarkAll"
-      >
-        <CheckCheck class="h-4 w-4" :stroke-width="2" />
-        {{ t('notifications.markAllRead') }}
-      </button>
-    </div>
-
-    <div
-      class="flex flex-wrap items-center gap-3 rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)]"
+    <AppPageHeader
+      :title="t('notifications.title')"
+      :subtitle="t('notifications.subtitle')"
+      :meta="unreadCount > 0 ? t('notifications.unreadCount', { count: unreadCount }) : undefined"
     >
-      <label
-        class="inline-flex h-11 cursor-pointer items-center gap-2 rounded-xl border border-brand-border px-3 text-sm font-semibold text-brand-text-secondary"
-      >
-        <input v-model="filters.unread_only" type="checkbox" class="h-4 w-4 accent-[#064E3B]" />
-        {{ t('notifications.filters.unreadOnly') }}
-      </label>
-      <AppSelect v-model="filters.type" :options="typeOptions" class="min-w-[12rem]" />
-      <AppSelect v-model="filters.severity" :options="severityOptions" class="min-w-[10rem]" />
-    </div>
+      <template #actions>
+        <button
+          type="button"
+          class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-brand-border bg-brand-surface px-4 text-sm font-semibold text-brand-primary-dark transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
+          :disabled="unreadCount <= 0 || markAll.isPending.value"
+          @click="onMarkAll"
+        >
+          <CheckCheck class="h-4 w-4" :stroke-width="2" />
+          <span>{{ t('notifications.markAllRead') }}</span>
+        </button>
+      </template>
+    </AppPageHeader>
+
+    <AppMobileFilters
+      search=""
+      search-placeholder=""
+      :show-search="false"
+      :active-count="activeFilterCount"
+      @reset="resetFilters"
+    >
+      <template #desktop>
+        <div
+          class="flex flex-wrap items-center gap-3 rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)]"
+        >
+          <label
+            class="inline-flex h-11 cursor-pointer items-center gap-2 rounded-xl border border-brand-border px-3 text-sm font-semibold text-brand-text-secondary"
+          >
+            <input v-model="filters.unread_only" type="checkbox" class="h-4 w-4 accent-[#064E3B]" />
+            {{ t('notifications.filters.unreadOnly') }}
+          </label>
+          <AppSelect v-model="filters.type" :options="typeOptions" class="min-w-[12rem]" />
+          <AppSelect v-model="filters.severity" :options="severityOptions" class="min-w-[10rem]" />
+        </div>
+      </template>
+      <template #filters>
+        <div class="space-y-3">
+          <label
+            class="inline-flex h-11 w-full cursor-pointer items-center gap-2 rounded-xl border border-brand-border px-3 text-sm font-semibold text-brand-text"
+          >
+            <input v-model="filters.unread_only" type="checkbox" class="h-4 w-4 accent-[#064E3B]" />
+            {{ t('notifications.filters.unreadOnly') }}
+          </label>
+          <AppSelect v-model="filters.type" :options="typeOptions" />
+          <AppSelect v-model="filters.severity" :options="severityOptions" />
+        </div>
+      </template>
+    </AppMobileFilters>
 
     <div v-if="isLoading" class="rounded-2xl border border-brand-border bg-brand-surface p-10 text-center text-sm text-brand-text-secondary">
       {{ t('notifications.loading') }}

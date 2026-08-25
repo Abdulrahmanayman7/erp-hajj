@@ -15,6 +15,8 @@ import {
 
 import { listWarehouses } from '../api/warehousesApi'
 import { ApiError } from '@/shared/api/http'
+import AppMobileFilters from '@/shared/components/AppMobileFilters.vue'
+import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 import { toSelectId, warehouseSelectOption } from '@/shared/lookups/selectOptions'
@@ -95,6 +97,21 @@ const stockStateOptions = computed<AppSelectOption[]>(() => [
   { value: 'low', label: t('inventory.stockState.low') },
   { value: 'out_of_stock', label: t('inventory.stockState.out_of_stock') },
 ])
+
+const activeFilterCount = computed(() => {
+  let count = 0
+  if (filters.warehouse_id !== '') count += 1
+  if (filters.category_id !== '') count += 1
+  if (filters.stock_state !== '') count += 1
+  return count
+})
+
+function resetFilters(): void {
+  filters.warehouse_id = ''
+  filters.category_id = ''
+  filters.stock_state = ''
+  filters.search = ''
+}
 
 watch(
   () => [committedSearch.value, filters.warehouse_id, filters.category_id, filters.stock_state],
@@ -216,129 +233,139 @@ async function submitAction(): Promise<void> {
 
 <template>
   <div class="space-y-6">
-    <div
-      class="flex flex-wrap items-end justify-between gap-4 rounded-2xl border border-brand-border bg-brand-surface px-5 py-5 shadow-[0_1px_2px_rgba(23,32,29,0.03)]"
+    <AppPageHeader
+      :title="t('inventory.balances.title')"
+      :subtitle="t('inventory.balances.subtitle')"
+      :meta="meta ? t('inventory.balances.total', { count: meta.total }) : undefined"
     >
-      <div class="min-w-0">
-        <h2 class="text-[1.75rem] font-bold leading-tight text-brand-text">
-          {{ t('inventory.balances.title') }}
-        </h2>
-        <p class="mt-1.5 text-sm text-brand-text-secondary">
-          {{ t('inventory.balances.subtitle') }}
-        </p>
-        <p v-if="meta" class="mt-2">
-          <span
-            class="inline-flex items-center rounded-full bg-brand-primary-soft px-2.5 py-0.5 text-xs font-semibold text-brand-primary-dark"
-          >
-            {{ t('inventory.balances.total', { count: meta.total }) }}
-          </span>
-        </p>
-        <div class="mt-3 flex flex-wrap gap-2">
-          <RouterLink
-            to="/app/inventory/items"
-            class="inline-flex h-9 items-center rounded-xl border border-brand-border bg-brand-bg px-3 text-sm font-semibold text-brand-text transition hover:border-brand-primary/30 hover:bg-brand-primary-soft hover:text-brand-primary-dark"
-          >
-            {{ t('inventory.nav.items') }}
-          </RouterLink>
-          <RouterLink
-            to="/app/inventory/movements"
-            class="inline-flex h-9 items-center rounded-xl border border-brand-border bg-brand-bg px-3 text-sm font-semibold text-brand-text transition hover:border-brand-primary/30 hover:bg-brand-primary-soft hover:text-brand-primary-dark"
-          >
-            {{ t('inventory.nav.movements') }}
-          </RouterLink>
-          <PermissionGuard permission="inventory.manage_items">
-            <button
-              type="button"
-              class="inline-flex h-9 items-center rounded-xl border border-brand-border bg-brand-bg px-3 text-sm font-semibold text-brand-text transition hover:border-brand-primary/30 hover:bg-brand-primary-soft hover:text-brand-primary-dark"
-              @click="categoriesOpen = true"
-            >
-              {{ t('inventory.nav.categories') }}
-            </button>
-          </PermissionGuard>
-        </div>
-      </div>
-
-      <div class="flex flex-wrap gap-2">
+      <template #actions>
         <PermissionGuard permission="inventory.add">
           <button
             type="button"
-            class="inline-flex h-11 items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 text-sm font-semibold text-emerald-950 shadow-sm transition hover:bg-emerald-100 focus:outline-none focus:ring-2 focus:ring-emerald-200/60"
+            class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 text-sm font-semibold text-emerald-950 shadow-sm transition hover:bg-emerald-100 focus:outline-none focus:ring-2 focus:ring-emerald-200/60 sm:w-auto"
             @click="openAction('receive')"
           >
             <PackagePlus class="h-4 w-4" :stroke-width="2" />
-            {{ t('inventory.stock.receiveCta') }}
+            <span>{{ t('inventory.stock.receiveCta') }}</span>
           </button>
         </PermissionGuard>
         <PermissionGuard permission="inventory.issue">
           <button
             type="button"
-            class="inline-flex h-11 items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3.5 text-sm font-semibold text-amber-950 shadow-sm transition hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-200/60"
+            class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3.5 text-sm font-semibold text-amber-950 shadow-sm transition hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-200/60 sm:w-auto"
             @click="openAction('issue')"
           >
             <PackageMinus class="h-4 w-4" :stroke-width="2" />
-            {{ t('inventory.stock.issueCta') }}
+            <span>{{ t('inventory.stock.issueCta') }}</span>
           </button>
         </PermissionGuard>
         <PermissionGuard permission="inventory.return">
           <button
             type="button"
-            class="inline-flex h-11 items-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-3.5 text-sm font-semibold text-sky-950 shadow-sm transition hover:bg-sky-100 focus:outline-none focus:ring-2 focus:ring-sky-200/60"
+            class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-3.5 text-sm font-semibold text-sky-950 shadow-sm transition hover:bg-sky-100 focus:outline-none focus:ring-2 focus:ring-sky-200/60 sm:w-auto"
             @click="openAction('return')"
           >
             <RotateCcw class="h-4 w-4" :stroke-width="2" />
-            {{ t('inventory.stock.returnCta') }}
+            <span>{{ t('inventory.stock.returnCta') }}</span>
           </button>
         </PermissionGuard>
         <PermissionGuard permission="inventory.transfer">
           <button
             type="button"
-            class="inline-flex h-11 items-center gap-2 rounded-xl border border-teal-200 bg-teal-50 px-3.5 text-sm font-semibold text-teal-950 shadow-sm transition hover:bg-teal-100 focus:outline-none focus:ring-2 focus:ring-teal-200/60"
+            class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-teal-200 bg-teal-50 px-3.5 text-sm font-semibold text-teal-950 shadow-sm transition hover:bg-teal-100 focus:outline-none focus:ring-2 focus:ring-teal-200/60 sm:w-auto"
             @click="openAction('transfer')"
           >
             <ArrowLeftRight class="h-4 w-4" :stroke-width="2" />
-            {{ t('inventory.stock.transferCta') }}
+            <span>{{ t('inventory.stock.transferCta') }}</span>
           </button>
         </PermissionGuard>
         <PermissionGuard permission="inventory.adjust">
           <button
             type="button"
-            class="inline-flex h-11 items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-3.5 text-sm font-semibold text-red-800 shadow-sm transition hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-200/60"
+            class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-3.5 text-sm font-semibold text-red-800 shadow-sm transition hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-200/60 sm:w-auto"
             @click="openAction('adjust')"
           >
             <Scale class="h-4 w-4" :stroke-width="2" />
-            {{ t('inventory.stock.adjustCta') }}
+            <span>{{ t('inventory.stock.adjustCta') }}</span>
           </button>
         </PermissionGuard>
-      </div>
+      </template>
+    </AppPageHeader>
+
+    <div class="flex flex-wrap gap-2">
+      <RouterLink
+        to="/app/inventory/items"
+        class="inline-flex h-9 items-center rounded-xl border border-brand-border bg-brand-bg px-3 text-sm font-semibold text-brand-text transition hover:border-brand-primary/30 hover:bg-brand-primary-soft hover:text-brand-primary-dark"
+      >
+        {{ t('inventory.nav.items') }}
+      </RouterLink>
+      <RouterLink
+        to="/app/inventory/movements"
+        class="inline-flex h-9 items-center rounded-xl border border-brand-border bg-brand-bg px-3 text-sm font-semibold text-brand-text transition hover:border-brand-primary/30 hover:bg-brand-primary-soft hover:text-brand-primary-dark"
+      >
+        {{ t('inventory.nav.movements') }}
+      </RouterLink>
+      <PermissionGuard permission="inventory.manage_items">
+        <button
+          type="button"
+          class="inline-flex h-9 items-center rounded-xl border border-brand-border bg-brand-bg px-3 text-sm font-semibold text-brand-text transition hover:border-brand-primary/30 hover:bg-brand-primary-soft hover:text-brand-primary-dark"
+          @click="categoriesOpen = true"
+        >
+          {{ t('inventory.nav.categories') }}
+        </button>
+      </PermissionGuard>
     </div>
 
-    <div
-      class="flex flex-wrap items-center gap-3 rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)]"
+    <AppMobileFilters
+      v-model:search="filters.search"
+      :search-placeholder="t('inventory.balances.searchPlaceholder')"
+      :active-count="activeFilterCount"
+      @reset="resetFilters"
     >
-      <div class="relative min-w-48 flex-1">
-        <Search
-          class="pointer-events-none absolute inset-s-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text-muted"
-          :stroke-width="1.75"
-          aria-hidden="true"
-        />
-        <input
-          v-model="filters.search"
-          type="search"
-          class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface pe-3 ps-10 text-sm text-brand-text outline-none transition placeholder:text-brand-text-muted focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
-          :placeholder="t('inventory.balances.searchPlaceholder')"
-        />
-      </div>
-      <AppRemoteSelect
-        :model-value="filters.warehouse_id"
-        query-key="warehouses-active"
-        :fetcher="fetchActiveWarehouses"
-        :map-option="warehouseSelectOption"
-        :empty-option="emptyWarehouse"
-        @update:model-value="filters.warehouse_id = toSelectId($event)"
-      />
-      <AppSelect v-model="filters.category_id" :options="categoryFilterOptions" searchable />
-      <AppSelect v-model="filters.stock_state" :options="stockStateOptions" />
-    </div>
+      <template #desktop>
+        <div
+          class="flex flex-wrap items-center gap-3 rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)]"
+        >
+          <div class="relative min-w-48 flex-1">
+            <Search
+              class="pointer-events-none absolute inset-s-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text-muted"
+              :stroke-width="1.75"
+              aria-hidden="true"
+            />
+            <input
+              v-model="filters.search"
+              type="search"
+              class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface pe-3 ps-10 text-sm text-brand-text outline-none transition placeholder:text-brand-text-muted focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+              :placeholder="t('inventory.balances.searchPlaceholder')"
+            />
+          </div>
+          <AppRemoteSelect
+            :model-value="filters.warehouse_id"
+            query-key="warehouses-active"
+            :fetcher="fetchActiveWarehouses"
+            :map-option="warehouseSelectOption"
+            :empty-option="emptyWarehouse"
+            @update:model-value="filters.warehouse_id = toSelectId($event)"
+          />
+          <AppSelect v-model="filters.category_id" :options="categoryFilterOptions" searchable />
+          <AppSelect v-model="filters.stock_state" :options="stockStateOptions" />
+        </div>
+      </template>
+      <template #filters>
+        <div class="space-y-3">
+          <AppRemoteSelect
+            :model-value="filters.warehouse_id"
+            query-key="warehouses-active"
+            :fetcher="fetchActiveWarehouses"
+            :map-option="warehouseSelectOption"
+            :empty-option="emptyWarehouse"
+            @update:model-value="filters.warehouse_id = toSelectId($event)"
+          />
+          <AppSelect v-model="filters.category_id" :options="categoryFilterOptions" searchable />
+          <AppSelect v-model="filters.stock_state" :options="stockStateOptions" />
+        </div>
+      </template>
+    </AppMobileFilters>
 
     <div
       v-if="listState === 'loading'"
@@ -485,13 +512,21 @@ async function submitAction(): Promise<void> {
           :key="balance.id"
           class="rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)]"
         >
-          <div class="flex items-start justify-between gap-2">
+          <div class="flex items-start justify-between gap-3">
             <div class="min-w-0">
-              <p class="font-mono text-xs font-bold text-brand-text">
-                {{ balance.item?.item_number }}
+              <p class="font-mono text-xs font-bold text-brand-primary-dark" dir="ltr">
+                {{ balance.item?.item_number || '—' }}
               </p>
-              <h3 class="mt-1 truncate font-bold text-brand-text">{{ balance.item?.name }}</h3>
-              <p class="mt-1 truncate text-sm text-brand-text">{{ balance.warehouse?.name }}</p>
+              <h3 class="mt-1 truncate font-bold text-brand-text">
+                <RouterLink
+                  v-if="balance.item"
+                  :to="`/app/inventory/items/${balance.item.id}`"
+                  class="transition hover:text-brand-primary-dark hover:underline hover:underline-offset-2"
+                >
+                  {{ balance.item.name }}
+                </RouterLink>
+                <template v-else>—</template>
+              </h3>
             </div>
             <span
               class="inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold shadow-sm"
@@ -504,38 +539,55 @@ async function submitAction(): Promise<void> {
               {{ t(`inventory.stockState.${balance.stock_state}`) }}
             </span>
           </div>
-          <p class="mt-3 text-sm font-semibold text-brand-text">
-            {{ t('inventory.columns.onHand') }}:
-            <span dir="ltr">{{ formatQuantity(balance.on_hand) }}</span>
-            {{ balance.item?.unit ? t(`inventory.units.${balance.item.unit}`) : '' }}
-          </p>
+          <dl class="mt-3 grid grid-cols-2 gap-2 text-xs text-brand-text-secondary">
+            <div>
+              <dt>{{ t('inventory.columns.warehouse') }}</dt>
+              <dd class="mt-0.5 font-medium text-brand-text">
+                <RouterLink
+                  v-if="balance.warehouse"
+                  :to="`/app/warehouses/${balance.warehouse.id}`"
+                  class="transition hover:text-brand-primary-dark hover:underline hover:underline-offset-2"
+                >
+                  {{ balance.warehouse.name }}
+                </RouterLink>
+                <template v-else>—</template>
+              </dd>
+            </div>
+            <div>
+              <dt>{{ t('inventory.columns.onHand') }}</dt>
+              <dd class="mt-0.5 font-medium text-brand-text" dir="ltr">
+                {{ formatQuantity(balance.on_hand) }}
+                {{ balance.item?.unit ? t(`inventory.units.${balance.item.unit}`) : '' }}
+              </dd>
+            </div>
+          </dl>
         </article>
       </div>
 
       <div
         v-if="meta && meta.last_page > 1"
-        class="flex items-center justify-between gap-3 rounded-2xl border border-brand-border bg-[#F7F8F6] px-5 py-3 text-sm"
+        class="flex items-center justify-between gap-3"
       >
         <button
           type="button"
-          class="inline-flex h-9 items-center gap-1 rounded-lg border border-brand-border bg-brand-surface px-3 font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
+          class="inline-flex h-11 items-center gap-1 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
           :disabled="filters.page <= 1"
           @click="filters.page -= 1"
         >
-          <ChevronRight class="h-4 w-4" />
-          {{ t('inventory.prev') }}
+          <ChevronRight class="h-4 w-4" :stroke-width="2" />
+          <span>{{ t('inventory.prev') }}</span>
         </button>
-        <span class="text-xs font-semibold text-brand-text">
+        <span class="text-xs font-semibold text-brand-text-muted">
           {{ filters.page }} / {{ meta.last_page }}
         </span>
         <button
           type="button"
-          class="inline-flex h-9 items-center gap-1 rounded-lg border border-brand-border bg-brand-surface px-3 font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
+          class="inline-flex h-11 items-center gap-1 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
           :disabled="filters.page >= meta.last_page"
           @click="filters.page += 1"
         >
-          {{ t('inventory.next') }}
-          <ChevronLeft class="h-4 w-4" />
+          <span>{{ t('inventory.next') }}</span>
+          <ChevronLeft class="h-4 w-4" :stroke-width="2" />
         </button>
       </div>
     </template>

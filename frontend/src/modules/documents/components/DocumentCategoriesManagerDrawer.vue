@@ -203,7 +203,7 @@ async function confirmDelete(category: DocumentCategory): Promise<void> {
           :aria-label="t('documents.categoriesTitle')"
           @click.stop
         >
-          <header class="flex items-start justify-between gap-3 border-b border-brand-border px-5 py-4">
+          <header class="flex shrink-0 items-start justify-between gap-3 border-b border-brand-border px-4 py-4">
             <div>
               <h2 class="text-lg font-bold">{{ t('documents.categoriesTitle') }}</h2>
               <p class="mt-1 text-sm text-brand-text-secondary">{{ t('documents.categoriesSubtitle') }}</p>
@@ -218,7 +218,7 @@ async function confirmDelete(category: DocumentCategory): Promise<void> {
             </button>
           </header>
 
-          <div class="flex items-center justify-between gap-3 border-b border-brand-border px-5 py-3">
+          <div class="flex items-center justify-between gap-3 border-b border-brand-border px-4 py-3">
             <PermissionGuard permission="documents.manage_categories">
               <button
                 type="button"
@@ -231,7 +231,7 @@ async function confirmDelete(category: DocumentCategory): Promise<void> {
             </PermissionGuard>
           </div>
 
-          <div class="flex-1 overflow-y-auto px-5 py-4">
+          <div class="flex-1 overflow-y-auto px-4 py-4">
             <div v-if="isLoading" class="py-10 text-center text-sm">{{ t('documents.categoriesLoading') }}</div>
             <div v-else-if="isError" class="py-10 text-center text-sm">
               <p>{{ t('documents.errors.loadCategories') }}</p>
@@ -305,7 +305,10 @@ async function confirmDelete(category: DocumentCategory): Promise<void> {
             v-if="formOpen"
             class="absolute inset-0 z-10 flex items-end bg-[rgba(15,23,20,0.2)] sm:items-center sm:justify-center"
           >
-            <div class="w-full rounded-t-2xl bg-brand-surface p-5 shadow-xl sm:max-w-md sm:rounded-2xl">
+            <div
+              class="w-full rounded-t-2xl bg-brand-surface p-4 shadow-xl sm:max-w-md sm:rounded-2xl sm:p-5"
+              style="padding-bottom: max(16px, env(safe-area-inset-bottom))"
+            >
               <h3 class="text-lg font-bold">
                 {{ editing ? t('documents.editCategoryTitle') : t('documents.createCategoryTitle') }}
               </h3>
@@ -331,13 +334,18 @@ async function confirmDelete(category: DocumentCategory): Promise<void> {
                 </label>
                 <p v-if="formError" class="text-sm text-red-700">{{ formError }}</p>
               </div>
-              <div class="mt-5 flex justify-end gap-2">
-                <button type="button" class="rounded-xl px-4 py-2 text-sm" :disabled="isSubmitting" @click="closeForm">
+              <div class="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  class="inline-flex h-11 items-center justify-center rounded-xl px-4 text-sm"
+                  :disabled="isSubmitting"
+                  @click="closeForm"
+                >
                   {{ t('documents.cancel') }}
                 </button>
                 <button
                   type="button"
-                  class="inline-flex items-center gap-2 rounded-xl bg-brand-primary-dark px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                  class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white disabled:opacity-60"
                   :disabled="isSubmitting"
                   @click="submitForm"
                 >

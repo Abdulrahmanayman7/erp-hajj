@@ -20,6 +20,8 @@ import { useOrganizationUnitsFlatQuery } from '@/modules/organization/queries/us
 import { listPositions } from '../api/positionsApi'
 import { listEmployees } from '../api/employeesApi'
 import { ApiError } from '@/shared/api/http'
+import AppMobileFilters from '@/shared/components/AppMobileFilters.vue'
+import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 import {
@@ -167,6 +169,22 @@ const emptySupervisorFilter = computed<AppSelectOption>(() => ({
   value: '',
   label: t('employees.filters.allSupervisors'),
 }))
+
+const activeFilterCount = computed(() => {
+  let count = 0
+  if (filters.status !== 'all') count += 1
+  if (filters.organization_unit_id !== '') count += 1
+  if (filters.position_id !== '') count += 1
+  if (filters.supervisor_id !== '') count += 1
+  return count
+})
+
+function resetFilters(): void {
+  filters.status = 'all'
+  filters.organization_unit_id = ''
+  filters.position_id = ''
+  filters.supervisor_id = ''
+}
 
 const isFormSubmitting = computed(
   () => createMutation.isPending.value || updateMutation.isPending.value,
@@ -399,27 +417,16 @@ async function unlinkUser(): Promise<void> {
 
 <template>
   <div class="space-y-6">
-    <div class="flex flex-wrap items-end justify-between gap-4">
-      <div class="min-w-0">
-        <h2 class="text-[1.75rem] font-bold leading-tight text-brand-text">
-          {{ t('employees.title') }}
-        </h2>
-        <p class="mt-1.5 text-sm text-brand-text-secondary">
-          {{ t('employees.subtitle') }}
-        </p>
-        <p v-if="meta" class="mt-2">
-          <span
-            class="inline-flex items-center rounded-full bg-brand-primary-soft px-2.5 py-0.5 text-xs font-semibold text-brand-primary-dark"
-          >
-            {{ t('employees.total', { count: meta.total }) }}
-          </span>
-        </p>
-      </div>
-      <div class="flex flex-wrap items-center gap-2">
+    <AppPageHeader
+      :title="t('employees.title')"
+      :subtitle="t('employees.subtitle')"
+      :meta="meta ? t('employees.total', { count: meta.total }) : undefined"
+    >
+      <template #actions>
         <PermissionGuard permission="positions.view">
           <button
             type="button"
-            class="inline-flex h-11 items-center gap-2 rounded-xl border border-brand-border bg-brand-surface px-4 text-sm font-semibold text-brand-text transition hover:bg-brand-bg"
+            class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-brand-border bg-brand-surface px-4 text-sm font-semibold text-brand-text transition hover:bg-brand-bg sm:w-auto"
             @click="positionsOpen = true"
           >
             <Briefcase class="h-4 w-4" :stroke-width="2" />
@@ -429,56 +436,92 @@ async function unlinkUser(): Promise<void> {
         <PermissionGuard permission="employees.create">
           <button
             type="button"
-            class="inline-flex h-11 items-center gap-2 rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white transition hover:bg-brand-primary"
+            class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white transition hover:bg-brand-primary sm:w-auto"
             @click="openCreate"
           >
             <Plus class="h-4 w-4" :stroke-width="2.25" />
             <span>{{ t('employees.add') }}</span>
           </button>
         </PermissionGuard>
-      </div>
-    </div>
+      </template>
+    </AppPageHeader>
 
-    <div
-      class="flex flex-wrap items-center gap-3 rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)]"
+    <AppMobileFilters
+      v-model:search="filters.search"
+      :search-placeholder="t('employees.searchPlaceholder')"
+      :active-count="activeFilterCount"
+      @reset="resetFilters"
     >
-      <div class="relative min-w-48 flex-1">
-        <Search
-          class="pointer-events-none absolute inset-s-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text-muted"
-          :stroke-width="1.75"
-          aria-hidden="true"
-        />
-        <input
-          v-model="filters.search"
-          type="search"
-          class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface pe-3 ps-10 text-sm text-brand-text outline-none transition placeholder:text-brand-text-muted focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
-          :placeholder="t('employees.searchPlaceholder')"
-        />
-      </div>
-      <AppSelect v-model="filters.status" :options="statusOptions" />
-      <AppSelect
-        v-model="filters.organization_unit_id"
-        :options="orgUnitFilterOptions"
-        searchable
-      />
-      <AppRemoteSelect
-        v-if="can('positions.view')"
-        :model-value="filters.position_id"
-        query-key="positions-active"
-        :fetcher="fetchActivePositions"
-        :map-option="positionSelectOption"
-        :empty-option="emptyPositionFilter"
-        @update:model-value="filters.position_id = toSelectId($event)"
-      />
-      <AppRemoteSelect
-        :model-value="filters.supervisor_id"
-        query-key="employees-active"
-        :fetcher="fetchActiveEmployees"
-        :map-option="employeeSelectOption"
-        :empty-option="emptySupervisorFilter"
-        @update:model-value="filters.supervisor_id = toSelectId($event)"
-      />
-    </div>
+      <template #desktop>
+        <div
+          class="flex flex-wrap items-center gap-3 rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)]"
+        >
+          <div class="relative min-w-48 flex-1">
+            <Search
+              class="pointer-events-none absolute inset-s-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text-muted"
+              :stroke-width="1.75"
+              aria-hidden="true"
+            />
+            <input
+              v-model="filters.search"
+              type="search"
+              class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface pe-3 ps-10 text-sm text-brand-text outline-none transition placeholder:text-brand-text-muted focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+              :placeholder="t('employees.searchPlaceholder')"
+            />
+          </div>
+          <AppSelect v-model="filters.status" :options="statusOptions" />
+          <AppSelect
+            v-model="filters.organization_unit_id"
+            :options="orgUnitFilterOptions"
+            searchable
+          />
+          <AppRemoteSelect
+            v-if="can('positions.view')"
+            :model-value="filters.position_id"
+            query-key="positions-active"
+            :fetcher="fetchActivePositions"
+            :map-option="positionSelectOption"
+            :empty-option="emptyPositionFilter"
+            @update:model-value="filters.position_id = toSelectId($event)"
+          />
+          <AppRemoteSelect
+            :model-value="filters.supervisor_id"
+            query-key="employees-active"
+            :fetcher="fetchActiveEmployees"
+            :map-option="employeeSelectOption"
+            :empty-option="emptySupervisorFilter"
+            @update:model-value="filters.supervisor_id = toSelectId($event)"
+          />
+        </div>
+      </template>
+      <template #filters>
+        <div class="space-y-3">
+          <AppSelect v-model="filters.status" :options="statusOptions" />
+          <AppSelect
+            v-model="filters.organization_unit_id"
+            :options="orgUnitFilterOptions"
+            searchable
+          />
+          <AppRemoteSelect
+            v-if="can('positions.view')"
+            :model-value="filters.position_id"
+            query-key="positions-active"
+            :fetcher="fetchActivePositions"
+            :map-option="positionSelectOption"
+            :empty-option="emptyPositionFilter"
+            @update:model-value="filters.position_id = toSelectId($event)"
+          />
+          <AppRemoteSelect
+            :model-value="filters.supervisor_id"
+            query-key="employees-active"
+            :fetcher="fetchActiveEmployees"
+            :map-option="employeeSelectOption"
+            :empty-option="emptySupervisorFilter"
+            @update:model-value="filters.supervisor_id = toSelectId($event)"
+          />
+        </div>
+      </template>
+    </AppMobileFilters>
 
     <div
       v-if="listState === 'loading'"
@@ -515,194 +558,261 @@ async function unlinkUser(): Promise<void> {
         </button>
       </PermissionGuard>
     </div>
-    <div
-      v-else
-      class="overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-[0_1px_2px_rgba(23,32,29,0.03)]"
-    >
-      <div class="overflow-x-auto">
-        <table class="min-w-full border-separate border-spacing-0 text-sm">
-          <thead>
-            <tr class="bg-[#F4F6F5]">
-              <th
-                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-start text-xs font-bold tracking-wide text-brand-text-muted"
+    <template v-else>
+      <div
+        class="hidden overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-[0_1px_2px_rgba(23,32,29,0.03)] md:block"
+      >
+        <div class="overflow-x-auto">
+          <table class="min-w-full border-separate border-spacing-0 text-sm">
+            <thead>
+              <tr class="bg-[#F4F6F5]">
+                <th
+                  class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-start text-xs font-bold tracking-wide text-brand-text-muted"
+                >
+                  {{ t('employees.columns.employeeNumber') }}
+                </th>
+                <th
+                  class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-start text-xs font-bold tracking-wide text-brand-text-muted"
+                >
+                  {{ t('employees.columns.fullName') }}
+                </th>
+                <th
+                  class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
+                >
+                  {{ t('employees.columns.orgUnit') }}
+                </th>
+                <th
+                  class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
+                >
+                  {{ t('employees.columns.position') }}
+                </th>
+                <th
+                  class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
+                >
+                  {{ t('employees.columns.supervisor') }}
+                </th>
+                <th
+                  class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
+                >
+                  {{ t('employees.columns.status') }}
+                </th>
+                <th
+                  class="w-36 whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
+                >
+                  {{ t('employees.columns.actions') }}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="(employee, index) in employees"
+                :key="employee.id"
+                class="group transition-colors duration-150"
+                :class="index % 2 === 1 ? 'bg-[#FAFBFA]' : 'bg-brand-surface'"
               >
-                {{ t('employees.columns.employeeNumber') }}
-              </th>
-              <th
-                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-start text-xs font-bold tracking-wide text-brand-text-muted"
-              >
-                {{ t('employees.columns.fullName') }}
-              </th>
-              <th
-                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
-              >
-                {{ t('employees.columns.orgUnit') }}
-              </th>
-              <th
-                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
-              >
-                {{ t('employees.columns.position') }}
-              </th>
-              <th
-                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
-              >
-                {{ t('employees.columns.supervisor') }}
-              </th>
-              <th
-                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
-              >
-                {{ t('employees.columns.status') }}
-              </th>
-              <th
-                class="w-36 whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
-              >
-                {{ t('employees.columns.actions') }}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="(employee, index) in employees"
-              :key="employee.id"
-              class="group transition-colors duration-150"
-              :class="index % 2 === 1 ? 'bg-[#FAFBFA]' : 'bg-brand-surface'"
-            >
-              <td
-                class="whitespace-nowrap border-b border-brand-border/80 px-5 py-3.5 font-mono text-xs text-brand-text-secondary group-hover:bg-[#EEF2F0]"
-                dir="ltr"
-              >
-                {{ employee.employee_number }}
-              </td>
-              <td
-                class="border-b border-brand-border/80 px-5 py-3.5 font-semibold text-brand-text group-hover:bg-[#EEF2F0]"
-              >
-                {{ employee.full_name }}
-              </td>
-              <td
-                class="border-b border-brand-border/80 px-5 py-3.5 text-center text-brand-text-secondary group-hover:bg-[#EEF2F0]"
-              >
-                {{ employee.organization_unit?.name ?? '—' }}
-              </td>
-              <td
-                class="border-b border-brand-border/80 px-5 py-3.5 text-center text-brand-text-secondary group-hover:bg-[#EEF2F0]"
-              >
-                {{ employee.position?.name ?? '—' }}
-              </td>
-              <td
-                class="border-b border-brand-border/80 px-5 py-3.5 text-center text-brand-text-secondary group-hover:bg-[#EEF2F0]"
-              >
-                {{ employee.supervisor?.full_name ?? '—' }}
-              </td>
-              <td
-                class="border-b border-brand-border/80 px-5 py-3.5 text-center group-hover:bg-[#EEF2F0]"
-              >
-                <div class="flex justify-center">
-                  <span
-                    class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
-                    :class="
-                      employee.status === 'active'
-                        ? 'bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200/70'
-                        : 'bg-neutral-100 text-neutral-600 ring-1 ring-neutral-200/80'
-                    "
-                  >
+                <td
+                  class="whitespace-nowrap border-b border-brand-border/80 px-5 py-3.5 font-mono text-xs text-brand-text-secondary group-hover:bg-[#EEF2F0]"
+                  dir="ltr"
+                >
+                  {{ employee.employee_number }}
+                </td>
+                <td
+                  class="border-b border-brand-border/80 px-5 py-3.5 font-semibold text-brand-text group-hover:bg-[#EEF2F0]"
+                >
+                  {{ employee.full_name }}
+                </td>
+                <td
+                  class="border-b border-brand-border/80 px-5 py-3.5 text-center text-brand-text-secondary group-hover:bg-[#EEF2F0]"
+                >
+                  {{ employee.organization_unit?.name ?? '—' }}
+                </td>
+                <td
+                  class="border-b border-brand-border/80 px-5 py-3.5 text-center text-brand-text-secondary group-hover:bg-[#EEF2F0]"
+                >
+                  {{ employee.position?.name ?? '—' }}
+                </td>
+                <td
+                  class="border-b border-brand-border/80 px-5 py-3.5 text-center text-brand-text-secondary group-hover:bg-[#EEF2F0]"
+                >
+                  {{ employee.supervisor?.full_name ?? '—' }}
+                </td>
+                <td
+                  class="border-b border-brand-border/80 px-5 py-3.5 text-center group-hover:bg-[#EEF2F0]"
+                >
+                  <div class="flex justify-center">
                     <span
-                      class="h-1.5 w-1.5 rounded-full"
-                      :class="employee.status === 'active' ? 'bg-emerald-500' : 'bg-neutral-400'"
-                    />
-                    {{ t(`employees.status.${employee.status}`) }}
-                  </span>
-                </div>
-              </td>
-              <td
-                class="border-b border-brand-border/80 px-5 py-3.5 text-center group-hover:bg-[#EEF2F0]"
-              >
-                <div class="inline-flex items-center justify-center gap-0.5">
-                  <PermissionGuard permission="documents.view">
-                    <AppTooltip :text="t('documents.entitySection.title')">
-                      <button
-                        type="button"
-                        class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-brand-text-secondary transition hover:bg-brand-bg"
-                        :aria-label="t('documents.entitySection.title')"
-                        @click="docsTarget = employee"
-                      >
-                        <FileText class="h-4 w-4" :stroke-width="2" />
-                      </button>
-                    </AppTooltip>
-                  </PermissionGuard>
-                  <PermissionGuard permission="employees.update">
-                    <AppTooltip :text="t('employees.actions.edit')">
-                      <button
-                        type="button"
-                        class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-brand-primary-dark transition hover:bg-brand-primary-soft"
-                        :aria-label="t('employees.actions.edit')"
-                        @click="openEdit(employee)"
-                      >
-                        <Pencil class="h-4 w-4" :stroke-width="2" />
-                      </button>
-                    </AppTooltip>
-                    <AppTooltip :text="t('employees.actions.linkUser')">
-                      <button
-                        type="button"
-                        class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-brand-text-secondary transition hover:bg-brand-bg"
-                        :aria-label="t('employees.actions.linkUser')"
-                        @click="openUserLink(employee)"
-                      >
-                        <Link2 class="h-4 w-4" :stroke-width="2" />
-                      </button>
-                    </AppTooltip>
-                  </PermissionGuard>
-                  <PermissionGuard permission="employees.assign_supervisor">
-                    <AppTooltip :text="t('employees.actions.assignSupervisor')">
-                      <button
-                        type="button"
-                        class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-brand-text-secondary transition hover:bg-brand-bg"
-                        :aria-label="t('employees.actions.assignSupervisor')"
-                        @click="openSupervisor(employee)"
-                      >
-                        <UserCog class="h-4 w-4" :stroke-width="2" />
-                      </button>
-                    </AppTooltip>
-                  </PermissionGuard>
-                  <PermissionGuard
-                    v-if="employee.status === 'active'"
-                    permission="employees.deactivate"
-                  >
-                    <AppTooltip :text="t('employees.actions.deactivate')">
-                      <button
-                        type="button"
-                        class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-amber-700 transition hover:bg-amber-50"
-                        :aria-label="t('employees.actions.deactivate')"
-                        @click="toggleStatus(employee)"
-                      >
-                        <UserX class="h-4 w-4" :stroke-width="2" />
-                      </button>
-                    </AppTooltip>
-                  </PermissionGuard>
-                  <PermissionGuard v-else permission="employees.update">
-                    <AppTooltip :text="t('employees.actions.activate')">
-                      <button
-                        type="button"
-                        class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-emerald-700 transition hover:bg-emerald-50"
-                        :aria-label="t('employees.actions.activate')"
-                        @click="toggleStatus(employee)"
-                      >
-                        <UserCheck class="h-4 w-4" :stroke-width="2" />
-                      </button>
-                    </AppTooltip>
-                  </PermissionGuard>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                      class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
+                      :class="
+                        employee.status === 'active'
+                          ? 'bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200/70'
+                          : 'bg-neutral-100 text-neutral-600 ring-1 ring-neutral-200/80'
+                      "
+                    >
+                      <span
+                        class="h-1.5 w-1.5 rounded-full"
+                        :class="employee.status === 'active' ? 'bg-emerald-500' : 'bg-neutral-400'"
+                      />
+                      {{ t(`employees.status.${employee.status}`) }}
+                    </span>
+                  </div>
+                </td>
+                <td
+                  class="border-b border-brand-border/80 px-5 py-3.5 text-center group-hover:bg-[#EEF2F0]"
+                >
+                  <div class="inline-flex items-center justify-center gap-0.5">
+                    <PermissionGuard permission="documents.view">
+                      <AppTooltip :text="t('documents.entitySection.title')">
+                        <button
+                          type="button"
+                          class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-brand-text-secondary transition hover:bg-brand-bg"
+                          :aria-label="t('documents.entitySection.title')"
+                          @click="docsTarget = employee"
+                        >
+                          <FileText class="h-4 w-4" :stroke-width="2" />
+                        </button>
+                      </AppTooltip>
+                    </PermissionGuard>
+                    <PermissionGuard permission="employees.update">
+                      <AppTooltip :text="t('employees.actions.edit')">
+                        <button
+                          type="button"
+                          class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-brand-primary-dark transition hover:bg-brand-primary-soft"
+                          :aria-label="t('employees.actions.edit')"
+                          @click="openEdit(employee)"
+                        >
+                          <Pencil class="h-4 w-4" :stroke-width="2" />
+                        </button>
+                      </AppTooltip>
+                      <AppTooltip :text="t('employees.actions.linkUser')">
+                        <button
+                          type="button"
+                          class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-brand-text-secondary transition hover:bg-brand-bg"
+                          :aria-label="t('employees.actions.linkUser')"
+                          @click="openUserLink(employee)"
+                        >
+                          <Link2 class="h-4 w-4" :stroke-width="2" />
+                        </button>
+                      </AppTooltip>
+                    </PermissionGuard>
+                    <PermissionGuard permission="employees.assign_supervisor">
+                      <AppTooltip :text="t('employees.actions.assignSupervisor')">
+                        <button
+                          type="button"
+                          class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-brand-text-secondary transition hover:bg-brand-bg"
+                          :aria-label="t('employees.actions.assignSupervisor')"
+                          @click="openSupervisor(employee)"
+                        >
+                          <UserCog class="h-4 w-4" :stroke-width="2" />
+                        </button>
+                      </AppTooltip>
+                    </PermissionGuard>
+                    <PermissionGuard
+                      v-if="employee.status === 'active'"
+                      permission="employees.deactivate"
+                    >
+                      <AppTooltip :text="t('employees.actions.deactivate')">
+                        <button
+                          type="button"
+                          class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-amber-700 transition hover:bg-amber-50"
+                          :aria-label="t('employees.actions.deactivate')"
+                          @click="toggleStatus(employee)"
+                        >
+                          <UserX class="h-4 w-4" :stroke-width="2" />
+                        </button>
+                      </AppTooltip>
+                    </PermissionGuard>
+                    <PermissionGuard v-else permission="employees.update">
+                      <AppTooltip :text="t('employees.actions.activate')">
+                        <button
+                          type="button"
+                          class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-emerald-700 transition hover:bg-emerald-50"
+                          :aria-label="t('employees.actions.activate')"
+                          @click="toggleStatus(employee)"
+                        >
+                          <UserCheck class="h-4 w-4" :stroke-width="2" />
+                        </button>
+                      </AppTooltip>
+                    </PermissionGuard>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
+
+      <div class="space-y-3 md:hidden">
+        <article
+          v-for="employee in employees"
+          :key="employee.id"
+          class="rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)]"
+        >
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <p class="font-mono text-xs text-brand-text-muted" dir="ltr">{{ employee.employee_number }}</p>
+              <h3 class="font-bold text-brand-text">{{ employee.full_name }}</h3>
+            </div>
+            <span
+              class="inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
+              :class="
+                employee.status === 'active'
+                  ? 'bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200/70'
+                  : 'bg-neutral-100 text-neutral-600 ring-1 ring-neutral-200/80'
+              "
+            >
+              <span
+                class="h-1.5 w-1.5 rounded-full"
+                :class="employee.status === 'active' ? 'bg-emerald-500' : 'bg-neutral-400'"
+              />
+              {{ t(`employees.status.${employee.status}`) }}
+            </span>
+          </div>
+          <dl class="mt-3 grid grid-cols-2 gap-2 text-xs text-brand-text-secondary">
+            <div>
+              <dt>{{ t('employees.columns.orgUnit') }}</dt>
+              <dd class="font-medium text-brand-text">{{ employee.organization_unit?.name ?? '—' }}</dd>
+            </div>
+            <div>
+              <dt>{{ t('employees.columns.position') }}</dt>
+              <dd class="font-medium text-brand-text">{{ employee.position?.name ?? '—' }}</dd>
+            </div>
+            <div class="col-span-2">
+              <dt>{{ t('employees.columns.supervisor') }}</dt>
+              <dd class="font-medium text-brand-text">{{ employee.supervisor?.full_name ?? '—' }}</dd>
+            </div>
+          </dl>
+          <div class="mt-3 flex flex-wrap items-center justify-end gap-1 border-t border-brand-border pt-3">
+            <PermissionGuard permission="employees.update">
+              <button
+                type="button"
+                class="inline-flex h-11 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-brand-primary-dark transition hover:bg-brand-primary-soft"
+                @click="openEdit(employee)"
+              >
+                <Pencil class="h-4 w-4" :stroke-width="2" />
+                {{ t('employees.actions.edit') }}
+              </button>
+            </PermissionGuard>
+            <PermissionGuard permission="employees.assign_supervisor">
+              <button
+                type="button"
+                class="inline-flex h-11 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-brand-text-secondary transition hover:bg-brand-bg"
+                @click="openSupervisor(employee)"
+              >
+                <UserCog class="h-4 w-4" :stroke-width="2" />
+                {{ t('employees.actions.assignSupervisor') }}
+              </button>
+            </PermissionGuard>
+          </div>
+        </article>
+      </div>
+
       <div
         v-if="meta && meta.last_page > 1"
-        class="flex items-center justify-between gap-3 border-t border-brand-border bg-[#F7F8F6] px-5 py-3 text-sm"
+        class="flex items-center justify-between gap-3"
       >
         <button
           type="button"
-          class="inline-flex h-9 items-center gap-1 rounded-lg border border-brand-border bg-brand-surface px-3 font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
+          class="inline-flex h-11 items-center gap-1 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
           :disabled="filters.page <= 1 || isFetching"
           @click="filters.page -= 1"
         >
@@ -714,7 +824,7 @@ async function unlinkUser(): Promise<void> {
         </span>
         <button
           type="button"
-          class="inline-flex h-9 items-center gap-1 rounded-lg border border-brand-border bg-brand-surface px-3 font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
+          class="inline-flex h-11 items-center gap-1 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
           :disabled="filters.page >= meta.last_page || isFetching"
           @click="filters.page += 1"
         >
@@ -722,7 +832,7 @@ async function unlinkUser(): Promise<void> {
           <ChevronLeft class="h-4 w-4" :stroke-width="2" />
         </button>
       </div>
-    </div>
+    </template>
 
     <EntityDocumentsSection
       v-if="docsTarget"

@@ -17,6 +17,8 @@ import {
 
 import { listUsers } from '@/modules/users/api/usersApi'
 import { ApiError } from '@/shared/api/http'
+import AppMobileFilters from '@/shared/components/AppMobileFilters.vue'
+import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 import { toSelectId, userSelectOption } from '@/shared/lookups/selectOptions'
@@ -123,6 +125,29 @@ const linkTypeOptions = computed<AppSelectOption[]>(() => [
     label: t(`documents.link.types.${type}`),
   })),
 ])
+
+const activeFilterCount = computed(() => {
+  let count = 0
+  if (filters.status !== 'active') count += 1
+  if (filters.category_id !== '') count += 1
+  if (filters.uploaded_by !== '') count += 1
+  if (filters.linkable_type !== '') count += 1
+  if (filters.linkable_id !== '') count += 1
+  if (filters.uploaded_from) count += 1
+  if (filters.uploaded_to) count += 1
+  return count
+})
+
+function resetFilters(): void {
+  filters.status = 'active'
+  filters.category_id = ''
+  filters.uploaded_by = ''
+  filters.linkable_type = ''
+  filters.linkable_id = ''
+  filters.uploaded_from = ''
+  filters.uploaded_to = ''
+  filters.search = ''
+}
 
 watch(
   () => [
@@ -275,87 +300,137 @@ function linkLabel(doc: Document): string {
 
 <template>
   <div class="space-y-6">
-    <div class="flex flex-wrap items-end justify-between gap-4">
-      <div class="min-w-0">
-        <h2 class="text-[1.75rem] font-bold leading-tight text-brand-text">{{ t('documents.title') }}</h2>
-        <p class="mt-1.5 text-sm text-brand-text-secondary">{{ t('documents.subtitle') }}</p>
-        <p v-if="meta" class="mt-2">
-          <span class="inline-flex items-center rounded-full bg-brand-primary-soft px-2.5 py-0.5 text-xs font-semibold text-brand-primary-dark">
-            {{ meta.total }}
-          </span>
-        </p>
-      </div>
-      <div class="flex flex-wrap items-center gap-2">
+    <AppPageHeader
+      :title="t('documents.title')"
+      :subtitle="t('documents.subtitle')"
+      :meta="meta ? String(meta.total) : undefined"
+    >
+      <template #actions>
         <PermissionGuard permission="documents.manage_categories">
           <button
             type="button"
-            class="inline-flex h-11 items-center gap-2 rounded-xl border border-brand-border bg-brand-surface px-4 text-sm font-semibold text-brand-text transition hover:bg-brand-bg"
+            class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-brand-border bg-brand-surface px-4 text-sm font-semibold text-brand-text transition hover:bg-brand-bg sm:w-auto"
             @click="categoriesOpen = true"
           >
             <FolderTree class="h-4 w-4" :stroke-width="2" />
-            {{ t('documents.categoriesLink') }}
+            <span>{{ t('documents.categoriesLink') }}</span>
           </button>
         </PermissionGuard>
         <PermissionGuard permission="documents.upload">
           <button
             type="button"
-            class="inline-flex h-11 items-center gap-2 rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white transition hover:bg-brand-primary"
+            class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white transition hover:bg-brand-primary sm:w-auto"
             @click="openUpload"
           >
             <Upload class="h-4 w-4" :stroke-width="2.25" />
-            {{ t('documents.upload.cta') }}
+            <span>{{ t('documents.upload.cta') }}</span>
           </button>
         </PermissionGuard>
-      </div>
-    </div>
+      </template>
+    </AppPageHeader>
 
-    <div class="flex flex-wrap items-center gap-3 rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)]">
-      <div class="relative min-w-48 flex-1">
-        <Search class="pointer-events-none absolute inset-s-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text-muted" :stroke-width="1.75" aria-hidden="true" />
-        <input
-          v-model="filters.search"
-          type="search"
-          class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface pe-3 ps-10 text-sm text-brand-text outline-none transition placeholder:text-brand-text-muted focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
-          :placeholder="t('documents.searchPlaceholder')"
-        />
-      </div>
-      <AppSelect v-model="filters.status" :options="statusOptions" />
-      <AppSelect v-model="filters.category_id" :options="categoryOptions" searchable />
-      <AppRemoteSelect
-        :model-value="filters.uploaded_by"
-        query-key="users"
-        :fetcher="fetchUsers"
-        :map-option="userSelectOption"
-        :empty-option="emptyUploader"
-        @update:model-value="filters.uploaded_by = toSelectId($event)"
-      />
-      <AppSelect v-model="filters.linkable_type" :options="linkTypeOptions" />
-      <input
-        :value="filters.linkable_id"
-        type="number"
-        min="1"
-        class="h-11 w-28 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
-        :placeholder="t('documents.filters.linkableId')"
-        @input="
-          filters.linkable_id =
-            ($event.target as HTMLInputElement).value === ''
-              ? ''
-              : Number(($event.target as HTMLInputElement).value)
-        "
-      />
-      <input
-        v-model="filters.uploaded_from"
-        type="date"
-        class="h-11 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
-        :aria-label="t('documents.filters.uploadedFrom')"
-      />
-      <input
-        v-model="filters.uploaded_to"
-        type="date"
-        class="h-11 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
-        :aria-label="t('documents.filters.uploadedTo')"
-      />
-    </div>
+    <AppMobileFilters
+      v-model:search="filters.search"
+      :search-placeholder="t('documents.searchPlaceholder')"
+      :active-count="activeFilterCount"
+      @reset="resetFilters"
+    >
+      <template #desktop>
+        <div
+          class="flex flex-wrap items-center gap-3 rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)]"
+        >
+          <div class="relative min-w-48 flex-1">
+            <Search
+              class="pointer-events-none absolute inset-s-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text-muted"
+              :stroke-width="1.75"
+              aria-hidden="true"
+            />
+            <input
+              v-model="filters.search"
+              type="search"
+              class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface pe-3 ps-10 text-sm text-brand-text outline-none transition placeholder:text-brand-text-muted focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+              :placeholder="t('documents.searchPlaceholder')"
+            />
+          </div>
+          <AppSelect v-model="filters.status" :options="statusOptions" />
+          <AppSelect v-model="filters.category_id" :options="categoryOptions" searchable />
+          <AppRemoteSelect
+            :model-value="filters.uploaded_by"
+            query-key="users"
+            :fetcher="fetchUsers"
+            :map-option="userSelectOption"
+            :empty-option="emptyUploader"
+            @update:model-value="filters.uploaded_by = toSelectId($event)"
+          />
+          <AppSelect v-model="filters.linkable_type" :options="linkTypeOptions" />
+          <input
+            :value="filters.linkable_id"
+            type="number"
+            min="1"
+            class="h-11 w-28 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+            :placeholder="t('documents.filters.linkableId')"
+            @input="
+              filters.linkable_id =
+                ($event.target as HTMLInputElement).value === ''
+                  ? ''
+                  : Number(($event.target as HTMLInputElement).value)
+            "
+          />
+          <input
+            v-model="filters.uploaded_from"
+            type="date"
+            class="h-11 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+            :aria-label="t('documents.filters.uploadedFrom')"
+          />
+          <input
+            v-model="filters.uploaded_to"
+            type="date"
+            class="h-11 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+            :aria-label="t('documents.filters.uploadedTo')"
+          />
+        </div>
+      </template>
+      <template #filters>
+        <div class="space-y-3">
+          <AppSelect v-model="filters.status" :options="statusOptions" />
+          <AppSelect v-model="filters.category_id" :options="categoryOptions" searchable />
+          <AppRemoteSelect
+            :model-value="filters.uploaded_by"
+            query-key="users"
+            :fetcher="fetchUsers"
+            :map-option="userSelectOption"
+            :empty-option="emptyUploader"
+            @update:model-value="filters.uploaded_by = toSelectId($event)"
+          />
+          <AppSelect v-model="filters.linkable_type" :options="linkTypeOptions" />
+          <input
+            :value="filters.linkable_id"
+            type="number"
+            min="1"
+            class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+            :placeholder="t('documents.filters.linkableId')"
+            @input="
+              filters.linkable_id =
+                ($event.target as HTMLInputElement).value === ''
+                  ? ''
+                  : Number(($event.target as HTMLInputElement).value)
+            "
+          />
+          <input
+            v-model="filters.uploaded_from"
+            type="date"
+            class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+            :aria-label="t('documents.filters.uploadedFrom')"
+          />
+          <input
+            v-model="filters.uploaded_to"
+            type="date"
+            class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+            :aria-label="t('documents.filters.uploadedTo')"
+          />
+        </div>
+      </template>
+    </AppMobileFilters>
 
     <div v-if="listState === 'loading'" class="rounded-2xl border border-brand-border bg-brand-surface p-10 text-center text-sm text-brand-text-muted">
       {{ t('documents.loading') }}
@@ -466,61 +541,90 @@ function linkLabel(doc: Document): string {
       </div>
 
       <div class="space-y-3 md:hidden">
-        <div
+        <article
           v-for="doc in documents"
           :key="doc.id"
           class="rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)]"
         >
-          <div class="flex items-center justify-between gap-2">
-            <RouterLink :to="`/app/documents/${doc.id}`" class="rounded-lg border border-brand-border bg-brand-bg px-2 py-1 font-mono text-xs font-bold text-brand-primary-dark">
-              {{ doc.document_number }}
-            </RouterLink>
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <p class="font-mono text-xs font-bold text-brand-primary-dark" dir="ltr">
+                {{ doc.document_number }}
+              </p>
+              <h3 class="mt-1 truncate font-bold text-brand-text">
+                <RouterLink
+                  :to="`/app/documents/${doc.id}`"
+                  class="transition hover:text-brand-primary-dark hover:underline hover:underline-offset-2"
+                >
+                  {{ doc.title }}
+                </RouterLink>
+              </h3>
+            </div>
             <span
-              class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold"
+              class="inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold"
               :class="documentStatusBadgeClass(doc.status)"
             >
               <span class="h-1.5 w-1.5 rounded-full" :class="documentStatusDotClass(doc.status)" />
               {{ t(`documents.status.${doc.status}`) }}
             </span>
           </div>
-          <p class="mt-3 font-semibold text-brand-text">{{ doc.title }}</p>
-          <p class="mt-1 text-sm text-brand-text-secondary">
-            {{ doc.original_filename }} · {{ formatDocumentSize(doc.size_bytes) }}
-          </p>
-          <button
-            v-if="canShowDocumentAction('download', can)"
-            type="button"
-            class="mt-3 inline-flex h-9 items-center gap-1.5 rounded-lg border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-primary-dark"
-            @click="onDownload(doc)"
-          >
-            <Download class="h-4 w-4" />
-            {{ t('documents.actions.download') }}
-          </button>
-        </div>
+          <dl class="mt-3 grid grid-cols-2 gap-2 text-xs text-brand-text-secondary">
+            <div>
+              <dt>{{ t('documents.columns.category') }}</dt>
+              <dd class="mt-0.5 font-medium text-brand-text">{{ doc.category?.name ?? '—' }}</dd>
+            </div>
+            <div>
+              <dt>{{ t('documents.columns.date') }}</dt>
+              <dd class="mt-0.5 font-medium text-brand-text" dir="ltr">
+                {{ doc.created_at ? doc.created_at.slice(0, 10) : '—' }}
+              </dd>
+            </div>
+          </dl>
+          <div class="mt-3 flex items-center justify-end gap-1 border-t border-brand-border pt-3">
+            <RouterLink
+              :to="`/app/documents/${doc.id}`"
+              class="inline-flex h-11 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-brand-primary-dark transition hover:bg-brand-primary-soft"
+            >
+              <Eye class="h-4 w-4" :stroke-width="2" />
+              {{ t('documents.actions.view') }}
+            </RouterLink>
+            <button
+              v-if="canShowDocumentAction('download', can)"
+              type="button"
+              class="inline-flex h-11 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-brand-primary-dark transition hover:bg-brand-primary-soft"
+              @click="onDownload(doc)"
+            >
+              <Download class="h-4 w-4" :stroke-width="2" />
+              {{ t('documents.actions.download') }}
+            </button>
+          </div>
+        </article>
       </div>
 
       <div
         v-if="meta && meta.last_page > 1"
-        class="flex items-center justify-between gap-3 rounded-xl border border-brand-border bg-[#F7F8F6] px-4 py-3 text-sm"
+        class="flex items-center justify-between gap-3"
       >
         <button
           type="button"
-          class="inline-flex h-9 items-center gap-1 rounded-lg border border-brand-border bg-brand-surface px-3 font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
+          class="inline-flex h-11 items-center gap-1 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
           :disabled="filters.page <= 1"
           @click="filters.page -= 1"
         >
-          <ChevronRight class="h-4 w-4" />
-          {{ t('documents.prev') }}
+          <ChevronRight class="h-4 w-4" :stroke-width="2" />
+          <span>{{ t('documents.prev') }}</span>
         </button>
-        <span class="text-xs font-semibold text-brand-text-muted">{{ filters.page }} / {{ meta.last_page }}</span>
+        <span class="text-xs font-semibold text-brand-text-muted">
+          {{ filters.page }} / {{ meta.last_page }}
+        </span>
         <button
           type="button"
-          class="inline-flex h-9 items-center gap-1 rounded-lg border border-brand-border bg-brand-surface px-3 font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
+          class="inline-flex h-11 items-center gap-1 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
           :disabled="filters.page >= meta.last_page"
           @click="filters.page += 1"
         >
-          {{ t('documents.next') }}
-          <ChevronLeft class="h-4 w-4" />
+          <span>{{ t('documents.next') }}</span>
+          <ChevronLeft class="h-4 w-4" :stroke-width="2" />
         </button>
       </div>
     </template>

@@ -49,7 +49,7 @@ function patch(part: Partial<LifecycleReasonFormState>): void {
         aria-modal="true"
         @click.stop
       >
-        <header class="flex items-start justify-between border-b border-brand-border bg-red-50/60 px-5 py-4">
+        <header class="flex items-start justify-between border-b border-brand-border bg-red-50/60 px-4 py-4 sm:px-5">
           <div>
             <h3 class="flex items-center gap-2 text-lg font-bold text-brand-text">
               <AlertTriangle class="h-5 w-5 text-red-700" />
@@ -68,7 +68,7 @@ function patch(part: Partial<LifecycleReasonFormState>): void {
           </button>
         </header>
 
-        <form class="space-y-4 px-5 py-5" @submit.prevent="emit('submit')">
+        <form class="space-y-4 px-4 py-5 sm:px-5" @submit.prevent="emit('submit')">
           <label class="block">
             <span class="text-sm font-medium">{{ t('assets.fields.reason') }}</span>
             <textarea
@@ -87,13 +87,21 @@ function patch(part: Partial<LifecycleReasonFormState>): void {
             {{ formError }}
           </p>
 
-          <div class="flex justify-end gap-2 pt-2">
-            <button type="button" class="h-11 rounded-xl border px-4 text-sm font-semibold" :disabled="submitting" @click="emit('close')">
+          <div
+            class="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end"
+            style="padding-bottom: max(0px, env(safe-area-inset-bottom))"
+          >
+            <button
+              type="button"
+              class="inline-flex h-11 items-center justify-center rounded-xl border px-4 text-sm font-semibold"
+              :disabled="submitting"
+              @click="emit('close')"
+            >
               {{ t('assets.cancel') }}
             </button>
             <button
               type="submit"
-              class="inline-flex h-11 items-center gap-2 rounded-xl bg-red-700 px-4 text-sm font-semibold text-white disabled:opacity-60"
+              class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-red-700 px-4 text-sm font-semibold text-white disabled:opacity-60"
               :disabled="submitting"
             >
               <Loader2 v-if="submitting" class="h-4 w-4 animate-spin" />

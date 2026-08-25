@@ -5,6 +5,8 @@ import { useRouter } from 'vue-router'
 import { ChevronLeft, ChevronRight, Eye, FolderTree, Pencil, Plus, Power, PowerOff, Search, Trash2 } from 'lucide-vue-next'
 
 import { ApiError } from '@/shared/api/http'
+import AppMobileFilters from '@/shared/components/AppMobileFilters.vue'
+import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 import AppTooltip from '@/shared/components/AppTooltip.vue'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
@@ -82,6 +84,19 @@ const statusOptions = computed<AppSelectOption[]>(() => [
   { value: '1', label: t('inventory.status.active') },
   { value: '0', label: t('inventory.status.inactive') },
 ])
+
+const activeFilterCount = computed(() => {
+  let count = 0
+  if (filters.category_id !== '') count += 1
+  if (filters.is_active !== '') count += 1
+  return count
+})
+
+function resetFilters(): void {
+  filters.category_id = ''
+  filters.is_active = ''
+  filters.search = ''
+}
 
 watch(
   () => [committedSearch.value, filters.category_id, filters.is_active],
@@ -227,65 +242,67 @@ async function removeItem(item: InventoryItem): Promise<void> {
 
 <template>
   <div class="space-y-6">
-    <div
-      class="flex flex-wrap items-end justify-between gap-4 rounded-2xl border border-brand-border bg-brand-surface px-5 py-5 shadow-[0_1px_2px_rgba(23,32,29,0.03)]"
+    <AppPageHeader
+      :title="t('inventory.items.title')"
+      :subtitle="t('inventory.items.subtitle')"
+      :meta="meta ? t('inventory.items.total', { count: meta.total }) : undefined"
     >
-      <div class="min-w-0">
-        <h2 class="text-[1.75rem] font-bold leading-tight text-brand-text">
-          {{ t('inventory.items.title') }}
-        </h2>
-        <p class="mt-1.5 text-sm text-brand-text-secondary">
-          {{ t('inventory.items.subtitle') }}
-        </p>
-        <p v-if="meta" class="mt-2">
-          <span
-            class="inline-flex items-center rounded-full bg-brand-primary-soft px-2.5 py-0.5 text-xs font-semibold text-brand-primary-dark"
-          >
-            {{ t('inventory.items.total', { count: meta.total }) }}
-          </span>
-        </p>
-      </div>
-      <div class="flex flex-wrap gap-2">
+      <template #actions>
         <PermissionGuard permission="inventory.manage_items">
           <button
             type="button"
-            class="inline-flex h-11 items-center gap-2 rounded-xl border border-brand-border bg-brand-surface px-4 text-sm font-semibold text-brand-text transition hover:bg-brand-bg"
+            class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-brand-border bg-brand-surface px-4 text-sm font-semibold text-brand-text transition hover:bg-brand-bg sm:w-auto"
             @click="categoriesOpen = true"
           >
             <FolderTree class="h-4 w-4" :stroke-width="2" />
-            {{ t('inventory.nav.categories') }}
+            <span>{{ t('inventory.nav.categories') }}</span>
           </button>
           <button
             type="button"
-            class="inline-flex h-11 items-center gap-2 rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-primary"
+            class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-primary sm:w-auto"
             @click="openCreate"
           >
             <Plus class="h-4 w-4" :stroke-width="2.25" />
-            {{ t('inventory.items.createCta') }}
+            <span>{{ t('inventory.items.createCta') }}</span>
           </button>
         </PermissionGuard>
-      </div>
-    </div>
+      </template>
+    </AppPageHeader>
 
-    <div
-      class="flex flex-wrap items-center gap-3 rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)]"
+    <AppMobileFilters
+      v-model:search="filters.search"
+      :search-placeholder="t('inventory.items.searchPlaceholder')"
+      :active-count="activeFilterCount"
+      @reset="resetFilters"
     >
-      <div class="relative min-w-48 flex-1">
-        <Search
-          class="pointer-events-none absolute inset-s-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text-muted"
-          :stroke-width="1.75"
-          aria-hidden="true"
-        />
-        <input
-          v-model="filters.search"
-          type="search"
-          class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface pe-3 ps-10 text-sm text-brand-text outline-none transition placeholder:text-brand-text-muted focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
-          :placeholder="t('inventory.items.searchPlaceholder')"
-        />
-      </div>
-      <AppSelect v-model="filters.category_id" :options="categoryFilterOptions" searchable />
-      <AppSelect v-model="filters.is_active" :options="statusOptions" />
-    </div>
+      <template #desktop>
+        <div
+          class="flex flex-wrap items-center gap-3 rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)]"
+        >
+          <div class="relative min-w-48 flex-1">
+            <Search
+              class="pointer-events-none absolute inset-s-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text-muted"
+              :stroke-width="1.75"
+              aria-hidden="true"
+            />
+            <input
+              v-model="filters.search"
+              type="search"
+              class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface pe-3 ps-10 text-sm text-brand-text outline-none transition placeholder:text-brand-text-muted focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+              :placeholder="t('inventory.items.searchPlaceholder')"
+            />
+          </div>
+          <AppSelect v-model="filters.category_id" :options="categoryFilterOptions" searchable />
+          <AppSelect v-model="filters.is_active" :options="statusOptions" />
+        </div>
+      </template>
+      <template #filters>
+        <div class="space-y-3">
+          <AppSelect v-model="filters.category_id" :options="categoryFilterOptions" searchable />
+          <AppSelect v-model="filters.is_active" :options="statusOptions" />
+        </div>
+      </template>
+    </AppMobileFilters>
 
     <div
       v-if="listState === 'loading'"
@@ -476,16 +493,14 @@ async function removeItem(item: InventoryItem): Promise<void> {
         <article
           v-for="item in items"
           :key="item.id"
-          class="rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)] transition hover:border-brand-primary/30"
-          @click="router.push(`/app/inventory/items/${item.id}`)"
+          class="rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)]"
         >
-          <div class="flex items-start justify-between gap-2">
+          <div class="flex items-start justify-between gap-3">
             <div class="min-w-0">
-              <p class="font-mono text-xs font-bold text-brand-text">{{ item.item_number }}</p>
-              <h3 class="mt-1 truncate font-bold text-brand-text">{{ item.name }}</h3>
-              <p class="mt-1 truncate text-sm text-brand-text">
-                {{ item.category?.name || t('inventory.noCategory') }}
+              <p class="font-mono text-xs font-bold text-brand-primary-dark" dir="ltr">
+                {{ item.item_number }}
               </p>
+              <h3 class="mt-1 truncate font-bold text-brand-text">{{ item.name }}</h3>
             </div>
             <span
               class="inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold text-brand-text ring-1 ring-inset"
@@ -502,33 +517,68 @@ async function removeItem(item: InventoryItem): Promise<void> {
               {{ item.is_active ? t('inventory.status.active') : t('inventory.status.inactive') }}
             </span>
           </div>
+          <dl class="mt-3 grid grid-cols-2 gap-2 text-xs text-brand-text-secondary">
+            <div>
+              <dt>{{ t('inventory.columns.unit') }} / {{ t('inventory.columns.minimumStock') }}</dt>
+              <dd class="mt-0.5 font-medium text-brand-text">
+                {{ t(`inventory.units.${item.unit}`) }}
+                <span class="text-brand-text-muted">·</span>
+                <span dir="ltr">{{ formatQuantity(item.minimum_stock) }}</span>
+              </dd>
+            </div>
+            <div>
+              <dt>{{ t('inventory.columns.category') }}</dt>
+              <dd class="mt-0.5 font-medium text-brand-text">
+                {{ item.category?.name || t('inventory.noCategory') }}
+              </dd>
+            </div>
+          </dl>
+          <div class="mt-3 flex flex-wrap items-center justify-end gap-1 border-t border-brand-border pt-3">
+            <button
+              type="button"
+              class="inline-flex h-11 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-brand-primary-dark transition hover:bg-brand-primary-soft"
+              @click="router.push(`/app/inventory/items/${item.id}`)"
+            >
+              <Eye class="h-4 w-4" :stroke-width="2" />
+              {{ t('inventory.actions.view') }}
+            </button>
+            <button
+              v-if="can('inventory.manage_items')"
+              type="button"
+              class="inline-flex h-11 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-brand-primary-dark transition hover:bg-brand-primary-soft"
+              @click="openEdit(item)"
+            >
+              <Pencil class="h-4 w-4" :stroke-width="2" />
+              {{ t('inventory.actions.edit') }}
+            </button>
+          </div>
         </article>
       </div>
 
       <div
         v-if="meta && meta.last_page > 1"
-        class="flex items-center justify-between gap-3 rounded-2xl border border-brand-border bg-[#F7F8F6] px-5 py-3 text-sm"
+        class="flex items-center justify-between gap-3"
       >
         <button
           type="button"
-          class="inline-flex h-9 items-center gap-1 rounded-lg border border-brand-border bg-brand-surface px-3 font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
+          class="inline-flex h-11 items-center gap-1 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
           :disabled="filters.page <= 1"
           @click="filters.page -= 1"
         >
-          <ChevronRight class="h-4 w-4" />
-          {{ t('inventory.prev') }}
+          <ChevronRight class="h-4 w-4" :stroke-width="2" />
+          <span>{{ t('inventory.prev') }}</span>
         </button>
-        <span class="text-xs font-semibold text-brand-text">
+        <span class="text-xs font-semibold text-brand-text-muted">
           {{ filters.page }} / {{ meta.last_page }}
         </span>
         <button
           type="button"
-          class="inline-flex h-9 items-center gap-1 rounded-lg border border-brand-border bg-brand-surface px-3 font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
+          class="inline-flex h-11 items-center gap-1 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
           :disabled="filters.page >= meta.last_page"
           @click="filters.page += 1"
         >
-          {{ t('inventory.next') }}
-          <ChevronLeft class="h-4 w-4" />
+          <span>{{ t('inventory.next') }}</span>
+          <ChevronLeft class="h-4 w-4" :stroke-width="2" />
         </button>
       </div>
     </template>

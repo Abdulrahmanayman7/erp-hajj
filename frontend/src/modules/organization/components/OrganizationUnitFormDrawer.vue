@@ -108,7 +108,7 @@ onUnmounted(() => {
           aria-modal="true"
           :aria-label="title"
         >
-          <header class="flex items-start justify-between gap-3 border-b border-brand-border/70 px-5 py-4">
+          <header class="flex shrink-0 items-start justify-between gap-3 border-b border-brand-border/70 px-4 py-4">
             <div>
               <h2 class="text-lg font-semibold text-brand-ink">{{ title }}</h2>
               <p class="mt-1 text-sm text-brand-muted">{{ subtitle }}</p>
@@ -124,7 +124,7 @@ onUnmounted(() => {
             </button>
           </header>
 
-          <div class="flex-1 overflow-y-auto px-5 py-4">
+          <div class="flex-1 overflow-y-auto px-4 py-4">
             <p v-if="formError" class="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
               {{ formError }}
             </p>
@@ -232,10 +232,13 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <footer class="flex items-center justify-end gap-2 border-t border-brand-border/70 px-5 py-4">
+          <footer
+            class="flex shrink-0 flex-col-reverse gap-2 border-t border-brand-border/70 px-4 py-3 sm:flex-row sm:justify-end"
+            style="padding-bottom: max(12px, env(safe-area-inset-bottom))"
+          >
             <button
               type="button"
-              class="rounded-xl px-4 py-2.5 text-sm font-medium text-brand-muted hover:bg-brand-canvas"
+              class="inline-flex h-11 items-center justify-center rounded-xl px-4 text-sm font-medium text-brand-muted hover:bg-brand-canvas"
               :disabled="submitting"
               @click="emit('close')"
             >
@@ -243,7 +246,7 @@ onUnmounted(() => {
             </button>
             <button
               type="button"
-              class="inline-flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2.5 text-sm font-semibold text-white hover:opacity-95 disabled:opacity-60"
+              class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand-primary px-4 text-sm font-semibold text-white hover:opacity-95 disabled:opacity-60"
               :disabled="submitting"
               @click="emit('submit')"
             >

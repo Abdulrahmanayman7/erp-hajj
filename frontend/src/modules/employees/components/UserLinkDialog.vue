@@ -74,7 +74,8 @@ onUnmounted(() => {
       @click.self="emit('close')"
     >
       <div
-        class="w-full max-w-md rounded-2xl bg-brand-surface p-5 shadow-xl"
+        class="w-full max-w-md rounded-2xl bg-brand-surface p-4 shadow-xl sm:p-5"
+        style="padding-bottom: max(16px, env(safe-area-inset-bottom))"
         role="dialog"
         aria-modal="true"
         :aria-label="title"
@@ -141,11 +142,11 @@ onUnmounted(() => {
           {{ formError }}
         </p>
 
-        <div class="mt-5 flex flex-wrap items-center justify-end gap-2">
+        <div class="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
           <button
             v-if="hasLinkedUser"
             type="button"
-            class="me-auto rounded-xl border border-amber-200 px-4 py-2 text-sm font-semibold text-amber-800 hover:bg-amber-50 disabled:opacity-60"
+            class="inline-flex h-11 items-center justify-center rounded-xl border border-amber-200 px-4 text-sm font-semibold text-amber-800 hover:bg-amber-50 disabled:opacity-60 sm:me-auto"
             :disabled="submitting"
             @click="emit('unlink')"
           >
@@ -153,7 +154,7 @@ onUnmounted(() => {
           </button>
           <button
             type="button"
-            class="rounded-xl px-4 py-2 text-sm font-semibold text-brand-text-secondary hover:bg-brand-bg"
+            class="inline-flex h-11 items-center justify-center rounded-xl px-4 text-sm font-semibold text-brand-text-secondary hover:bg-brand-bg"
             :disabled="submitting"
             @click="emit('close')"
           >
@@ -161,7 +162,7 @@ onUnmounted(() => {
           </button>
           <button
             type="button"
-            class="inline-flex items-center gap-2 rounded-xl bg-brand-primary-dark px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+            class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white disabled:opacity-60"
             :disabled="submitting || userId === ''"
             @click="emit('submit')"
           >

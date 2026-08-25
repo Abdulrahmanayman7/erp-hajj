@@ -7,6 +7,8 @@ import { ChevronLeft, ChevronRight, Eye, Pencil, Plus, Power, PowerOff, Search, 
 import { listEmployees } from '@/modules/employees/api/employeesApi'
 import { useOrganizationUnitsFlatQuery } from '@/modules/organization/queries/useOrganizationUnitsQuery'
 import { ApiError } from '@/shared/api/http'
+import AppMobileFilters from '@/shared/components/AppMobileFilters.vue'
+import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 import { employeeSelectOption, toSelectId } from '@/shared/lookups/selectOptions'
@@ -92,6 +94,21 @@ const emptyEmployeeFilter = computed<AppSelectOption>(() => ({
   value: '',
   label: t('inventory.filters.allEmployees'),
 }))
+
+const activeFilterCount = computed(() => {
+  let count = 0
+  if (filters.is_active !== '') count += 1
+  if (filters.organization_unit_id !== '') count += 1
+  if (filters.responsible_employee_id !== '') count += 1
+  return count
+})
+
+function resetFilters(): void {
+  filters.is_active = ''
+  filters.organization_unit_id = ''
+  filters.responsible_employee_id = ''
+  filters.search = ''
+}
 
 watch(
   () => [committedSearch.value, filters.is_active, filters.organization_unit_id, filters.responsible_employee_id],
@@ -235,44 +252,75 @@ async function removeWarehouse(warehouse: Warehouse): Promise<void> {
 
 <template>
   <div class="space-y-6">
-    <div class="flex flex-wrap items-end justify-between gap-4 rounded-2xl border border-brand-border bg-brand-surface px-5 py-5 shadow-sm">
-      <div>
-        <h2 class="text-[1.75rem] font-bold text-brand-text">{{ t('inventory.warehouses.title') }}</h2>
-        <p class="mt-1.5 text-sm text-brand-text-secondary">{{ t('inventory.warehouses.subtitle') }}</p>
-      </div>
-      <PermissionGuard permission="warehouses.create">
-        <button
-          type="button"
-          class="inline-flex h-11 items-center gap-2 rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
-          @click="openCreate"
-        >
-          <Plus class="h-4 w-4" />
-          {{ t('inventory.warehouses.createCta') }}
-        </button>
-      </PermissionGuard>
-    </div>
+    <AppPageHeader
+      :title="t('inventory.warehouses.title')"
+      :subtitle="t('inventory.warehouses.subtitle')"
+      :meta="meta ? String(meta.total) : undefined"
+    >
+      <template #actions>
+        <PermissionGuard permission="warehouses.create">
+          <button
+            type="button"
+            class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/30 sm:w-auto"
+            @click="openCreate"
+          >
+            <Plus class="h-4 w-4" />
+            <span>{{ t('inventory.warehouses.createCta') }}</span>
+          </button>
+        </PermissionGuard>
+      </template>
+    </AppPageHeader>
 
-    <div class="flex flex-wrap items-center gap-3 rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-sm">
-      <div class="relative min-w-48 flex-1">
-        <Search class="pointer-events-none absolute inset-s-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text-muted" />
-        <input
-          v-model="filters.search"
-          type="search"
-          class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface pe-3 ps-10 text-sm outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/10"
-          :placeholder="t('inventory.warehouses.searchPlaceholder')"
-        />
-      </div>
-      <AppSelect v-model="filters.is_active" :options="statusOptions" />
-      <AppSelect v-model="filters.organization_unit_id" :options="orgUnitOptions" searchable />
-      <AppRemoteSelect
-        :model-value="filters.responsible_employee_id"
-        query-key="employees-active"
-        :fetcher="fetchActiveEmployees"
-        :map-option="employeeSelectOption"
-        :empty-option="emptyEmployeeFilter"
-        @update:model-value="filters.responsible_employee_id = toSelectId($event)"
-      />
-    </div>
+    <AppMobileFilters
+      v-model:search="filters.search"
+      :search-placeholder="t('inventory.warehouses.searchPlaceholder')"
+      :active-count="activeFilterCount"
+      @reset="resetFilters"
+    >
+      <template #desktop>
+        <div
+          class="flex flex-wrap items-center gap-3 rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)]"
+        >
+          <div class="relative min-w-48 flex-1">
+            <Search
+              class="pointer-events-none absolute inset-s-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text-muted"
+              :stroke-width="1.75"
+              aria-hidden="true"
+            />
+            <input
+              v-model="filters.search"
+              type="search"
+              class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface pe-3 ps-10 text-sm text-brand-text outline-none transition placeholder:text-brand-text-muted focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+              :placeholder="t('inventory.warehouses.searchPlaceholder')"
+            />
+          </div>
+          <AppSelect v-model="filters.is_active" :options="statusOptions" />
+          <AppSelect v-model="filters.organization_unit_id" :options="orgUnitOptions" searchable />
+          <AppRemoteSelect
+            :model-value="filters.responsible_employee_id"
+            query-key="employees-active"
+            :fetcher="fetchActiveEmployees"
+            :map-option="employeeSelectOption"
+            :empty-option="emptyEmployeeFilter"
+            @update:model-value="filters.responsible_employee_id = toSelectId($event)"
+          />
+        </div>
+      </template>
+      <template #filters>
+        <div class="space-y-3">
+          <AppSelect v-model="filters.is_active" :options="statusOptions" />
+          <AppSelect v-model="filters.organization_unit_id" :options="orgUnitOptions" searchable />
+          <AppRemoteSelect
+            :model-value="filters.responsible_employee_id"
+            query-key="employees-active"
+            :fetcher="fetchActiveEmployees"
+            :map-option="employeeSelectOption"
+            :empty-option="emptyEmployeeFilter"
+            @update:model-value="filters.responsible_employee_id = toSelectId($event)"
+          />
+        </div>
+      </template>
+    </AppMobileFilters>
 
     <div v-if="listState === 'loading'" class="rounded-2xl border border-brand-border bg-brand-surface p-10 text-center text-sm text-brand-text-muted shadow-sm">
       {{ t('inventory.loading') }}
@@ -441,14 +489,14 @@ async function removeWarehouse(warehouse: Warehouse): Promise<void> {
         <article
           v-for="warehouse in warehouses"
           :key="warehouse.id"
-          class="rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)] transition hover:border-brand-primary/30"
-          @click="router.push(`/app/warehouses/${warehouse.id}`)"
+          class="rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)]"
         >
-          <div class="flex items-start justify-between gap-2">
+          <div class="flex items-start justify-between gap-3">
             <div class="min-w-0">
-              <p class="font-mono text-xs font-bold text-brand-text">{{ warehouse.warehouse_number }}</p>
+              <p class="font-mono text-xs font-bold text-brand-primary-dark" dir="ltr">
+                {{ warehouse.warehouse_number }}
+              </p>
               <h3 class="mt-1 truncate font-bold text-brand-text">{{ warehouse.name }}</h3>
-              <p class="mt-1 truncate text-sm text-brand-text">{{ warehouse.location || '—' }}</p>
             </div>
             <span
               class="inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold text-brand-text ring-1 ring-inset"
@@ -465,31 +513,49 @@ async function removeWarehouse(warehouse: Warehouse): Promise<void> {
               {{ warehouse.is_active ? t('inventory.status.active') : t('inventory.status.inactive') }}
             </span>
           </div>
+          <dl class="mt-3 grid grid-cols-2 gap-2 text-xs text-brand-text-secondary">
+            <div class="col-span-2">
+              <dt>{{ t('inventory.columns.location') }}</dt>
+              <dd class="mt-0.5 font-medium text-brand-text">{{ warehouse.location || '—' }}</dd>
+            </div>
+          </dl>
+          <div class="mt-3 flex items-center justify-end border-t border-brand-border pt-3">
+            <button
+              type="button"
+              class="inline-flex h-11 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-brand-primary-dark transition hover:bg-brand-primary-soft"
+              @click="router.push(`/app/warehouses/${warehouse.id}`)"
+            >
+              <Eye class="h-4 w-4" :stroke-width="2" />
+              {{ t('inventory.actions.view') }}
+            </button>
+          </div>
         </article>
       </div>
 
       <div
         v-if="meta && meta.last_page > 1"
-        class="flex items-center justify-between gap-3 rounded-2xl border border-brand-border bg-[#F7F8F6] px-5 py-3 text-sm"
+        class="flex items-center justify-between gap-3"
       >
         <button
           type="button"
-          class="inline-flex h-9 items-center gap-1 rounded-lg border border-brand-border bg-brand-surface px-3 font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
+          class="inline-flex h-11 items-center gap-1 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
           :disabled="filters.page <= 1"
           @click="filters.page -= 1"
         >
-          <ChevronRight class="h-4 w-4" />
-          {{ t('inventory.prev') }}
+          <ChevronRight class="h-4 w-4" :stroke-width="2" />
+          <span>{{ t('inventory.prev') }}</span>
         </button>
-        <span class="text-xs font-semibold text-brand-text">{{ filters.page }} / {{ meta.last_page }}</span>
+        <span class="text-xs font-semibold text-brand-text-muted">
+          {{ filters.page }} / {{ meta.last_page }}
+        </span>
         <button
           type="button"
-          class="inline-flex h-9 items-center gap-1 rounded-lg border border-brand-border bg-brand-surface px-3 font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
+          class="inline-flex h-11 items-center gap-1 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
           :disabled="filters.page >= meta.last_page"
           @click="filters.page += 1"
         >
-          {{ t('inventory.next') }}
-          <ChevronLeft class="h-4 w-4" />
+          <span>{{ t('inventory.next') }}</span>
+          <ChevronLeft class="h-4 w-4" :stroke-width="2" />
         </button>
       </div>
     </template>

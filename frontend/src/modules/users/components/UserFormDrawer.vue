@@ -115,7 +115,7 @@ onUnmounted(() => {
         >
           <!-- Sticky header -->
           <header
-            class="flex shrink-0 items-start justify-between gap-4 border-b border-brand-border px-6 py-5 sm:px-7"
+            class="flex shrink-0 items-start justify-between gap-4 border-b border-brand-border px-4 py-5 sm:px-7"
           >
             <div class="min-w-0 text-start">
               <h3 class="text-[21px] font-bold leading-tight text-brand-text">
@@ -142,7 +142,7 @@ onUnmounted(() => {
             class="flex min-h-0 flex-1 flex-col"
             @submit.prevent="emit('submit')"
           >
-            <div class="flex-1 space-y-6 overflow-y-auto px-6 py-6 sm:px-7">
+            <div class="flex-1 space-y-6 overflow-y-auto px-4 py-6 sm:px-7">
               <div class="space-y-5">
                 <label class="block">
                   <span class="mb-2 block text-sm font-semibold text-brand-text">
@@ -334,7 +334,8 @@ onUnmounted(() => {
 
             <!-- Sticky footer -->
             <footer
-              class="flex shrink-0 items-center justify-end gap-2.5 border-t border-brand-border bg-brand-surface px-6 py-4 sm:px-7"
+              class="flex shrink-0 flex-col-reverse gap-2 border-t border-brand-border bg-brand-surface px-4 py-3 sm:flex-row sm:justify-end"
+              style="padding-bottom: max(12px, env(safe-area-inset-bottom))"
             >
               <button
                 type="button"

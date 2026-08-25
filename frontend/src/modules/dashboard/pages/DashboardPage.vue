@@ -6,6 +6,7 @@ import { RouterLink } from 'vue-router'
 import { Bell, RefreshCw } from 'lucide-vue-next'
 
 import { useCurrentUserQuery } from '@/modules/auth/queries/useCurrentUserQuery'
+import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import { useToast } from '@/shared/composables/useToast'
 
 import DashboardAttention from '../components/DashboardAttention.vue'
@@ -48,6 +49,15 @@ const generatedAtLabel = computed(() =>
 )
 const timezoneLabel = computed(() => friendlyTimezone(timezone.value))
 const tenantName = computed(() => user.value?.tenant?.name ?? null)
+
+const contextLine = computed(() => {
+  const parts = [
+    tenantName.value,
+    todayLabel.value,
+    t('dashboard.timezoneAt', { timezone: timezoneLabel.value }),
+  ].filter(Boolean)
+  return parts.join(' · ')
+})
 
 const notifications = computed(() => data.value?.notifications)
 const unreadCount = computed(() => notifications.value?.unread_count ?? 0)
@@ -93,55 +103,48 @@ async function onRefresh(): Promise<void> {
 </script>
 
 <template>
-  <div class="mx-auto max-w-[1280px] space-y-5">
-    <div class="flex flex-wrap items-end justify-between gap-4 border-b border-brand-border pb-5">
-      <div>
-        <h2 class="text-[1.75rem] font-bold text-brand-text">
-          {{ t('dashboard.title') }}
-        </h2>
-        <p class="mt-1.5 text-sm text-brand-text-secondary">
-          {{ t('dashboard.subtitle') }}
-        </p>
-        <div class="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-brand-text-muted">
-          <span v-if="tenantName">{{ tenantName }}</span>
-          <span v-if="tenantName" aria-hidden="true">·</span>
-          <span>{{ todayLabel }}</span>
-          <span aria-hidden="true">·</span>
-          <span>{{ t('dashboard.timezoneAt', { timezone: timezoneLabel }) }}</span>
-        </div>
-      </div>
-
-      <div class="flex flex-wrap items-center gap-2.5">
+  <div class="mx-auto max-w-[1280px] min-w-0 space-y-5 overflow-x-hidden">
+    <AppPageHeader
+      :title="t('dashboard.title')"
+      :subtitle="t('dashboard.subtitle')"
+    >
+      <template #actions>
         <RouterLink
           v-if="notifications && unreadCount > 0"
           :to="notificationsHref"
-          class="inline-flex items-center gap-2 rounded-full border border-brand-border bg-brand-surface px-3 py-1.5 text-xs font-semibold text-brand-text transition hover:border-brand-primary/30 hover:bg-brand-primary-soft/50"
+          class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text transition hover:border-brand-primary/30 hover:bg-brand-primary-soft/50 sm:h-auto sm:w-auto sm:rounded-full sm:py-1.5 sm:text-xs"
         >
           <Bell class="h-3.5 w-3.5 text-brand-primary" :stroke-width="1.75" />
           <span>{{ t('dashboard.unreadChip', { count: unreadCount }) }}</span>
         </RouterLink>
 
-        <div class="flex items-center gap-2 rounded-xl border border-brand-border bg-brand-surface px-2 py-1.5">
-          <span class="hidden text-xs text-brand-text-muted sm:inline">
+        <div
+          class="flex w-full items-center gap-2 rounded-xl border border-brand-border bg-brand-surface px-2 py-1.5 sm:w-auto"
+        >
+          <span class="hidden min-w-0 truncate text-xs text-brand-text-muted sm:inline">
             {{ t('dashboard.lastUpdated', { time: generatedAtLabel }) }}
           </span>
           <button
-          type="button"
-          class="inline-flex h-8 items-center gap-1.5 rounded-lg px-2 text-sm font-semibold text-brand-text transition hover:bg-brand-bg disabled:opacity-60"
-          :disabled="isFetching"
-          :aria-label="t('dashboard.refresh')"
-          @click="onRefresh"
-        >
-          <RefreshCw
-            class="h-4 w-4"
-            :class="isFetching ? 'animate-spin' : ''"
-            :stroke-width="1.75"
-          />
-          <span>{{ t('dashboard.refresh') }}</span>
+            type="button"
+            class="inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-lg px-3 text-sm font-semibold text-brand-text transition hover:bg-brand-bg disabled:opacity-60 sm:h-8 sm:flex-none sm:px-2"
+            :disabled="isFetching"
+            :aria-label="t('dashboard.refresh')"
+            @click="onRefresh"
+          >
+            <RefreshCw
+              class="h-4 w-4"
+              :class="isFetching ? 'animate-spin' : ''"
+              :stroke-width="1.75"
+            />
+            <span>{{ t('dashboard.refresh') }}</span>
           </button>
         </div>
-      </div>
-    </div>
+      </template>
+    </AppPageHeader>
+
+    <p class="-mt-2 break-words text-xs leading-5 text-brand-text-muted">
+      {{ contextLine }}
+    </p>
 
     <div
       v-if="isLoading"
@@ -155,15 +158,15 @@ async function onRefresh(): Promise<void> {
           class="h-32 animate-pulse rounded-2xl border border-brand-border bg-brand-bg"
         />
       </div>
-      <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
+      <div class="grid grid-cols-1 gap-4">
         <div v-for="n in 4" :key="n" class="h-52 animate-pulse rounded-2xl border border-brand-border bg-brand-bg" />
       </div>
     </div>
 
     <div
       v-else-if="isError"
-        class="rounded-2xl border border-red-200 bg-red-50 p-10 text-center"
-        role="alert"
+      class="rounded-2xl border border-red-200 bg-red-50 p-6 text-center sm:p-10"
+      role="alert"
     >
       <p class="text-sm text-red-700">
         {{ t('dashboard.loadError') }}
@@ -180,25 +183,25 @@ async function onRefresh(): Promise<void> {
     <template v-else-if="data">
       <div
         v-if="showEmptyModules"
-        class="rounded-2xl border border-brand-border bg-brand-surface p-8 text-center text-sm text-brand-text-secondary"
+        class="rounded-2xl border border-brand-border bg-brand-surface p-6 text-center text-sm text-brand-text-secondary sm:p-8"
       >
         {{ t('dashboard.noModules') }}
       </div>
 
       <template v-else>
+        <!-- Mobile priority: attention → KPIs → today → work → resources -->
+        <DashboardAttention
+          v-if="showAttention"
+          :items="data.attention ?? []"
+        />
+
         <DashboardKpiGrid :kpis="kpisPayload" />
 
-        <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
-          <DashboardAttention
-            v-if="showAttention"
-            :items="data.attention ?? []"
-          />
-          <DashboardToday
-            v-if="showToday"
-            :today="todayPayload"
-            :timezone="timezone"
-          />
-        </div>
+        <DashboardToday
+          v-if="showToday"
+          :today="todayPayload"
+          :timezone="timezone"
+        />
 
         <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
           <DashboardWork

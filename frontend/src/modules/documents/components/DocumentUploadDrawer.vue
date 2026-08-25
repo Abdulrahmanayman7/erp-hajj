@@ -152,7 +152,7 @@ onUnmounted(() => {
           :aria-label="t('documents.upload.title')"
           @click.stop
         >
-          <header class="flex items-start justify-between gap-3 border-b border-brand-border px-5 py-4">
+          <header class="flex shrink-0 items-start justify-between gap-3 border-b border-brand-border px-4 py-4">
             <div>
               <h2 class="text-lg font-bold text-brand-text">{{ t('documents.upload.title') }}</h2>
               <p class="mt-1 text-sm text-brand-text-secondary">{{ t('documents.upload.subtitle') }}</p>
@@ -168,7 +168,7 @@ onUnmounted(() => {
             </button>
           </header>
 
-          <div class="flex-1 space-y-6 overflow-y-auto px-5 py-4">
+          <div class="flex-1 space-y-6 overflow-y-auto px-4 py-4">
             <section class="space-y-3">
               <h3 class="text-sm font-bold text-brand-text">{{ t('documents.upload.fileSection') }}</h3>
               <input
@@ -318,10 +318,13 @@ onUnmounted(() => {
             </p>
           </div>
 
-          <footer class="flex items-center justify-end gap-2 border-t border-brand-border px-5 py-4">
+          <footer
+            class="flex shrink-0 flex-col-reverse gap-2 border-t border-brand-border px-4 py-3 sm:flex-row sm:justify-end"
+            style="padding-bottom: max(12px, env(safe-area-inset-bottom))"
+          >
             <button
               type="button"
-              class="rounded-xl px-4 py-2 text-sm font-semibold text-brand-text-secondary"
+              class="inline-flex h-11 items-center justify-center rounded-xl px-4 text-sm font-semibold text-brand-text-secondary"
               :disabled="submitting"
               @click="emit('close')"
             >
@@ -329,7 +332,7 @@ onUnmounted(() => {
             </button>
             <button
               type="button"
-              class="inline-flex items-center gap-2 rounded-xl bg-brand-primary-dark px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+              class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white disabled:opacity-60"
               :disabled="submitting"
               @click="emit('submit')"
             >

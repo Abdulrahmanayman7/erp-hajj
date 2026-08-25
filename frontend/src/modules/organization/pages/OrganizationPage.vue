@@ -2,32 +2,26 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
-  CalendarDays,
-  ChevronLeft,
   ChevronsDown,
   ChevronsUp,
   FolderTree,
   LoaderCircle,
-  Pencil,
   Plus,
-  Power,
-  PowerOff,
   Search,
-  Trash2,
-  ArrowRightLeft,
-  UserRound,
   X,
 } from 'lucide-vue-next'
 
-import EntityDocumentsSection from '@/modules/documents/components/EntityDocumentsSection.vue'
 import { ApiError } from '@/shared/api/http'
+import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
+import { useBodyScrollLock } from '@/shared/composables/useBodyScrollLock'
 import { useConfirm } from '@/shared/composables/useConfirm'
 import { useToast } from '@/shared/composables/useToast'
 import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
 
 import OrganizationTreeNodes from '../components/OrganizationTreeNodes.vue'
+import OrganizationUnitDetailsPanel from '../components/OrganizationUnitDetailsPanel.vue'
 import OrganizationUnitFormDrawer, {
   type OrganizationUnitFormState,
 } from '../components/OrganizationUnitFormDrawer.vue'
@@ -71,6 +65,7 @@ const unitsCount = computed(() => flattenUnits(tree.value).length)
 const selectedId = ref<number | null>(null)
 const expanded = ref<Set<number>>(new Set())
 const mobileDetailsOpen = ref(false)
+useBodyScrollLock(mobileDetailsOpen)
 
 const selected = computed(() =>
   selectedId.value != null ? findUnitInTree(tree.value, selectedId.value) : null,
@@ -319,53 +314,33 @@ function expandAll(): void {
 function collapseAll(): void {
   expanded.value = new Set()
 }
-
-function formatDate(value: string | null): string {
-  if (!value) return '—'
-  return new Date(value).toLocaleDateString('ar-SA')
-}
-
-function typeBadgeClass(type: OrganizationUnitType): string {
-  if (type === 'department') return 'bg-brand-primary-soft text-brand-primary-dark'
-  if (type === 'section') return 'bg-brand-gold-soft text-[#8a6a2e]'
-  return 'bg-[#F4F6F5] text-brand-text-secondary'
-}
 </script>
 
 <template>
-  <div class="space-y-6">
-    <div class="flex flex-wrap items-end justify-between gap-4">
-      <div class="min-w-0">
-        <h2 class="text-[1.75rem] font-bold leading-tight text-brand-text">
-          {{ t('organization.title') }}
-        </h2>
-        <p class="mt-1.5 text-sm text-brand-text-secondary">
-          {{ t('organization.subtitle') }}
-        </p>
-        <p v-if="!isLoading && !isError" class="mt-2">
-          <span
-            class="inline-flex items-center rounded-full bg-brand-primary-soft px-2.5 py-0.5 text-xs font-semibold text-brand-primary-dark"
+  <div class="min-w-0 space-y-6 overflow-x-hidden">
+    <AppPageHeader
+      :title="t('organization.title')"
+      :subtitle="t('organization.subtitle')"
+      :meta="!isLoading && !isError ? t('organization.total', { count: unitsCount }) : undefined"
+    >
+      <template #actions>
+        <PermissionGuard permission="organization_units.create">
+          <button
+            type="button"
+            class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white transition hover:bg-brand-primary sm:w-auto"
+            @click="openCreate()"
           >
-            {{ t('organization.total', { count: unitsCount }) }}
-          </span>
-        </p>
-      </div>
-      <PermissionGuard permission="organization_units.create">
-        <button
-          type="button"
-          class="inline-flex h-11 items-center gap-2 rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white transition hover:bg-brand-primary"
-          @click="openCreate()"
-        >
-          <Plus class="h-4 w-4" :stroke-width="2.25" />
-          <span>{{ t('organization.createCta') }}</span>
-        </button>
-      </PermissionGuard>
-    </div>
+            <Plus class="h-4 w-4" :stroke-width="2.25" />
+            <span>{{ t('organization.createCta') }}</span>
+          </button>
+        </PermissionGuard>
+      </template>
+    </AppPageHeader>
 
     <div
-      class="flex flex-wrap items-center gap-3 rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)]"
+      class="flex flex-col gap-3 rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)] sm:flex-row sm:flex-wrap sm:items-center"
     >
-      <div class="relative min-w-48 flex-1">
+      <div class="relative min-w-0 flex-1 sm:min-w-48">
         <Search
           class="pointer-events-none absolute inset-s-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text-muted"
           :stroke-width="1.75"
@@ -384,19 +359,19 @@ function typeBadgeClass(type: OrganizationUnitType): string {
       <div class="flex items-center gap-2">
         <button
           type="button"
-          class="inline-flex h-11 items-center gap-1.5 rounded-xl border border-brand-border bg-brand-bg px-3 text-sm font-semibold text-brand-text transition hover:border-brand-primary/30 hover:bg-brand-primary-soft hover:text-brand-primary-dark"
+          class="inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl border border-brand-border bg-brand-bg px-3 text-sm font-semibold text-brand-text transition hover:border-brand-primary/30 hover:bg-brand-primary-soft hover:text-brand-primary-dark sm:flex-none"
           @click="expandAll"
         >
           <ChevronsDown class="h-4 w-4" :stroke-width="2" />
-          <span class="hidden sm:inline">{{ t('organization.expandAll') }}</span>
+          <span class="sm:inline">{{ t('organization.expandAll') }}</span>
         </button>
         <button
           type="button"
-          class="inline-flex h-11 items-center gap-1.5 rounded-xl border border-brand-border bg-brand-bg px-3 text-sm font-semibold text-brand-text transition hover:border-brand-primary/30 hover:bg-brand-primary-soft hover:text-brand-primary-dark"
+          class="inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl border border-brand-border bg-brand-bg px-3 text-sm font-semibold text-brand-text transition hover:border-brand-primary/30 hover:bg-brand-primary-soft hover:text-brand-primary-dark sm:flex-none"
           @click="collapseAll"
         >
           <ChevronsUp class="h-4 w-4" :stroke-width="2" />
-          <span class="hidden sm:inline">{{ t('organization.collapseAll') }}</span>
+          <span class="sm:inline">{{ t('organization.collapseAll') }}</span>
         </button>
       </div>
     </div>
@@ -443,9 +418,9 @@ function typeBadgeClass(type: OrganizationUnitType): string {
       </PermissionGuard>
     </div>
 
-    <div v-else class="grid items-start gap-4 lg:grid-cols-[minmax(22rem,1.05fr)_minmax(20rem,0.95fr)]">
+    <div v-else class="grid min-w-0 items-start gap-4 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
       <section
-        class="overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-[0_1px_2px_rgba(23,32,29,0.03)]"
+        class="min-w-0 overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-[0_1px_2px_rgba(23,32,29,0.03)]"
       >
         <div class="flex items-center justify-between gap-3 border-b border-brand-border bg-[#F7F8F6] px-4 py-3">
           <div class="flex min-w-0 items-center gap-2">
@@ -461,7 +436,7 @@ function typeBadgeClass(type: OrganizationUnitType): string {
             aria-hidden="true"
           />
         </div>
-        <ul class="max-h-[min(70vh,40rem)] overflow-y-auto p-2" role="tree">
+        <ul class="max-h-[min(70vh,40rem)] min-w-0 overflow-x-hidden overflow-y-auto p-1.5 sm:p-2" role="tree">
           <OrganizationTreeNodes
             :nodes="tree"
             :expanded="expanded"
@@ -475,8 +450,7 @@ function typeBadgeClass(type: OrganizationUnitType): string {
       </section>
 
       <section
-        class="overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-[0_1px_2px_rgba(23,32,29,0.03)]"
-        :class="mobileDetailsOpen ? 'block' : 'hidden lg:block'"
+        class="hidden min-w-0 overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-[0_1px_2px_rgba(23,32,29,0.03)] lg:block"
       >
         <div
           v-if="!selected"
@@ -489,169 +463,51 @@ function typeBadgeClass(type: OrganizationUnitType): string {
           <p class="max-w-xs text-sm text-brand-text-secondary">{{ t('organization.selectHint') }}</p>
         </div>
 
-        <div v-else class="flex flex-col">
-          <div class="border-b border-brand-border bg-[#F7F8F6] px-5 py-4">
-            <div class="flex items-start justify-between gap-3">
-              <div class="min-w-0">
-                <div class="flex flex-wrap items-center gap-2">
-                  <h2 class="text-lg font-bold text-brand-text">{{ selected.name }}</h2>
-                  <span
-                    class="inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
-                    :class="
-                      selected.status === 'active'
-                        ? 'bg-emerald-50 text-emerald-800'
-                        : 'bg-slate-100 text-slate-600'
-                    "
-                  >
-                    {{ statusLabel(selected.status) }}
-                  </span>
-                </div>
-                <div class="mt-2 flex flex-wrap items-center gap-2">
-                  <span
-                    class="inline-flex items-center rounded-lg border border-brand-border bg-brand-surface px-2 py-0.5 font-mono text-[11px] font-bold tracking-wide text-brand-primary-dark"
-                    dir="ltr"
-                  >
-                    {{ selected.code }}
-                  </span>
-                  <span
-                    class="inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-bold"
-                    :class="typeBadgeClass(selected.type)"
-                  >
-                    {{ typeLabel(selected.type) }}
-                  </span>
-                </div>
-              </div>
-              <button
-                type="button"
-                class="rounded-lg p-2 text-brand-text-muted transition hover:bg-brand-surface hover:text-brand-text lg:hidden"
-                :aria-label="t('organization.close')"
-                @click="mobileDetailsOpen = false"
-              >
-                <ChevronLeft class="h-5 w-5" />
-              </button>
-            </div>
-          </div>
-
-          <div class="flex flex-col gap-5 p-5">
-            <dl class="grid gap-3 sm:grid-cols-2">
-              <div class="rounded-xl bg-brand-bg px-3.5 py-3">
-                <dt class="text-[11px] font-semibold text-brand-text-muted">
-                  {{ t('organization.fields.parent') }}
-                </dt>
-                <dd class="mt-1 text-sm font-semibold text-brand-text">{{ parentName }}</dd>
-              </div>
-              <div class="rounded-xl bg-brand-bg px-3.5 py-3">
-                <dt class="text-[11px] font-semibold text-brand-text-muted">
-                  {{ t('organization.fields.manager') }}
-                </dt>
-                <dd class="mt-1 flex items-center gap-1.5 text-sm font-semibold text-brand-text">
-                  <UserRound class="h-3.5 w-3.5 shrink-0 text-brand-text-muted" :stroke-width="1.85" />
-                  <template v-if="selected.manager">
-                    <span class="truncate">{{ selected.manager.name }}</span>
-                    <span
-                      v-if="selected.manager.status !== 'active'"
-                      class="text-xs font-medium text-amber-700"
-                    >
-                      ({{ t('organization.managerDisabled') }})
-                    </span>
-                  </template>
-                  <template v-else>{{ t('organization.noManager') }}</template>
-                </dd>
-              </div>
-              <div class="rounded-xl bg-brand-bg px-3.5 py-3">
-                <dt class="text-[11px] font-semibold text-brand-text-muted">
-                  {{ t('organization.fields.childrenCount') }}
-                </dt>
-                <dd class="mt-1 text-sm font-semibold text-brand-text">{{ selected.children_count }}</dd>
-              </div>
-              <div class="rounded-xl bg-brand-bg px-3.5 py-3">
-                <dt class="text-[11px] font-semibold text-brand-text-muted">
-                  {{ t('organization.fields.createdAt') }}
-                </dt>
-                <dd class="mt-1 flex items-center gap-1.5 text-sm font-semibold text-brand-text">
-                  <CalendarDays class="h-3.5 w-3.5 shrink-0 text-brand-text-muted" :stroke-width="1.85" />
-                  {{ formatDate(selected.created_at) }}
-                </dd>
-              </div>
-              <div class="rounded-xl bg-brand-bg px-3.5 py-3 sm:col-span-2">
-                <dt class="text-[11px] font-semibold text-brand-text-muted">
-                  {{ t('organization.fields.updatedAt') }}
-                </dt>
-                <dd class="mt-1 text-sm font-semibold text-brand-text">
-                  {{ formatDate(selected.updated_at) }}
-                </dd>
-              </div>
-            </dl>
-
-            <div class="flex flex-wrap gap-2 border-t border-brand-border pt-4">
-              <PermissionGuard permission="organization_units.update">
-                <button
-                  type="button"
-                  class="inline-flex h-10 items-center gap-1.5 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text transition hover:bg-brand-bg"
-                  @click="openEdit(selected)"
-                >
-                  <Pencil class="h-4 w-4" :stroke-width="1.85" />
-                  {{ t('organization.edit') }}
-                </button>
-                <button
-                  type="button"
-                  class="inline-flex h-10 items-center gap-1.5 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text transition hover:bg-brand-bg"
-                  @click="openMove"
-                >
-                  <ArrowRightLeft class="h-4 w-4" :stroke-width="1.85" />
-                  {{ t('organization.moveCta') }}
-                </button>
-                <button
-                  type="button"
-                  class="inline-flex h-10 items-center gap-1.5 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm font-semibold transition hover:bg-brand-bg"
-                  :class="
-                    selected.status === 'active'
-                      ? 'text-amber-800 hover:border-amber-200 hover:bg-amber-50'
-                      : 'text-emerald-800 hover:border-emerald-200 hover:bg-emerald-50'
-                  "
-                  @click="toggleStatus(selected)"
-                >
-                  <PowerOff v-if="selected.status === 'active'" class="h-4 w-4" :stroke-width="1.85" />
-                  <Power v-else class="h-4 w-4" :stroke-width="1.85" />
-                  {{
-                    selected.status === 'active'
-                      ? t('organization.deactivateCta')
-                      : t('organization.activateCta')
-                  }}
-                </button>
-              </PermissionGuard>
-              <PermissionGuard permission="organization_units.create">
-                <button
-                  type="button"
-                  class="inline-flex h-10 items-center gap-1.5 rounded-xl bg-brand-primary-dark px-3 text-sm font-semibold text-white transition hover:bg-brand-primary"
-                  @click="openCreate(selected.id)"
-                >
-                  <Plus class="h-4 w-4" :stroke-width="2.25" />
-                  {{ t('organization.addChild') }}
-                </button>
-              </PermissionGuard>
-              <PermissionGuard permission="organization_units.delete">
-                <button
-                  v-if="selected.children_count === 0"
-                  type="button"
-                  class="inline-flex h-10 items-center gap-1.5 rounded-xl border border-red-200 px-3 text-sm font-semibold text-red-700 transition hover:bg-red-50"
-                  @click="confirmDelete(selected)"
-                >
-                  <Trash2 class="h-4 w-4" :stroke-width="1.85" />
-                  {{ t('organization.deleteCta') }}
-                </button>
-              </PermissionGuard>
-            </div>
-
-            <EntityDocumentsSection
-              linkable-type="organization_unit"
-              :linkable-id="selected.id"
-              :link-label="`${selected.code} — ${selected.name}`"
-            />
-          </div>
-        </div>
+        <OrganizationUnitDetailsPanel
+          v-else
+          :unit="selected"
+          :parent-name="parentName"
+          @edit="openEdit(selected)"
+          @move="openMove"
+          @toggle-status="toggleStatus(selected)"
+          @add-child="openCreate(selected.id)"
+          @delete="confirmDelete(selected)"
+        />
       </section>
     </div>
+
+    <Teleport to="body">
+      <div
+        v-if="mobileDetailsOpen && selected"
+        class="fixed inset-0 z-50 lg:hidden"
+        role="dialog"
+        aria-modal="true"
+        :aria-label="selected.name"
+      >
+        <button
+          type="button"
+          class="absolute inset-0 bg-brand-text/40"
+          :aria-label="t('organization.close')"
+          @click="mobileDetailsOpen = false"
+        />
+        <div
+          class="absolute inset-x-0 bottom-0 flex max-h-[88dvh] flex-col overflow-hidden rounded-t-[1.5rem] border border-brand-border bg-brand-surface shadow-[0_-18px_40px_-24px_rgba(23,32,29,0.45)]"
+          style="padding-bottom: max(8px, env(safe-area-inset-bottom))"
+        >
+          <OrganizationUnitDetailsPanel
+            :unit="selected"
+            :parent-name="parentName"
+            show-close
+            @close="mobileDetailsOpen = false"
+            @edit="openEdit(selected)"
+            @move="openMove"
+            @toggle-status="toggleStatus(selected)"
+            @add-child="openCreate(selected.id)"
+            @delete="confirmDelete(selected)"
+          />
+        </div>
+      </div>
+    </Teleport>
 
     <OrganizationUnitFormDrawer
       :open="drawerOpen"
@@ -678,7 +534,7 @@ function typeBadgeClass(type: OrganizationUnitType): string {
             </div>
             <button
               type="button"
-              class="rounded-lg p-1.5 text-brand-text-muted transition hover:bg-brand-bg hover:text-brand-text"
+              class="inline-flex h-11 w-11 items-center justify-center rounded-xl text-brand-text-muted transition hover:bg-brand-bg hover:text-brand-text"
               :aria-label="t('organization.close')"
               @click="moveOpen = false"
             >
@@ -698,17 +554,17 @@ function typeBadgeClass(type: OrganizationUnitType): string {
               "
             />
           </div>
-          <div class="flex justify-end gap-2 border-t border-brand-border px-5 py-4">
+          <div class="flex flex-col gap-2 border-t border-brand-border px-5 py-4 sm:flex-row sm:justify-end">
             <button
               type="button"
-              class="inline-flex h-10 items-center rounded-xl px-4 text-sm font-medium text-brand-text-secondary transition hover:bg-brand-bg"
+              class="inline-flex h-11 items-center justify-center rounded-xl px-4 text-sm font-medium text-brand-text-secondary transition hover:bg-brand-bg sm:h-10"
               @click="moveOpen = false"
             >
               {{ t('organization.cancel') }}
             </button>
             <button
               type="button"
-              class="inline-flex h-10 items-center rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white transition hover:bg-brand-primary disabled:opacity-60"
+              class="inline-flex h-11 items-center justify-center rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white transition hover:bg-brand-primary disabled:opacity-60 sm:h-10"
               :disabled="isMoving"
               @click="confirmMove"
             >

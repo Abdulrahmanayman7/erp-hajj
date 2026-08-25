@@ -226,7 +226,7 @@ async function confirmDelete(category: ContractCategory): Promise<void> {
           @click.stop
         >
           <header
-            class="flex shrink-0 items-start justify-between gap-4 border-b border-brand-border px-6 py-5"
+            class="flex shrink-0 items-start justify-between gap-4 border-b border-brand-border px-4 py-5 sm:px-6"
           >
             <div>
               <h3 class="text-[21px] font-bold text-brand-text">
@@ -246,7 +246,7 @@ async function confirmDelete(category: ContractCategory): Promise<void> {
             </button>
           </header>
 
-          <div class="flex flex-wrap items-center gap-3 border-b border-brand-border px-6 py-3">
+          <div class="flex flex-wrap items-center gap-3 border-b border-brand-border px-4 py-3 sm:px-6">
             <input
               v-model="search"
               type="search"
@@ -265,7 +265,7 @@ async function confirmDelete(category: ContractCategory): Promise<void> {
             </PermissionGuard>
           </div>
 
-          <div class="flex-1 overflow-y-auto px-6 py-4">
+          <div class="flex-1 overflow-y-auto px-4 py-4 sm:px-6">
             <div v-if="isLoading" class="py-10 text-center text-sm text-brand-text-muted">
               {{ t('contracts.categoriesLoading') }}
             </div>
@@ -353,7 +353,10 @@ async function confirmDelete(category: ContractCategory): Promise<void> {
           v-if="formOpen"
           class="absolute inset-0 z-10 flex items-center justify-center bg-[rgba(15,23,20,0.28)] p-4"
         >
-          <div class="w-full max-w-sm rounded-2xl bg-brand-surface p-5 shadow-xl">
+          <div
+            class="w-full max-w-sm rounded-2xl bg-brand-surface p-4 shadow-xl sm:p-5"
+            style="padding-bottom: max(16px, env(safe-area-inset-bottom))"
+          >
             <h4 class="text-base font-semibold text-brand-text">
               {{
                 editing ? t('contracts.editCategoryTitle') : t('contracts.createCategoryTitle')
@@ -392,10 +395,10 @@ async function confirmDelete(category: ContractCategory): Promise<void> {
                 {{ formError }}
               </p>
             </div>
-            <div class="mt-5 flex justify-end gap-2">
+            <div class="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <button
                 type="button"
-                class="rounded-xl px-4 py-2 text-sm font-semibold text-brand-text-secondary"
+                class="inline-flex h-11 items-center justify-center rounded-xl px-4 text-sm font-semibold text-brand-text-secondary"
                 :disabled="isSubmitting"
                 @click="closeForm"
               >
@@ -403,7 +406,7 @@ async function confirmDelete(category: ContractCategory): Promise<void> {
               </button>
               <button
                 type="button"
-                class="inline-flex items-center gap-2 rounded-xl bg-brand-primary-dark px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white disabled:opacity-60"
                 :disabled="isSubmitting"
                 @click="submitForm"
               >

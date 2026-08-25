@@ -15,6 +15,8 @@ import {
 import { listEmployees } from '@/modules/employees/api/employeesApi'
 import { useOrganizationUnitsFlatQuery } from '@/modules/organization/queries/useOrganizationUnitsQuery'
 import { ApiError } from '@/shared/api/http'
+import AppMobileFilters from '@/shared/components/AppMobileFilters.vue'
+import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 import { employeeSelectOption, namedCodeOption, toSelectId } from '@/shared/lookups/selectOptions'
@@ -239,6 +241,24 @@ const isFormSubmitting = computed(
   () => createMutation.isPending.value || updateMutation.isPending.value,
 )
 
+const activeFilterCount = computed(() => {
+  let count = 0
+  if (filters.status !== 'all') count += 1
+  if (filters.category_id !== '') count += 1
+  if (filters.organization_unit_id !== '') count += 1
+  if (filters.employee_id !== '') count += 1
+  if (filters.expiring_soon) count += 1
+  return count
+})
+
+function resetFilters(): void {
+  filters.status = 'all'
+  filters.category_id = ''
+  filters.organization_unit_id = ''
+  filters.employee_id = ''
+  filters.expiring_soon = false
+}
+
 watch(
   () => [
     committedSearch.value,
@@ -392,27 +412,16 @@ function isCategoryInactive(contract: Contract): boolean {
 
 <template>
   <div class="space-y-6">
-    <div class="flex flex-wrap items-end justify-between gap-4">
-      <div class="min-w-0">
-        <h2 class="text-[1.75rem] font-bold leading-tight text-brand-text">
-          {{ t('contracts.title') }}
-        </h2>
-        <p class="mt-1.5 text-sm text-brand-text-secondary">
-          {{ t('contracts.subtitle') }}
-        </p>
-        <p v-if="meta" class="mt-2">
-          <span
-            class="inline-flex items-center rounded-full bg-brand-primary-soft px-2.5 py-0.5 text-xs font-semibold text-brand-primary-dark"
-          >
-            {{ t('contracts.total', { count: meta.total }) }}
-          </span>
-        </p>
-      </div>
-      <div class="flex flex-wrap items-center gap-2">
+    <AppPageHeader
+      :title="t('contracts.title')"
+      :subtitle="t('contracts.subtitle')"
+      :meta="meta ? t('contracts.total', { count: meta.total }) : undefined"
+    >
+      <template #actions>
         <PermissionGuard permission="contracts.update">
           <button
             type="button"
-            class="inline-flex h-11 items-center gap-2 rounded-xl border border-brand-border bg-brand-surface px-4 text-sm font-semibold text-brand-text transition hover:bg-brand-bg"
+            class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-brand-border bg-brand-surface px-4 text-sm font-semibold text-brand-text transition hover:bg-brand-bg sm:w-auto"
             @click="categoriesOpen = true"
           >
             <FolderTree class="h-4 w-4" :stroke-width="2" />
@@ -422,61 +431,102 @@ function isCategoryInactive(contract: Contract): boolean {
         <PermissionGuard permission="contracts.create">
           <button
             type="button"
-            class="inline-flex h-11 items-center gap-2 rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white transition hover:bg-brand-primary"
+            class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white transition hover:bg-brand-primary sm:w-auto"
             @click="openCreate"
           >
             <Plus class="h-4 w-4" :stroke-width="2.25" />
             <span>{{ t('contracts.add') }}</span>
           </button>
         </PermissionGuard>
-      </div>
-    </div>
+      </template>
+    </AppPageHeader>
 
-    <div
-      class="flex flex-wrap items-center gap-3 rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)]"
+    <AppMobileFilters
+      v-model:search="filters.search"
+      :search-placeholder="t('contracts.searchPlaceholder')"
+      :active-count="activeFilterCount"
+      @reset="resetFilters"
     >
-      <div class="relative min-w-48 flex-1">
-        <Search
-          class="pointer-events-none absolute inset-s-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text-muted"
-          :stroke-width="1.75"
-          aria-hidden="true"
-        />
-        <input
-          v-model="filters.search"
-          type="search"
-          class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface pe-3 ps-10 text-sm text-brand-text outline-none transition placeholder:text-brand-text-muted focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
-          :placeholder="t('contracts.searchPlaceholder')"
-        />
-      </div>
-      <AppSelect v-model="filters.status" :options="statusOptions" />
-      <AppRemoteSelect
-        :model-value="filters.category_id"
-        query-key="contract-categories"
-        :fetcher="fetchCategories"
-        :map-option="namedCodeOption"
-        :empty-option="emptyCategory"
-        @update:model-value="filters.category_id = toSelectId($event)"
-      />
-      <AppSelect
-        v-model="filters.organization_unit_id"
-        :options="orgUnitFilterOptions"
-        searchable
-      />
-      <AppRemoteSelect
-        :model-value="filters.employee_id"
-        query-key="employees-active"
-        :fetcher="fetchActiveEmployees"
-        :map-option="employeeSelectOption"
-        :empty-option="emptyEmployee"
-        @update:model-value="filters.employee_id = toSelectId($event)"
-      />
-      <label
-        class="inline-flex h-11 cursor-pointer items-center gap-2 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text"
-      >
-        <input v-model="filters.expiring_soon" type="checkbox" class="rounded border-brand-border" />
-        <span>{{ t('contracts.filters.expiringSoon') }}</span>
-      </label>
-    </div>
+      <template #desktop>
+        <div
+          class="flex flex-wrap items-center gap-3 rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)]"
+        >
+          <div class="relative min-w-48 flex-1">
+            <Search
+              class="pointer-events-none absolute inset-s-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text-muted"
+              :stroke-width="1.75"
+              aria-hidden="true"
+            />
+            <input
+              v-model="filters.search"
+              type="search"
+              class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface pe-3 ps-10 text-sm text-brand-text outline-none transition placeholder:text-brand-text-muted focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+              :placeholder="t('contracts.searchPlaceholder')"
+            />
+          </div>
+          <AppSelect v-model="filters.status" :options="statusOptions" />
+          <AppRemoteSelect
+            :model-value="filters.category_id"
+            query-key="contract-categories"
+            :fetcher="fetchCategories"
+            :map-option="namedCodeOption"
+            :empty-option="emptyCategory"
+            @update:model-value="filters.category_id = toSelectId($event)"
+          />
+          <AppSelect
+            v-model="filters.organization_unit_id"
+            :options="orgUnitFilterOptions"
+            searchable
+          />
+          <AppRemoteSelect
+            :model-value="filters.employee_id"
+            query-key="employees-active"
+            :fetcher="fetchActiveEmployees"
+            :map-option="employeeSelectOption"
+            :empty-option="emptyEmployee"
+            @update:model-value="filters.employee_id = toSelectId($event)"
+          />
+          <label
+            class="inline-flex h-11 cursor-pointer items-center gap-2 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text"
+          >
+            <input v-model="filters.expiring_soon" type="checkbox" class="rounded border-brand-border" />
+            <span>{{ t('contracts.filters.expiringSoon') }}</span>
+          </label>
+        </div>
+      </template>
+      <template #filters>
+        <div class="space-y-3">
+          <AppSelect v-model="filters.status" :options="statusOptions" />
+          <AppRemoteSelect
+            :model-value="filters.category_id"
+            query-key="contract-categories"
+            :fetcher="fetchCategories"
+            :map-option="namedCodeOption"
+            :empty-option="emptyCategory"
+            @update:model-value="filters.category_id = toSelectId($event)"
+          />
+          <AppSelect
+            v-model="filters.organization_unit_id"
+            :options="orgUnitFilterOptions"
+            searchable
+          />
+          <AppRemoteSelect
+            :model-value="filters.employee_id"
+            query-key="employees-active"
+            :fetcher="fetchActiveEmployees"
+            :map-option="employeeSelectOption"
+            :empty-option="emptyEmployee"
+            @update:model-value="filters.employee_id = toSelectId($event)"
+          />
+          <label
+            class="inline-flex h-11 w-full cursor-pointer items-center gap-2 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text"
+          >
+            <input v-model="filters.expiring_soon" type="checkbox" class="rounded border-brand-border" />
+            <span>{{ t('contracts.filters.expiringSoon') }}</span>
+          </label>
+        </div>
+      </template>
+    </AppMobileFilters>
 
     <div
       v-if="listState === 'loading'"
@@ -513,16 +563,16 @@ function isCategoryInactive(contract: Contract): boolean {
         </button>
       </PermissionGuard>
     </div>
-    <div
-      v-else
-      ref="tableRoot"
-      class="overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-[0_1px_2px_rgba(23,32,29,0.03)] outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25"
-      tabindex="0"
-      role="grid"
-      :aria-rowcount="contracts.length"
-      :aria-label="t('contracts.title')"
-      @keydown="onTableKeydown"
-    >
+    <template v-else>
+      <div
+        ref="tableRoot"
+        class="hidden overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-[0_1px_2px_rgba(23,32,29,0.03)] outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25 md:block"
+        tabindex="0"
+        role="grid"
+        :aria-rowcount="contracts.length"
+        :aria-label="t('contracts.title')"
+        @keydown="onTableKeydown"
+      >
       <div class="overflow-x-auto">
         <table class="min-w-full border-separate border-spacing-0 text-sm">
           <thead>
@@ -688,13 +738,70 @@ function isCategoryInactive(contract: Contract): boolean {
           </tbody>
         </table>
       </div>
+      </div>
+
+      <div class="space-y-3 md:hidden">
+        <RouterLink
+          v-for="contract in contracts"
+          :key="contract.id"
+          :to="`/app/contracts/${contract.id}`"
+          class="block rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)] transition active:bg-brand-bg"
+        >
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <p class="font-mono text-xs font-bold text-brand-primary-dark" dir="ltr">
+                {{ contract.contract_number }}
+              </p>
+              <h3 class="mt-1 font-bold text-brand-text">{{ contract.title }}</h3>
+              <p class="mt-1 text-sm text-brand-text-secondary">{{ contract.counterparty_name }}</p>
+            </div>
+            <div class="flex shrink-0 flex-col items-end gap-1">
+              <span
+                class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold"
+                :class="contractStatusBadgeClass(contract.status)"
+              >
+                <span
+                  class="h-1.5 w-1.5 shrink-0 rounded-full"
+                  :class="contractStatusDotClass(contract.status)"
+                />
+                {{ t(`contracts.status.${contract.status}`) }}
+              </span>
+              <span
+                v-if="contract.is_expiring_soon"
+                class="inline-flex rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-900 ring-1 ring-inset ring-amber-200/80"
+              >
+                {{ t('contracts.expiringSoonBadge') }}
+              </span>
+            </div>
+          </div>
+          <dl class="mt-3 grid grid-cols-2 gap-2 text-xs text-brand-text-secondary">
+            <div>
+              <dt>{{ t('contracts.columns.category') }}</dt>
+              <dd class="font-medium text-brand-text">{{ contract.category?.name ?? '—' }}</dd>
+            </div>
+            <div>
+              <dt>{{ t('contracts.columns.value') }}</dt>
+              <dd class="font-medium text-brand-text" dir="ltr">{{ formatValue(contract) }}</dd>
+            </div>
+            <div>
+              <dt>{{ t('contracts.columns.startDate') }}</dt>
+              <dd class="font-medium text-brand-text" dir="ltr">{{ contract.start_date }}</dd>
+            </div>
+            <div>
+              <dt>{{ t('contracts.columns.endDate') }}</dt>
+              <dd class="font-medium text-brand-text" dir="ltr">{{ contract.end_date ?? '—' }}</dd>
+            </div>
+          </dl>
+        </RouterLink>
+      </div>
+
       <div
         v-if="meta && meta.last_page > 1"
-        class="flex items-center justify-between gap-3 border-t border-brand-border bg-[#F7F8F6] px-5 py-3 text-sm"
+        class="flex items-center justify-between gap-3"
       >
         <button
           type="button"
-          class="inline-flex h-9 items-center gap-1 rounded-lg border border-brand-border bg-brand-surface px-3 font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
+          class="inline-flex h-11 items-center gap-1 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
           :disabled="filters.page <= 1 || isFetching"
           @click="filters.page -= 1"
         >
@@ -706,7 +813,7 @@ function isCategoryInactive(contract: Contract): boolean {
         </span>
         <button
           type="button"
-          class="inline-flex h-9 items-center gap-1 rounded-lg border border-brand-border bg-brand-surface px-3 font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
+          class="inline-flex h-11 items-center gap-1 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
           :disabled="filters.page >= meta.last_page || isFetching"
           @click="filters.page += 1"
         >
@@ -714,7 +821,7 @@ function isCategoryInactive(contract: Contract): boolean {
           <ChevronLeft class="h-4 w-4" :stroke-width="2" />
         </button>
       </div>
-    </div>
+    </template>
 
     <ContractFormDrawer
       :open="drawerOpen"

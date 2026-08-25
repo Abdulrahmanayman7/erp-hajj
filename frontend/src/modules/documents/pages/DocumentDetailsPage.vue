@@ -228,7 +228,7 @@ const hostLink = computed(() => {
     </div>
     <template v-else>
       <section class="rounded-2xl border border-brand-border bg-brand-surface px-5 py-5 sm:px-6">
-        <div class="flex flex-wrap items-start justify-between gap-4">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div class="min-w-0 flex-1">
             <div class="flex flex-wrap items-center gap-2">
               <p class="font-mono text-xs font-semibold tracking-wide text-brand-text-muted" dir="ltr">{{ document.document_number }}</p>
@@ -237,18 +237,18 @@ const hostLink = computed(() => {
                 {{ t(`documents.status.${document.status}`) }}
               </span>
             </div>
-            <h2 class="mt-2 text-[1.65rem] font-bold leading-snug text-brand-text sm:text-[1.85rem]">{{ document.title }}</h2>
-            <p class="mt-2 text-sm text-brand-text-secondary">{{ document.original_filename }}</p>
+            <h2 class="mt-2 break-words text-[1.35rem] font-bold leading-snug text-brand-text sm:text-[1.85rem]">{{ document.title }}</h2>
+            <p class="mt-2 break-words text-sm text-brand-text-secondary">{{ document.original_filename }}</p>
           </div>
-          <div class="flex flex-wrap gap-2">
+          <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
             <PermissionGuard permission="documents.update">
-              <button type="button" class="inline-flex h-10 items-center gap-2 rounded-xl border border-brand-border bg-brand-surface px-4 text-sm font-semibold text-brand-primary-dark transition hover:bg-brand-primary-soft" @click="startEdit">
+              <button type="button" class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-brand-border bg-brand-surface px-4 text-sm font-semibold text-brand-primary-dark transition hover:bg-brand-primary-soft sm:h-10 sm:w-auto" @click="startEdit">
                 <Pencil class="h-4 w-4" />
                 {{ t('documents.actions.edit') }}
               </button>
             </PermissionGuard>
             <PermissionGuard permission="documents.download">
-              <button type="button" class="inline-flex h-10 items-center gap-2 rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white transition hover:bg-brand-primary" @click="onDownload">
+              <button type="button" class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white transition hover:bg-brand-primary sm:h-10 sm:w-auto" @click="onDownload">
                 <Download class="h-4 w-4" />
                 {{ t('documents.actions.download') }}
               </button>

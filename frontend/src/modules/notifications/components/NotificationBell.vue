@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRouter } from 'vue-router'
 import { Bell, CheckCheck, X } from 'lucide-vue-next'
@@ -21,12 +21,16 @@ import {
 } from '../utils/notificationLabels'
 import { resolveNotificationRoute } from '../utils/resolveNotificationRoute'
 
+import { useBodyScrollLock } from '@/shared/composables/useBodyScrollLock'
+
 const { t } = useI18n()
 const router = useRouter()
 
 const open = ref(false)
 const root = ref<HTMLElement | null>(null)
 const isMobile = ref(false)
+const lockScroll = computed(() => open.value && isMobile.value)
+useBodyScrollLock(lockScroll)
 
 const { data: unreadData } = useUnreadCountQuery()
 const unreadCount = computed(() => unreadData.value?.unread_count ?? 0)
@@ -91,15 +95,6 @@ function onKeydown(event: KeyboardEvent): void {
   }
 }
 
-watch(open, (value) => {
-  if (typeof document === 'undefined') return
-  if (value && isMobile.value) {
-    document.body.style.overflow = 'hidden'
-  } else {
-    document.body.style.overflow = ''
-  }
-})
-
 onMounted(() => {
   updateIsMobile()
   window.addEventListener('resize', updateIsMobile)
@@ -111,7 +106,6 @@ onUnmounted(() => {
   window.removeEventListener('resize', updateIsMobile)
   document.removeEventListener('click', onDocumentClick)
   document.removeEventListener('keydown', onKeydown)
-  document.body.style.overflow = ''
 })
 </script>
 

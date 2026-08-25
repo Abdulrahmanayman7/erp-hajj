@@ -5,6 +5,7 @@ import { AlertTriangle, Globe2, LoaderCircle, Save } from 'lucide-vue-next'
 import { onBeforeRouteLeave } from 'vue-router'
 
 import { ApiError } from '@/shared/api/http'
+import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 import { useConfirm } from '@/shared/composables/useConfirm'
 import { usePermissions } from '@/shared/composables/usePermissions'
@@ -165,32 +166,23 @@ async function onSave(): Promise<void> {
 </script>
 
 <template>
-  <div class="mx-auto max-w-6xl space-y-6">
-    <header class="flex flex-col gap-4 border-b border-brand-border pb-6 sm:flex-row sm:items-end sm:justify-between">
-      <div>
-        <h1 class="text-2xl font-bold tracking-tight text-brand-text">{{ t('settings.title') }}</h1>
-        <p class="mt-1.5 text-sm leading-6 text-brand-text-secondary">{{ t('settings.subtitle') }}</p>
-      </div>
-      <button
-        v-if="canUpdate"
-        type="button"
-        class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand-primary-dark px-5 text-sm font-bold text-white transition hover:bg-brand-primary disabled:cursor-not-allowed disabled:opacity-50"
-        :disabled="!dirty || saving"
-        :aria-busy="saving"
-        @click="onSave"
-      >
-        <LoaderCircle v-if="saving" class="h-4 w-4 animate-spin" aria-hidden="true" />
-        <Save v-else class="h-4 w-4" aria-hidden="true" />
-        {{ saving ? t('settings.saving') : t('settings.saveChanges') }}
-      </button>
-    </header>
+  <div class="mx-auto max-w-6xl min-w-0 space-y-6">
+    <AppPageHeader
+      :title="t('settings.title')"
+      :subtitle="t('settings.subtitle')"
+    />
 
     <template v-if="isLoading">
-      <section v-for="section in 2" :key="section" class="rounded-2xl border border-brand-border bg-brand-surface p-5 shadow-sm sm:p-7" role="status">
+      <section
+        v-for="section in 2"
+        :key="section"
+        class="rounded-2xl border border-brand-border bg-brand-surface p-5 shadow-sm sm:p-7"
+        role="status"
+      >
         <span class="sr-only">{{ t('settings.loading') }}</span>
         <div class="h-6 w-40 animate-pulse rounded bg-brand-bg" />
         <div class="mt-2 h-4 w-72 max-w-full animate-pulse rounded bg-brand-bg" />
-        <div class="mt-7 grid gap-5 md:grid-cols-2">
+        <div class="mt-7 grid grid-cols-1 gap-5">
           <div v-for="field in 4" :key="field" class="space-y-2">
             <div class="h-4 w-24 animate-pulse rounded bg-brand-bg" />
             <div class="h-11 animate-pulse rounded-xl bg-brand-bg" />
@@ -208,7 +200,7 @@ async function onSave(): Promise<void> {
       <p class="mt-1 text-sm text-rose-700">{{ t('settings.errors.loadHint') }}</p>
       <button
         type="button"
-        class="mt-4 inline-flex h-10 items-center rounded-xl border border-rose-300 bg-white px-4 text-sm font-bold text-rose-800 transition hover:bg-rose-100"
+        class="mt-4 inline-flex h-11 w-full items-center justify-center rounded-xl border border-rose-300 bg-white px-4 text-sm font-bold text-rose-800 transition hover:bg-rose-100 sm:h-10 sm:w-auto"
         :disabled="isFetching"
         @click="refetch()"
       >
@@ -244,20 +236,27 @@ async function onSave(): Promise<void> {
           <p class="mt-1 text-sm text-brand-text-secondary">{{ t('settings.sections.generalDescription') }}</p>
         </div>
 
-        <dl v-if="!canUpdate" class="grid gap-x-8 gap-y-6 md:grid-cols-2">
-          <div v-for="field in [
-            ['name', t('settings.fields.name')],
-            ['contact_name', t('settings.fields.contactName')],
-            ['contact_email', t('settings.fields.contactEmail')],
-            ['contact_phone', t('settings.fields.contactPhone')],
-          ]" :key="field[0]">
+        <dl v-if="!canUpdate" class="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
+          <div
+            v-for="field in [
+              ['name', t('settings.fields.name')],
+              ['contact_name', t('settings.fields.contactName')],
+              ['contact_email', t('settings.fields.contactEmail')],
+              ['contact_phone', t('settings.fields.contactPhone')],
+            ]"
+            :key="field[0]"
+          >
             <dt class="text-sm font-semibold text-brand-text-secondary">{{ field[1] }}</dt>
-            <dd class="mt-1 break-words text-sm font-bold text-brand-text">{{ form[field[0] as keyof SettingsFormState] || t('settings.notProvided') }}</dd>
+            <dd class="mt-1 break-words text-sm font-bold text-brand-text">
+              {{ form[field[0] as keyof SettingsFormState] || t('settings.notProvided') }}
+            </dd>
           </div>
         </dl>
-        <div v-else class="grid gap-5 md:grid-cols-2">
-          <label class="block space-y-2 md:col-span-2">
-            <span class="text-sm font-bold text-brand-text">{{ t('settings.fields.name') }} <span class="text-rose-700">*</span></span>
+        <div v-else class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <label class="block space-y-2 sm:col-span-2">
+            <span class="text-sm font-bold text-brand-text">
+              {{ t('settings.fields.name') }} <span class="text-rose-700">*</span>
+            </span>
             <input
               v-model="form.name"
               type="text"
@@ -269,7 +268,14 @@ async function onSave(): Promise<void> {
               autocomplete="organization"
               @input="clearFieldError('name')"
             />
-            <p v-if="fieldErrors.name" id="settings-name-error" class="text-xs font-medium text-rose-700" role="alert">{{ fieldErrors.name }}</p>
+            <p
+              v-if="fieldErrors.name"
+              id="settings-name-error"
+              class="text-xs font-medium text-rose-700"
+              role="alert"
+            >
+              {{ fieldErrors.name }}
+            </p>
           </label>
 
           <label class="block space-y-1.5">
@@ -284,7 +290,12 @@ async function onSave(): Promise<void> {
               :aria-describedby="fieldErrors.contact_name ? 'settings-contact-name-error' : undefined"
               @input="clearFieldError('contact_name')"
             />
-            <p v-if="fieldErrors.contact_name" id="settings-contact-name-error" class="text-xs font-medium text-rose-700" role="alert">
+            <p
+              v-if="fieldErrors.contact_name"
+              id="settings-contact-name-error"
+              class="text-xs font-medium text-rose-700"
+              role="alert"
+            >
               {{ fieldErrors.contact_name }}
             </p>
           </label>
@@ -302,7 +313,12 @@ async function onSave(): Promise<void> {
               autocomplete="email"
               @input="clearFieldError('contact_email')"
             />
-            <p v-if="fieldErrors.contact_email" id="settings-contact-email-error" class="text-xs font-medium text-rose-700" role="alert">
+            <p
+              v-if="fieldErrors.contact_email"
+              id="settings-contact-email-error"
+              class="text-xs font-medium text-rose-700"
+              role="alert"
+            >
               {{ fieldErrors.contact_email }}
             </p>
           </label>
@@ -320,7 +336,12 @@ async function onSave(): Promise<void> {
               autocomplete="tel"
               @input="clearFieldError('contact_phone')"
             />
-            <p v-if="fieldErrors.contact_phone" id="settings-contact-phone-error" class="text-xs font-medium text-rose-700" role="alert">
+            <p
+              v-if="fieldErrors.contact_phone"
+              id="settings-contact-phone-error"
+              class="text-xs font-medium text-rose-700"
+              role="alert"
+            >
               {{ fieldErrors.contact_phone }}
             </p>
           </label>
@@ -333,9 +354,12 @@ async function onSave(): Promise<void> {
           <p class="mt-1 text-sm text-brand-text-secondary">{{ t('settings.sections.regionalDescription') }}</p>
         </div>
 
-        <div class="grid gap-6 md:grid-cols-2">
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
           <div class="space-y-1.5">
-            <span class="text-sm font-bold text-brand-text">{{ t('settings.fields.timezone') }} <span v-if="canUpdate" class="text-rose-700">*</span></span>
+            <span class="text-sm font-bold text-brand-text">
+              {{ t('settings.fields.timezone') }}
+              <span v-if="canUpdate" class="text-rose-700">*</span>
+            </span>
             <AppSelect
               v-if="canUpdate"
               v-model="form.timezone"
@@ -351,8 +375,13 @@ async function onSave(): Promise<void> {
               <p class="mt-0.5 text-xs font-medium text-brand-text-muted" dir="ltr">{{ form.timezone }}</p>
             </div>
             <p v-if="canUpdate" class="text-xs text-brand-text-muted">{{ t('settings.timezoneHint') }}</p>
-            <p v-if="fieldErrors.timezone" class="text-xs font-medium text-rose-700" role="alert">{{ fieldErrors.timezone }}</p>
-            <div v-if="canUpdate && timezoneChanged" class="mt-3 flex gap-2 rounded-xl border border-brand-gold/30 bg-brand-gold-soft p-3 text-xs leading-5 text-brand-text">
+            <p v-if="fieldErrors.timezone" class="text-xs font-medium text-rose-700" role="alert">
+              {{ fieldErrors.timezone }}
+            </p>
+            <div
+              v-if="canUpdate && timezoneChanged"
+              class="mt-3 flex gap-2 rounded-xl border border-brand-gold/30 bg-brand-gold-soft p-3 text-xs leading-5 text-brand-text"
+            >
               <AlertTriangle class="mt-0.5 h-4 w-4 shrink-0 text-brand-warning" aria-hidden="true" />
               {{ t('settings.timezoneWarning') }}
             </div>
@@ -360,14 +389,37 @@ async function onSave(): Promise<void> {
 
           <div class="space-y-1.5">
             <span class="text-sm font-bold text-brand-text">{{ t('settings.fields.locale') }}</span>
-            <div class="flex items-center justify-between rounded-xl border border-brand-border bg-brand-bg px-3 py-2.5">
-              <span class="text-sm font-bold text-brand-text">{{ t('settings.localeArabic') }}</span>
-              <span class="rounded-full bg-brand-primary-soft px-2.5 py-1 text-xs font-bold text-brand-primary-dark">{{ t('settings.default') }}</span>
+            <div class="flex items-center justify-between gap-3 rounded-xl border border-brand-border bg-brand-bg px-3 py-2.5">
+              <span class="min-w-0 break-words text-sm font-bold text-brand-text">{{ t('settings.localeArabic') }}</span>
+              <span
+                class="shrink-0 rounded-full bg-brand-primary-soft px-2.5 py-1 text-xs font-bold text-brand-primary-dark"
+              >
+                {{ t('settings.default') }}
+              </span>
             </div>
             <p class="text-xs text-brand-text-muted">{{ t('settings.localeReadonlyHint') }}</p>
           </div>
         </div>
       </section>
+
+      <div
+        v-if="canUpdate"
+        class="app-sticky-form-actions"
+      >
+        <div class="app-sticky-form-actions__inner">
+          <button
+            type="button"
+            class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand-primary-dark px-5 text-sm font-bold text-white transition hover:bg-brand-primary disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+            :disabled="!dirty || saving"
+            :aria-busy="saving"
+            @click="onSave"
+          >
+            <LoaderCircle v-if="saving" class="h-4 w-4 animate-spin" aria-hidden="true" />
+            <Save v-else class="h-4 w-4" aria-hidden="true" />
+            {{ saving ? t('settings.saving') : t('settings.saveChanges') }}
+          </button>
+        </div>
+      </div>
     </template>
   </div>
 </template>

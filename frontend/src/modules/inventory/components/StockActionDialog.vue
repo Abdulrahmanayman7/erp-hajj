@@ -99,7 +99,7 @@ const fetchActiveItems = (params: { search?: string; page: number; per_page: num
         @click.stop
       >
         <header
-          class="flex items-start justify-between border-b border-brand-border px-5 py-5"
+          class="flex items-start justify-between border-b border-brand-border px-4 py-5 sm:px-5"
           :class="isDanger ? 'bg-red-50/80' : 'bg-brand-bg/50'"
         >
           <div class="flex items-start gap-3">
@@ -128,7 +128,7 @@ const fetchActiveItems = (params: { search?: string; page: number; per_page: num
           </button>
         </header>
 
-        <form class="space-y-5 overflow-y-auto px-5 py-5" @submit.prevent="emit('submit')">
+        <form class="space-y-5 overflow-y-auto px-4 py-5 sm:px-5" @submit.prevent="emit('submit')">
           <div
             v-if="isDanger"
             class="flex gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-800"
@@ -285,10 +285,13 @@ const fetchActiveItems = (params: { search?: string; page: number; per_page: num
             {{ formError }}
           </p>
 
-          <footer class="sticky bottom-0 flex justify-end gap-2 border-t border-brand-border bg-brand-surface pt-4">
+          <footer
+            class="sticky bottom-0 flex flex-col-reverse gap-2 border-t border-brand-border bg-brand-surface pt-4 sm:flex-row sm:justify-end"
+            style="padding-bottom: max(12px, env(safe-area-inset-bottom))"
+          >
             <button
               type="button"
-              class="rounded-xl border border-brand-border px-4 py-2 text-sm font-semibold"
+              class="inline-flex h-11 items-center justify-center rounded-xl border border-brand-border px-4 text-sm font-semibold"
               :disabled="submitting"
               @click="emit('close')"
             >
@@ -296,7 +299,7 @@ const fetchActiveItems = (params: { search?: string; page: number; per_page: num
             </button>
             <button
               type="submit"
-              class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-white"
+              class="inline-flex h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold text-white"
               :class="isDanger ? 'bg-red-700 hover:bg-red-800' : 'bg-brand-primary-dark hover:bg-brand-primary'"
               :disabled="submitting"
             >

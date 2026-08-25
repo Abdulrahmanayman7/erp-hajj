@@ -16,6 +16,8 @@ import { listEmployees } from '@/modules/employees/api/employeesApi'
 import { listWarehouses } from '@/modules/inventory/api/warehousesApi'
 import { useOrganizationUnitsFlatQuery } from '@/modules/organization/queries/useOrganizationUnitsQuery'
 import { ApiError } from '@/shared/api/http'
+import AppMobileFilters from '@/shared/components/AppMobileFilters.vue'
+import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 import { employeeSelectOption, toSelectId, warehouseSelectOption } from '@/shared/lookups/selectOptions'
@@ -125,6 +127,25 @@ const orgUnitFormOptions = computed<AppSelectOption[]>(() => [
   { value: '', label: t('assets.noOrgUnit') },
   ...(orgUnitsData.value?.data ?? []).map((u) => ({ value: u.id, label: u.name, hint: u.code })),
 ])
+
+const activeFilterCount = computed(() => {
+  let count = 0
+  if (filters.status !== '') count += 1
+  if (filters.category_id !== '') count += 1
+  if (filters.warehouse_id !== '') count += 1
+  if (filters.organization_unit_id !== '') count += 1
+  if (filters.employee_id !== '') count += 1
+  return count
+})
+
+function resetFilters(): void {
+  filters.status = ''
+  filters.category_id = ''
+  filters.warehouse_id = ''
+  filters.organization_unit_id = ''
+  filters.employee_id = ''
+  filters.search = ''
+}
 
 watch(
   () => [
@@ -250,74 +271,103 @@ async function removeAsset(asset: Asset): Promise<void> {
 
 <template>
   <div class="space-y-6">
-    <div class="flex flex-wrap items-end justify-between gap-4">
-      <div class="min-w-0">
-        <h2 class="text-[1.75rem] font-bold leading-tight text-brand-text">
-          {{ t('assets.list.title') }}
-        </h2>
-        <p class="mt-1.5 text-sm text-brand-text-secondary">{{ t('assets.list.subtitle') }}</p>
-        <p v-if="meta" class="mt-2">
-          <span class="inline-flex items-center rounded-full bg-brand-primary-soft px-2.5 py-0.5 text-xs font-semibold text-brand-primary-dark">
-            {{ meta.total }}
-          </span>
-        </p>
-      </div>
-      <div class="flex flex-wrap items-center gap-2">
+    <AppPageHeader
+      :title="t('assets.list.title')"
+      :subtitle="t('assets.list.subtitle')"
+      :meta="meta ? String(meta.total) : undefined"
+    >
+      <template #actions>
         <PermissionGuard v-if="showCategories" permission="assets.update">
           <button
             type="button"
-            class="inline-flex h-11 items-center gap-2 rounded-xl border border-brand-border bg-brand-surface px-4 text-sm font-semibold text-brand-text transition hover:bg-brand-bg"
+            class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-brand-border bg-brand-surface px-4 text-sm font-semibold text-brand-text transition hover:bg-brand-bg sm:w-auto"
             @click="categoriesOpen = true"
           >
             <FolderTree class="h-4 w-4" />
-            {{ t('assets.categories.nav') }}
+            <span>{{ t('assets.categories.nav') }}</span>
           </button>
         </PermissionGuard>
         <PermissionGuard v-if="showCreate" permission="assets.create">
           <button
             type="button"
-            class="inline-flex h-11 items-center gap-2 rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white transition hover:bg-brand-primary"
+            class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white transition hover:bg-brand-primary sm:w-auto"
             @click="openCreate"
           >
             <Plus class="h-4 w-4" />
-            {{ t('assets.list.createCta') }}
+            <span>{{ t('assets.list.createCta') }}</span>
           </button>
         </PermissionGuard>
-      </div>
-    </div>
+      </template>
+    </AppPageHeader>
 
-    <div class="flex flex-wrap items-center gap-3 rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)]">
-      <div class="relative min-w-48 flex-1">
-        <Search
-          class="pointer-events-none absolute inset-s-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text-muted"
-        />
-        <input
-          v-model="filters.search"
-          type="search"
-          class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface pe-3 ps-10 text-sm text-brand-text outline-none transition placeholder:text-brand-text-muted focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
-          :placeholder="t('assets.list.searchPlaceholder')"
-        />
-      </div>
-      <AppSelect v-model="filters.status" :options="statusOptions" />
-      <AppSelect v-model="filters.category_id" :options="categoryFilterOptions" searchable />
-      <AppRemoteSelect
-        :model-value="filters.warehouse_id"
-        query-key="warehouses-active"
-        :fetcher="fetchActiveWarehouses"
-        :map-option="warehouseSelectOption"
-        :empty-option="emptyWarehouse"
-        @update:model-value="filters.warehouse_id = toSelectId($event)"
-      />
-      <AppSelect v-model="filters.organization_unit_id" :options="orgUnitFilterOptions" searchable />
-      <AppRemoteSelect
-        :model-value="filters.employee_id"
-        query-key="employees-active"
-        :fetcher="fetchActiveEmployees"
-        :map-option="employeeSelectOption"
-        :empty-option="emptyEmployee"
-        @update:model-value="filters.employee_id = toSelectId($event)"
-      />
-    </div>
+    <AppMobileFilters
+      v-model:search="filters.search"
+      :search-placeholder="t('assets.list.searchPlaceholder')"
+      :active-count="activeFilterCount"
+      @reset="resetFilters"
+    >
+      <template #desktop>
+        <div
+          class="flex flex-wrap items-center gap-3 rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)]"
+        >
+          <div class="relative min-w-48 flex-1">
+            <Search
+              class="pointer-events-none absolute inset-s-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text-muted"
+              :stroke-width="1.75"
+              aria-hidden="true"
+            />
+            <input
+              v-model="filters.search"
+              type="search"
+              class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface pe-3 ps-10 text-sm text-brand-text outline-none transition placeholder:text-brand-text-muted focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+              :placeholder="t('assets.list.searchPlaceholder')"
+            />
+          </div>
+          <AppSelect v-model="filters.status" :options="statusOptions" />
+          <AppSelect v-model="filters.category_id" :options="categoryFilterOptions" searchable />
+          <AppRemoteSelect
+            :model-value="filters.warehouse_id"
+            query-key="warehouses-active"
+            :fetcher="fetchActiveWarehouses"
+            :map-option="warehouseSelectOption"
+            :empty-option="emptyWarehouse"
+            @update:model-value="filters.warehouse_id = toSelectId($event)"
+          />
+          <AppSelect v-model="filters.organization_unit_id" :options="orgUnitFilterOptions" searchable />
+          <AppRemoteSelect
+            :model-value="filters.employee_id"
+            query-key="employees-active"
+            :fetcher="fetchActiveEmployees"
+            :map-option="employeeSelectOption"
+            :empty-option="emptyEmployee"
+            @update:model-value="filters.employee_id = toSelectId($event)"
+          />
+        </div>
+      </template>
+      <template #filters>
+        <div class="space-y-3">
+          <AppSelect v-model="filters.status" :options="statusOptions" />
+          <AppSelect v-model="filters.category_id" :options="categoryFilterOptions" searchable />
+          <AppRemoteSelect
+            :model-value="filters.warehouse_id"
+            query-key="warehouses-active"
+            :fetcher="fetchActiveWarehouses"
+            :map-option="warehouseSelectOption"
+            :empty-option="emptyWarehouse"
+            @update:model-value="filters.warehouse_id = toSelectId($event)"
+          />
+          <AppSelect v-model="filters.organization_unit_id" :options="orgUnitFilterOptions" searchable />
+          <AppRemoteSelect
+            :model-value="filters.employee_id"
+            query-key="employees-active"
+            :fetcher="fetchActiveEmployees"
+            :map-option="employeeSelectOption"
+            :empty-option="emptyEmployee"
+            @update:model-value="filters.employee_id = toSelectId($event)"
+          />
+        </div>
+      </template>
+    </AppMobileFilters>
 
     <div
       v-if="listState === 'loading'"
@@ -445,16 +495,15 @@ async function removeAsset(asset: Asset): Promise<void> {
           class="rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)] transition active:bg-brand-bg"
           @click="router.push(`/app/assets/${asset.id}`)"
         >
-          <div class="flex items-start justify-between gap-2">
-            <div>
-              <p class="font-mono text-xs text-brand-text-muted">{{ asset.asset_number }}</p>
-              <h3 class="font-bold">{{ asset.name }}</h3>
-              <p class="mt-1 text-sm text-brand-text-secondary">
-                {{ asset.category?.name || t('assets.noCategory') }}
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <p class="font-mono text-xs font-bold text-brand-primary-dark" dir="ltr">
+                {{ asset.asset_number }}
               </p>
+              <h3 class="mt-1 truncate font-bold text-brand-text">{{ asset.name }}</h3>
             </div>
             <span
-              class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold"
+              class="inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold"
               :class="assetStatusBadgeClass(asset.status)"
             >
               <span class="h-1.5 w-1.5 shrink-0 rounded-full" :class="assetStatusDotClass(asset.status)" />
@@ -464,11 +513,11 @@ async function removeAsset(asset: Asset): Promise<void> {
           <dl class="mt-3 grid grid-cols-2 gap-2 text-xs text-brand-text-secondary">
             <div>
               <dt>{{ t('assets.columns.warehouse') }}</dt>
-              <dd class="font-medium text-brand-text">{{ asset.warehouse?.name || '—' }}</dd>
+              <dd class="mt-0.5 font-medium text-brand-text">{{ asset.warehouse?.name || '—' }}</dd>
             </div>
             <div>
               <dt>{{ t('assets.columns.employee') }}</dt>
-              <dd class="font-medium text-brand-text">
+              <dd class="mt-0.5 font-medium text-brand-text">
                 {{ asset.current_custody?.employee?.full_name || '—' }}
               </dd>
             </div>
@@ -476,25 +525,30 @@ async function removeAsset(asset: Asset): Promise<void> {
         </article>
       </div>
 
-      <div v-if="meta && meta.last_page > 1" class="flex items-center justify-between gap-3">
+      <div
+        v-if="meta && meta.last_page > 1"
+        class="flex items-center justify-between gap-3"
+      >
         <button
           type="button"
-          class="inline-flex items-center gap-1 rounded-xl border px-3 py-2 text-sm disabled:opacity-40"
+          class="inline-flex h-11 items-center gap-1 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
           :disabled="filters.page <= 1"
           @click="filters.page -= 1"
         >
-          <ChevronRight class="h-4 w-4" />
-          {{ t('assets.prev') }}
+          <ChevronRight class="h-4 w-4" :stroke-width="2" />
+          <span>{{ t('assets.prev') }}</span>
         </button>
-        <span class="text-sm text-brand-text-muted">{{ filters.page }} / {{ meta.last_page }}</span>
+        <span class="text-xs font-semibold text-brand-text-muted">
+          {{ filters.page }} / {{ meta.last_page }}
+        </span>
         <button
           type="button"
-          class="inline-flex items-center gap-1 rounded-xl border px-3 py-2 text-sm disabled:opacity-40"
+          class="inline-flex h-11 items-center gap-1 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
           :disabled="filters.page >= meta.last_page"
           @click="filters.page += 1"
         >
-          {{ t('assets.next') }}
-          <ChevronLeft class="h-4 w-4" />
+          <span>{{ t('assets.next') }}</span>
+          <ChevronLeft class="h-4 w-4" :stroke-width="2" />
         </button>
       </div>
     </template>

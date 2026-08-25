@@ -51,12 +51,12 @@ const selectedEmployee = computed(() =>
     <div v-if="open" class="fixed inset-0 z-50" role="presentation">
       <div class="absolute inset-0 bg-black/30" @click="emit('close')" />
       <aside
-        class="absolute inset-y-0 start-0 flex w-full max-w-[540px] flex-col bg-brand-surface shadow-xl"
+        class="app-drawer-panel absolute inset-y-0 start-0 flex w-full max-w-[540px] flex-col bg-brand-surface shadow-xl"
         role="dialog"
         aria-modal="true"
         @click.stop
       >
-        <header class="flex items-start justify-between border-b border-brand-border px-6 py-5">
+        <header class="flex shrink-0 items-start justify-between border-b border-brand-border px-4 py-5 sm:px-6">
           <div>
             <h3 class="text-lg font-bold text-brand-text">
               {{ t(isEdit ? 'inventory.warehouses.editTitle' : 'inventory.warehouses.createTitle') }}
@@ -77,7 +77,7 @@ const selectedEmployee = computed(() =>
         </header>
 
         <form class="flex min-h-0 flex-1 flex-col" @submit.prevent="emit('submit')">
-          <div class="flex-1 space-y-4 overflow-y-auto px-6 py-6">
+          <div class="flex-1 space-y-4 overflow-y-auto px-4 py-6 sm:px-6">
             <label class="block">
               <span class="text-sm font-medium text-brand-text">{{ t('inventory.fields.warehouseNumber') }}</span>
               <input
@@ -172,10 +172,13 @@ const selectedEmployee = computed(() =>
             <p v-if="formError" class="text-sm text-red-700">{{ formError }}</p>
           </div>
 
-          <footer class="flex justify-end gap-2 border-t border-brand-border p-4">
+          <footer
+            class="flex shrink-0 flex-col-reverse gap-2 border-t border-brand-border px-4 py-3 sm:flex-row sm:justify-end"
+            style="padding-bottom: max(12px, env(safe-area-inset-bottom))"
+          >
             <button
               type="button"
-              class="rounded-xl border border-brand-border px-4 py-2 text-sm font-semibold"
+              class="inline-flex h-11 items-center justify-center rounded-xl border border-brand-border px-4 text-sm font-semibold"
               :disabled="submitting"
               @click="emit('close')"
             >
@@ -183,7 +186,7 @@ const selectedEmployee = computed(() =>
             </button>
             <button
               type="submit"
-              class="inline-flex items-center gap-2 rounded-xl bg-brand-primary-dark px-4 py-2 text-sm font-semibold text-white"
+              class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white"
               :disabled="submitting"
             >
               <Loader2 v-if="submitting" class="h-4 w-4 animate-spin" />

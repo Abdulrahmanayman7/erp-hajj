@@ -28,6 +28,7 @@ export const ar = {
     profile: 'الملف الشخصي',
     audit: 'سجل التدقيق',
     settings: 'الإعدادات',
+    more: 'المزيد',
   },
   shell: {
     breadcrumbHome: 'الرئيسية',
@@ -42,6 +43,13 @@ export const ar = {
     enterFullscreen: 'ملء الشاشة',
     exitFullscreen: 'إنهاء ملء الشاشة',
     productLabel: 'ERP HAJJ',
+    moreSubtitle: 'بقية وحدات النظام',
+    moreEmpty: 'لا توجد وحدات إضافية متاحة لصلاحياتك',
+    filters: 'الفلاتر',
+    filtersWithCount: 'الفلاتر ({count})',
+    applyFilters: 'تطبيق',
+    resetFilters: 'إعادة تعيين',
+    close: 'إغلاق',
   },
   home: {
     welcome: 'مرحبًا بك، {name}',

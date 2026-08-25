@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppBottomNav from '@/shared/components/AppBottomNav.vue'
 import AppConfirmDialog from '@/shared/components/AppConfirmDialog.vue'
 import AppToastHost from '@/shared/components/AppToastHost.vue'
 
@@ -8,22 +9,27 @@ import AppTopbar from './AppTopbar.vue'
 </script>
 
 <template>
-  <div class="flex h-dvh overflow-hidden gap-3 bg-brand-bg p-3 text-brand-text lg:gap-4 lg:p-4">
-    <!-- First in RTL flex = right side -->
-    <AppSidebar />
+  <div class="app-shell flex h-dvh overflow-hidden bg-brand-bg text-brand-text md:gap-3 md:p-3 lg:gap-4 lg:p-4">
+    <!-- Desktop sidebar only — mobile uses bottom nav -->
+    <div class="hidden h-full shrink-0 md:block">
+      <AppSidebar />
+    </div>
 
-    <div class="flex min-h-0 min-w-0 flex-1 flex-col gap-3 lg:gap-4">
+    <div class="flex min-h-0 min-w-0 flex-1 flex-col md:gap-3 lg:gap-4">
       <AppTopbar />
 
-      <main class="min-h-0 flex-1 overflow-auto">
-        <div class="mx-auto w-full max-w-[1440px] px-3 py-4 sm:px-4 lg:px-6 lg:py-6">
+      <main class="app-shell-main min-h-0 flex-1 overflow-auto">
+        <div class="app-page-container mx-auto w-full max-w-[1440px]">
           <slot />
         </div>
       </main>
 
-      <AppFooter />
+      <div class="hidden md:block">
+        <AppFooter />
+      </div>
     </div>
 
+    <AppBottomNav />
     <AppToastHost />
     <AppConfirmDialog />
   </div>

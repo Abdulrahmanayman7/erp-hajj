@@ -13,6 +13,8 @@ import {
 
 import { listRoles } from '@/modules/roles/api/rolesApi'
 import { ApiError } from '@/shared/api/http'
+import AppMobileFilters from '@/shared/components/AppMobileFilters.vue'
+import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 import { roleSelectOption, toSelectId } from '@/shared/lookups/selectOptions'
@@ -90,6 +92,17 @@ const statusOptions = computed(() => [
   { value: 'disabled', label: t('users.status.disabled') },
 ])
 
+const activeFilterCount = computed(() => {
+  let count = 0
+  if (filters.status) count += 1
+  if (filters.role_id !== '') count += 1
+  return count
+})
+
+function resetFilters(): void {
+  filters.status = ''
+  filters.role_id = ''
+}
 
 const isSubmitting = computed(
   () =>
@@ -219,57 +232,72 @@ function formatDate(value: string | null): string {
 
 <template>
   <div class="space-y-6">
-    <div class="flex flex-wrap items-end justify-between gap-4">
-      <div class="min-w-0">
-        <h2 class="text-[1.75rem] font-bold leading-tight text-brand-text">
-          {{ t('users.title') }}
-        </h2>
-        <p v-if="meta" class="mt-1.5 text-sm text-brand-text-secondary">
-          <span
-            class="inline-flex items-center rounded-full bg-brand-primary-soft px-2.5 py-0.5 text-xs font-semibold text-brand-primary-dark"
-          >
-            {{ t('users.total', { count: meta.total }) }}
-          </span>
-        </p>
-      </div>
-      <PermissionGuard permission="users.create">
-        <button
-          type="button"
-          class="inline-flex h-11 items-center gap-2 rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white transition hover:bg-brand-primary"
-          @click="openCreate"
-        >
-          <Plus class="h-4 w-4" :stroke-width="2.25" />
-          <span>{{ t('users.add') }}</span>
-        </button>
-      </PermissionGuard>
-    </div>
-
-    <div
-      class="flex flex-wrap items-center gap-3 rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)]"
+    <AppPageHeader
+      :title="t('users.title')"
+      :meta="meta ? t('users.total', { count: meta.total }) : undefined"
     >
-      <div class="relative min-w-48 flex-1">
-        <Search
-          class="pointer-events-none absolute inset-s-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text-muted"
-          :stroke-width="1.75"
-          aria-hidden="true"
-        />
-        <input
-          v-model="filters.search"
-          type="search"
-          class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface pe-3 ps-10 text-sm text-brand-text outline-none transition placeholder:text-brand-text-muted focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
-          :placeholder="t('users.searchPlaceholder')"
-        />
-      </div>
-      <AppSelect v-model="filters.status" :options="statusOptions" />
-      <AppRemoteSelect
-        :model-value="filters.role_id"
-        query-key="roles"
-        :fetcher="fetchRoles"
-        :map-option="roleSelectOption"
-        :empty-option="emptyRoleFilter"
-        @update:model-value="filters.role_id = toSelectId($event)"
-      />
-    </div>
+      <template #actions>
+        <PermissionGuard permission="users.create">
+          <button
+            type="button"
+            class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white transition hover:bg-brand-primary sm:w-auto"
+            @click="openCreate"
+          >
+            <Plus class="h-4 w-4" :stroke-width="2.25" />
+            <span>{{ t('users.add') }}</span>
+          </button>
+        </PermissionGuard>
+      </template>
+    </AppPageHeader>
+
+    <AppMobileFilters
+      v-model:search="filters.search"
+      :search-placeholder="t('users.searchPlaceholder')"
+      :active-count="activeFilterCount"
+      @reset="resetFilters"
+    >
+      <template #desktop>
+        <div
+          class="flex flex-wrap items-center gap-3 rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)]"
+        >
+          <div class="relative min-w-48 flex-1">
+            <Search
+              class="pointer-events-none absolute inset-s-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text-muted"
+              :stroke-width="1.75"
+              aria-hidden="true"
+            />
+            <input
+              v-model="filters.search"
+              type="search"
+              class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface pe-3 ps-10 text-sm text-brand-text outline-none transition placeholder:text-brand-text-muted focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+              :placeholder="t('users.searchPlaceholder')"
+            />
+          </div>
+          <AppSelect v-model="filters.status" :options="statusOptions" />
+          <AppRemoteSelect
+            :model-value="filters.role_id"
+            query-key="roles"
+            :fetcher="fetchRoles"
+            :map-option="roleSelectOption"
+            :empty-option="emptyRoleFilter"
+            @update:model-value="filters.role_id = toSelectId($event)"
+          />
+        </div>
+      </template>
+      <template #filters>
+        <div class="space-y-3">
+          <AppSelect v-model="filters.status" :options="statusOptions" />
+          <AppRemoteSelect
+            :model-value="filters.role_id"
+            query-key="roles"
+            :fetcher="fetchRoles"
+            :map-option="roleSelectOption"
+            :empty-option="emptyRoleFilter"
+            @update:model-value="filters.role_id = toSelectId($event)"
+          />
+        </div>
+      </template>
+    </AppMobileFilters>
 
     <div
       v-if="isLoading"
@@ -293,152 +321,229 @@ function formatDate(value: string | null): string {
     >
       {{ t('users.empty') }}
     </div>
-    <div
-      v-else
-      class="overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-[0_1px_2px_rgba(23,32,29,0.03)]"
-    >
-      <div class="overflow-x-auto">
-        <table class="min-w-full border-separate border-spacing-0 text-sm">
-          <thead>
-            <tr class="bg-[#F4F6F5]">
-              <th
-                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-start text-xs font-bold tracking-wide text-brand-text-muted"
+    <template v-else>
+      <div
+        class="hidden overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-[0_1px_2px_rgba(23,32,29,0.03)] md:block"
+      >
+        <div class="overflow-x-auto">
+          <table class="min-w-full border-separate border-spacing-0 text-sm">
+            <thead>
+              <tr class="bg-[#F4F6F5]">
+                <th
+                  class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-start text-xs font-bold tracking-wide text-brand-text-muted"
+                >
+                  {{ t('users.columns.name') }}
+                </th>
+                <th
+                  class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
+                >
+                  {{ t('users.columns.email') }}
+                </th>
+                <th
+                  class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
+                >
+                  {{ t('users.columns.roles') }}
+                </th>
+                <th
+                  class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
+                >
+                  {{ t('users.columns.status') }}
+                </th>
+                <th
+                  class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
+                >
+                  {{ t('users.columns.created') }}
+                </th>
+                <th
+                  class="w-28 whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
+                >
+                  {{ t('users.columns.actions') }}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="(user, index) in users"
+                :key="user.id"
+                class="group transition-colors duration-150"
+                :class="index % 2 === 1 ? 'bg-[#FAFBFA]' : 'bg-brand-surface'"
               >
-                {{ t('users.columns.name') }}
-              </th>
-              <th
-                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
-              >
-                {{ t('users.columns.email') }}
-              </th>
-              <th
-                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
-              >
-                {{ t('users.columns.roles') }}
-              </th>
-              <th
-                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
-              >
-                {{ t('users.columns.status') }}
-              </th>
-              <th
-                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
-              >
-                {{ t('users.columns.created') }}
-              </th>
-              <th
-                class="w-28 whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
-              >
-                {{ t('users.columns.actions') }}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="(user, index) in users"
-              :key="user.id"
-              class="group transition-colors duration-150"
-              :class="index % 2 === 1 ? 'bg-[#FAFBFA]' : 'bg-brand-surface'"
-            >
-              <td class="border-b border-brand-border/80 px-5 py-3.5 group-hover:bg-[#EEF2F0]">
-                <div class="flex min-w-0 items-center gap-2.5">
-                  <UserAvatar :user="user" size="md" />
-                  <span class="truncate font-semibold text-brand-text">{{ user.name }}</span>
-                </div>
-              </td>
-              <td
-                class="border-b border-brand-border/80 px-5 py-3.5 text-center text-brand-text-secondary group-hover:bg-[#EEF2F0]"
-                dir="ltr"
-              >
-                {{ user.email }}
-              </td>
-              <td class="border-b border-brand-border/80 px-5 py-3.5 text-center group-hover:bg-[#EEF2F0]">
-                <div class="flex flex-wrap items-center justify-center gap-1.5">
-                  <span
-                    v-for="role in user.roles"
-                    :key="role.id"
-                    class="inline-flex items-center rounded-lg bg-brand-primary-soft px-2 py-0.5 text-xs font-semibold text-brand-primary-dark ring-1 ring-brand-primary/10"
-                  >
-                    {{ role.name }}
-                  </span>
-                  <span v-if="user.roles.length === 0" class="text-brand-text-muted">—</span>
-                </div>
-              </td>
-              <td class="border-b border-brand-border/80 px-5 py-3.5 text-center group-hover:bg-[#EEF2F0]">
-                <div class="flex justify-center">
-                  <span
-                    class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
-                    :class="
-                      user.status === 'active'
-                        ? 'bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200/70'
-                        : 'bg-neutral-100 text-neutral-600 ring-1 ring-neutral-200/80'
-                    "
-                  >
+                <td class="border-b border-brand-border/80 px-5 py-3.5 group-hover:bg-[#EEF2F0]">
+                  <div class="flex min-w-0 items-center gap-2.5">
+                    <UserAvatar :user="user" size="md" />
+                    <span class="truncate font-semibold text-brand-text">{{ user.name }}</span>
+                  </div>
+                </td>
+                <td
+                  class="border-b border-brand-border/80 px-5 py-3.5 text-center text-brand-text-secondary group-hover:bg-[#EEF2F0]"
+                  dir="ltr"
+                >
+                  {{ user.email }}
+                </td>
+                <td class="border-b border-brand-border/80 px-5 py-3.5 text-center group-hover:bg-[#EEF2F0]">
+                  <div class="flex flex-wrap items-center justify-center gap-1.5">
                     <span
-                      class="h-1.5 w-1.5 rounded-full"
-                      :class="user.status === 'active' ? 'bg-emerald-500' : 'bg-neutral-400'"
-                    />
-                    {{ t(`users.status.${user.status}`) }}
-                  </span>
-                </div>
-              </td>
-              <td
-                class="whitespace-nowrap border-b border-brand-border/80 px-5 py-3.5 text-center text-brand-text-secondary group-hover:bg-[#EEF2F0]"
-              >
-                {{ formatDate(user.created_at) }}
-              </td>
-              <td class="border-b border-brand-border/80 px-5 py-3.5 text-center group-hover:bg-[#EEF2F0]">
-                <div class="inline-flex items-center justify-center gap-1">
-                  <PermissionGuard permission="users.update">
-                    <AppTooltip :text="t('users.actions.edit')">
-                      <button
-                        type="button"
-                        class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-brand-primary-dark transition hover:bg-brand-primary-soft"
-                        :aria-label="t('users.actions.edit')"
-                        @click="openEdit(user)"
-                      >
-                        <Pencil class="h-4 w-4" :stroke-width="2" />
-                      </button>
-                    </AppTooltip>
-                  </PermissionGuard>
-                  <PermissionGuard permission="users.disable">
-                    <AppTooltip
-                      v-if="user.status === 'active'"
-                      :text="t('users.actions.disable')"
+                      v-for="role in user.roles"
+                      :key="role.id"
+                      class="inline-flex items-center rounded-lg bg-brand-primary-soft px-2 py-0.5 text-xs font-semibold text-brand-primary-dark ring-1 ring-brand-primary/10"
                     >
-                      <button
-                        type="button"
-                        class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-amber-700 transition hover:bg-amber-50"
-                        :aria-label="t('users.actions.disable')"
-                        @click="toggleStatus(user)"
+                      {{ role.name }}
+                    </span>
+                    <span v-if="user.roles.length === 0" class="text-brand-text-muted">—</span>
+                  </div>
+                </td>
+                <td class="border-b border-brand-border/80 px-5 py-3.5 text-center group-hover:bg-[#EEF2F0]">
+                  <div class="flex justify-center">
+                    <span
+                      class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
+                      :class="
+                        user.status === 'active'
+                          ? 'bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200/70'
+                          : 'bg-neutral-100 text-neutral-600 ring-1 ring-neutral-200/80'
+                      "
+                    >
+                      <span
+                        class="h-1.5 w-1.5 rounded-full"
+                        :class="user.status === 'active' ? 'bg-emerald-500' : 'bg-neutral-400'"
+                      />
+                      {{ t(`users.status.${user.status}`) }}
+                    </span>
+                  </div>
+                </td>
+                <td
+                  class="whitespace-nowrap border-b border-brand-border/80 px-5 py-3.5 text-center text-brand-text-secondary group-hover:bg-[#EEF2F0]"
+                >
+                  {{ formatDate(user.created_at) }}
+                </td>
+                <td class="border-b border-brand-border/80 px-5 py-3.5 text-center group-hover:bg-[#EEF2F0]">
+                  <div class="inline-flex items-center justify-center gap-1">
+                    <PermissionGuard permission="users.update">
+                      <AppTooltip :text="t('users.actions.edit')">
+                        <button
+                          type="button"
+                          class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-brand-primary-dark transition hover:bg-brand-primary-soft"
+                          :aria-label="t('users.actions.edit')"
+                          @click="openEdit(user)"
+                        >
+                          <Pencil class="h-4 w-4" :stroke-width="2" />
+                        </button>
+                      </AppTooltip>
+                    </PermissionGuard>
+                    <PermissionGuard permission="users.disable">
+                      <AppTooltip
+                        v-if="user.status === 'active'"
+                        :text="t('users.actions.disable')"
                       >
-                        <UserX class="h-4 w-4" :stroke-width="2" />
-                      </button>
-                    </AppTooltip>
-                    <AppTooltip v-else :text="t('users.actions.enable')">
-                      <button
-                        type="button"
-                        class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-emerald-700 transition hover:bg-emerald-50"
-                        :aria-label="t('users.actions.enable')"
-                        @click="toggleStatus(user)"
-                      >
-                        <UserCheck class="h-4 w-4" :stroke-width="2" />
-                      </button>
-                    </AppTooltip>
-                  </PermissionGuard>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                        <button
+                          type="button"
+                          class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-amber-700 transition hover:bg-amber-50"
+                          :aria-label="t('users.actions.disable')"
+                          @click="toggleStatus(user)"
+                        >
+                          <UserX class="h-4 w-4" :stroke-width="2" />
+                        </button>
+                      </AppTooltip>
+                      <AppTooltip v-else :text="t('users.actions.enable')">
+                        <button
+                          type="button"
+                          class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-emerald-700 transition hover:bg-emerald-50"
+                          :aria-label="t('users.actions.enable')"
+                          @click="toggleStatus(user)"
+                        >
+                          <UserCheck class="h-4 w-4" :stroke-width="2" />
+                        </button>
+                      </AppTooltip>
+                    </PermissionGuard>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
+
+      <div class="space-y-3 md:hidden">
+        <article
+          v-for="user in users"
+          :key="user.id"
+          class="rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)]"
+        >
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex min-w-0 items-center gap-2.5">
+              <UserAvatar :user="user" size="md" />
+              <div class="min-w-0">
+                <h3 class="truncate font-bold text-brand-text">{{ user.name }}</h3>
+                <p class="mt-0.5 truncate text-sm text-brand-text-secondary" dir="ltr">{{ user.email }}</p>
+              </div>
+            </div>
+            <span
+              class="inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
+              :class="
+                user.status === 'active'
+                  ? 'bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200/70'
+                  : 'bg-neutral-100 text-neutral-600 ring-1 ring-neutral-200/80'
+              "
+            >
+              <span
+                class="h-1.5 w-1.5 rounded-full"
+                :class="user.status === 'active' ? 'bg-emerald-500' : 'bg-neutral-400'"
+              />
+              {{ t(`users.status.${user.status}`) }}
+            </span>
+          </div>
+          <dl class="mt-3 grid grid-cols-2 gap-2 text-xs text-brand-text-secondary">
+            <div>
+              <dt>{{ t('users.columns.roles') }}</dt>
+              <dd class="mt-0.5 font-medium text-brand-text">
+                <template v-if="user.roles.length">
+                  {{ user.roles.map((r) => r.name).join(' · ') }}
+                </template>
+                <template v-else>—</template>
+              </dd>
+            </div>
+            <div>
+              <dt>{{ t('users.columns.created') }}</dt>
+              <dd class="mt-0.5 font-medium text-brand-text">{{ formatDate(user.created_at) }}</dd>
+            </div>
+          </dl>
+          <div class="mt-3 flex items-center justify-end gap-1 border-t border-brand-border pt-3">
+            <PermissionGuard permission="users.update">
+              <button
+                type="button"
+                class="inline-flex h-11 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-brand-primary-dark transition hover:bg-brand-primary-soft"
+                @click="openEdit(user)"
+              >
+                <Pencil class="h-4 w-4" :stroke-width="2" />
+                {{ t('users.actions.edit') }}
+              </button>
+            </PermissionGuard>
+            <PermissionGuard permission="users.disable">
+              <button
+                type="button"
+                class="inline-flex h-11 items-center gap-2 rounded-xl px-3 text-sm font-semibold transition"
+                :class="
+                  user.status === 'active'
+                    ? 'text-amber-700 hover:bg-amber-50'
+                    : 'text-emerald-700 hover:bg-emerald-50'
+                "
+                @click="toggleStatus(user)"
+              >
+                <UserX v-if="user.status === 'active'" class="h-4 w-4" :stroke-width="2" />
+                <UserCheck v-else class="h-4 w-4" :stroke-width="2" />
+                {{ user.status === 'active' ? t('users.actions.disable') : t('users.actions.enable') }}
+              </button>
+            </PermissionGuard>
+          </div>
+        </article>
+      </div>
+
       <div
         v-if="meta && meta.last_page > 1"
-        class="flex items-center justify-between gap-3 border-t border-brand-border bg-[#F7F8F6] px-5 py-3 text-sm"
+        class="flex items-center justify-between gap-3"
       >
         <button
           type="button"
-          class="inline-flex h-9 items-center gap-1 rounded-lg border border-brand-border bg-brand-surface px-3 font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
+          class="inline-flex h-11 items-center gap-1 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
           :disabled="filters.page <= 1 || isFetching"
           @click="filters.page -= 1"
         >
@@ -450,7 +555,7 @@ function formatDate(value: string | null): string {
         </span>
         <button
           type="button"
-          class="inline-flex h-9 items-center gap-1 rounded-lg border border-brand-border bg-brand-surface px-3 font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
+          class="inline-flex h-11 items-center gap-1 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
           :disabled="filters.page >= meta.last_page || isFetching"
           @click="filters.page += 1"
         >
@@ -458,7 +563,7 @@ function formatDate(value: string | null): string {
           <ChevronLeft class="h-4 w-4" :stroke-width="2" />
         </button>
       </div>
-    </div>
+    </template>
 
     <UserFormDrawer
       :open="drawerOpen"

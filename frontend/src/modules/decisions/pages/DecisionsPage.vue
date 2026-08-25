@@ -6,6 +6,8 @@ import { ChevronLeft, ChevronRight, Eye, Pencil, Plus, Search } from 'lucide-vue
 
 import { listEmployees } from '@/modules/employees/api/employeesApi'
 import { useOrganizationUnitsFlatQuery } from '@/modules/organization/queries/useOrganizationUnitsQuery'
+import AppMobileFilters from '@/shared/components/AppMobileFilters.vue'
+import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 import { employeeSelectOption, toSelectId } from '@/shared/lookups/selectOptions'
@@ -121,6 +123,32 @@ const form = reactive<DecisionFormState>({
 })
 
 const isFormSubmitting = computed(() => create.isPending.value || update.isPending.value)
+
+const activeFilterCount = computed(() => {
+  let count = 0
+  if (filters.status !== 'all') count += 1
+  if (filters.organization_unit_id !== '') count += 1
+  if (filters.responsible_employee_id !== '') count += 1
+  if (filters.has_source_recommendation !== '') count += 1
+  if (filters.meeting_id !== '') count += 1
+  if (filters.effective_date_from) count += 1
+  if (filters.effective_date_to) count += 1
+  if (filters.due_date_from) count += 1
+  if (filters.due_date_to) count += 1
+  return count
+})
+
+function resetFilters(): void {
+  filters.status = 'all'
+  filters.organization_unit_id = ''
+  filters.responsible_employee_id = ''
+  filters.has_source_recommendation = ''
+  filters.meeting_id = ''
+  filters.effective_date_from = ''
+  filters.effective_date_to = ''
+  filters.due_date_from = ''
+  filters.due_date_to = ''
+}
 
 watch(
   () => [
@@ -294,89 +322,144 @@ async function save(): Promise<void> {
 
 <template>
   <div class="space-y-6">
-    <div class="flex flex-wrap items-end justify-between gap-4">
-      <div class="min-w-0">
-        <h2 class="text-[1.75rem] font-bold leading-tight text-brand-text">
-          {{ t('decisions.title') }}
-        </h2>
-        <p class="mt-1.5 text-sm text-brand-text-secondary">
-          {{ t('decisions.subtitle') }}
-        </p>
-        <p v-if="meta" class="mt-2">
-          <span
-            class="inline-flex items-center rounded-full bg-brand-primary-soft px-2.5 py-0.5 text-xs font-semibold text-brand-primary-dark"
-          >
-            {{ t('decisions.total', { count: meta.total }) }}
-          </span>
-        </p>
-      </div>
-      <PermissionGuard permission="decisions.create">
-        <button
-          type="button"
-          class="inline-flex h-11 items-center gap-2 rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white transition hover:bg-brand-primary"
-          @click="openCreate"
-        >
-          <Plus class="h-4 w-4" :stroke-width="2.25" />
-          <span>{{ t('decisions.add') }}</span>
-        </button>
-      </PermissionGuard>
-    </div>
-
-    <div
-      class="flex flex-wrap items-center gap-3 rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)]"
+    <AppPageHeader
+      :title="t('decisions.title')"
+      :subtitle="t('decisions.subtitle')"
+      :meta="meta ? t('decisions.total', { count: meta.total }) : undefined"
     >
-      <div class="relative min-w-48 flex-1">
-        <Search
-          class="pointer-events-none absolute inset-s-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text-muted"
-          :stroke-width="1.75"
-          aria-hidden="true"
-        />
-        <input
-          v-model="filters.search"
-          type="search"
-          class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface pe-3 ps-10 text-sm text-brand-text outline-none transition placeholder:text-brand-text-muted focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
-          :placeholder="t('decisions.searchPlaceholder')"
-        />
-      </div>
-      <AppSelect v-model="filters.status" :options="statusOptions" />
-      <AppSelect v-model="filters.organization_unit_id" :options="orgOptions" searchable />
-      <AppRemoteSelect
-        :model-value="filters.responsible_employee_id"
-        query-key="employees-active"
-        :fetcher="fetchActiveEmployees"
-        :map-option="employeeSelectOption"
-        :empty-option="emptyEmployee"
-        @update:model-value="filters.responsible_employee_id = toSelectId($event)"
-      />
-      <AppSelect v-model="filters.has_source_recommendation" :options="sourceOptions" />
-      <input
-        v-model.number="filters.meeting_id"
-        type="number"
-        min="1"
-        class="h-11 w-28 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
-        :placeholder="t('decisions.filters.meetingId')"
-      />
-      <input
-        v-model="filters.effective_date_from"
-        type="date"
-        class="h-11 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
-      />
-      <input
-        v-model="filters.effective_date_to"
-        type="date"
-        class="h-11 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
-      />
-      <input
-        v-model="filters.due_date_from"
-        type="date"
-        class="h-11 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
-      />
-      <input
-        v-model="filters.due_date_to"
-        type="date"
-        class="h-11 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
-      />
-    </div>
+      <template #actions>
+        <PermissionGuard permission="decisions.create">
+          <button
+            type="button"
+            class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white transition hover:bg-brand-primary sm:w-auto"
+            @click="openCreate"
+          >
+            <Plus class="h-4 w-4" :stroke-width="2.25" />
+            <span>{{ t('decisions.add') }}</span>
+          </button>
+        </PermissionGuard>
+      </template>
+    </AppPageHeader>
+
+    <AppMobileFilters
+      v-model:search="filters.search"
+      :search-placeholder="t('decisions.searchPlaceholder')"
+      :active-count="activeFilterCount"
+      @reset="resetFilters"
+    >
+      <template #desktop>
+        <div
+          class="flex flex-wrap items-center gap-3 rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)]"
+        >
+          <div class="relative min-w-48 flex-1">
+            <Search
+              class="pointer-events-none absolute inset-s-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text-muted"
+              :stroke-width="1.75"
+              aria-hidden="true"
+            />
+            <input
+              v-model="filters.search"
+              type="search"
+              class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface pe-3 ps-10 text-sm text-brand-text outline-none transition placeholder:text-brand-text-muted focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+              :placeholder="t('decisions.searchPlaceholder')"
+            />
+          </div>
+          <AppSelect v-model="filters.status" :options="statusOptions" />
+          <AppSelect v-model="filters.organization_unit_id" :options="orgOptions" searchable />
+          <AppRemoteSelect
+            :model-value="filters.responsible_employee_id"
+            query-key="employees-active"
+            :fetcher="fetchActiveEmployees"
+            :map-option="employeeSelectOption"
+            :empty-option="emptyEmployee"
+            @update:model-value="filters.responsible_employee_id = toSelectId($event)"
+          />
+          <AppSelect v-model="filters.has_source_recommendation" :options="sourceOptions" />
+          <input
+            v-model.number="filters.meeting_id"
+            type="number"
+            min="1"
+            class="h-11 w-28 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+            :placeholder="t('decisions.filters.meetingId')"
+          />
+          <input
+            v-model="filters.effective_date_from"
+            type="date"
+            class="h-11 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+          />
+          <input
+            v-model="filters.effective_date_to"
+            type="date"
+            class="h-11 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+          />
+          <input
+            v-model="filters.due_date_from"
+            type="date"
+            class="h-11 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+          />
+          <input
+            v-model="filters.due_date_to"
+            type="date"
+            class="h-11 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+          />
+        </div>
+      </template>
+      <template #filters>
+        <div class="space-y-3">
+          <AppSelect v-model="filters.status" :options="statusOptions" />
+          <AppSelect v-model="filters.organization_unit_id" :options="orgOptions" searchable />
+          <AppRemoteSelect
+            :model-value="filters.responsible_employee_id"
+            query-key="employees-active"
+            :fetcher="fetchActiveEmployees"
+            :map-option="employeeSelectOption"
+            :empty-option="emptyEmployee"
+            @update:model-value="filters.responsible_employee_id = toSelectId($event)"
+          />
+          <AppSelect v-model="filters.has_source_recommendation" :options="sourceOptions" />
+          <label class="block">
+            <span class="mb-1.5 block text-sm font-semibold text-brand-text">{{ t('decisions.filters.meetingId') }}</span>
+            <input
+              v-model.number="filters.meeting_id"
+              type="number"
+              min="1"
+              class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+              :placeholder="t('decisions.filters.meetingId')"
+            />
+          </label>
+          <label class="block">
+            <span class="mb-1.5 block text-sm font-semibold text-brand-text">{{ t('decisions.columns.effectiveDate') }}</span>
+            <div class="grid grid-cols-2 gap-2">
+              <input
+                v-model="filters.effective_date_from"
+                type="date"
+                class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+              />
+              <input
+                v-model="filters.effective_date_to"
+                type="date"
+                class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+              />
+            </div>
+          </label>
+          <label class="block">
+            <span class="mb-1.5 block text-sm font-semibold text-brand-text">{{ t('decisions.columns.dueDate') }}</span>
+            <div class="grid grid-cols-2 gap-2">
+              <input
+                v-model="filters.due_date_from"
+                type="date"
+                class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+              />
+              <input
+                v-model="filters.due_date_to"
+                type="date"
+                class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+              />
+            </div>
+          </label>
+        </div>
+      </template>
+    </AppMobileFilters>
 
     <div
       v-if="listState === 'loading'"
@@ -413,16 +496,16 @@ async function save(): Promise<void> {
         </button>
       </PermissionGuard>
     </div>
-    <div
-      v-else
-      ref="tableRoot"
-      class="overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-[0_1px_2px_rgba(23,32,29,0.03)] outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25"
-      tabindex="0"
-      role="grid"
-      :aria-rowcount="decisions.length"
-      :aria-label="t('decisions.title')"
-      @keydown="onTableKeydown"
-    >
+    <template v-else>
+      <div
+        ref="tableRoot"
+        class="hidden overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-[0_1px_2px_rgba(23,32,29,0.03)] outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25 md:block"
+        tabindex="0"
+        role="grid"
+        :aria-rowcount="decisions.length"
+        :aria-label="t('decisions.title')"
+        @keydown="onTableKeydown"
+      >
       <div class="overflow-x-auto">
         <table class="min-w-full border-separate border-spacing-0 text-sm">
           <thead>
@@ -585,13 +668,65 @@ async function save(): Promise<void> {
           </tbody>
         </table>
       </div>
+      </div>
+
+      <div class="space-y-3 md:hidden">
+        <RouterLink
+          v-for="decision in decisions"
+          :key="decision.id"
+          :to="`/app/decisions/${decision.id}`"
+          class="block rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)] transition active:bg-brand-bg"
+        >
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <p class="font-mono text-xs font-bold text-brand-primary-dark" dir="ltr">
+                {{ decision.decision_number }}
+              </p>
+              <h3 class="mt-1 font-bold text-brand-text">{{ decision.title }}</h3>
+            </div>
+            <span
+              class="inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold"
+              :class="decisionStatusBadgeClass(decision.status)"
+            >
+              <span
+                class="h-1.5 w-1.5 shrink-0 rounded-full"
+                :class="decisionStatusDotClass(decision.status)"
+              />
+              {{ t(`decisions.status.${decision.status}`) }}
+            </span>
+          </div>
+          <dl class="mt-3 grid grid-cols-2 gap-2 text-xs text-brand-text-secondary">
+            <div>
+              <dt>{{ t('decisions.columns.responsible') }}</dt>
+              <dd class="font-medium text-brand-text">
+                {{ decision.responsible_employee?.full_name ?? '—' }}
+              </dd>
+            </div>
+            <div>
+              <dt>{{ t('decisions.columns.organizationUnit') }}</dt>
+              <dd class="font-medium text-brand-text">
+                {{ decision.organization_unit?.name ?? '—' }}
+              </dd>
+            </div>
+            <div>
+              <dt>{{ t('decisions.columns.effectiveDate') }}</dt>
+              <dd class="font-medium text-brand-text" dir="ltr">{{ decision.effective_date ?? '—' }}</dd>
+            </div>
+            <div>
+              <dt>{{ t('decisions.columns.dueDate') }}</dt>
+              <dd class="font-medium text-brand-text" dir="ltr">{{ decision.due_date ?? '—' }}</dd>
+            </div>
+          </dl>
+        </RouterLink>
+      </div>
+
       <div
         v-if="meta && meta.last_page > 1"
-        class="flex items-center justify-between gap-3 border-t border-brand-border bg-[#F7F8F6] px-5 py-3 text-sm"
+        class="flex items-center justify-between gap-3"
       >
         <button
           type="button"
-          class="inline-flex h-9 items-center gap-1 rounded-lg border border-brand-border bg-brand-surface px-3 font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
+          class="inline-flex h-11 items-center gap-1 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
           :disabled="filters.page <= 1 || isFetching"
           @click="filters.page -= 1"
         >
@@ -603,7 +738,7 @@ async function save(): Promise<void> {
         </span>
         <button
           type="button"
-          class="inline-flex h-9 items-center gap-1 rounded-lg border border-brand-border bg-brand-surface px-3 font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
+          class="inline-flex h-11 items-center gap-1 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
           :disabled="filters.page >= meta.last_page || isFetching"
           @click="filters.page += 1"
         >
@@ -611,7 +746,7 @@ async function save(): Promise<void> {
           <ChevronLeft class="h-4 w-4" :stroke-width="2" />
         </button>
       </div>
-    </div>
+    </template>
 
     <DecisionFormDrawer
       :open="drawerOpen"

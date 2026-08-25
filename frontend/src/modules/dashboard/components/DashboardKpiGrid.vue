@@ -40,7 +40,7 @@ const iconFor: Partial<Record<DashboardKpiKey, Component>> = {
       v-for="entry in entries"
       :key="entry.key"
       :to="isSafeAppHref(entry.kpi.href) ? entry.kpi.href : undefined"
-      class="group relative min-h-[128px] overflow-hidden rounded-2xl border p-4 transition sm:p-5"
+      class="group relative min-h-[112px] min-w-0 overflow-hidden rounded-2xl border p-3.5 transition sm:min-h-[128px] sm:p-5"
       :class="[
         severityCardClass(effectiveSeverity(entry.kpi.severity, entry.kpi.value)),
         isSafeAppHref(entry.kpi.href)
@@ -48,19 +48,21 @@ const iconFor: Partial<Record<DashboardKpiKey, Component>> = {
           : '',
       ]"
     >
-      <div class="flex items-start justify-between gap-3">
+      <div class="flex items-start justify-between gap-2 sm:gap-3">
         <span
-          class="inline-flex h-9 w-9 items-center justify-center rounded-xl"
+          class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
           :class="entry.kpi.value > 0 ? 'bg-white/70 text-brand-primary-dark' : 'bg-brand-bg text-brand-text-muted'"
           aria-hidden="true"
         >
           <component :is="iconFor[entry.key] ?? ClipboardList" class="h-[18px] w-[18px]" :stroke-width="1.9" />
         </span>
-        <span class="text-xs font-semibold text-brand-text-muted">
+        <span class="max-w-[55%] text-end text-[11px] font-semibold leading-snug text-brand-text-muted sm:max-w-none sm:text-xs">
           {{ entry.kpi.value > 0 ? t('dashboard.requiresFollowUp') : t('dashboard.allClear') }}
         </span>
       </div>
-      <p class="mt-4 text-sm font-semibold text-brand-text-secondary">{{ entry.kpi.label }}</p>
+      <p class="mt-3 break-words text-sm font-semibold leading-snug text-brand-text-secondary sm:mt-4">
+        {{ entry.kpi.label }}
+      </p>
       <p
         class="mt-1 text-2xl font-bold tabular-nums tracking-tight"
         :class="severityValueClass(effectiveSeverity(entry.kpi.severity, entry.kpi.value))"

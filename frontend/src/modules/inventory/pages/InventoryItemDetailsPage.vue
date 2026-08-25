@@ -201,7 +201,7 @@ function assignForm(next: InventoryItemFormState): void {
 
     <template v-else>
       <section class="rounded-2xl border border-brand-border bg-brand-surface px-5 py-5 sm:px-6">
-        <div class="flex flex-wrap items-start justify-between gap-4">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div class="min-w-0 flex-1">
             <div class="flex flex-wrap items-center gap-2">
               <p
@@ -226,10 +226,10 @@ function assignForm(next: InventoryItemFormState): void {
                 {{ item.is_active ? t('inventory.status.active') : t('inventory.status.inactive') }}
               </span>
             </div>
-            <h2 class="mt-2 text-[1.65rem] font-bold leading-snug text-brand-text sm:text-[1.85rem]">
+            <h2 class="mt-2 break-words text-[1.35rem] font-bold leading-snug text-brand-text sm:text-[1.85rem]">
               {{ item.name }}
             </h2>
-            <p class="mt-2 text-sm text-brand-text-secondary">
+            <p class="mt-2 break-words text-sm text-brand-text-secondary">
               <span class="font-semibold text-brand-text">
                 {{ item.category?.name ?? t('inventory.noCategory') }}
               </span>
@@ -248,7 +248,7 @@ function assignForm(next: InventoryItemFormState): void {
           >
             <button
               type="button"
-              class="inline-flex h-10 items-center gap-2 rounded-xl border border-brand-border bg-brand-surface px-4 text-sm font-semibold text-brand-primary-dark transition hover:bg-brand-primary-soft"
+              class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-brand-border bg-brand-surface px-4 text-sm font-semibold text-brand-primary-dark transition hover:bg-brand-primary-soft sm:h-10 sm:w-auto"
               @click="openEdit"
             >
               <Pencil class="h-4 w-4" />

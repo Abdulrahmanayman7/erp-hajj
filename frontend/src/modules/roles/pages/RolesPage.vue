@@ -15,6 +15,7 @@ import {
 } from 'lucide-vue-next'
 
 import { ApiError } from '@/shared/api/http'
+import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import AppTooltip from '@/shared/components/AppTooltip.vue'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
 import { useConfirm } from '@/shared/composables/useConfirm'
@@ -186,32 +187,24 @@ function initials(name: string): string {
 
 <template>
   <div class="space-y-6">
-    <div class="flex flex-wrap items-end justify-between gap-4">
-      <div class="min-w-0">
-        <h2 class="text-[1.75rem] font-bold leading-tight text-brand-text">
-          {{ t('roles.title') }}
-        </h2>
-        <p class="mt-1.5 text-sm text-brand-text-secondary">
-          <span
-            v-if="meta"
-            class="inline-flex items-center rounded-full bg-brand-primary-soft px-2.5 py-0.5 text-xs font-semibold text-brand-primary-dark"
+    <AppPageHeader
+      :title="t('roles.title')"
+      :subtitle="meta ? undefined : t('roles.subtitle')"
+      :meta="meta ? t('roles.total', { count: meta.total }) : undefined"
+    >
+      <template #actions>
+        <PermissionGuard permission="roles.create">
+          <button
+            type="button"
+            class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white transition hover:bg-brand-primary sm:w-auto"
+            @click="openCreate"
           >
-            {{ t('roles.total', { count: meta.total }) }}
-          </span>
-          <span v-else>{{ t('roles.subtitle') }}</span>
-        </p>
-      </div>
-      <PermissionGuard permission="roles.create">
-        <button
-          type="button"
-          class="inline-flex h-11 items-center gap-2 rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white transition hover:bg-brand-primary"
-          @click="openCreate"
-        >
-          <Plus class="h-4 w-4" :stroke-width="2.25" />
-          <span>{{ t('roles.add') }}</span>
-        </button>
-      </PermissionGuard>
-    </div>
+            <Plus class="h-4 w-4" :stroke-width="2.25" />
+            <span>{{ t('roles.add') }}</span>
+          </button>
+        </PermissionGuard>
+      </template>
+    </AppPageHeader>
 
     <div
       class="flex flex-wrap items-center gap-3 rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)]"
@@ -253,201 +246,275 @@ function initials(name: string): string {
     >
       {{ t('roles.empty') }}
     </div>
-    <div
-      v-else
-      class="overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-[0_1px_2px_rgba(23,32,29,0.03)]"
-    >
-      <div class="overflow-x-auto">
-        <table class="min-w-full border-separate border-spacing-0 text-sm">
-          <thead>
-            <tr class="bg-[#F4F6F5]">
-              <th
-                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-start text-xs font-bold tracking-wide text-brand-text-muted"
+    <template v-else>
+      <div
+        class="hidden overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-[0_1px_2px_rgba(23,32,29,0.03)] md:block"
+      >
+        <div class="overflow-x-auto">
+          <table class="min-w-full border-separate border-spacing-0 text-sm">
+            <thead>
+              <tr class="bg-[#F4F6F5]">
+                <th
+                  class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-start text-xs font-bold tracking-wide text-brand-text-muted"
+                >
+                  {{ t('roles.columns.name') }}
+                </th>
+                <th
+                  class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
+                >
+                  {{ t('roles.columns.type') }}
+                </th>
+                <th
+                  class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
+                >
+                  {{ t('roles.columns.status') }}
+                </th>
+                <th
+                  class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
+                >
+                  {{ t('roles.columns.members') }}
+                </th>
+                <th
+                  class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
+                >
+                  {{ t('roles.columns.permissions') }}
+                </th>
+                <th
+                  class="w-40 whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
+                >
+                  {{ t('roles.columns.actions') }}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="(role, index) in roles"
+                :key="role.id"
+                class="group transition-colors duration-150"
+                :class="index % 2 === 1 ? 'bg-[#FAFBFA]' : 'bg-brand-surface'"
               >
-                {{ t('roles.columns.name') }}
-              </th>
-              <th
-                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
-              >
-                {{ t('roles.columns.type') }}
-              </th>
-              <th
-                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
-              >
-                {{ t('roles.columns.status') }}
-              </th>
-              <th
-                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
-              >
-                {{ t('roles.columns.members') }}
-              </th>
-              <th
-                class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
-              >
-                {{ t('roles.columns.permissions') }}
-              </th>
-              <th
-                class="w-40 whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text-muted"
-              >
-                {{ t('roles.columns.actions') }}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="(role, index) in roles"
-              :key="role.id"
-              class="group transition-colors duration-150"
-              :class="index % 2 === 1 ? 'bg-[#FAFBFA]' : 'bg-brand-surface'"
-            >
-              <td class="border-b border-brand-border/80 px-5 py-3.5 group-hover:bg-[#EEF2F0]">
-                <div class="flex min-w-0 items-center gap-3">
-                  <span
-                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-primary-soft text-xs font-bold text-brand-primary-dark"
-                  >
-                    {{ initials(role.name) }}
-                  </span>
-                  <span class="min-w-0">
-                    <span class="block truncate font-semibold text-brand-text">{{ role.name }}</span>
+                <td class="border-b border-brand-border/80 px-5 py-3.5 group-hover:bg-[#EEF2F0]">
+                  <div class="flex min-w-0 items-center gap-3">
                     <span
-                      v-if="role.description"
-                      class="mt-0.5 block truncate text-xs text-brand-text-muted"
+                      class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-primary-soft text-xs font-bold text-brand-primary-dark"
                     >
-                      {{ role.description }}
+                      {{ initials(role.name) }}
                     </span>
-                  </span>
-                </div>
-              </td>
-              <td class="border-b border-brand-border/80 px-5 py-3.5 text-center group-hover:bg-[#EEF2F0]">
-                <div class="flex justify-center">
-                  <span
-                    class="inline-flex items-center rounded-lg px-2 py-0.5 text-xs font-semibold ring-1"
-                    :class="
-                      role.is_system
-                        ? 'bg-brand-gold-soft text-[#8A6A2E] ring-brand-gold/35'
-                        : 'bg-neutral-100 text-neutral-700 ring-neutral-200/80'
-                    "
-                  >
-                    {{ role.is_system ? t('roles.system') : t('roles.custom') }}
-                  </span>
-                </div>
-              </td>
-              <td class="border-b border-brand-border/80 px-5 py-3.5 text-center group-hover:bg-[#EEF2F0]">
-                <div class="flex justify-center">
-                  <span
-                    class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
-                    :class="
-                      role.is_active
-                        ? 'bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200/70'
-                        : 'bg-neutral-100 text-neutral-600 ring-1 ring-neutral-200/80'
-                    "
-                  >
+                    <span class="min-w-0">
+                      <span class="block truncate font-semibold text-brand-text">{{ role.name }}</span>
+                      <span
+                        v-if="role.description"
+                        class="mt-0.5 block truncate text-xs text-brand-text-muted"
+                      >
+                        {{ role.description }}
+                      </span>
+                    </span>
+                  </div>
+                </td>
+                <td class="border-b border-brand-border/80 px-5 py-3.5 text-center group-hover:bg-[#EEF2F0]">
+                  <div class="flex justify-center">
                     <span
-                      class="h-1.5 w-1.5 rounded-full"
-                      :class="role.is_active ? 'bg-emerald-500' : 'bg-neutral-400'"
-                    />
-                    {{ role.is_active ? t('roles.active') : t('roles.inactive') }}
-                  </span>
-                </div>
-              </td>
-              <td
-                class="border-b border-brand-border/80 px-5 py-3.5 text-center text-brand-text-secondary group-hover:bg-[#EEF2F0]"
-              >
-                {{ role.users_count }}
-              </td>
-              <td
-                class="border-b border-brand-border/80 px-5 py-3.5 text-center text-brand-text-secondary group-hover:bg-[#EEF2F0]"
-              >
-                {{ role.permissions_count }}
-              </td>
-              <td class="border-b border-brand-border/80 px-5 py-3.5 text-center group-hover:bg-[#EEF2F0]">
-                <div class="inline-flex items-center justify-center gap-1">
-                  <PermissionGuard permission="roles.update">
-                    <AppTooltip :text="t('roles.actions.edit')">
-                      <button
-                        type="button"
+                      class="inline-flex items-center rounded-lg px-2 py-0.5 text-xs font-semibold ring-1"
+                      :class="
+                        role.is_system
+                          ? 'bg-brand-gold-soft text-[#8A6A2E] ring-brand-gold/35'
+                          : 'bg-neutral-100 text-neutral-700 ring-neutral-200/80'
+                      "
+                    >
+                      {{ role.is_system ? t('roles.system') : t('roles.custom') }}
+                    </span>
+                  </div>
+                </td>
+                <td class="border-b border-brand-border/80 px-5 py-3.5 text-center group-hover:bg-[#EEF2F0]">
+                  <div class="flex justify-center">
+                    <span
+                      class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
+                      :class="
+                        role.is_active
+                          ? 'bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200/70'
+                          : 'bg-neutral-100 text-neutral-600 ring-1 ring-neutral-200/80'
+                      "
+                    >
+                      <span
+                        class="h-1.5 w-1.5 rounded-full"
+                        :class="role.is_active ? 'bg-emerald-500' : 'bg-neutral-400'"
+                      />
+                      {{ role.is_active ? t('roles.active') : t('roles.inactive') }}
+                    </span>
+                  </div>
+                </td>
+                <td
+                  class="border-b border-brand-border/80 px-5 py-3.5 text-center text-brand-text-secondary group-hover:bg-[#EEF2F0]"
+                >
+                  {{ role.users_count }}
+                </td>
+                <td
+                  class="border-b border-brand-border/80 px-5 py-3.5 text-center text-brand-text-secondary group-hover:bg-[#EEF2F0]"
+                >
+                  {{ role.permissions_count }}
+                </td>
+                <td class="border-b border-brand-border/80 px-5 py-3.5 text-center group-hover:bg-[#EEF2F0]">
+                  <div class="inline-flex items-center justify-center gap-1">
+                    <PermissionGuard permission="roles.update">
+                      <AppTooltip :text="t('roles.actions.edit')">
+                        <button
+                          type="button"
+                          class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-brand-primary-dark transition hover:bg-brand-primary-soft"
+                          :aria-label="t('roles.actions.edit')"
+                          @click="openEdit(role)"
+                        >
+                          <Pencil class="h-4 w-4" :stroke-width="2" />
+                        </button>
+                      </AppTooltip>
+                    </PermissionGuard>
+
+                    <AppTooltip :text="t('roles.actions.permissions')">
+                      <RouterLink
+                        :to="`/app/roles/${role.id}/permissions`"
                         class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-brand-primary-dark transition hover:bg-brand-primary-soft"
-                        :aria-label="t('roles.actions.edit')"
-                        @click="openEdit(role)"
+                        :aria-label="t('roles.actions.permissions')"
                       >
-                        <Pencil class="h-4 w-4" :stroke-width="2" />
-                      </button>
+                        <KeyRound class="h-4 w-4" :stroke-width="2" />
+                      </RouterLink>
                     </AppTooltip>
-                  </PermissionGuard>
 
-                  <AppTooltip :text="t('roles.actions.permissions')">
-                    <RouterLink
-                      :to="`/app/roles/${role.id}/permissions`"
-                      class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-brand-primary-dark transition hover:bg-brand-primary-soft"
-                      :aria-label="t('roles.actions.permissions')"
-                    >
-                      <KeyRound class="h-4 w-4" :stroke-width="2" />
-                    </RouterLink>
-                  </AppTooltip>
-
-                  <PermissionGuard permission="roles.update">
-                    <AppTooltip
-                      :text="
-                        role.is_active ? t('roles.actions.deactivate') : t('roles.actions.activate')
-                      "
-                    >
-                      <button
-                        type="button"
-                        class="inline-flex h-9 w-9 items-center justify-center rounded-lg transition disabled:cursor-not-allowed disabled:opacity-40"
-                        :class="
-                          role.is_active
-                            ? 'text-amber-700 hover:bg-amber-50'
-                            : 'text-emerald-700 hover:bg-emerald-50'
+                    <PermissionGuard permission="roles.update">
+                      <AppTooltip
+                        :text="
+                          role.is_active ? t('roles.actions.deactivate') : t('roles.actions.activate')
                         "
-                        :disabled="role.code === 'tenant_owner'"
-                        :aria-label="
-                          role.is_active
-                            ? t('roles.actions.deactivate')
-                            : t('roles.actions.activate')
-                        "
-                        @click="toggleActive(role)"
                       >
-                        <PowerOff
-                          v-if="role.is_active"
-                          class="h-4 w-4"
-                          :stroke-width="2"
-                        />
-                        <Power v-else class="h-4 w-4" :stroke-width="2" />
-                      </button>
-                    </AppTooltip>
-                  </PermissionGuard>
+                        <button
+                          type="button"
+                          class="inline-flex h-9 w-9 items-center justify-center rounded-lg transition disabled:cursor-not-allowed disabled:opacity-40"
+                          :class="
+                            role.is_active
+                              ? 'text-amber-700 hover:bg-amber-50'
+                              : 'text-emerald-700 hover:bg-emerald-50'
+                          "
+                          :disabled="role.code === 'tenant_owner'"
+                          :aria-label="
+                            role.is_active
+                              ? t('roles.actions.deactivate')
+                              : t('roles.actions.activate')
+                          "
+                          @click="toggleActive(role)"
+                        >
+                          <PowerOff
+                            v-if="role.is_active"
+                            class="h-4 w-4"
+                            :stroke-width="2"
+                          />
+                          <Power v-else class="h-4 w-4" :stroke-width="2" />
+                        </button>
+                      </AppTooltip>
+                    </PermissionGuard>
 
-                  <PermissionGuard permission="roles.delete">
-                    <AppTooltip
-                      :text="
-                        role.is_system ? t('roles.systemProtected') : t('roles.actions.delete')
-                      "
-                    >
-                      <button
-                        type="button"
-                        class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40"
-                        :disabled="role.is_system"
-                        :aria-label="t('roles.actions.delete')"
-                        @click="removeRole(role)"
+                    <PermissionGuard permission="roles.delete">
+                      <AppTooltip
+                        :text="
+                          role.is_system ? t('roles.systemProtected') : t('roles.actions.delete')
+                        "
                       >
-                        <Trash2 class="h-4 w-4" :stroke-width="2" />
-                      </button>
-                    </AppTooltip>
-                  </PermissionGuard>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                        <button
+                          type="button"
+                          class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40"
+                          :disabled="role.is_system"
+                          :aria-label="t('roles.actions.delete')"
+                          @click="removeRole(role)"
+                        >
+                          <Trash2 class="h-4 w-4" :stroke-width="2" />
+                        </button>
+                      </AppTooltip>
+                    </PermissionGuard>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="space-y-3 md:hidden">
+        <article
+          v-for="role in roles"
+          :key="role.id"
+          class="rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)]"
+        >
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex min-w-0 items-center gap-3">
+              <span
+                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-primary-soft text-xs font-bold text-brand-primary-dark"
+              >
+                {{ initials(role.name) }}
+              </span>
+              <div class="min-w-0">
+                <h3 class="truncate font-bold text-brand-text">{{ role.name }}</h3>
+                <p v-if="role.description" class="mt-0.5 truncate text-xs text-brand-text-muted">
+                  {{ role.description }}
+                </p>
+              </div>
+            </div>
+            <span
+              class="inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
+              :class="
+                role.is_active
+                  ? 'bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200/70'
+                  : 'bg-neutral-100 text-neutral-600 ring-1 ring-neutral-200/80'
+              "
+            >
+              <span
+                class="h-1.5 w-1.5 rounded-full"
+                :class="role.is_active ? 'bg-emerald-500' : 'bg-neutral-400'"
+              />
+              {{ role.is_active ? t('roles.active') : t('roles.inactive') }}
+            </span>
+          </div>
+          <dl class="mt-3 grid grid-cols-3 gap-2 text-xs text-brand-text-secondary">
+            <div>
+              <dt>{{ t('roles.columns.type') }}</dt>
+              <dd class="font-medium text-brand-text">
+                {{ role.is_system ? t('roles.system') : t('roles.custom') }}
+              </dd>
+            </div>
+            <div>
+              <dt>{{ t('roles.columns.members') }}</dt>
+              <dd class="font-medium text-brand-text">{{ role.users_count }}</dd>
+            </div>
+            <div>
+              <dt>{{ t('roles.columns.permissions') }}</dt>
+              <dd class="font-medium text-brand-text">{{ role.permissions_count }}</dd>
+            </div>
+          </dl>
+          <div class="mt-3 flex flex-wrap items-center justify-end gap-1 border-t border-brand-border pt-3">
+            <PermissionGuard permission="roles.update">
+              <button
+                type="button"
+                class="inline-flex h-11 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-brand-primary-dark transition hover:bg-brand-primary-soft"
+                @click="openEdit(role)"
+              >
+                <Pencil class="h-4 w-4" :stroke-width="2" />
+                {{ t('roles.actions.edit') }}
+              </button>
+            </PermissionGuard>
+            <RouterLink
+              :to="`/app/roles/${role.id}/permissions`"
+              class="inline-flex h-11 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-brand-primary-dark transition hover:bg-brand-primary-soft"
+            >
+              <KeyRound class="h-4 w-4" :stroke-width="2" />
+              {{ t('roles.actions.permissions') }}
+            </RouterLink>
+          </div>
+        </article>
       </div>
 
       <div
         v-if="meta && meta.last_page > 1"
-        class="flex items-center justify-between gap-3 border-t border-brand-border bg-[#F7F8F6] px-5 py-3 text-sm"
+        class="flex items-center justify-between gap-3"
       >
         <button
           type="button"
-          class="inline-flex h-9 items-center gap-1 rounded-lg border border-brand-border bg-brand-surface px-3 font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
+          class="inline-flex h-11 items-center gap-1 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
           :disabled="filters.page <= 1 || isFetching"
           @click="filters.page -= 1"
         >
@@ -459,7 +526,7 @@ function initials(name: string): string {
         </span>
         <button
           type="button"
-          class="inline-flex h-9 items-center gap-1 rounded-lg border border-brand-border bg-brand-surface px-3 font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
+          class="inline-flex h-11 items-center gap-1 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
           :disabled="filters.page >= meta.last_page || isFetching"
           @click="filters.page += 1"
         >
@@ -467,7 +534,7 @@ function initials(name: string): string {
           <ChevronLeft class="h-4 w-4" :stroke-width="2" />
         </button>
       </div>
-    </div>
+    </template>
 
     <RoleFormDrawer
       :open="drawerOpen"

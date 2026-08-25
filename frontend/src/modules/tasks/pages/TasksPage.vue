@@ -5,6 +5,8 @@ import { RouterLink, useRouter } from 'vue-router'
 import { ChevronLeft, ChevronRight, Eye, Pencil, Plus, Search } from 'lucide-vue-next'
 import { listEmployees } from '@/modules/employees/api/employeesApi'
 import { useOrganizationUnitsFlatQuery } from '@/modules/organization/queries/useOrganizationUnitsQuery'
+import AppMobileFilters from '@/shared/components/AppMobileFilters.vue'
+import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 import AppTooltip from '@/shared/components/AppTooltip.vue'
@@ -55,6 +57,24 @@ const orgOptions = computed<AppSelectOption[]>(() => [{ value: '', label: t('tas
 const emptyEmployeeFilter = computed<AppSelectOption>(() => ({ value: '', label: t('tasks.noEmployee') }))
 const statusOptions = computed<AppSelectOption[]>(() => [{ value: 'all', label: t('tasks.filters.allStatuses') }, ...TASK_STATUSES.map((x) => ({ value: x, label: t(`tasks.status.${x}`) }))])
 const priorityOptions = computed<AppSelectOption[]>(() => [{ value: 'all', label: t('tasks.filters.allPriorities') }, ...TASK_PRIORITIES.map((x) => ({ value: x, label: t(`tasks.priority.${x}`) }))])
+
+const activeFilterCount = computed(() => {
+  let count = 0
+  if (filters.status !== 'all') count += 1
+  if (filters.priority !== 'all') count += 1
+  if (filters.assigned_to_employee_id !== '') count += 1
+  if (filters.organization_unit_id !== '') count += 1
+  if (filters.overdue) count += 1
+  return count
+})
+
+function resetFilters(): void {
+  filters.status = 'all'
+  filters.priority = 'all'
+  filters.assigned_to_employee_id = ''
+  filters.organization_unit_id = ''
+  filters.overdue = false
+}
 
 const create = useCreateTaskMutation()
 const update = useUpdateTaskMutation()
@@ -131,33 +151,96 @@ async function save(): Promise<void> {
 </script>
 <template>
   <div class="space-y-6">
-    <div class="flex flex-wrap items-end justify-between gap-4">
-      <div class="min-w-0"><h2 class="text-[1.75rem] font-bold leading-tight text-brand-text">{{ t('tasks.title') }}</h2><p class="mt-1.5 text-sm text-brand-text-secondary">{{ t('tasks.subtitle') }}</p><p v-if="meta" class="mt-2"><span class="inline-flex items-center rounded-full bg-brand-primary-soft px-2.5 py-0.5 text-xs font-semibold text-brand-primary-dark">{{ t('tasks.total', { count: meta.total }) }}</span></p></div>
-      <PermissionGuard permission="tasks.create"><button class="inline-flex h-11 items-center gap-2 rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white transition hover:bg-brand-primary" @click="openCreate"><Plus class="h-4 w-4" :stroke-width="2.25" /> {{ t('tasks.add') }}</button></PermissionGuard>
+    <AppPageHeader
+      :title="t('tasks.title')"
+      :subtitle="t('tasks.subtitle')"
+      :meta="meta ? t('tasks.total', { count: meta.total }) : undefined"
+    >
+      <template #actions>
+        <PermissionGuard permission="tasks.create">
+          <button
+            type="button"
+            class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white transition hover:bg-brand-primary sm:w-auto"
+            @click="openCreate"
+          >
+            <Plus class="h-4 w-4" :stroke-width="2.25" />
+            {{ t('tasks.add') }}
+          </button>
+        </PermissionGuard>
+      </template>
+    </AppPageHeader>
+
+    <div class="flex w-full gap-2 rounded-xl border border-brand-border bg-brand-surface p-1 sm:w-fit">
+      <button
+        type="button"
+        class="min-h-11 flex-1 rounded-lg px-4 py-2 text-sm font-semibold transition sm:flex-none"
+        :class="segment === 'all' ? 'bg-brand-primary-dark text-white' : 'text-brand-text-secondary'"
+        @click="segment = 'all'"
+      >
+        {{ t('tasks.segments.all') }}
+      </button>
+      <button
+        type="button"
+        class="min-h-11 flex-1 rounded-lg px-4 py-2 text-sm font-semibold transition sm:flex-none"
+        :class="segment === 'mine' ? 'bg-brand-primary-dark text-white' : 'text-brand-text-secondary'"
+        @click="segment = 'mine'"
+      >
+        {{ t('tasks.segments.mine') }}
+      </button>
     </div>
 
-    <div class="flex gap-2 rounded-xl border border-brand-border bg-brand-surface p-1 w-fit">
-      <button class="rounded-lg px-4 py-2 text-sm font-semibold transition" :class="segment === 'all' ? 'bg-brand-primary-dark text-white' : 'text-brand-text-secondary'" @click="segment = 'all'">{{ t('tasks.segments.all') }}</button>
-      <button class="rounded-lg px-4 py-2 text-sm font-semibold transition" :class="segment === 'mine' ? 'bg-brand-primary-dark text-white' : 'text-brand-text-secondary'" @click="segment = 'mine'">{{ t('tasks.segments.mine') }}</button>
-    </div>
-
-    <div class="flex flex-wrap items-center gap-3 rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)]">
-      <div class="relative min-w-48 flex-1"><Search class="pointer-events-none absolute inset-s-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text-muted" :stroke-width="1.75" /><input v-model="filters.search" type="search" class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface pe-3 ps-10 text-sm text-brand-text outline-none transition placeholder:text-brand-text-muted focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15" :placeholder="t('tasks.searchPlaceholder')" /></div>
-      <AppSelect v-model="filters.status" :options="statusOptions" />
-      <AppSelect v-model="filters.priority" :options="priorityOptions" />
-      <AppRemoteSelect
-        :model-value="filters.assigned_to_employee_id"
-        query-key="employees-active"
-        :fetcher="fetchActiveEmployees"
-        :map-option="employeeSelectOption"
-        :empty-option="emptyEmployeeFilter"
-        @update:model-value="filters.assigned_to_employee_id = toSelectId($event)"
-      />
-      <AppSelect v-model="filters.organization_unit_id" :options="orgOptions" searchable />
-      <label class="flex h-11 items-center gap-2 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text">
-        <input v-model="filters.overdue" type="checkbox" class="h-4 w-4" />{{ t('tasks.filters.overdue') }}
-      </label>
-    </div>
+    <AppMobileFilters
+      v-model:search="filters.search"
+      :search-placeholder="t('tasks.searchPlaceholder')"
+      :active-count="activeFilterCount"
+      @reset="resetFilters"
+    >
+      <template #desktop>
+        <div class="flex flex-wrap items-center gap-3 rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)]">
+          <div class="relative min-w-48 flex-1">
+            <Search class="pointer-events-none absolute inset-s-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text-muted" :stroke-width="1.75" />
+            <input
+              v-model="filters.search"
+              type="search"
+              class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface pe-3 ps-10 text-sm text-brand-text outline-none transition placeholder:text-brand-text-muted focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+              :placeholder="t('tasks.searchPlaceholder')"
+            />
+          </div>
+          <AppSelect v-model="filters.status" :options="statusOptions" />
+          <AppSelect v-model="filters.priority" :options="priorityOptions" />
+          <AppRemoteSelect
+            :model-value="filters.assigned_to_employee_id"
+            query-key="employees-active"
+            :fetcher="fetchActiveEmployees"
+            :map-option="employeeSelectOption"
+            :empty-option="emptyEmployeeFilter"
+            @update:model-value="filters.assigned_to_employee_id = toSelectId($event)"
+          />
+          <AppSelect v-model="filters.organization_unit_id" :options="orgOptions" searchable />
+          <label class="flex h-11 items-center gap-2 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text">
+            <input v-model="filters.overdue" type="checkbox" class="h-4 w-4" />{{ t('tasks.filters.overdue') }}
+          </label>
+        </div>
+      </template>
+      <template #filters>
+        <div class="space-y-3">
+          <AppSelect v-model="filters.status" :options="statusOptions" />
+          <AppSelect v-model="filters.priority" :options="priorityOptions" />
+          <AppRemoteSelect
+            :model-value="filters.assigned_to_employee_id"
+            query-key="employees-active"
+            :fetcher="fetchActiveEmployees"
+            :map-option="employeeSelectOption"
+            :empty-option="emptyEmployeeFilter"
+            @update:model-value="filters.assigned_to_employee_id = toSelectId($event)"
+          />
+          <AppSelect v-model="filters.organization_unit_id" :options="orgOptions" searchable />
+          <label class="flex h-11 w-full items-center gap-2 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text">
+            <input v-model="filters.overdue" type="checkbox" class="h-4 w-4" />{{ t('tasks.filters.overdue') }}
+          </label>
+        </div>
+      </template>
+    </AppMobileFilters>
 
     <div v-if="listState === 'loading'" class="rounded-2xl border border-brand-border bg-brand-surface p-10 text-center text-sm text-brand-text-muted">{{ t('tasks.loading') }}</div>
     <div v-else-if="listState === 'error'" class="rounded-2xl border border-red-200 bg-red-50 p-10 text-center"><p class="text-sm text-red-700">{{ t('tasks.errors.load') }}</p><button class="mt-3 text-sm font-semibold text-brand-primary-dark underline" @click="() => refetch()">{{ t('tasks.retry') }}</button></div>
@@ -204,11 +287,10 @@ async function save(): Promise<void> {
             </tr>
           </tbody>
         </table></div>
-        <div v-if="meta && meta.last_page > 1" class="flex items-center justify-between gap-3 border-t border-brand-border bg-[#F7F8F6] px-5 py-3 text-sm"><button class="inline-flex h-9 items-center gap-1 rounded-lg border border-brand-border bg-brand-surface px-3 font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40" :disabled="filters.page <= 1 || isFetching" @click="filters.page -= 1"><ChevronRight class="h-4 w-4" />{{ t('tasks.prev') }}</button><span class="text-xs font-semibold text-brand-text">{{ filters.page }} / {{ meta.last_page }}</span><button class="inline-flex h-9 items-center gap-1 rounded-lg border border-brand-border bg-brand-surface px-3 font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40" :disabled="filters.page >= meta.last_page || isFetching" @click="filters.page += 1">{{ t('tasks.next') }}<ChevronLeft class="h-4 w-4" /></button></div>
       </div>
 
       <div class="space-y-3 md:hidden">
-        <RouterLink v-for="task in tasks" :key="task.id" :to="`/app/tasks/${task.id}`" class="block rounded-2xl border border-brand-border bg-brand-surface p-4">
+        <RouterLink v-for="task in tasks" :key="task.id" :to="`/app/tasks/${task.id}`" class="block rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)] transition active:bg-brand-bg">
           <div class="flex flex-wrap items-center justify-between gap-2">
             <span class="font-mono text-sm font-bold text-brand-text">{{ task.task_number }}</span>
             <div class="flex flex-col items-end gap-1">
@@ -225,12 +307,50 @@ async function save(): Promise<void> {
             </div>
           </div>
           <p class="mt-2 font-semibold text-brand-text">{{ task.title }}</p>
-          <p class="mt-1 text-sm text-brand-text">{{ task.assigned_to_employee?.full_name ?? '—' }} · {{ task.due_date ?? '—' }}</p>
-          <div class="mt-2 flex flex-wrap items-center gap-2">
-            <span class="rounded-full px-2 py-1 text-xs font-bold text-brand-text" :class="taskPriorityBadgeClass(task.priority)">{{ t(`tasks.priority.${task.priority}`) }}</span>
-            <span class="text-xs font-semibold text-brand-text">{{ task.progress_percent }}%</span>
-          </div>
+          <dl class="mt-3 grid grid-cols-2 gap-2 text-xs text-brand-text-secondary">
+            <div>
+              <dt>{{ t('tasks.columns.assignee') }}</dt>
+              <dd class="font-medium text-brand-text">{{ task.assigned_to_employee?.full_name ?? '—' }}</dd>
+            </div>
+            <div>
+              <dt>{{ t('tasks.columns.dueDate') }}</dt>
+              <dd class="font-medium text-brand-text" dir="ltr">{{ task.due_date ?? '—' }}</dd>
+            </div>
+            <div>
+              <dt>{{ t('tasks.columns.priority') }}</dt>
+              <dd>
+                <span class="rounded-full px-2 py-0.5 text-[11px] font-bold text-brand-text" :class="taskPriorityBadgeClass(task.priority)">{{ t(`tasks.priority.${task.priority}`) }}</span>
+              </dd>
+            </div>
+            <div>
+              <dt>{{ t('tasks.columns.progress') }}</dt>
+              <dd class="font-medium text-brand-text">{{ task.progress_percent }}%</dd>
+            </div>
+          </dl>
         </RouterLink>
+      </div>
+
+      <div
+        v-if="meta && meta.last_page > 1"
+        class="flex items-center justify-between gap-3"
+      >
+        <button
+          type="button"
+          class="inline-flex h-11 items-center gap-1 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
+          :disabled="filters.page <= 1 || isFetching"
+          @click="filters.page -= 1"
+        >
+          <ChevronRight class="h-4 w-4" />{{ t('tasks.prev') }}
+        </button>
+        <span class="text-xs font-semibold text-brand-text">{{ filters.page }} / {{ meta.last_page }}</span>
+        <button
+          type="button"
+          class="inline-flex h-11 items-center gap-1 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text transition hover:bg-brand-bg disabled:cursor-not-allowed disabled:opacity-40"
+          :disabled="filters.page >= meta.last_page || isFetching"
+          @click="filters.page += 1"
+        >
+          {{ t('tasks.next') }}<ChevronLeft class="h-4 w-4" />
+        </button>
       </div>
     </template>
 
