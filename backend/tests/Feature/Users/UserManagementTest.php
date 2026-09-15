@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Modules\Authorization\Models\Permission;
 use App\Modules\Authorization\Models\Role;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Notification;
 use Laravel\Sanctum\Sanctum;
 
 test('owner can list same-tenant users and excludes platform users', function (): void {
@@ -84,7 +85,7 @@ test('owner can create user with invite path', function (): void {
 test('owner create with invite reports sent when smtp mailer delivers', function (): void {
     Event::fake([AuthorizationSecurityEvent::class]);
     config(['mail.default' => 'smtp']);
-    \Illuminate\Support\Facades\Notification::fake();
+    Notification::fake();
 
     actingAsTenantOwner();
 
