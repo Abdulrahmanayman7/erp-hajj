@@ -249,7 +249,7 @@ async function save(): Promise<void> {
       <p v-else>{{ t('tasks.empty') }}</p>
     </div>
     <template v-else>
-      <div class="hidden overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-[0_1px_2px_rgba(23,32,29,0.03)] outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25 md:block" tabindex="0" role="grid" :aria-rowcount="tasks.length" :aria-label="t('tasks.title')" @keydown="onTableKeydown">
+      <div class="hidden overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-[0_1px_2px_rgba(23,32,29,0.03)] outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25 lg:block" tabindex="0" role="grid" :aria-rowcount="tasks.length" :aria-label="t('tasks.title')" @keydown="onTableKeydown">
         <div class="overflow-x-auto"><table class="min-w-full border-separate border-spacing-0 text-sm">
           <thead><tr class="bg-[#F4F6F5]"><th v-for="(key, columnIndex) in ['number','title','source','assignee','dueDate','priority','progress','status','actions']" :key="key" class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-bold tracking-wide text-brand-text" :class="columnIndex === 0 ? 'border-s-[3px] border-s-transparent' : ''">{{ t(`tasks.columns.${key}`) }}</th></tr></thead>
           <tbody>
@@ -289,7 +289,7 @@ async function save(): Promise<void> {
         </table></div>
       </div>
 
-      <div class="space-y-3 md:hidden">
+      <div class="space-y-3 lg:hidden">
         <RouterLink v-for="task in tasks" :key="task.id" :to="`/app/tasks/${task.id}`" class="block rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)] transition active:bg-brand-bg">
           <div class="flex flex-wrap items-center justify-between gap-2">
             <span class="font-mono text-sm font-bold text-brand-text">{{ task.task_number }}</span>

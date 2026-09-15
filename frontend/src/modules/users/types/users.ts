@@ -18,6 +18,8 @@ export interface TenantUser {
   created_at: string | null
   updated_at: string | null
   password_provisioned?: boolean
+  invite_sent?: boolean
+  invite_code?: 'INVITE_MAILER_UNAVAILABLE' | 'INVITE_SEND_FAILED' | null
 }
 
 export interface UsersListMeta {

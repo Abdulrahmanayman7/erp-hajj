@@ -2,13 +2,23 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRoute } from 'vue-router'
-import { ChevronDown, ChevronsLeft, ChevronsRight, LogOut, Maximize2, Minimize2 } from 'lucide-vue-next'
+import {
+  ArrowRight,
+  ChevronDown,
+  ChevronsLeft,
+  ChevronsRight,
+  LogOut,
+  Maximize2,
+  Minimize2,
+  RefreshCw,
+} from 'lucide-vue-next'
 
 import { useLogoutMutation } from '@/modules/auth/mutations/useLogoutMutation'
 import { useCurrentUserQuery } from '@/modules/auth/queries/useCurrentUserQuery'
 import NotificationBell from '@/modules/notifications/components/NotificationBell.vue'
 import AppTooltip from '@/shared/components/AppTooltip.vue'
 import UserAvatar from '@/shared/components/UserAvatar.vue'
+import { useAppChromeNavigation } from '@/shared/composables/useAppChromeNavigation'
 import { useFullscreen } from '@/shared/composables/useFullscreen'
 import { useSidebarCollapse } from '@/shared/composables/useSidebarCollapse'
 
@@ -18,6 +28,14 @@ const { data: user } = useCurrentUserQuery()
 const { mutate: logout, isPending: isLoggingOut } = useLogoutMutation()
 const { collapsed, toggleCollapsed } = useSidebarCollapse()
 const { isFullscreen, toggleFullscreen } = useFullscreen()
+const {
+  goBack,
+  hardRefreshProgress,
+  isHoldingRefresh,
+  onRefreshPointerDown,
+  onRefreshPointerUp,
+  onRefreshPointerCancel,
+} = useAppChromeNavigation()
 
 const menuOpen = ref(false)
 const menuRoot = ref<HTMLElement | null>(null)
@@ -29,6 +47,11 @@ const sidebarToggleLabel = computed(() =>
 )
 const fullscreenToggleLabel = computed(() =>
   isFullscreen.value ? t('shell.exitFullscreen') : t('shell.enterFullscreen'),
+)
+const refreshLabel = computed(() =>
+  isHoldingRefresh.value
+    ? t('shell.hardRefreshProgress', { progress: hardRefreshProgress.value })
+    : t('shell.refresh'),
 )
 
 const pageTitle = computed(() => {
@@ -118,6 +141,46 @@ onUnmounted(() => {
     style="padding-inline-start: max(12px, env(safe-area-inset-left, 0px)); padding-inline-end: max(12px, env(safe-area-inset-right, 0px)); padding-top: env(safe-area-inset-top, 0px)"
   >
     <div class="flex min-w-0 items-center gap-2 md:gap-3">
+      <AppTooltip :text="t('shell.goBack')" side="bottom">
+        <button
+          type="button"
+          class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-brand-text-secondary transition duration-200 hover:bg-brand-bg hover:text-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25 active:scale-[0.96]"
+          :aria-label="t('shell.goBack')"
+          @click="goBack"
+        >
+          <ArrowRight class="h-5 w-5" :stroke-width="2.25" aria-hidden="true" />
+        </button>
+      </AppTooltip>
+
+      <AppTooltip :text="`${t('shell.refresh')} — ${t('shell.hardRefreshHint')}`" side="bottom">
+        <button
+          type="button"
+          class="relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-brand-text-secondary transition duration-200 hover:bg-brand-bg hover:text-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25 active:scale-[0.96] select-none"
+          :aria-label="refreshLabel"
+          :aria-valuemin="0"
+          :aria-valuemax="100"
+          :aria-valuenow="hardRefreshProgress"
+          :aria-busy="isHoldingRefresh"
+          @pointerdown.prevent="onRefreshPointerDown"
+          @pointerup="onRefreshPointerUp"
+          @pointerleave="onRefreshPointerCancel"
+          @pointercancel="onRefreshPointerCancel"
+        >
+          <span
+            v-if="isHoldingRefresh"
+            class="absolute inset-1 rounded-[0.65rem] bg-brand-primary/10"
+            :style="{ opacity: Math.max(0.2, hardRefreshProgress / 100) }"
+            aria-hidden="true"
+          />
+          <RefreshCw
+            class="relative h-5 w-5"
+            :class="{ 'animate-spin': isHoldingRefresh }"
+            :stroke-width="2.25"
+            aria-hidden="true"
+          />
+        </button>
+      </AppTooltip>
+
       <AppTooltip :text="sidebarToggleLabel" side="bottom">
         <button
           type="button"

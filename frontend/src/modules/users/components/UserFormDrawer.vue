@@ -24,6 +24,7 @@ const props = defineProps<{
   formError: string
   submitting: boolean
   canAssignRoles: boolean
+  forceManualPassword?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -263,15 +264,28 @@ onUnmounted(() => {
                   {{ t('users.passwordSection') }}
                 </h4>
 
+                <p
+                  v-if="forceManualPassword"
+                  class="rounded-[11px] border border-amber-200 bg-amber-50 px-3.5 py-3 text-sm text-amber-900"
+                  role="status"
+                >
+                  {{ t('users.manualPasswordForcedHint') }}
+                </p>
+
                 <label
                   class="flex cursor-pointer items-start gap-4 rounded-[11px] border border-brand-border bg-[#F7F8F6] px-3.5 py-3.5 transition duration-150 hover:border-brand-primary/20"
+                  :class="{ 'opacity-60': forceManualPassword }"
                 >
                   <span class="min-w-0 flex-1 text-start">
                     <span class="block text-sm font-semibold text-brand-text">
                       {{ t('users.fields.sendInvite') }}
                     </span>
                     <span class="mt-1 block text-[12px] leading-relaxed text-brand-text-secondary">
-                      {{ t('users.sendInviteHint') }}
+                      {{
+                        forceManualPassword
+                          ? t('users.inviteMailerUnavailableHint')
+                          : t('users.sendInviteHint')
+                      }}
                     </span>
                   </span>
 
@@ -281,7 +295,7 @@ onUnmounted(() => {
                       type="checkbox"
                       role="switch"
                       class="peer sr-only"
-                      :disabled="submitting"
+                      :disabled="submitting || forceManualPassword"
                       :aria-checked="form.send_invite"
                     />
                     <span

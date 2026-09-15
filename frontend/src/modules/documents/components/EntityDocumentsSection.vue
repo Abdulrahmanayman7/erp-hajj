@@ -224,7 +224,7 @@ async function onDelete(doc: Document): Promise<void> {
         {{ t('documents.entitySection.empty') }}
       </p>
       <template v-else>
-        <div class="mt-4 hidden overflow-x-auto rounded-xl border border-brand-border md:block">
+        <div class="mt-4 hidden overflow-x-auto rounded-xl border border-brand-border lg:block">
           <table class="min-w-full text-sm">
             <thead>
               <tr class="bg-brand-bg">
@@ -300,7 +300,7 @@ async function onDelete(doc: Document): Promise<void> {
           </table>
         </div>
 
-        <div class="mt-4 space-y-3 md:hidden">
+        <div class="mt-4 space-y-3 lg:hidden">
           <div
             v-for="doc in documents"
             :key="doc.id"

@@ -499,7 +499,7 @@ async function save(): Promise<void> {
     <template v-else>
       <div
         ref="tableRoot"
-        class="hidden overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-[0_1px_2px_rgba(23,32,29,0.03)] outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25 md:block"
+        class="hidden overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-[0_1px_2px_rgba(23,32,29,0.03)] outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25 lg:block"
         tabindex="0"
         role="grid"
         :aria-rowcount="decisions.length"
@@ -670,7 +670,7 @@ async function save(): Promise<void> {
       </div>
       </div>
 
-      <div class="space-y-3 md:hidden">
+      <div class="space-y-3 lg:hidden">
         <RouterLink
           v-for="decision in decisions"
           :key="decision.id"

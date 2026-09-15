@@ -73,9 +73,48 @@ test('owner can create user with invite path', function (): void {
         ->assertCreated()
         ->assertJsonPath('data.email', 'new@example.com')
         ->assertJsonPath('data.status', 'active')
-        ->assertJsonPath('data.password_provisioned', false);
+        ->assertJsonPath('data.password_provisioned', false)
+        // Default test mailer is log — invite is not delivered to a real inbox.
+        ->assertJsonPath('data.invite_sent', false)
+        ->assertJsonPath('data.invite_code', 'INVITE_MAILER_UNAVAILABLE');
 
     Event::assertDispatched(AuthorizationSecurityEvent::class, fn (AuthorizationSecurityEvent $e): bool => $e->name === AuthorizationSecurityEvent::USER_CREATED);
+});
+
+test('owner create with invite reports sent when smtp mailer delivers', function (): void {
+    Event::fake([AuthorizationSecurityEvent::class]);
+    config(['mail.default' => 'smtp']);
+    \Illuminate\Support\Facades\Notification::fake();
+
+    actingAsTenantOwner();
+
+    spaPostJson('/api/v1/users', [
+        'name' => 'Invited User',
+        'email' => 'invited@example.com',
+        'send_invite' => true,
+    ])
+        ->assertCreated()
+        ->assertJsonPath('data.invite_sent', true)
+        ->assertJsonPath('data.invite_code', null)
+        ->assertJsonPath('data.password_provisioned', false);
+});
+
+test('owner can create user with manual temporary password', function (): void {
+    Event::fake([AuthorizationSecurityEvent::class]);
+    actingAsTenantOwner();
+
+    spaPostJson('/api/v1/users', [
+        'name' => 'Manual User',
+        'email' => 'manual@example.com',
+        'send_invite' => false,
+        'temporary_password' => 'SecretPass1!',
+        'temporary_password_confirmation' => 'SecretPass1!',
+    ])
+        ->assertCreated()
+        ->assertJsonPath('data.password_provisioned', true)
+        ->assertJsonPath('data.invite_sent', false)
+        ->assertJsonPath('data.invite_code', null)
+        ->assertJsonMissing(['temporary_password' => 'SecretPass1!']);
 });
 
 test('duplicate global email returns USER_EMAIL_TAKEN', function (): void {

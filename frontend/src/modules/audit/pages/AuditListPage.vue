@@ -276,7 +276,7 @@ function formatTime(iso: string): string {
 
     <template v-else>
       <div
-        class="hidden overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-[0_1px_2px_rgba(23,32,29,0.03)] md:block"
+        class="hidden overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-[0_1px_2px_rgba(23,32,29,0.03)] lg:block"
       >
         <table class="min-w-full text-sm">
           <thead class="bg-[#F4F6F5] text-brand-text-muted">
@@ -311,7 +311,7 @@ function formatTime(iso: string): string {
         </table>
       </div>
 
-      <div class="space-y-3 md:hidden">
+      <div class="space-y-3 lg:hidden">
         <button
           v-for="row in rows"
           :key="row.id"

@@ -2,7 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
-import { ChevronDown, LogOut } from 'lucide-vue-next'
+import { ChevronDown, ChevronsLeft, ChevronsRight, LogOut } from 'lucide-vue-next'
 
 import rafeeaLogo from '@/assets/brand/rafeea-logo.png'
 import { useLogoutMutation } from '@/modules/auth/mutations/useLogoutMutation'
@@ -20,8 +20,12 @@ const GROUPS_KEY = 'erp-hajj.sidebar.groups'
 const { t } = useI18n()
 const { data: user } = useCurrentUserQuery()
 const { mutate: logout, isPending: isLoggingOut } = useLogoutMutation()
-const { collapsed } = useSidebarCollapse()
+const { collapsed, toggleCollapsed } = useSidebarCollapse()
 const { navGroups, isItemActive } = useAppNavigation()
+
+const sidebarToggleLabel = computed(() =>
+  collapsed.value ? t('shell.expandSidebar') : t('shell.collapseSidebar'),
+)
 
 const openGroups = ref<Record<string, boolean>>({
   home: true,
@@ -230,6 +234,29 @@ onMounted(() => {
         </div>
       </div>
     </aside>
+
+    <!-- Persistent tablet+ edge handle: stays visible when expanded or collapsed -->
+    <button
+      type="button"
+      class="sidebar-edge-toggle absolute top-24 z-30 hidden h-10 w-10 items-center justify-center rounded-full border border-brand-border bg-brand-surface text-brand-primary shadow-[0_8px_24px_-12px_rgba(23,32,29,0.45)] transition hover:bg-brand-bg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/30 active:scale-[0.96] md:inline-flex"
+      :aria-label="sidebarToggleLabel"
+      :aria-expanded="!collapsed"
+      aria-controls="app-sidebar"
+      @click="toggleCollapsed"
+    >
+      <ChevronsRight
+        v-if="!collapsed"
+        class="h-5 w-5"
+        :stroke-width="2.25"
+        aria-hidden="true"
+      />
+      <ChevronsLeft
+        v-else
+        class="h-5 w-5"
+        :stroke-width="2.25"
+        aria-hidden="true"
+      />
+    </button>
   </div>
 </template>
 
@@ -240,6 +267,13 @@ onMounted(() => {
   min-height: 0;
   height: 100%;
   transition: width 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: visible;
+}
+
+/* Pin to the content-facing edge (physical left when sidebar is on the right in RTL). */
+.sidebar-edge-toggle {
+  left: 0;
+  transform: translate(-50%, 0);
 }
 
 .dashboard-sidebar {

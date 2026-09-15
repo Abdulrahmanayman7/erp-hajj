@@ -176,7 +176,7 @@ User remains an **auth account** (Sprint 005 fields). Sprint 006 manages: **name
 
 **Primary:** On create, do **not** require admin-chosen password. System creates the user (`active`) and sends a **set-password invitation** by reusing the Authentication password-reset broker (frontend `/reset-password` URL). Admin never sees a password.
 
-**Fallback (local / mailer `log|array` / send failure):** Create payload may include `temporary_password` (+ confirmation) meeting Auth password policy; stored hashed; **never** written to audit/logs; response may include a one-time `password_provisioned: true` flag **without** echoing the password. User may still use forgot-password.
+**Fallback (local / mailer `log|array` / send failure):** Create payload may include `temporary_password` (+ confirmation) meeting Auth password policy; stored hashed; **never** written to audit/logs; response may include a one-time `password_provisioned: true` flag **without** echoing the password. When an invite was requested but not delivered, the API also returns `invite_sent: false` with `invite_code` (`INVITE_MAILER_UNAVAILABLE` | `INVITE_SEND_FAILED`) so the UI can force the manual password path. User may still use forgot-password.
 
 No self-registration.
 

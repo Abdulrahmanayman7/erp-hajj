@@ -209,7 +209,7 @@ function formatDateTime(value: string | null): string {
     </div>
     <template v-else>
       <div
-        class="hidden overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-[0_1px_2px_rgba(23,32,29,0.03)] md:block"
+        class="hidden overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-[0_1px_2px_rgba(23,32,29,0.03)] lg:block"
       >
         <div class="overflow-x-auto">
           <table class="min-w-full text-sm">
@@ -308,7 +308,7 @@ function formatDateTime(value: string | null): string {
         </div>
       </div>
 
-      <div class="space-y-3 md:hidden">
+      <div class="space-y-3 lg:hidden">
         <article
           v-for="movement in movements"
           :key="movement.id"

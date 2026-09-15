@@ -210,7 +210,7 @@ async function onMarkAll(): Promise<void> {
     </div>
     <template v-else>
       <!-- Desktop table -->
-      <div class="hidden overflow-hidden rounded-2xl border border-brand-border bg-brand-surface md:block">
+      <div class="hidden overflow-hidden rounded-2xl border border-brand-border bg-brand-surface lg:block">
         <table class="min-w-full text-sm">
           <thead>
             <tr class="bg-brand-bg text-brand-text-secondary">
@@ -306,7 +306,7 @@ async function onMarkAll(): Promise<void> {
       </div>
 
       <!-- Mobile cards -->
-      <div class="space-y-3 md:hidden">
+      <div class="space-y-3 lg:hidden">
         <button
           v-for="item in items"
           :key="item.id"

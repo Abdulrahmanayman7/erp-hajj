@@ -90,7 +90,7 @@ Body:
 | `role_ids` | optional array of tenant role IDs (same tenant); validated against assign authority |
 | `send_invite` | boolean, default `true` |
 
-Behavior: create `active` user; if `send_invite` and mail works → password reset invitation; else temporary password path (logged as security-sensitive create — **never** return password in API body in production responses; implementation may return one-time `temporary_password` only when invite skipped and actor has create permission — document as high-risk; prefer invite-only when mail ready).
+Behavior: create `active` user; if `send_invite` and the configured mailer can deliver (`MAIL_MAILER` not `log`/`array`) and the reset link send succeeds → `invite_sent: true`; otherwise `invite_sent: false` with stable `invite_code` (`INVITE_MAILER_UNAVAILABLE` | `INVITE_SEND_FAILED`). Temporary password path when `send_invite` is false (password hashed; **never** echo password in API body). Response may include `password_provisioned: true` without returning the password.
 
 ### `GET /users/{user}`
 

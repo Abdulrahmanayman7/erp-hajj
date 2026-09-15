@@ -89,13 +89,17 @@ function onSubmit(): void {
     Layout shell is LTR so the split matches the reference (hero left / form right).
     Arabic UI blocks keep dir="rtl".
   -->
-  <div class="login-page relative h-dvh max-h-dvh overflow-hidden bg-[#FDFBF7] text-[#1A3A32]" dir="ltr">
+  <div
+    class="login-page relative h-dvh max-h-dvh overflow-hidden bg-[#FDFBF7] text-[#1A3A32]"
+    dir="ltr"
+    style="padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px)"
+  >
     <div
-      class="relative z-10 mx-auto grid h-full w-full max-w-[1600px] grid-cols-1 grid-rows-[minmax(0,34%)_minmax(0,66%)] lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:grid-rows-1"
+      class="login-grid relative z-10 mx-auto grid h-full w-full max-w-[1600px] grid-cols-1 grid-rows-[minmax(0,28%)_minmax(0,72%)] md:grid-rows-[minmax(0,32%)_minmax(0,68%)] lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:grid-rows-1"
     >
       <!-- HERO -->
       <section
-        class="relative flex min-h-0 flex-col items-end justify-start overflow-hidden px-5 pb-4 pt-6 sm:px-8 sm:pt-8 lg:px-12 lg:pb-8 lg:pe-36 lg:ps-16 lg:pt-12 xl:pe-44 xl:ps-20 xl:pt-14"
+        class="login-hero relative flex min-h-0 flex-col items-end justify-start overflow-hidden px-4 pb-3 pt-4 sm:px-8 sm:pt-6 lg:px-12 lg:pb-8 lg:pe-36 lg:ps-16 lg:pt-12 xl:pe-44 xl:ps-20 xl:pt-14"
         aria-label="ERP Hajj"
       >
         <!-- Photo: CSS object-cover (not SVG) so it never stretches -->
@@ -147,26 +151,26 @@ function onSubmit(): void {
 
         <!-- Hero typography — top-right of the Makkah image -->
         <div
-          class="relative z-10 w-full max-w-[500px] rounded-3xl bg-white/95 px-6 py-5 shadow-[0_12px_40px_-20px_rgba(3,61,48,0.28)] sm:px-7 sm:py-6"
+          class="login-hero-card relative z-10 w-full max-w-[500px] rounded-2xl bg-white/95 px-4 py-3 shadow-[0_12px_40px_-20px_rgba(3,61,48,0.28)] sm:rounded-3xl sm:px-7 sm:py-6"
           dir="rtl"
         >
           <div class="flex flex-col items-start text-start">
             <h1
               class="font-bold leading-none tracking-tight"
-              style="font-size: clamp(2.35rem, 3.4vw, 3.5rem)"
+              style="font-size: clamp(1.75rem, 3.4vw, 3.5rem)"
               dir="ltr"
             >
               <span class="text-[#064E3B]">ERP</span>
               <span class="ms-2.5 text-[#C6A15B]">Hajj</span>
             </h1>
 
-            <p class="mt-4 text-[1.35rem] font-semibold leading-snug text-[#064E3B] sm:mt-[1.05rem] sm:text-[1.55rem] lg:text-[1.7rem]">
+            <p class="mt-2 text-base font-semibold leading-snug text-[#064E3B] sm:mt-[1.05rem] sm:text-[1.55rem] lg:text-[1.7rem]">
               {{ t('app.tagline') }}
             </p>
 
-            <div class="mt-4 h-px w-14 bg-[#C6A15B]/90" aria-hidden="true" />
+            <div class="mt-2 h-px w-14 bg-[#C6A15B]/90 sm:mt-4" aria-hidden="true" />
 
-            <p class="mt-5 max-w-[500px] text-[1.05rem] font-normal leading-[1.9] text-[#2F3F3A] sm:text-[1.1rem]">
+            <p class="login-hero-desc mt-3 hidden max-w-[500px] text-[1.05rem] font-normal leading-[1.9] text-[#2F3F3A] sm:mt-5 sm:block sm:text-[1.1rem]">
               {{ t('auth.brandDescription') }}
             </p>
           </div>
@@ -175,40 +179,40 @@ function onSubmit(): void {
 
       <!-- LOGIN CARD -->
       <section
-        class="relative flex min-h-0 items-center justify-center overflow-hidden bg-[#FDFBF7] px-4 py-3 sm:px-6 lg:px-10 lg:py-4"
+        class="login-form-pane relative flex min-h-0 items-stretch justify-center overflow-hidden bg-[#FDFBF7] px-4 py-2 sm:items-center sm:px-6 sm:py-3 lg:px-10 lg:py-4"
         dir="rtl"
       >
-        <div class="relative w-full max-w-[400px]">
+        <div class="relative flex w-full max-w-[400px] min-h-0 flex-col justify-center">
           <div
-            class="relative rounded-[28px] border border-[#EDE8DE] bg-white px-6 py-5 shadow-[0_20px_48px_-28px_rgba(20,40,35,0.28)] sm:rounded-[36px] sm:px-8 sm:py-6 lg:py-7"
+            class="login-card relative max-h-full overflow-y-auto overscroll-contain rounded-[24px] border border-[#EDE8DE] bg-white px-5 py-4 shadow-[0_20px_48px_-28px_rgba(20,40,35,0.28)] sm:rounded-[36px] sm:px-8 sm:py-6 lg:overflow-visible lg:py-7"
           >
             <div class="flex flex-col items-center text-center">
               <img
                 :src="rafeeaLogo"
                 :alt="t('auth.companyName')"
-                class="h-28 w-auto bg-transparent object-contain sm:h-32 lg:h-36"
+                class="login-logo h-16 w-auto bg-transparent object-contain sm:h-28 lg:h-36"
                 width="280"
                 height="144"
                 decoding="async"
               />
 
-              <h2 class="mt-3 text-xl font-bold text-[#111827] sm:mt-4 sm:text-[1.55rem]">
+              <h2 class="mt-2 text-lg font-bold text-[#111827] sm:mt-4 sm:text-[1.55rem]">
                 {{ t('auth.loginTitle') }}
               </h2>
-              <p class="mt-1 text-xs text-[#8A9390] sm:text-sm">
+              <p class="mt-0.5 text-xs text-[#8A9390] sm:mt-1 sm:text-sm">
                 {{ t('auth.loginSubtitle') }}
               </p>
             </div>
 
             <p
               v-if="resetSuccess"
-              class="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900"
+              class="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900 sm:mt-4"
               role="status"
             >
               {{ t('auth.resetSuccessBanner') }}
             </p>
 
-            <form class="mt-4 space-y-4 sm:mt-5 sm:space-y-5" @submit.prevent="onSubmit">
+            <form class="mt-3 space-y-3 sm:mt-5 sm:space-y-5" @submit.prevent="onSubmit">
               <div>
                 <label for="login-email" class="mb-1.5 block text-sm font-medium text-[#2C3E3A]">
                   {{ t('auth.email') }}
@@ -229,7 +233,7 @@ function onSubmit(): void {
                     type="email"
                     autocomplete="username"
                     :placeholder="t('auth.emailPlaceholder')"
-                    class="login-field h-12 w-full rounded-2xl border border-[#E3E5DF] bg-white ps-11 pe-3 text-sm text-[#17352E] outline-none transition placeholder:text-[#A0A8A5] focus:border-[#064E3B] focus:ring-2 focus:ring-[#064E3B]/15 sm:h-[52px] sm:text-[0.95rem]"
+                    class="login-field h-11 w-full rounded-2xl border border-[#E3E5DF] bg-white ps-11 pe-3 text-sm text-[#17352E] outline-none transition placeholder:text-[#A0A8A5] focus:border-[#064E3B] focus:ring-2 focus:ring-[#064E3B]/15 sm:h-[52px] sm:text-[0.95rem]"
                     :aria-invalid="!!fieldErrors.email"
                     :aria-describedby="fieldErrors.email ? 'login-email-error' : undefined"
                   />
@@ -276,7 +280,7 @@ function onSubmit(): void {
 
               <button
                 type="submit"
-                class="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-l from-[#033D30] to-[#064E3B] px-4 text-sm font-semibold text-white shadow-[0_12px_28px_-10px_rgba(6,78,59,0.65)] transition hover:from-[#022F26] hover:to-[#053F30] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#064E3B] active:scale-[0.995] disabled:cursor-not-allowed disabled:opacity-60 sm:h-[52px] sm:text-base"
+                class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-l from-[#033D30] to-[#064E3B] px-4 text-sm font-semibold text-white shadow-[0_12px_28px_-10px_rgba(6,78,59,0.65)] transition hover:from-[#022F26] hover:to-[#053F30] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#064E3B] active:scale-[0.995] disabled:cursor-not-allowed disabled:opacity-60 sm:h-[52px] sm:text-base"
                 :disabled="isLoggingIn"
                 :aria-busy="isLoggingIn"
               >
@@ -301,3 +305,34 @@ function onSubmit(): void {
     </div>
   </div>
 </template>
+
+<style scoped>
+@media (max-height: 720px) and (max-width: 1023px) {
+  .login-grid {
+    grid-template-rows: minmax(0, 22%) minmax(0, 78%);
+  }
+
+  .login-logo {
+    height: 3.25rem;
+  }
+
+  .login-hero-card {
+    padding-block: 0.65rem;
+    padding-inline: 0.85rem;
+  }
+
+  .login-card {
+    padding-block: 0.85rem;
+  }
+}
+
+@media (max-height: 640px) and (max-width: 1023px) {
+  .login-grid {
+    grid-template-rows: minmax(0, 0) minmax(0, 100%);
+  }
+
+  .login-hero {
+    display: none;
+  }
+}
+</style>

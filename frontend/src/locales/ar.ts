@@ -48,6 +48,10 @@ export const ar = {
     filters: 'الفلاتر',
     filtersWithCount: 'الفلاتر ({count})',
     applyFilters: 'تطبيق',
+    goBack: 'رجوع للصفحة السابقة',
+    refresh: 'تحديث البيانات',
+    hardRefreshHint: 'اضغط مطولاً 5 ثوانٍ لإعادة تحميل النظام بالكامل',
+    hardRefreshProgress: 'إعادة تحميل كاملة… {progress}%',
     resetFilters: 'إعادة تعيين',
     close: 'إغلاق',
   },
@@ -198,6 +202,13 @@ export const ar = {
     successCreateInvite: 'تم إضافة المستخدم بنجاح، وتم إرسال دعوة تعيين كلمة المرور إلى بريده.',
     successCreateInviteLocal:
       'تم إضافة المستخدم بنجاح. بيئة التطوير الحالية تسجّل رسالة الدعوة في سجل الخادم ولا ترسلها لصندوق البريد الحقيقي.',
+    inviteFailedTitle: 'تعذر إرسال دعوة كلمة المرور',
+    inviteFailedBody:
+      'تم إنشاء المستخدم، لكن الدعوة لم تُرسل. استخدم تعيين كلمة مرور يدويًا عند الإنشاء القادم، أو اطلب من المستخدم «نسيت كلمة المرور».',
+    inviteMailerUnavailableHint:
+      'إرسال الدعوة غير متاح حاليًا (إعداد البريد). عيّن كلمة مرور مؤقتة يدويًا.',
+    manualPasswordForcedHint:
+      'تم التحويل تلقائيًا لتعيين كلمة المرور يدويًا لأن إرسال الدعوة غير متاح.',
     successUpdate: 'تم حفظ تغييرات المستخدم بنجاح.',
     confirm: 'تأكيد',
     confirmDisableTitle: 'تعطيل المستخدم',

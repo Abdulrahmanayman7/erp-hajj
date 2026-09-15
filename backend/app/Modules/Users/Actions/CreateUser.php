@@ -28,8 +28,15 @@ final class CreateUser
     ) {}
 
     /**
+     * Mailers that never deliver to a real inbox (local / test).
+     *
+     * @var list<string>
+     */
+    private const NON_DELIVERING_MAILERS = ['log', 'array'];
+
+    /**
      * @param  array{name: string, email: string, role_ids?: list<int>, send_invite?: bool, temporary_password?: string|null, avatar_group?: string}  $data
-     * @return array{user: User, password_provisioned: bool}
+     * @return array{user: User, password_provisioned: bool, invite_sent: bool, invite_code: string|null}
      */
     public function execute(User $actor, array $data, Request $request): array
     {
@@ -62,6 +69,9 @@ final class CreateUser
             $passwordProvisioned = true;
         }
 
+        $inviteSent = false;
+        $inviteCode = null;
+
         $user = DB::transaction(function () use ($actor, $data, $tenant, $roles, $plainPassword, $request, $sendInvite, $avatarGroup): User {
             $user = new User;
             $user->forceFill([
@@ -91,7 +101,7 @@ final class CreateUser
                 'actor_id' => $actor->id,
                 'user_id' => $user->id,
                 'role_ids' => $roles->pluck('id')->all(),
-                'invite_sent' => (bool) $sendInvite,
+                'invite_requested' => (bool) $sendInvite,
             ], $request);
 
             if ($roles->isNotEmpty()) {
@@ -108,15 +118,31 @@ final class CreateUser
         });
 
         if ($sendInvite) {
-            $status = Password::broker()->sendResetLink(['email' => $user->email]);
+            $mailer = (string) config('mail.default');
 
-            if ($status !== Password::RESET_LINK_SENT) {
-                Log::warning('User invite reset link was not sent.', [
+            if (in_array($mailer, self::NON_DELIVERING_MAILERS, true)) {
+                $inviteSent = false;
+                $inviteCode = 'INVITE_MAILER_UNAVAILABLE';
+                Log::warning('User invite skipped: mailer does not deliver to inboxes.', [
                     'user_id' => $user->id,
                     'email' => $user->email,
-                    'status' => $status,
-                    'mailer' => config('mail.default'),
+                    'mailer' => $mailer,
+                    'code' => $inviteCode,
                 ]);
+            } else {
+                $status = Password::broker()->sendResetLink(['email' => $user->email]);
+                $inviteSent = $status === Password::RESET_LINK_SENT;
+
+                if (! $inviteSent) {
+                    $inviteCode = 'INVITE_SEND_FAILED';
+                    Log::warning('User invite reset link was not sent.', [
+                        'user_id' => $user->id,
+                        'email' => $user->email,
+                        'status' => $status,
+                        'mailer' => $mailer,
+                        'code' => $inviteCode,
+                    ]);
+                }
             }
         }
 
@@ -125,6 +151,8 @@ final class CreateUser
         return [
             'user' => $user,
             'password_provisioned' => $passwordProvisioned,
+            'invite_sent' => $inviteSent,
+            'invite_code' => $inviteCode,
         ];
     }
 }

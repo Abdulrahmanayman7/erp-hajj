@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Change Request draft (awaiting approval):** PWA + Web Push background notifications — see `docs/00-project/CHANGE_REQUEST_PWA_WEB_PUSH.md`. No PWA/push code until approved.
+- **User create invite feedback:** API returns `invite_sent` + `invite_code` (`INVITE_MAILER_UNAVAILABLE` | `INVITE_SEND_FAILED`); UI forces manual temporary password when invite mail is unavailable; Hostinger SMTP ops note in `docs/08-deployment/HOSTINGER_SMTP.md`.
+- **App chrome:** topbar back + soft refresh; press-and-hold 5s for hard reload; persistent tablet sidebar expand/collapse edge handle.
+- **Responsive lists:** card layouts through `lg` breakpoint; tables from `lg+`.
+- **Login:** tighter mobile/tablet viewport fit without page scroll (short-height compact styles).
+- **Permissions catalog:** Arabic `description` strings for Role Permissions UI.
+
 ### Fixed
 
 - **Local CORS localhost vs 127.0.0.1:** browsers treat these as distinct origins. CORS now allows `FRONTEND_URL`, optional `CORS_ALLOWED_ORIGINS`, and the loopback twin of `FRONTEND_URL`, so Vite at `http://localhost:5173` works when the API was configured with `http://127.0.0.1:5173` (and the reverse). Still never `*` with credentialed cookies.

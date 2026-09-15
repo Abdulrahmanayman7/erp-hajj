@@ -55,10 +55,19 @@ class UserController
 
         $data = (new UserResource($result['user']))->resolve();
         $data['password_provisioned'] = $result['password_provisioned'];
+        $data['invite_sent'] = $result['invite_sent'];
+        $data['invite_code'] = $result['invite_code'];
+
+        $message = 'تم إنشاء المستخدم بنجاح';
+        if ($result['invite_sent'] === true) {
+            $message = 'تم إنشاء المستخدم وإرسال دعوة تعيين كلمة المرور';
+        } elseif (($request->validatedPayload()['send_invite'] ?? true) === true) {
+            $message = 'تم إنشاء المستخدم، لكن تعذر إرسال دعوة تعيين كلمة المرور';
+        }
 
         return ApiResponse::success(
             data: $data,
-            message: 'تم إنشاء المستخدم بنجاح',
+            message: $message,
             status: 201,
         );
     }

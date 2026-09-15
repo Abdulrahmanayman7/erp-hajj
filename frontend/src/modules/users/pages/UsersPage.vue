@@ -69,9 +69,12 @@ const disableMutation = useDisableUserMutation()
 const enableMutation = useEnableUserMutation()
 const syncRolesMutation = useSyncUserRolesMutation()
 
+const INVITE_MAIL_UNAVAILABLE_KEY = 'erp-hajj.users.inviteMailUnavailable'
+
 const drawerOpen = ref(false)
 const editing = ref<TenantUser | null>(null)
 const formError = ref('')
+const forceManualPassword = ref(false)
 const form = reactive({
   name: '',
   email: '',
@@ -81,6 +84,23 @@ const form = reactive({
   temporary_password_confirmation: '',
   avatar_group: 'neutral' as AvatarGroup,
 })
+
+function readInviteMailUnavailable(): boolean {
+  try {
+    return localStorage.getItem(INVITE_MAIL_UNAVAILABLE_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+function markInviteMailUnavailable(): void {
+  forceManualPassword.value = true
+  try {
+    localStorage.setItem(INVITE_MAIL_UNAVAILABLE_KEY, '1')
+  } catch {
+    // ignore quota / private mode
+  }
+}
 
 const users = computed(() => data.value?.data ?? [])
 const meta = computed(() => data.value?.meta)
@@ -123,7 +143,8 @@ function openCreate(): void {
   form.name = ''
   form.email = ''
   form.role_ids = []
-  form.send_invite = true
+  forceManualPassword.value = readInviteMailUnavailable()
+  form.send_invite = !forceManualPassword.value
   form.temporary_password = ''
   form.temporary_password_confirmation = ''
   form.avatar_group = 'neutral'
@@ -169,7 +190,7 @@ async function submitForm(): Promise<void> {
     }
 
     const sendInvite = form.send_invite
-    await createMutation.mutateAsync({
+    const created = await createMutation.mutateAsync({
       name: form.name,
       email: form.email,
       role_ids: form.role_ids,
@@ -183,10 +204,11 @@ async function submitForm(): Promise<void> {
     closeDrawer()
     if (!sendInvite) {
       toast.success(t('users.successCreate'))
-    } else if (import.meta.env.DEV) {
-      toast.info(t('users.successCreateInviteLocal'), 6500)
-    } else {
+    } else if (created.invite_sent === true) {
       toast.success(t('users.successCreateInvite'))
+    } else {
+      markInviteMailUnavailable()
+      toast.info(t('users.inviteFailedBody'), 8000)
     }
   } catch (error) {
     formError.value =
@@ -323,7 +345,7 @@ function formatDate(value: string | null): string {
     </div>
     <template v-else>
       <div
-        class="hidden overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-[0_1px_2px_rgba(23,32,29,0.03)] md:block"
+        class="hidden overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-[0_1px_2px_rgba(23,32,29,0.03)] lg:block"
       >
         <div class="overflow-x-auto">
           <table class="min-w-full border-separate border-spacing-0 text-sm">
@@ -462,7 +484,7 @@ function formatDate(value: string | null): string {
         </div>
       </div>
 
-      <div class="space-y-3 md:hidden">
+      <div class="space-y-3 lg:hidden">
         <article
           v-for="user in users"
           :key="user.id"
@@ -573,6 +595,7 @@ function formatDate(value: string | null): string {
       :form-error="formError"
       :submitting="isSubmitting"
       :can-assign-roles="can('users.assign_roles')"
+      :force-manual-password="forceManualPassword"
       @close="closeDrawer"
       @submit="submitForm"
     />

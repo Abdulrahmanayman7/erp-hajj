@@ -11,7 +11,7 @@ import AppTopbar from './AppTopbar.vue'
 <template>
   <div class="app-shell flex h-dvh overflow-hidden bg-brand-bg text-brand-text md:gap-3 md:p-3 lg:gap-4 lg:p-4">
     <!-- Desktop sidebar only — mobile uses bottom nav -->
-    <div class="hidden h-full shrink-0 md:block">
+    <div class="hidden h-full shrink-0 overflow-visible md:block">
       <AppSidebar />
     </div>
 
