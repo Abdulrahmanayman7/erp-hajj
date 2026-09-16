@@ -20,7 +20,9 @@ import {
   isSettingsDirty,
   listTimezones,
   settingsToForm,
+  toFormText,
   validateSettingsForm,
+  withEditableSmtpDefaults,
   type SettingsFormState,
 } from '../validation/settingsValidation'
 
@@ -51,11 +53,13 @@ watch(
     if (!value) {
       return
     }
-    const next = settingsToForm(value)
-    form.value = { ...next }
-    baseline.value = { ...next }
+    // Baseline preserves API truth (null encryption → '').
+    const persisted = settingsToForm(value)
+    baseline.value = { ...persisted }
+    // Editable form may show SSL when host exists but encryption was null.
+    form.value = withEditableSmtpDefaults(persisted)
     fieldErrors.value = {}
-    if (next.mail_deliverable) {
+    if (persisted.mail_deliverable) {
       try {
         localStorage.removeItem(INVITE_MAIL_UNAVAILABLE_KEY)
       } catch {
@@ -64,6 +68,19 @@ watch(
     }
   },
   { immediate: true },
+)
+
+watch(
+  () => form.value.mail_host,
+  (host) => {
+    if (
+      toFormText(host).trim() !== '' &&
+      toFormText(form.value.mail_encryption).trim() === '' &&
+      toFormText(baseline.value.mail_encryption).trim() === ''
+    ) {
+      form.value.mail_encryption = 'ssl'
+    }
+  },
 )
 
 const dirty = computed(() => isSettingsDirty(form.value, baseline.value))
@@ -191,12 +208,12 @@ async function onSave(): Promise<void> {
 
   try {
     const updated = await updateMutation.mutateAsync(payload)
-    const next = settingsToForm(updated)
-    form.value = { ...next }
-    baseline.value = { ...next }
+    const persisted = settingsToForm(updated)
+    baseline.value = { ...persisted }
+    form.value = withEditableSmtpDefaults(persisted)
     fieldErrors.value = {}
     testResult.value = null
-    if (next.mail_deliverable) {
+    if (persisted.mail_deliverable) {
       try {
         localStorage.removeItem(INVITE_MAIL_UNAVAILABLE_KEY)
       } catch {

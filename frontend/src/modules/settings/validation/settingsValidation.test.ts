@@ -10,6 +10,7 @@ import {
   settingsToForm,
   toFormText,
   validateSettingsForm,
+  withEditableSmtpDefaults,
 } from './settingsValidation'
 import type { TenantSettings } from '../types/settings'
 
@@ -50,6 +51,7 @@ describe('settingsValidation', () => {
     expect(form.mail_password_configured).toBe(false)
     expect(form.mail_password).toBe('')
     expect(form.mail_port).toBe('')
+    expect(form.mail_encryption).toBe('')
   })
 
   it('normalizes mail_port from number, string, and null API values', () => {
@@ -318,5 +320,129 @@ describe('settingsValidation', () => {
       { allowTimezone: 'Pacific/Honolulu' },
     )
     expect(errors.timezone).toBeUndefined()
+  })
+
+  it('A: null mail_encryption with host produces PATCH mail_encryption=ssl', () => {
+    const persisted = settingsToForm({
+      ...sample,
+      technical: {
+        ...sample.technical,
+        status: 'unavailable',
+        deliverable: false,
+        mail_mailer: 'smtp',
+        mail_host: 'smtp.gmail.com',
+        mail_port: 465,
+        mail_encryption: null,
+        mail_username: 'user@gmail.com',
+        mail_password_configured: true,
+        mail_from_address: 'user@gmail.com',
+        mail_from_name: 'Test',
+      },
+    })
+    expect(persisted.mail_encryption).toBe('')
+
+    const editable = withEditableSmtpDefaults(persisted)
+    expect(editable.mail_encryption).toBe('ssl')
+    expect(isSettingsDirty(editable, persisted)).toBe(true)
+
+    const patch = buildSettingsPatch(editable, persisted)
+    expect(patch).toEqual({
+      technical: {
+        mail_encryption: 'ssl',
+      },
+    })
+  })
+
+  it('B: after encryption is ssl, unrelated saves do not resend SMTP', () => {
+    const persisted = settingsToForm({
+      ...sample,
+      technical: {
+        ...sample.technical,
+        status: 'tenant_smtp',
+        deliverable: true,
+        mail_mailer: 'smtp',
+        mail_host: 'smtp.gmail.com',
+        mail_port: 465,
+        mail_encryption: 'ssl',
+        mail_username: 'user@gmail.com',
+        mail_password_configured: true,
+      },
+    })
+    const editable = withEditableSmtpDefaults(persisted)
+    expect(isSettingsDirty(editable, persisted)).toBe(false)
+
+    const patch = buildSettingsPatch(
+      { ...editable, contact_phone: '+966500000000' },
+      persisted,
+    )
+    expect(patch).toEqual({
+      general: { contact_phone: '+966500000000' },
+    })
+    expect(patch?.technical).toBeUndefined()
+  })
+
+  it('C: fresh tenant without SMTP does not claim deliverable or force encryption patch', () => {
+    const persisted = settingsToForm(sample)
+    expect(persisted.mail_encryption).toBe('')
+    expect(persisted.mail_deliverable).toBe(false)
+    expect(persisted.mail_status).toBe('unavailable')
+
+    const editable = withEditableSmtpDefaults(persisted)
+    expect(editable.mail_encryption).toBe('')
+    expect(isSettingsDirty(editable, persisted)).toBe(false)
+
+    const patch = buildSettingsPatch(
+      { ...editable, name: 'رفيع محدث' },
+      persisted,
+    )
+    expect(patch).toEqual({ general: { name: 'رفيع محدث' } })
+    expect(patch?.technical).toBeUndefined()
+  })
+
+  it('D: complete SMTP configuration produces a full accepted PATCH shape', () => {
+    const baseline = settingsToForm(sample)
+    const form = {
+      ...baseline,
+      mail_mailer: 'smtp',
+      mail_host: 'smtp.gmail.com',
+      mail_port: '465',
+      mail_encryption: 'ssl',
+      mail_username: 'user@gmail.com',
+      mail_password: 'app-password',
+      mail_from_address: 'user@gmail.com',
+      mail_from_name: 'ERP',
+    }
+    expect(validateSettingsForm(form)).toEqual({})
+    const patch = buildSettingsPatch(form, baseline)
+    expect(patch?.technical).toMatchObject({
+      mail_mailer: 'smtp',
+      mail_host: 'smtp.gmail.com',
+      mail_port: 465,
+      mail_encryption: 'ssl',
+      mail_username: 'user@gmail.com',
+      mail_password: 'app-password',
+      mail_from_address: 'user@gmail.com',
+      mail_from_name: 'ERP',
+    })
+  })
+
+  it('E: null encryption is never masked in dirty comparison', () => {
+    const baseline = settingsToForm({
+      ...sample,
+      technical: {
+        ...sample.technical,
+        mail_mailer: 'smtp',
+        mail_host: 'smtp.gmail.com',
+        mail_port: 465,
+        mail_encryption: null,
+      },
+    })
+    // If both sides wrongly defaulted to ssl, dirty would be false and patch empty.
+    expect(baseline.mail_encryption).toBe('')
+    expect(isSettingsDirty({ ...baseline, mail_encryption: 'ssl' }, baseline)).toBe(true)
+    expect(
+      buildSettingsPatch({ ...baseline, mail_encryption: 'ssl' }, baseline)?.technical
+        ?.mail_encryption,
+    ).toBe('ssl')
   })
 })

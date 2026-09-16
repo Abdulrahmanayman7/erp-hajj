@@ -10,6 +10,10 @@ export interface SettingsFormState {
   mail_host: string
   /** Always a string in form state (HTML inputs). Never call methods on raw API values. */
   mail_port: string
+  /**
+   * Persisted/base: empty string means API null (never invent 'ssl').
+   * Editable UI may apply SMTP_ENCRYPTION_UI_DEFAULT when host is present.
+   */
   mail_encryption: string
   mail_username: string
   mail_password: string
@@ -20,6 +24,9 @@ export interface SettingsFormState {
   mail_status: string
   mail_deliverable: boolean
 }
+
+/** Editable UI default when configuring SMTP without a persisted encryption value. */
+export const SMTP_ENCRYPTION_UI_DEFAULT = 'ssl'
 
 /**
  * Safe API → form text conversion.
@@ -38,7 +45,10 @@ export function toFormText(value: unknown): string {
   return ''
 }
 
-/** Normalize editable form fields so .trim() is always safe. */
+/**
+ * Normalize editable form fields so .trim() is always safe.
+ * Does NOT invent persisted SMTP values (null encryption stays '').
+ */
 export function normalizeSettingsForm(form: SettingsFormState): SettingsFormState {
   return {
     name: toFormText(form.name),
@@ -49,7 +59,7 @@ export function normalizeSettingsForm(form: SettingsFormState): SettingsFormStat
     mail_mailer: toFormText(form.mail_mailer),
     mail_host: toFormText(form.mail_host),
     mail_port: toFormText(form.mail_port).trim(),
-    mail_encryption: toFormText(form.mail_encryption) || 'ssl',
+    mail_encryption: toFormText(form.mail_encryption).trim().toLowerCase(),
     mail_username: toFormText(form.mail_username),
     mail_password: toFormText(form.mail_password),
     mail_password_clear: Boolean(form.mail_password_clear),
@@ -59,6 +69,18 @@ export function normalizeSettingsForm(form: SettingsFormState): SettingsFormStat
     mail_status: toFormText(form.mail_status) || 'unavailable',
     mail_deliverable: Boolean(form.mail_deliverable),
   }
+}
+
+/**
+ * Apply editable-only SMTP UI defaults without mutating persisted baseline truth.
+ * When host is present but encryption is empty (API null), default the editor to SSL.
+ */
+export function withEditableSmtpDefaults(form: SettingsFormState): SettingsFormState {
+  const normalized = normalizeSettingsForm(form)
+  if (normalized.mail_host.trim() !== '' && normalized.mail_encryption === '') {
+    return { ...normalized, mail_encryption: SMTP_ENCRYPTION_UI_DEFAULT }
+  }
+  return normalized
 }
 
 export function emptySettingsForm(): SettingsFormState {
@@ -71,7 +93,7 @@ export function emptySettingsForm(): SettingsFormState {
     mail_mailer: '',
     mail_host: '',
     mail_port: '',
-    mail_encryption: 'ssl',
+    mail_encryption: '',
     mail_username: '',
     mail_password: '',
     mail_password_clear: false,
@@ -83,6 +105,10 @@ export function emptySettingsForm(): SettingsFormState {
   }
 }
 
+/**
+ * Hydrate persisted/base state from API — preserve backend truth.
+ * null mail_encryption → '' (never silently 'ssl').
+ */
 export function settingsToForm(data: TenantSettings): SettingsFormState {
   return normalizeSettingsForm({
     name: toFormText(data.general?.name),
@@ -93,7 +119,7 @@ export function settingsToForm(data: TenantSettings): SettingsFormState {
     mail_mailer: toFormText(data.technical?.mail_mailer),
     mail_host: toFormText(data.technical?.mail_host),
     mail_port: toFormText(data.technical?.mail_port),
-    mail_encryption: toFormText(data.technical?.mail_encryption) || 'ssl',
+    mail_encryption: toFormText(data.technical?.mail_encryption),
     mail_username: toFormText(data.technical?.mail_username),
     mail_password: '',
     mail_password_clear: false,
@@ -117,9 +143,35 @@ export function mailPortToApiValue(port: string): number | null {
   return Number.isInteger(parsed) ? parsed : null
 }
 
+function isSmtpConfiguring(form: SettingsFormState): boolean {
+  return (
+    form.mail_mailer.trim() === 'smtp' ||
+    form.mail_host.trim() !== '' ||
+    form.mail_username.trim() !== '' ||
+    form.mail_password.trim() !== ''
+  )
+}
+
+/**
+ * Effective encryption for an editable SMTP configuration.
+ * Empty persisted encryption while configuring → UI default so it can be PATCHed.
+ */
+export function effectiveSmtpEncryption(form: SettingsFormState): string {
+  const normalized = normalizeSettingsForm(form)
+  if (normalized.mail_encryption !== '') {
+    return normalized.mail_encryption
+  }
+  if (isSmtpConfiguring(normalized) && normalized.mail_host.trim() !== '') {
+    return SMTP_ENCRYPTION_UI_DEFAULT
+  }
+  return ''
+}
+
 export function isSettingsDirty(form: SettingsFormState, baseline: SettingsFormState): boolean {
   const current = normalizeSettingsForm(form)
   const base = normalizeSettingsForm(baseline)
+  const currentEncryption = effectiveSmtpEncryption(current)
+  const baseEncryption = base.mail_encryption
 
   return (
     current.name.trim() !== base.name.trim() ||
@@ -130,7 +182,7 @@ export function isSettingsDirty(form: SettingsFormState, baseline: SettingsFormS
     current.mail_mailer.trim() !== base.mail_mailer.trim() ||
     current.mail_host.trim() !== base.mail_host.trim() ||
     current.mail_port.trim() !== base.mail_port.trim() ||
-    current.mail_encryption.trim() !== base.mail_encryption.trim() ||
+    currentEncryption !== baseEncryption ||
     current.mail_username.trim() !== base.mail_username.trim() ||
     current.mail_password.trim() !== '' ||
     current.mail_password_clear !== base.mail_password_clear ||
@@ -166,11 +218,14 @@ export function buildSettingsPatch(
     regional.timezone = current.timezone
   }
 
-  const smtpEnabled = current.mail_mailer.trim() === 'smtp' || current.mail_host.trim() !== ''
+  const smtpConfiguring = isSmtpConfiguring(current)
+  const currentEncryption = effectiveSmtpEncryption(current)
+  const baseEncryption = base.mail_encryption
 
-  if (smtpEnabled && current.mail_mailer.trim() !== base.mail_mailer.trim()) {
-    technical.mail_mailer = current.mail_mailer.trim() === '' ? null : current.mail_mailer.trim()
-  } else if (!smtpEnabled && base.mail_mailer) {
+  if (smtpConfiguring && current.mail_mailer.trim() !== base.mail_mailer.trim()) {
+    technical.mail_mailer =
+      current.mail_mailer.trim() === '' ? 'smtp' : current.mail_mailer.trim()
+  } else if (!smtpConfiguring && base.mail_mailer) {
     technical.mail_mailer = null
   } else if (current.mail_mailer.trim() === 'smtp' && base.mail_mailer !== 'smtp') {
     technical.mail_mailer = 'smtp'
@@ -179,13 +234,16 @@ export function buildSettingsPatch(
   const smtpFieldChanged =
     current.mail_host.trim() !== base.mail_host.trim() ||
     current.mail_port.trim() !== base.mail_port.trim() ||
-    current.mail_encryption.trim() !== base.mail_encryption.trim() ||
+    currentEncryption !== baseEncryption ||
     current.mail_username.trim() !== base.mail_username.trim() ||
     current.mail_password.trim() !== '' ||
     current.mail_password_clear
 
   if (smtpFieldChanged && current.mail_host.trim() !== '') {
-    technical.mail_mailer = 'smtp'
+    const mailer = current.mail_mailer.trim() === '' ? 'smtp' : current.mail_mailer.trim()
+    if (mailer !== base.mail_mailer.trim()) {
+      technical.mail_mailer = mailer
+    }
   }
 
   if (current.mail_host.trim() !== base.mail_host.trim()) {
@@ -194,10 +252,12 @@ export function buildSettingsPatch(
   if (current.mail_port.trim() !== base.mail_port.trim()) {
     technical.mail_port = mailPortToApiValue(current.mail_port)
   }
-  if (current.mail_encryption.trim() !== base.mail_encryption.trim()) {
-    technical.mail_encryption =
-      current.mail_encryption.trim() === '' ? null : current.mail_encryption.trim()
+
+  // Persist encryption when it differs from baseline (null/'' → ssl must be sent).
+  if (currentEncryption !== baseEncryption) {
+    technical.mail_encryption = currentEncryption === '' ? null : currentEncryption
   }
+
   if (current.mail_username.trim() !== base.mail_username.trim()) {
     technical.mail_username =
       current.mail_username.trim() === '' ? null : current.mail_username.trim()
@@ -247,7 +307,7 @@ export function validateSettingsForm(
   form: SettingsFormState,
   options?: { allowTimezone?: string },
 ): Record<string, string> {
-  const current = normalizeSettingsForm(form)
+  const current = withEditableSmtpDefaults(form)
   const errors: Record<string, string> = {}
 
   if (!current.name.trim()) {
@@ -301,7 +361,8 @@ export function validateSettingsForm(
         errors.mail_port = 'المنفذ يجب أن يكون بين 1 و 65535'
       }
     }
-    if (!['tls', 'ssl', 'none'].includes(current.mail_encryption)) {
+    const encryption = effectiveSmtpEncryption(current)
+    if (!['tls', 'ssl', 'none'].includes(encryption)) {
       errors.mail_encryption = 'قيمة التشفير غير مدعومة'
     }
     if (current.mail_username.trim().length > 255) {
