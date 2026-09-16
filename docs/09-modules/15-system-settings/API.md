@@ -1,7 +1,7 @@
 # System Settings — API
 
-> **Status:** Implemented (Sprint 020)
-> **Last updated:** 2026-08-13
+> **Status:** Implemented (Sprint 020 + mail sender extension)
+> **Last updated:** 2026-09-16
 > Aligns with [00-tenancy/API.md](../00-tenancy/API.md) path names.
 
 ## Endpoints
@@ -31,13 +31,16 @@ Platform routes (`/api/v1/platform/tenants*`) are **out of scope** for this slic
     "timezone": "Asia/Riyadh",
     "locale": "ar",
     "locale_editable": false
+  },
+  "technical": {
+    "mail_from_address": null,
+    "mail_from_name": null
   }
 }
 ```
 
-- Always returns effective values (defaults from Tenant row).
-- No secrets, no storage paths, no env dump.
-- Optional implementation metadata: `updated_at` of tenant row — allowed if useful; not required.
+- Always returns effective stored values (null technical fields = use server `mail.from.*` at send time).
+- No secrets, no SMTP host/password, no storage paths, no env dump.
 
 ## PATCH request
 
@@ -53,6 +56,10 @@ Partial update. Only mutable fields accepted:
   },
   "regional": {
     "timezone": "Asia/Riyadh"
+  },
+  "technical": {
+    "mail_from_address": "noreply@example.com",
+    "mail_from_name": "رفيع ERP"
   }
 }
 ```
@@ -62,11 +69,12 @@ Partial update. Only mutable fields accepted:
 | Rule | Behavior |
 |---|---|
 | Omitted section/field | Unchanged |
-| Explicit `null` on nullable contact_* | Clears value |
+| Explicit `null` or blank string on nullable contact_* / mail_from_* | Clears value (server fallback for mail) |
 | `regional.locale` present | **422** (immutable via this API) |
 | Unknown property | **422** validation / `SETTINGS_UNKNOWN_FIELD` |
-| Empty PATCH object | **422** (nothing to update) or no-op **200** — prefer **422 SETTINGS_NO_CHANGES** if body empty of mutable fields |
+| Empty PATCH object | **422 SETTINGS_NO_CHANGES** if body empty of mutable fields |
 | `tenant_id` / `tenant_code` / `status` | Rejected if present |
+| SMTP credentials (`MAIL_HOST`, passwords, …) | **Never** accepted |
 
 Success: **200** with full effective resource (same shape as GET).
 

@@ -21,6 +21,15 @@ const sample: TenantSettings = {
     locale: 'ar',
     locale_editable: false,
   },
+  technical: {
+    mail_from_address: null,
+    mail_from_name: null,
+  },
+}
+
+const emptyMailFields = {
+  mail_from_address: '',
+  mail_from_name: '',
 }
 
 describe('settingsValidation', () => {
@@ -29,6 +38,8 @@ describe('settingsValidation', () => {
     expect(form.name).toBe('رفيع')
     expect(form.contact_phone).toBe('')
     expect(form.timezone).toBe('Asia/Riyadh')
+    expect(form.mail_from_address).toBe('')
+    expect(form.mail_from_name).toBe('')
   })
 
   it('detects dirty state and builds partial patch', () => {
@@ -40,6 +51,21 @@ describe('settingsValidation', () => {
       regional: { timezone: 'Africa/Cairo' },
     })
     expect(buildSettingsPatch(baseline, baseline)).toBeNull()
+  })
+
+  it('builds technical mail sender patch', () => {
+    const baseline = settingsToForm(sample)
+    const form = {
+      ...baseline,
+      mail_from_address: 'noreply@example.com',
+      mail_from_name: 'رفيع ERP',
+    }
+    expect(buildSettingsPatch(form, baseline)).toEqual({
+      technical: {
+        mail_from_address: 'noreply@example.com',
+        mail_from_name: 'رفيع ERP',
+      },
+    })
   })
 
   it('returns to clean when a changed value is reverted', () => {
@@ -71,9 +97,23 @@ describe('settingsValidation', () => {
       contact_email: 'bad',
       contact_phone: '',
       timezone: 'Asia/Riyadh',
+      ...emptyMailFields,
     })
     expect(errors.name).toBeTruthy()
     expect(errors.contact_email).toBeTruthy()
+  })
+
+  it('rejects invalid mail_from_address', () => {
+    const errors = validateSettingsForm({
+      name: 'رفيع',
+      contact_name: '',
+      contact_email: '',
+      contact_phone: '',
+      timezone: 'Asia/Riyadh',
+      mail_from_address: 'bad',
+      mail_from_name: '',
+    })
+    expect(errors.mail_from_address).toBeTruthy()
   })
 
   it('rejects HTML in name', () => {
@@ -83,6 +123,7 @@ describe('settingsValidation', () => {
       contact_email: '',
       contact_phone: '',
       timezone: 'Asia/Riyadh',
+      ...emptyMailFields,
     })
     expect(errors.name).toBeTruthy()
   })
@@ -94,6 +135,7 @@ describe('settingsValidation', () => {
       contact_email: 'a'.repeat(250) + '@example.com',
       contact_phone: '0'.repeat(51),
       timezone: 'Asia/Riyadh',
+      ...emptyMailFields,
     })
 
     expect(errors.contact_name).toBeTruthy()
@@ -118,6 +160,7 @@ describe('settingsValidation', () => {
       contact_email: '',
       contact_phone: '',
       timezone: 'Asia/Jordan',
+      ...emptyMailFields,
     })
     expect(errors.timezone).toBeTruthy()
   })
@@ -130,6 +173,7 @@ describe('settingsValidation', () => {
         contact_email: '',
         contact_phone: '',
         timezone: 'Pacific/Honolulu',
+        ...emptyMailFields,
       },
       { allowTimezone: 'Pacific/Honolulu' },
     )

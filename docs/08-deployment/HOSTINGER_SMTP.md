@@ -31,7 +31,10 @@ php artisan config:cache
 
 Confirm `FRONTEND_URL` matches the SPA origin so reset links open correctly.
 
+Optional per-tenant From identity (not SMTP credentials) is configured in **Settings → إعدادات البريد الإلكتروني** (`mail_from_address` / `mail_from_name`). Empty values fall back to `MAIL_FROM_ADDRESS` / `MAIL_FROM_NAME` above.
+
 ## Related
 
+- [docs/09-modules/15-system-settings/BUSINESS_RULES.md](../09-modules/15-system-settings/BUSINESS_RULES.md)
 - [docs/09-modules/02-users-and-authorization/BUSINESS_RULES.md](../09-modules/02-users-and-authorization/BUSINESS_RULES.md) — invite vs temporary password
 - [DEPLOYMENT.md](DEPLOYMENT.md)

@@ -66,8 +66,9 @@ PATCH /api/v1/tenant-settings   # tenant_settings.update
 ```
 
 - Singleton for the **current authenticated tenant** only (no `{tenant}` / no `tenant_id` input).
-- Typed JSON body/resource (grouped `general` + `regional`), **not** an unrestricted `key→value` bag.
+- Typed JSON body/resource (grouped `general` + `regional` + `technical`), **not** an unrestricted `key→value` bag.
 - PATCH is partial: only supplied mutable fields change.
+- `technical.mail_from_address` / `mail_from_name` are optional sender identity only; SMTP credentials stay in environment (Decision §6).
 
 ### 6. Secrets & env
 

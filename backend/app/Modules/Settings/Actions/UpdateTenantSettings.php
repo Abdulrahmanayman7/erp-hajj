@@ -23,11 +23,13 @@ final class UpdateTenantSettings
     /**
      * @param  array{
      *   general?: array{name?: string, contact_name?: ?string, contact_email?: ?string, contact_phone?: ?string},
-     *   regional?: array{timezone?: string}
+     *   regional?: array{timezone?: string},
+     *   technical?: array{mail_from_address?: ?string, mail_from_name?: ?string}
      * }  $payload
      * @return array{
      *   general: array{name: string, contact_name: ?string, contact_email: ?string, contact_phone: ?string},
-     *   regional: array{timezone: string, locale: string, locale_editable: false}
+     *   regional: array{timezone: string, locale: string, locale_editable: false},
+     *   technical: array{mail_from_address: ?string, mail_from_name: ?string}
      * }
      */
     public function execute(User $actor, array $payload, Request $request): array
@@ -44,6 +46,8 @@ final class UpdateTenantSettings
                 'contact_email' => $locked->contact_email,
                 'contact_phone' => $locked->contact_phone,
                 'timezone' => $locked->timezone,
+                'mail_from_address' => $locked->mail_from_address,
+                'mail_from_name' => $locked->mail_from_name,
             ];
 
             $changes = [];
@@ -90,6 +94,24 @@ final class UpdateTenantSettings
                 if ($timezone !== (string) $beforeSnapshot['timezone']) {
                     $locked->timezone = $timezone;
                     $changes['timezone'] = ['before' => $beforeSnapshot['timezone'], 'after' => $timezone];
+                }
+            }
+
+            if (isset($payload['technical'])) {
+                foreach (['mail_from_address', 'mail_from_name'] as $field) {
+                    if (! array_key_exists($field, $payload['technical'])) {
+                        continue;
+                    }
+                    $newValue = $payload['technical'][$field];
+                    $oldValue = $beforeSnapshot[$field];
+                    if ($this->normalizedEquals($oldValue, $newValue)) {
+                        continue;
+                    }
+                    $locked->{$field} = is_string($newValue) ? trim($newValue) : $newValue;
+                    if ($locked->{$field} === '') {
+                        $locked->{$field} = null;
+                    }
+                    $changes[$field] = ['before' => $oldValue, 'after' => $locked->{$field}];
                 }
             }
 

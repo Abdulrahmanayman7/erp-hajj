@@ -97,6 +97,7 @@ test('owner can GET and PATCH tenant settings', function (): void {
             'data' => [
                 'general' => ['name', 'contact_name', 'contact_email', 'contact_phone'],
                 'regional' => ['timezone', 'locale', 'locale_editable'],
+                'technical' => ['mail_from_address', 'mail_from_name'],
             ],
         ]);
 
@@ -386,4 +387,99 @@ test('settings does not write tenant_settings KV rows', function (): void {
     ])->assertOk();
 
     expect(DB::table('tenant_settings')->where('tenant_id', $tenant->id)->count())->toBe(0);
+});
+
+test('owner can read and update technical mail sender settings', function (): void {
+    $tenant = Tenant::factory()->create([
+        'mail_from_address' => null,
+        'mail_from_name' => null,
+    ]);
+    actingAsTenantOwner($tenant);
+
+    spaGetJson('/api/v1/tenant-settings')
+        ->assertOk()
+        ->assertJsonPath('data.technical.mail_from_address', null)
+        ->assertJsonPath('data.technical.mail_from_name', null);
+
+    spaPatchJson('/api/v1/tenant-settings', [
+        'technical' => [
+            'mail_from_address' => 'noreply@rafee.test',
+            'mail_from_name' => 'رفيع ERP',
+        ],
+    ])->assertOk()
+        ->assertJsonPath('data.technical.mail_from_address', 'noreply@rafee.test')
+        ->assertJsonPath('data.technical.mail_from_name', 'رفيع ERP');
+
+    expect($tenant->fresh()->mail_from_address)->toBe('noreply@rafee.test')
+        ->and($tenant->fresh()->mail_from_name)->toBe('رفيع ERP');
+});
+
+test('invalid technical mail_from_address is rejected', function (): void {
+    actingAsTenantOwner();
+
+    spaPatchJson('/api/v1/tenant-settings', [
+        'technical' => ['mail_from_address' => 'not-an-email'],
+    ])->assertStatus(422);
+});
+
+test('unauthorized user cannot update technical settings', function (): void {
+    $tenant = Tenant::factory()->create();
+    provisionTenantRbac($tenant);
+    $user = tenantUser($tenant, ['email' => 'settings-tech-no-update@example.com']);
+    settingsGrantExactPermissions($user, ['tenant_settings.view']);
+    Sanctum::actingAs($user);
+
+    spaPatchJson('/api/v1/tenant-settings', [
+        'technical' => ['mail_from_name' => 'محاولة'],
+    ])->assertForbidden();
+});
+
+test('tenant A cannot read or change tenant B mail sender settings', function (): void {
+    $tenantA = Tenant::factory()->create([
+        'mail_from_address' => 'a@example.com',
+        'mail_from_name' => 'Tenant A',
+    ]);
+    $tenantB = Tenant::factory()->create([
+        'mail_from_address' => 'b@example.com',
+        'mail_from_name' => 'Tenant B',
+    ]);
+
+    actingAsTenantOwner($tenantA);
+    spaGetJson('/api/v1/tenant-settings')
+        ->assertOk()
+        ->assertJsonPath('data.technical.mail_from_address', 'a@example.com');
+
+    spaPatchJson('/api/v1/tenant-settings', [
+        'technical' => ['mail_from_name' => 'Tenant A Updated'],
+    ])->assertOk();
+
+    expect($tenantA->fresh()->mail_from_name)->toBe('Tenant A Updated')
+        ->and($tenantB->fresh()->mail_from_address)->toBe('b@example.com')
+        ->and($tenantB->fresh()->mail_from_name)->toBe('Tenant B');
+
+    actingAsTenantOwner($tenantB);
+    spaGetJson('/api/v1/tenant-settings')
+        ->assertOk()
+        ->assertJsonPath('data.technical.mail_from_address', 'b@example.com')
+        ->assertJsonPath('data.technical.mail_from_name', 'Tenant B');
+});
+
+test('empty technical mail sender clears to null for server fallback', function (): void {
+    $tenant = Tenant::factory()->create([
+        'mail_from_address' => 'custom@example.com',
+        'mail_from_name' => 'Custom',
+    ]);
+    actingAsTenantOwner($tenant);
+
+    spaPatchJson('/api/v1/tenant-settings', [
+        'technical' => [
+            'mail_from_address' => '',
+            'mail_from_name' => '   ',
+        ],
+    ])->assertOk()
+        ->assertJsonPath('data.technical.mail_from_address', null)
+        ->assertJsonPath('data.technical.mail_from_name', null);
+
+    expect($tenant->fresh()->mail_from_address)->toBeNull()
+        ->and($tenant->fresh()->mail_from_name)->toBeNull();
 });

@@ -11,9 +11,15 @@ export interface TenantSettingsRegional {
   locale_editable: boolean
 }
 
+export interface TenantSettingsTechnical {
+  mail_from_address: string | null
+  mail_from_name: string | null
+}
+
 export interface TenantSettings {
   general: TenantSettingsGeneral
   regional: TenantSettingsRegional
+  technical: TenantSettingsTechnical
 }
 
 export interface UpdateTenantSettingsPayload {
@@ -25,5 +31,9 @@ export interface UpdateTenantSettingsPayload {
   }
   regional?: {
     timezone?: string
+  }
+  technical?: {
+    mail_from_address?: string | null
+    mail_from_name?: string | null
   }
 }

@@ -8,7 +8,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
 /**
  * @property array{
  *   general: array{name: string, contact_name: ?string, contact_email: ?string, contact_phone: ?string},
- *   regional: array{timezone: string, locale: string, locale_editable: false}
+ *   regional: array{timezone: string, locale: string, locale_editable: false},
+ *   technical: array{mail_from_address: ?string, mail_from_name: ?string}
  * } $resource
  */
 class TenantSettingsResource extends JsonResource
@@ -18,7 +19,7 @@ class TenantSettingsResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        /** @var array{general: array<string, mixed>, regional: array<string, mixed>} $data */
+        /** @var array{general: array<string, mixed>, regional: array<string, mixed>, technical: array<string, mixed>} $data */
         $data = $this->resource;
 
         return [
@@ -32,6 +33,10 @@ class TenantSettingsResource extends JsonResource
                 'timezone' => $data['regional']['timezone'],
                 'locale' => $data['regional']['locale'],
                 'locale_editable' => false,
+            ],
+            'technical' => [
+                'mail_from_address' => $data['technical']['mail_from_address'],
+                'mail_from_name' => $data['technical']['mail_from_name'],
             ],
         ];
     }

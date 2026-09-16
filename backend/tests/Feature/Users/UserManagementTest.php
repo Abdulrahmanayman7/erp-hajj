@@ -9,6 +9,7 @@ use App\Core\Tenancy\Models\Tenant;
 use App\Models\User;
 use App\Modules\Authorization\Models\Permission;
 use App\Modules\Authorization\Models\Role;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Notification;
 use Laravel\Sanctum\Sanctum;
@@ -98,6 +99,80 @@ test('owner create with invite reports sent when smtp mailer delivers', function
         ->assertJsonPath('data.invite_sent', true)
         ->assertJsonPath('data.invite_code', null)
         ->assertJsonPath('data.password_provisioned', false);
+});
+
+test('invite email uses tenant mail sender settings', function (): void {
+    Event::fake([AuthorizationSecurityEvent::class]);
+    config([
+        'mail.default' => 'smtp',
+        'mail.from.address' => 'fallback@server.test',
+        'mail.from.name' => 'Server Default',
+    ]);
+    Notification::fake();
+
+    $tenant = Tenant::factory()->create([
+        'mail_from_address' => 'noreply@tenant-a.test',
+        'mail_from_name' => 'منشأة أ',
+    ]);
+    actingAsTenantOwner($tenant);
+
+    spaPostJson('/api/v1/users', [
+        'name' => 'Tenant Invitee',
+        'email' => 'invitee-a@example.com',
+        'send_invite' => true,
+    ])
+        ->assertCreated()
+        ->assertJsonPath('data.invite_sent', true);
+
+    $invitee = User::query()->where('email', 'invitee-a@example.com')->firstOrFail();
+
+    Notification::assertSentTo(
+        $invitee,
+        ResetPassword::class,
+        function (ResetPassword $notification) use ($invitee): bool {
+            $mail = $notification->toMail($invitee);
+
+            return ($mail->from[0] ?? null) === 'noreply@tenant-a.test'
+                && ($mail->from[1] ?? null) === 'منشأة أ';
+        },
+    );
+});
+
+test('invite email falls back to config mail from when tenant sender empty', function (): void {
+    Event::fake([AuthorizationSecurityEvent::class]);
+    config([
+        'mail.default' => 'smtp',
+        'mail.from.address' => 'fallback@server.test',
+        'mail.from.name' => 'Server Default',
+    ]);
+    Notification::fake();
+
+    $tenant = Tenant::factory()->create([
+        'mail_from_address' => null,
+        'mail_from_name' => null,
+    ]);
+    actingAsTenantOwner($tenant);
+
+    spaPostJson('/api/v1/users', [
+        'name' => 'Fallback Invitee',
+        'email' => 'invitee-fallback@example.com',
+        'send_invite' => true,
+    ])
+        ->assertCreated()
+        ->assertJsonPath('data.invite_sent', true);
+
+    $invitee = User::query()->where('email', 'invitee-fallback@example.com')->firstOrFail();
+
+    Notification::assertSentTo(
+        $invitee,
+        ResetPassword::class,
+        function (ResetPassword $notification) use ($invitee): bool {
+            $mail = $notification->toMail($invitee);
+
+            return ($mail->from[0] ?? null) === 'fallback@server.test'
+                && ($mail->from[1] ?? null) === 'Server Default';
+        },
+    );
 });
 
 test('owner can create user with manual temporary password', function (): void {

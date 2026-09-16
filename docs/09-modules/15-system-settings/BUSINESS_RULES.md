@@ -1,7 +1,7 @@
 # System Settings — Business Rules
 
-> **Status:** Implemented (Sprint 020)
-> **Last updated:** 2026-08-13
+> **Status:** Implemented (Sprint 020 + mail sender extension)
+> **Last updated:** 2026-09-16
 > ADR: [ADR-0016](../../10-decisions/ADR-0016-TYPED-TENANT-SETTINGS-AND-RESOLUTION.md)
 
 ## 1. Singleton per tenant
@@ -10,7 +10,7 @@
 - No list/create/delete Settings resources.
 - No second settings “profile”.
 
-## 2. Final MVP settings catalog
+## 2. Final settings catalog
 
 | Key (API field) | Arabic label | Type | Default | Nullable | Validation | Owner | Affects business logic? | Restart? | Audit |
 |---|---|---|---|---|---|---|---|---|---|
@@ -20,8 +20,19 @@
 | `contact_name` | اسم جهة الاتصال | string | null | yes | nullable, string, max 255, no HTML | Tenant admin | Operational display only | no | yes |
 | `contact_email` | بريد جهة الاتصال | string | null | yes | nullable, email, max 255 | Tenant admin | Operational display only | no | yes |
 | `contact_phone` | هاتف جهة الاتصال | string | null | yes | nullable, string, max 50 | Tenant admin | Operational display only | no | yes |
+| `mail_from_address` | بريد المرسل | string | null | yes | nullable, email, max 255; blank/null → `config('mail.from.address')` at send time | Tenant admin | Invite / password-reset From address | no | yes |
+| `mail_from_name` | اسم المرسل | string | null | yes | nullable, string, max 255, no HTML; blank/null → `config('mail.from.name')` | Tenant admin | Invite / password-reset From name | no | yes |
 
-### Explicitly **not** in MVP catalog
+### Mail architecture (non-negotiable)
+
+| Concern | Where |
+|---|---|
+| SMTP transport (`MAIL_MAILER`, host, port, username, password, encryption) | **Server environment only** |
+| Sender identity (`mail_from_address`, `mail_from_name`) | **Tenant Settings → technical** |
+| Resolution | tenant value if non-blank → else `config('mail.from.*')` |
+| Cross-tenant safety | From set per `MailMessage` from the recipient user’s `tenant_id`; never `Config::set` |
+
+### Explicitly **not** in catalog (unchanged)
 
 | Candidate | Decision | Reason |
 |---|---|---|
@@ -37,7 +48,7 @@
 | Custody due-soon days | **Global config** | `config('notifications.custody_expected_return_soon_days')` |
 | Document max upload | **Global / PHP** | Documents module + server limits |
 | Inventory low-stock | **Per-item minimum** + scanner; no tenant toggle | Inventory module |
-| Secrets / env | **Forbidden** | Deployment configuration |
+| Secrets / SMTP passwords / env | **Forbidden** | Deployment configuration |
 
 ## 3. Timezone source of truth
 

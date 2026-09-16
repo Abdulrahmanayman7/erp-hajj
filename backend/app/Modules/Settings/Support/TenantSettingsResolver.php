@@ -13,7 +13,8 @@ final class TenantSettingsResolver
     /**
      * @return array{
      *   general: array{name: string, contact_name: ?string, contact_email: ?string, contact_phone: ?string},
-     *   regional: array{timezone: string, locale: string, locale_editable: false}
+     *   regional: array{timezone: string, locale: string, locale_editable: false},
+     *   technical: array{mail_from_address: ?string, mail_from_name: ?string}
      * }
      */
     public function resolve(Tenant $tenant): array
@@ -28,6 +29,9 @@ final class TenantSettingsResolver
             $locale = 'ar';
         }
 
+        $mailFromAddress = trim((string) ($tenant->mail_from_address ?? ''));
+        $mailFromName = trim((string) ($tenant->mail_from_name ?? ''));
+
         return [
             'general' => [
                 'name' => (string) $tenant->name,
@@ -39,6 +43,10 @@ final class TenantSettingsResolver
                 'timezone' => $timezone,
                 'locale' => $locale,
                 'locale_editable' => false,
+            ],
+            'technical' => [
+                'mail_from_address' => $mailFromAddress === '' ? null : $mailFromAddress,
+                'mail_from_name' => $mailFromName === '' ? null : $mailFromName,
             ],
         ];
     }

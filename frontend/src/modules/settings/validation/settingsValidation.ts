@@ -6,6 +6,8 @@ export interface SettingsFormState {
   contact_email: string
   contact_phone: string
   timezone: string
+  mail_from_address: string
+  mail_from_name: string
 }
 
 export function settingsToForm(data: TenantSettings): SettingsFormState {
@@ -15,6 +17,8 @@ export function settingsToForm(data: TenantSettings): SettingsFormState {
     contact_email: data.general.contact_email ?? '',
     contact_phone: data.general.contact_phone ?? '',
     timezone: data.regional.timezone ?? 'Asia/Riyadh',
+    mail_from_address: data.technical?.mail_from_address ?? '',
+    mail_from_name: data.technical?.mail_from_name ?? '',
   }
 }
 
@@ -24,7 +28,9 @@ export function isSettingsDirty(form: SettingsFormState, baseline: SettingsFormS
     form.contact_name.trim() !== baseline.contact_name.trim() ||
     form.contact_email.trim() !== baseline.contact_email.trim() ||
     form.contact_phone.trim() !== baseline.contact_phone.trim() ||
-    form.timezone !== baseline.timezone
+    form.timezone !== baseline.timezone ||
+    form.mail_from_address.trim() !== baseline.mail_from_address.trim() ||
+    form.mail_from_name.trim() !== baseline.mail_from_name.trim()
   )
 }
 
@@ -34,6 +40,7 @@ export function buildSettingsPatch(
 ): UpdateTenantSettingsPayload | null {
   const general: NonNullable<UpdateTenantSettingsPayload['general']> = {}
   const regional: NonNullable<UpdateTenantSettingsPayload['regional']> = {}
+  const technical: NonNullable<UpdateTenantSettingsPayload['technical']> = {}
 
   if (form.name.trim() !== baseline.name.trim()) {
     general.name = form.name.trim()
@@ -50,6 +57,14 @@ export function buildSettingsPatch(
   if (form.timezone !== baseline.timezone) {
     regional.timezone = form.timezone
   }
+  if (form.mail_from_address.trim() !== baseline.mail_from_address.trim()) {
+    technical.mail_from_address =
+      form.mail_from_address.trim() === '' ? null : form.mail_from_address.trim()
+  }
+  if (form.mail_from_name.trim() !== baseline.mail_from_name.trim()) {
+    technical.mail_from_name =
+      form.mail_from_name.trim() === '' ? null : form.mail_from_name.trim()
+  }
 
   const payload: UpdateTenantSettingsPayload = {}
   if (Object.keys(general).length > 0) {
@@ -57,6 +72,9 @@ export function buildSettingsPatch(
   }
   if (Object.keys(regional).length > 0) {
     payload.regional = regional
+  }
+  if (Object.keys(technical).length > 0) {
+    payload.technical = technical
   }
 
   return Object.keys(payload).length > 0 ? payload : null
@@ -96,6 +114,18 @@ export function validateSettingsForm(
     form.timezone !== options?.allowTimezone
   ) {
     errors.timezone = 'المنطقة الزمنية غير صالحة. استخدم معرف IANA فقط.'
+  }
+  if (form.mail_from_address.trim()) {
+    if (form.mail_from_address.trim().length > 255) {
+      errors.mail_from_address = 'بريد المرسل يجب ألا يتجاوز 255 حرفًا'
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.mail_from_address.trim())) {
+      errors.mail_from_address = 'بريد المرسل غير صالح'
+    }
+  }
+  if (form.mail_from_name.trim().length > 255) {
+    errors.mail_from_name = 'اسم المرسل يجب ألا يتجاوز 255 حرفًا'
+  } else if (form.mail_from_name.includes('<') || form.mail_from_name.includes('>')) {
+    errors.mail_from_name = 'لا يُسمح بوسوم HTML'
   }
   return errors
 }

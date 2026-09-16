@@ -1930,6 +1930,8 @@ export const ar = {
       generalDescription: 'البيانات الأساسية ووسائل التواصل الخاصة بالمنشأة.',
       regional: 'المنطقة واللغة',
       regionalDescription: 'تحدد كيفية عرض الوقت والتواريخ داخل النظام.',
+      technical: 'إعدادات البريد الإلكتروني',
+      technicalDescription: 'بيانات المرسل المستخدمة في دعوات المستخدمين ورسائل النظام.',
     },
     viewOnly: {
       title: 'وضع العرض فقط',
@@ -1948,7 +1950,12 @@ export const ar = {
       contactPhone: 'هاتف جهة الاتصال',
       timezone: 'المنطقة الزمنية',
       locale: 'اللغة',
+      mailFromAddress: 'بريد المرسل',
+      mailFromName: 'اسم المرسل',
     },
+    mailFromAddressPlaceholder: "noreply{'@'}example.com",
+    mailFromNamePlaceholder: 'رفيع ERP',
+    mailFromFallbackHint: 'اترك الحقل فارغًا لاستخدام الإعداد الافتراضي للخادم.',
     errors: {
       generic: 'تعذر حفظ الإعدادات. حاول مرة أخرى.',
       load: 'تعذر تحميل الإعدادات.',

@@ -28,6 +28,8 @@ class Tenant extends Model
         'contact_name',
         'contact_email',
         'contact_phone',
+        'mail_from_address',
+        'mail_from_name',
         'notes',
     ];
 

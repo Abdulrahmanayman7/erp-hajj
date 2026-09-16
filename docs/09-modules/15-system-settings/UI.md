@@ -1,7 +1,7 @@
 # System Settings — UI
 
-> **Status:** Implemented (Sprint 020)
-> **Last updated:** 2026-08-16
+> **Status:** Implemented (Sprint 020 + mail sender extension)
+> **Last updated:** 2026-09-16
 
 ## Route
 
@@ -20,10 +20,11 @@ Single canonical page — no scattered settings screens.
 
 ## Page structure
 
-One page, two sections (no unrelated tabs):
+One page, three sections (no unrelated tabs):
 
 1. **معلومات المنشأة** — name + contact fields, with a responsive two-column form where suitable.
 2. **المنطقة واللغة** — searchable timezone select with a human-friendly display label and IANA ID hint; locale shown as a read-only setting (`العربية` / `ar`).
+3. **إعدادات البريد الإلكتروني** (Technical) — `mail_from_address` / `mail_from_name` (بريد المرسل / اسم المرسل). Empty = use server `MAIL_FROM_*`. SMTP host/credentials are **not** editable here.
 
 No Operations section until tenant-configurable thresholds are approved.
 

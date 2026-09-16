@@ -51,6 +51,7 @@ use App\Modules\Notifications\Policies\NotificationPolicy;
 use App\Modules\OrganizationStructure\Models\OrganizationUnit;
 use App\Modules\OrganizationStructure\Policies\OrganizationUnitPolicy;
 use App\Modules\Settings\Policies\TenantSettingsPolicy;
+use App\Modules\Settings\Support\TenantMailSenderResolver;
 use App\Modules\Tasks\Models\Task;
 use App\Modules\Tasks\Policies\TaskPolicy;
 use App\Modules\Users\Policies\UserPolicy;
@@ -91,7 +92,11 @@ class AppServiceProvider extends ServiceProvider
                 'email' => $user->email,
             ]);
 
-            return (new MailMessage)
+            $sender = app(TenantMailSenderResolver::class)->resolveForTenantId(
+                $user->tenant_id !== null ? (int) $user->tenant_id : null,
+            );
+
+            $message = (new MailMessage)
                 ->subject('تعيين كلمة المرور — رفيع')
                 ->greeting('مرحبًا '.$user->name)
                 ->line('تم إنشاء حسابك أو طلب إعادة تعيين كلمة المرور في منصة رفيع.')
@@ -100,6 +105,12 @@ class AppServiceProvider extends ServiceProvider
                 ->line('رابط التعيين صالح لمدة 60 دقيقة.')
                 ->line('إذا لم تطلب ذلك، يمكنك تجاهل هذه الرسالة.')
                 ->salutation('مع التحية، فريق رفيع');
+
+            if ($sender['address'] !== '') {
+                $message->from($sender['address'], $sender['name'] !== '' ? $sender['name'] : null);
+            }
+
+            return $message;
         });
 
         Event::listen(AuthSecurityEvent::class, LogAuthSecurityEvent::class);

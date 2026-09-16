@@ -21,6 +21,10 @@ const sample = {
     locale: 'ar',
     locale_editable: false as const,
   },
+  technical: {
+    mail_from_address: null,
+    mail_from_name: null,
+  },
 }
 
 describe('settingsApi', () => {

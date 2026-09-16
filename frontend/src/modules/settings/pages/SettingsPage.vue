@@ -39,6 +39,8 @@ const form = ref<SettingsFormState>({
   contact_email: '',
   contact_phone: '',
   timezone: 'Asia/Riyadh',
+  mail_from_address: '',
+  mail_from_name: '',
 })
 const baseline = ref<SettingsFormState>({ ...form.value })
 const fieldErrors = ref<Record<string, string>>({})
@@ -152,7 +154,10 @@ async function onSave(): Promise<void> {
       if (error.status === 422 && error.errors) {
         const mapped: Record<string, string> = {}
         Object.entries(error.errors).forEach(([key, messages]) => {
-          const short = key.replace(/^general\./, '').replace(/^regional\./, '')
+          const short = key
+            .replace(/^general\./, '')
+            .replace(/^regional\./, '')
+            .replace(/^technical\./, '')
           mapped[short] = Array.isArray(messages) ? String(messages[0]) : String(messages)
         })
         fieldErrors.value = mapped
@@ -174,7 +179,7 @@ async function onSave(): Promise<void> {
 
     <template v-if="isLoading">
       <section
-        v-for="section in 2"
+        v-for="section in 3"
         :key="section"
         class="rounded-2xl border border-brand-border bg-brand-surface p-5 shadow-sm sm:p-7"
         role="status"
@@ -399,6 +404,82 @@ async function onSave(): Promise<void> {
             </div>
             <p class="text-xs text-brand-text-muted">{{ t('settings.localeReadonlyHint') }}</p>
           </div>
+        </div>
+      </section>
+
+      <section class="rounded-2xl border border-brand-border bg-brand-surface p-5 shadow-sm sm:p-7">
+        <div class="mb-7">
+          <h2 class="text-lg font-bold text-brand-text">{{ t('settings.sections.technical') }}</h2>
+          <p class="mt-1 text-sm text-brand-text-secondary">{{ t('settings.sections.technicalDescription') }}</p>
+        </div>
+
+        <dl v-if="!canUpdate" class="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
+          <div>
+            <dt class="text-sm font-semibold text-brand-text-secondary">{{ t('settings.fields.mailFromAddress') }}</dt>
+            <dd class="mt-1 break-words text-sm font-bold text-brand-text" dir="ltr">
+              {{ form.mail_from_address || t('settings.notProvided') }}
+            </dd>
+          </div>
+          <div>
+            <dt class="text-sm font-semibold text-brand-text-secondary">{{ t('settings.fields.mailFromName') }}</dt>
+            <dd class="mt-1 break-words text-sm font-bold text-brand-text">
+              {{ form.mail_from_name || t('settings.notProvided') }}
+            </dd>
+          </div>
+        </dl>
+        <div v-else class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <label class="block space-y-1.5">
+            <span class="text-sm font-bold text-brand-text">{{ t('settings.fields.mailFromAddress') }}</span>
+            <input
+              v-model="form.mail_from_address"
+              type="email"
+              class="h-11 w-full rounded-xl border bg-brand-surface px-3 text-sm text-brand-text outline-none transition placeholder:text-brand-text-muted focus:border-brand-primary/50 focus:ring-2 focus:ring-brand-primary/15 disabled:bg-brand-bg"
+              :class="fieldErrors.mail_from_address ? 'border-rose-500' : 'border-brand-border'"
+              :placeholder="t('settings.mailFromAddressPlaceholder')"
+              :disabled="saving"
+              :aria-invalid="Boolean(fieldErrors.mail_from_address)"
+              :aria-describedby="fieldErrors.mail_from_address ? 'settings-mail-from-address-error' : 'settings-mail-from-hint'"
+              autocomplete="off"
+              dir="ltr"
+              @input="clearFieldError('mail_from_address')"
+            />
+            <p
+              v-if="fieldErrors.mail_from_address"
+              id="settings-mail-from-address-error"
+              class="text-xs font-medium text-rose-700"
+              role="alert"
+            >
+              {{ fieldErrors.mail_from_address }}
+            </p>
+            <p v-else id="settings-mail-from-hint" class="text-xs text-brand-text-muted">
+              {{ t('settings.mailFromFallbackHint') }}
+            </p>
+          </label>
+
+          <label class="block space-y-1.5">
+            <span class="text-sm font-bold text-brand-text">{{ t('settings.fields.mailFromName') }}</span>
+            <input
+              v-model="form.mail_from_name"
+              type="text"
+              class="h-11 w-full rounded-xl border bg-brand-surface px-3 text-sm text-brand-text outline-none transition placeholder:text-brand-text-muted focus:border-brand-primary/50 focus:ring-2 focus:ring-brand-primary/15 disabled:bg-brand-bg"
+              :class="fieldErrors.mail_from_name ? 'border-rose-500' : 'border-brand-border'"
+              :placeholder="t('settings.mailFromNamePlaceholder')"
+              :disabled="saving"
+              :aria-invalid="Boolean(fieldErrors.mail_from_name)"
+              :aria-describedby="fieldErrors.mail_from_name ? 'settings-mail-from-name-error' : undefined"
+              autocomplete="off"
+              @input="clearFieldError('mail_from_name')"
+            />
+            <p
+              v-if="fieldErrors.mail_from_name"
+              id="settings-mail-from-name-error"
+              class="text-xs font-medium text-rose-700"
+              role="alert"
+            >
+              {{ fieldErrors.mail_from_name }}
+            </p>
+            <p v-else class="text-xs text-brand-text-muted">{{ t('settings.mailFromFallbackHint') }}</p>
+          </label>
         </div>
       </section>
 

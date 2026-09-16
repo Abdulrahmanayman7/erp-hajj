@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Tenant email sender settings (Technical):** `tenants.mail_from_address` / `mail_from_name` via Settings API group `technical`; UI section «إعدادات البريد الإلكتروني»; invite/password-reset `MailMessage->from()` resolves tenant values with fallback to `config('mail.from.*')`. SMTP credentials remain env-only.
+
 - **Change Request draft (awaiting approval):** PWA + Web Push background notifications — see `docs/00-project/CHANGE_REQUEST_PWA_WEB_PUSH.md`. No PWA/push code until approved.
 - **User create invite feedback:** API returns `invite_sent` + `invite_code` (`INVITE_MAILER_UNAVAILABLE` | `INVITE_SEND_FAILED`); UI forces manual temporary password when invite mail is unavailable; Hostinger SMTP ops note in `docs/08-deployment/HOSTINGER_SMTP.md`.
 - **App chrome:** topbar back + soft refresh; press-and-hold 5s for hard reload; persistent tablet sidebar expand/collapse edge handle.

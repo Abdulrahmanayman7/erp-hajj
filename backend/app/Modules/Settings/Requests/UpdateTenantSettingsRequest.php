@@ -9,13 +9,16 @@ use Illuminate\Validation\Validator;
 class UpdateTenantSettingsRequest extends FormRequest
 {
     /** @var list<string> */
-    private const ROOT_ALLOWED = ['general', 'regional'];
+    private const ROOT_ALLOWED = ['general', 'regional', 'technical'];
 
     /** @var list<string> */
     private const GENERAL_ALLOWED = ['name', 'contact_name', 'contact_email', 'contact_phone'];
 
     /** @var list<string> */
     private const REGIONAL_ALLOWED = ['timezone'];
+
+    /** @var list<string> */
+    private const TECHNICAL_ALLOWED = ['mail_from_address', 'mail_from_name'];
 
     /** @var list<string> */
     private const IMMUTABLE_ROOT = [
@@ -48,6 +51,9 @@ class UpdateTenantSettingsRequest extends FormRequest
             'regional' => ['sometimes', 'array'],
             'regional.timezone' => ['sometimes', 'required', 'string', 'max:64'],
             'regional.locale' => ['prohibited'],
+            'technical' => ['sometimes', 'array'],
+            'technical.mail_from_address' => ['sometimes', 'nullable', 'email', 'max:255'],
+            'technical.mail_from_name' => ['sometimes', 'nullable', 'string', 'max:255'],
             'tenant_id' => ['prohibited'],
             'tenant_code' => ['prohibited'],
             'status' => ['prohibited'],
@@ -97,11 +103,22 @@ class UpdateTenantSettingsRequest extends FormRequest
                 }
             }
 
+            if (isset($payload['technical']) && is_array($payload['technical'])) {
+                foreach (array_keys($payload['technical']) as $key) {
+                    if (! in_array($key, self::TECHNICAL_ALLOWED, true)) {
+                        throw SettingsDomainException::unknownField();
+                    }
+                }
+            }
+
             $hasMutable = false;
             if (isset($payload['general']) && is_array($payload['general']) && $payload['general'] !== []) {
                 $hasMutable = true;
             }
             if (isset($payload['regional']) && is_array($payload['regional']) && $payload['regional'] !== []) {
+                $hasMutable = true;
+            }
+            if (isset($payload['technical']) && is_array($payload['technical']) && $payload['technical'] !== []) {
                 $hasMutable = true;
             }
 
@@ -119,6 +136,13 @@ class UpdateTenantSettingsRequest extends FormRequest
                 }
             }
 
+            if (array_key_exists('mail_from_name', $payload['technical'] ?? [])) {
+                $value = $payload['technical']['mail_from_name'] ?? null;
+                if (is_string($value) && (str_contains($value, '<') || str_contains($value, '>'))) {
+                    $validator->errors()->add('technical.mail_from_name', 'لا يُسمح بوسوم HTML.');
+                }
+            }
+
             if (isset($payload['regional']['timezone']) && is_string($payload['regional']['timezone'])) {
                 $tz = $payload['regional']['timezone'];
                 if (! in_array($tz, timezone_identifiers_list(), true)) {
@@ -131,12 +155,13 @@ class UpdateTenantSettingsRequest extends FormRequest
     /**
      * @return array{
      *   general?: array{name?: string, contact_name?: ?string, contact_email?: ?string, contact_phone?: ?string},
-     *   regional?: array{timezone?: string}
+     *   regional?: array{timezone?: string},
+     *   technical?: array{mail_from_address?: ?string, mail_from_name?: ?string}
      * }
      */
     public function settingsPayload(): array
     {
-        /** @var array{general?: array<string, mixed>, regional?: array<string, mixed>} $validated */
+        /** @var array{general?: array<string, mixed>, regional?: array<string, mixed>, technical?: array<string, mixed>} $validated */
         $validated = $this->validated();
 
         $out = [];
@@ -158,6 +183,17 @@ class UpdateTenantSettingsRequest extends FormRequest
             }
             if ($regional !== []) {
                 $out['regional'] = $regional;
+            }
+        }
+        if (isset($validated['technical']) && is_array($validated['technical'])) {
+            $technical = [];
+            foreach (self::TECHNICAL_ALLOWED as $key) {
+                if (array_key_exists($key, $validated['technical'])) {
+                    $technical[$key] = $validated['technical'][$key];
+                }
+            }
+            if ($technical !== []) {
+                $out['technical'] = $technical;
             }
         }
 
