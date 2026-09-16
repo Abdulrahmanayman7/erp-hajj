@@ -18,7 +18,11 @@ export interface TenantSettingsTechnical {
   deliverable: boolean
   mail_mailer: string | null
   mail_host: string | null
-  mail_port: number | null
+  /**
+   * Backend emits integer|null. Wire tolerance allows string for defensive hydration.
+   * Form state always normalizes to string via `toFormText`.
+   */
+  mail_port: number | string | null
   mail_encryption: string | null
   mail_username: string | null
   mail_password_configured: boolean

@@ -5,7 +5,10 @@ import {
   emptySettingsForm,
   isSettingsDirty,
   listTimezones,
+  mailPortToApiValue,
+  normalizeSettingsForm,
   settingsToForm,
+  toFormText,
   validateSettingsForm,
 } from './settingsValidation'
 import type { TenantSettings } from '../types/settings'
@@ -46,6 +49,103 @@ describe('settingsValidation', () => {
     expect(form.mail_from_name).toBe('')
     expect(form.mail_password_configured).toBe(false)
     expect(form.mail_password).toBe('')
+    expect(form.mail_port).toBe('')
+  })
+
+  it('normalizes mail_port from number, string, and null API values', () => {
+    expect(toFormText(null)).toBe('')
+    expect(toFormText(undefined)).toBe('')
+    expect(toFormText(587)).toBe('587')
+    expect(toFormText('587')).toBe('587')
+
+    expect(
+      settingsToForm({
+        ...sample,
+        technical: { ...sample.technical, mail_port: 587 },
+      }).mail_port,
+    ).toBe('587')
+
+    expect(
+      settingsToForm({
+        ...sample,
+        technical: { ...sample.technical, mail_port: '587' },
+      }).mail_port,
+    ).toBe('587')
+
+    expect(
+      settingsToForm({
+        ...sample,
+        technical: { ...sample.technical, mail_port: null },
+      }).mail_port,
+    ).toBe('')
+  })
+
+  it('does not throw when form.mail_port is accidentally a number (Vue number-input coercion)', () => {
+    const baseline = settingsToForm({
+      ...sample,
+      technical: {
+        ...sample.technical,
+        status: 'tenant_smtp',
+        deliverable: true,
+        mail_mailer: 'smtp',
+        mail_host: 'smtp.example.com',
+        mail_port: 587,
+        mail_encryption: 'ssl',
+      },
+    })
+    const coerced = {
+      ...baseline,
+      mail_port: 587 as unknown as string,
+    }
+
+    expect(() => isSettingsDirty(coerced, baseline)).not.toThrow()
+    expect(isSettingsDirty(coerced, baseline)).toBe(false)
+    expect(() => validateSettingsForm(coerced)).not.toThrow()
+    expect(validateSettingsForm(coerced).mail_port).toBeUndefined()
+    expect(
+      buildSettingsPatch({ ...coerced, mail_from_name: 'x' }, baseline)?.technical?.mail_from_name,
+    ).toBe('x')
+  })
+
+  it('builds mail_port PATCH as integer or null', () => {
+    expect(mailPortToApiValue('')).toBeNull()
+    expect(mailPortToApiValue('  ')).toBeNull()
+    expect(mailPortToApiValue('587')).toBe(587)
+    expect(mailPortToApiValue(587 as unknown as string)).toBe(587)
+
+    const baseline = settingsToForm(sample)
+    const withPort = {
+      ...baseline,
+      mail_mailer: 'smtp',
+      mail_host: 'smtp.example.com',
+      mail_port: '587',
+      mail_encryption: 'ssl',
+    }
+    expect(buildSettingsPatch(withPort, baseline)?.technical?.mail_port).toBe(587)
+
+    const cleared = buildSettingsPatch(
+      { ...withPort, mail_port: '' },
+      settingsToForm({
+        ...sample,
+        technical: {
+          ...sample.technical,
+          mail_mailer: 'smtp',
+          mail_host: 'smtp.example.com',
+          mail_port: 587,
+          mail_encryption: 'ssl',
+        },
+      }),
+    )
+    expect(cleared?.technical?.mail_port).toBeNull()
+  })
+
+  it('normalizeSettingsForm coerces numeric mail_port before trim', () => {
+    const normalized = normalizeSettingsForm({
+      ...emptySettingsForm(),
+      mail_port: 465 as unknown as string,
+    })
+    expect(normalized.mail_port).toBe('465')
+    expect(typeof normalized.mail_port).toBe('string')
   })
 
   it('detects dirty state and builds partial patch', () => {
@@ -89,6 +189,7 @@ describe('settingsValidation', () => {
         mail_password_configured: true,
       },
     })
+    expect(baseline.mail_port).toBe('465')
     expect(baseline.mail_password).toBe('')
     expect(isSettingsDirty({ ...baseline, mail_from_name: 'x' }, baseline)).toBe(true)
     const patch = buildSettingsPatch({ ...baseline, mail_from_name: 'x' }, baseline)
@@ -110,6 +211,7 @@ describe('settingsValidation', () => {
     const patch = buildSettingsPatch(form, baseline)
     expect(patch?.technical?.mail_mailer).toBe('smtp')
     expect(patch?.technical?.mail_password).toBe('secret-pass')
+    expect(patch?.technical?.mail_port).toBe(465)
   })
 
   it('validates incomplete SMTP', () => {

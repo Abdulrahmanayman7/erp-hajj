@@ -600,9 +600,9 @@ async function onSendTestEmail(): Promise<void> {
             <span class="text-sm font-bold text-brand-text">{{ t('settings.fields.mailPort') }}</span>
             <input
               v-model="form.mail_port"
-              type="number"
-              min="1"
-              max="65535"
+              type="text"
+              inputmode="numeric"
+              pattern="[0-9]*"
               class="h-11 w-full rounded-xl border bg-brand-surface px-3 text-sm text-brand-text outline-none transition placeholder:text-brand-text-muted focus:border-brand-primary/50 focus:ring-2 focus:ring-brand-primary/15 disabled:bg-brand-bg"
               :class="fieldErrors.mail_port ? 'border-rose-500' : 'border-brand-border'"
               :placeholder="t('settings.mailPortPlaceholder')"
