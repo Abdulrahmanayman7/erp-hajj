@@ -61,18 +61,26 @@ Making them per-tenant would silently change scanners, Dashboard KPIs, Notificat
 ### 5. API surface
 
 ```text
-GET   /api/v1/tenant-settings   # tenant_settings.view
-PATCH /api/v1/tenant-settings   # tenant_settings.update
+GET   /api/v1/tenant-settings              # tenant_settings.view
+PATCH /api/v1/tenant-settings              # tenant_settings.update
+POST  /api/v1/tenant-settings/test-email   # tenant_settings.update
 ```
 
 - Singleton for the **current authenticated tenant** only (no `{tenant}` / no `tenant_id` input).
 - Typed JSON body/resource (grouped `general` + `regional` + `technical`), **not** an unrestricted `key→value` bag.
 - PATCH is partial: only supplied mutable fields change.
-- `technical.mail_from_address` / `mail_from_name` are optional sender identity only; SMTP credentials stay in environment (Decision §6).
+- `technical` includes optional SMTP delivery fields + sender identity; see Decision §6 amendment.
 
 ### 6. Secrets & env
 
-Tenant Settings is **not** a secret manager and **not** an env editor. Never store `APP_KEY`, DB/SMTP passwords, API tokens, or private keys.
+Tenant Settings is **not** a general secret manager and **not** an env editor. Never store `APP_KEY`, DB passwords, API tokens, or private keys unrelated to mail.
+
+**Amended exception (2026-09-16):** tenant SMTP credentials may be stored on `tenants` columns (`mail_password` encrypted at rest via Laravel `encrypted` cast) so owners can configure delivery without editing server `.env`. Requirements:
+
+- Password never returned by API (only `mail_password_configured`).
+- Password never audited as plaintext or ciphertext (`mail_auth_updated` boolean flag only).
+- Per-send isolated mailer via `MailManager::build()` — **never** `Config::set` of global SMTP for tenant credentials.
+- Server `.env` mail remains fallback when tenant SMTP is incomplete; `log`/`array` are not deliverable.
 
 ### 7. Audit
 

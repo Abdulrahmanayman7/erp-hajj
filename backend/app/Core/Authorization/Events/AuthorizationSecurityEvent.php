@@ -255,6 +255,8 @@ final class AuthorizationSecurityEvent
 
     public const TENANT_SETTINGS_UPDATED = 'TENANT_SETTINGS_UPDATED';
 
+    public const TENANT_EMAIL_TEST_SENT = 'TENANT_EMAIL_TEST_SENT';
+
     /**
      * @param  array<string, mixed>  $context
      */

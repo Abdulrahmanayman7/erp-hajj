@@ -59,4 +59,13 @@ class SettingsDomainException extends RuntimeException
     {
         return new self('لا توجد حقول قابلة للتحديث في الطلب.', 'SETTINGS_NO_CHANGES', 422);
     }
+
+    public static function mailTestRequiresTenantSmtp(): self
+    {
+        return new self(
+            'يجب حفظ إعدادات SMTP للمنشأة قبل إرسال رسالة تجريبية.',
+            'SETTINGS_MAIL_TEST_REQUIRES_SMTP',
+            422,
+        );
+    }
 }

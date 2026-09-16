@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { AlertTriangle, Globe2, LoaderCircle, Save } from 'lucide-vue-next'
+import { AlertTriangle, Globe2, LoaderCircle, Mail, Save } from 'lucide-vue-next'
 import { onBeforeRouteLeave } from 'vue-router'
 
 import { ApiError } from '@/shared/api/http'
@@ -11,16 +11,20 @@ import { useConfirm } from '@/shared/composables/useConfirm'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import { useToast } from '@/shared/composables/useToast'
 
+import { sendTenantTestEmail } from '../api/settingsApi'
 import { useUpdateTenantSettingsMutation } from '../mutations/useUpdateTenantSettingsMutation'
 import { useTenantSettingsQuery } from '../queries/useTenantSettingsQuery'
 import {
   buildSettingsPatch,
+  emptySettingsForm,
   isSettingsDirty,
   listTimezones,
   settingsToForm,
   validateSettingsForm,
   type SettingsFormState,
 } from '../validation/settingsValidation'
+
+const INVITE_MAIL_UNAVAILABLE_KEY = 'erp-hajj.users.inviteMailUnavailable'
 
 const { t } = useI18n()
 const toast = useToast()
@@ -33,17 +37,13 @@ const canUpdate = computed(() => can('tenant_settings.update'))
 const { data, isLoading, isError, refetch, isFetching } = useTenantSettingsQuery(canView)
 const updateMutation = useUpdateTenantSettingsMutation()
 
-const form = ref<SettingsFormState>({
-  name: '',
-  contact_name: '',
-  contact_email: '',
-  contact_phone: '',
-  timezone: 'Asia/Riyadh',
-  mail_from_address: '',
-  mail_from_name: '',
-})
+const form = ref<SettingsFormState>(emptySettingsForm())
 const baseline = ref<SettingsFormState>({ ...form.value })
 const fieldErrors = ref<Record<string, string>>({})
+const testEmail = ref('')
+const testEmailError = ref('')
+const testSending = ref(false)
+const testResult = ref<{ ok: boolean; message: string } | null>(null)
 
 watch(
   data,
@@ -55,6 +55,13 @@ watch(
     form.value = { ...next }
     baseline.value = { ...next }
     fieldErrors.value = {}
+    if (next.mail_deliverable) {
+      try {
+        localStorage.removeItem(INVITE_MAIL_UNAVAILABLE_KEY)
+      } catch {
+        // ignore
+      }
+    }
   },
   { immediate: true },
 )
@@ -68,6 +75,46 @@ const timezoneOptions = computed<AppSelectOption[]>(() =>
   })),
 )
 const timezoneChanged = computed(() => form.value.timezone !== baseline.value.timezone)
+
+const encryptionOptions = computed<AppSelectOption[]>(() => [
+  { value: 'ssl', label: t('settings.encryption.ssl') },
+  { value: 'tls', label: t('settings.encryption.tls') },
+  { value: 'none', label: t('settings.encryption.none') },
+])
+
+const mailerOptions = computed<AppSelectOption[]>(() => [
+  { value: 'smtp', label: t('settings.mailer.smtp') },
+  { value: '', label: t('settings.mailer.disabled') },
+])
+
+const mailStatusLabel = computed(() => {
+  const status = form.value.mail_status
+  if (status === 'tenant_smtp') {
+    return t('settings.mailStatus.tenantSmtp')
+  }
+  if (status === 'server_fallback') {
+    return t('settings.mailStatus.serverFallback')
+  }
+  return t('settings.mailStatus.unavailable')
+})
+
+const mailStatusTone = computed(() => {
+  if (form.value.mail_status === 'tenant_smtp') {
+    return 'ok'
+  }
+  if (form.value.mail_status === 'server_fallback') {
+    return 'warn'
+  }
+  return 'bad'
+})
+
+const canSendTest = computed(
+  () =>
+    canUpdate.value &&
+    !dirty.value &&
+    form.value.mail_status === 'tenant_smtp' &&
+    !testSending.value,
+)
 
 function timezonePresentation(timezone: string): Pick<AppSelectOption, 'label' | 'hint'> {
   const labels: Record<string, string> = {
@@ -148,6 +195,14 @@ async function onSave(): Promise<void> {
     form.value = { ...next }
     baseline.value = { ...next }
     fieldErrors.value = {}
+    testResult.value = null
+    if (next.mail_deliverable) {
+      try {
+        localStorage.removeItem(INVITE_MAIL_UNAVAILABLE_KEY)
+      } catch {
+        // ignore
+      }
+    }
     toast.success(t('settings.successSave'))
   } catch (error) {
     if (error instanceof ApiError) {
@@ -166,6 +221,36 @@ async function onSave(): Promise<void> {
       return
     }
     toast.error(t('settings.errors.generic'))
+  }
+}
+
+async function onSendTestEmail(): Promise<void> {
+  if (!canSendTest.value) {
+    return
+  }
+
+  testEmailError.value = ''
+  testResult.value = null
+  const email = testEmail.value.trim()
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    testEmailError.value = t('settings.testEmail.invalid')
+    return
+  }
+
+  testSending.value = true
+  try {
+    const message = await sendTenantTestEmail(email)
+    testResult.value = { ok: true, message }
+    toast.success(message)
+  } catch (error) {
+    const message =
+      error instanceof ApiError
+        ? error.message || t('settings.testEmail.failed')
+        : t('settings.testEmail.failed')
+    testResult.value = { ok: false, message }
+    toast.error(message)
+  } finally {
+    testSending.value = false
   }
 }
 </script>
@@ -413,7 +498,60 @@ async function onSave(): Promise<void> {
           <p class="mt-1 text-sm text-brand-text-secondary">{{ t('settings.sections.technicalDescription') }}</p>
         </div>
 
+        <div
+          class="mb-6 flex flex-wrap items-center gap-2 rounded-xl border px-3 py-2.5 text-sm"
+          :class="{
+            'border-emerald-200 bg-emerald-50 text-emerald-900': mailStatusTone === 'ok',
+            'border-amber-200 bg-amber-50 text-amber-950': mailStatusTone === 'warn',
+            'border-rose-200 bg-rose-50 text-rose-900': mailStatusTone === 'bad',
+          }"
+          role="status"
+        >
+          <span class="font-semibold">{{ t('settings.mailStatus.label') }}</span>
+          <span class="font-bold">{{ mailStatusLabel }}</span>
+        </div>
+
         <dl v-if="!canUpdate" class="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
+          <div>
+            <dt class="text-sm font-semibold text-brand-text-secondary">{{ t('settings.fields.mailMailer') }}</dt>
+            <dd class="mt-1 break-words text-sm font-bold text-brand-text">
+              {{ form.mail_mailer === 'smtp' ? t('settings.mailer.smtp') : t('settings.mailer.disabled') }}
+            </dd>
+          </div>
+          <div>
+            <dt class="text-sm font-semibold text-brand-text-secondary">{{ t('settings.fields.mailHost') }}</dt>
+            <dd class="mt-1 break-words text-sm font-bold text-brand-text" dir="ltr">
+              {{ form.mail_host || t('settings.notProvided') }}
+            </dd>
+          </div>
+          <div>
+            <dt class="text-sm font-semibold text-brand-text-secondary">{{ t('settings.fields.mailPort') }}</dt>
+            <dd class="mt-1 break-words text-sm font-bold text-brand-text" dir="ltr">
+              {{ form.mail_port || t('settings.notProvided') }}
+            </dd>
+          </div>
+          <div>
+            <dt class="text-sm font-semibold text-brand-text-secondary">{{ t('settings.fields.mailEncryption') }}</dt>
+            <dd class="mt-1 break-words text-sm font-bold text-brand-text">
+              {{ form.mail_encryption || t('settings.notProvided') }}
+            </dd>
+          </div>
+          <div>
+            <dt class="text-sm font-semibold text-brand-text-secondary">{{ t('settings.fields.mailUsername') }}</dt>
+            <dd class="mt-1 break-words text-sm font-bold text-brand-text" dir="ltr">
+              {{ form.mail_username || t('settings.notProvided') }}
+            </dd>
+          </div>
+          <div>
+            <dt class="text-sm font-semibold text-brand-text-secondary">{{ t('settings.fields.mailPassword') }}</dt>
+            <dd class="mt-1 break-words text-sm font-bold text-brand-text">
+              {{
+                form.mail_password_configured
+                  ? t('settings.mailPasswordConfigured')
+                  : t('settings.notProvided')
+              }}
+            </dd>
+          </div>
           <div>
             <dt class="text-sm font-semibold text-brand-text-secondary">{{ t('settings.fields.mailFromAddress') }}</dt>
             <dd class="mt-1 break-words text-sm font-bold text-brand-text" dir="ltr">
@@ -427,7 +565,124 @@ async function onSave(): Promise<void> {
             </dd>
           </div>
         </dl>
+
         <div v-else class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <label class="block space-y-1.5 sm:col-span-2">
+            <span class="text-sm font-bold text-brand-text">{{ t('settings.fields.mailMailer') }}</span>
+            <AppSelect
+              v-model="form.mail_mailer"
+              :options="mailerOptions"
+              :disabled="saving"
+              :searchable="false"
+              @update:model-value="clearFieldError('mail_mailer')"
+            />
+          </label>
+
+          <label class="block space-y-1.5">
+            <span class="text-sm font-bold text-brand-text">{{ t('settings.fields.mailHost') }}</span>
+            <input
+              v-model="form.mail_host"
+              type="text"
+              class="h-11 w-full rounded-xl border bg-brand-surface px-3 text-sm text-brand-text outline-none transition placeholder:text-brand-text-muted focus:border-brand-primary/50 focus:ring-2 focus:ring-brand-primary/15 disabled:bg-brand-bg"
+              :class="fieldErrors.mail_host ? 'border-rose-500' : 'border-brand-border'"
+              :placeholder="t('settings.mailHostPlaceholder')"
+              :disabled="saving"
+              autocomplete="off"
+              dir="ltr"
+              @input="clearFieldError('mail_host')"
+            />
+            <p v-if="fieldErrors.mail_host" class="text-xs font-medium text-rose-700" role="alert">
+              {{ fieldErrors.mail_host }}
+            </p>
+          </label>
+
+          <label class="block space-y-1.5">
+            <span class="text-sm font-bold text-brand-text">{{ t('settings.fields.mailPort') }}</span>
+            <input
+              v-model="form.mail_port"
+              type="number"
+              min="1"
+              max="65535"
+              class="h-11 w-full rounded-xl border bg-brand-surface px-3 text-sm text-brand-text outline-none transition placeholder:text-brand-text-muted focus:border-brand-primary/50 focus:ring-2 focus:ring-brand-primary/15 disabled:bg-brand-bg"
+              :class="fieldErrors.mail_port ? 'border-rose-500' : 'border-brand-border'"
+              :placeholder="t('settings.mailPortPlaceholder')"
+              :disabled="saving"
+              autocomplete="off"
+              dir="ltr"
+              @input="clearFieldError('mail_port')"
+            />
+            <p v-if="fieldErrors.mail_port" class="text-xs font-medium text-rose-700" role="alert">
+              {{ fieldErrors.mail_port }}
+            </p>
+          </label>
+
+          <label class="block space-y-1.5">
+            <span class="text-sm font-bold text-brand-text">{{ t('settings.fields.mailEncryption') }}</span>
+            <AppSelect
+              v-model="form.mail_encryption"
+              :options="encryptionOptions"
+              :disabled="saving"
+              :searchable="false"
+              @update:model-value="clearFieldError('mail_encryption')"
+            />
+            <p v-if="fieldErrors.mail_encryption" class="text-xs font-medium text-rose-700" role="alert">
+              {{ fieldErrors.mail_encryption }}
+            </p>
+          </label>
+
+          <label class="block space-y-1.5">
+            <span class="text-sm font-bold text-brand-text">{{ t('settings.fields.mailUsername') }}</span>
+            <input
+              v-model="form.mail_username"
+              type="text"
+              class="h-11 w-full rounded-xl border bg-brand-surface px-3 text-sm text-brand-text outline-none transition placeholder:text-brand-text-muted focus:border-brand-primary/50 focus:ring-2 focus:ring-brand-primary/15 disabled:bg-brand-bg"
+              :class="fieldErrors.mail_username ? 'border-rose-500' : 'border-brand-border'"
+              :placeholder="t('settings.mailUsernamePlaceholder')"
+              :disabled="saving"
+              autocomplete="off"
+              dir="ltr"
+              @input="clearFieldError('mail_username')"
+            />
+            <p v-if="fieldErrors.mail_username" class="text-xs font-medium text-rose-700" role="alert">
+              {{ fieldErrors.mail_username }}
+            </p>
+          </label>
+
+          <label class="block space-y-1.5 sm:col-span-2">
+            <span class="text-sm font-bold text-brand-text">{{ t('settings.fields.mailPassword') }}</span>
+            <input
+              v-model="form.mail_password"
+              type="password"
+              class="h-11 w-full rounded-xl border bg-brand-surface px-3 text-sm text-brand-text outline-none transition placeholder:text-brand-text-muted focus:border-brand-primary/50 focus:ring-2 focus:ring-brand-primary/15 disabled:bg-brand-bg"
+              :class="fieldErrors.mail_password ? 'border-rose-500' : 'border-brand-border'"
+              :placeholder="
+                form.mail_password_configured
+                  ? t('settings.mailPasswordPlaceholderConfigured')
+                  : t('settings.mailPasswordPlaceholder')
+              "
+              :disabled="saving || form.mail_password_clear"
+              autocomplete="new-password"
+              dir="ltr"
+              @input="clearFieldError('mail_password')"
+            />
+            <p v-if="form.mail_password_configured && !form.mail_password_clear" class="text-xs text-brand-text-muted">
+              {{ t('settings.mailPasswordConfigured') }}
+            </p>
+            <p v-if="fieldErrors.mail_password" class="text-xs font-medium text-rose-700" role="alert">
+              {{ fieldErrors.mail_password }}
+            </p>
+            <label class="mt-2 inline-flex items-center gap-2 text-sm text-brand-text-secondary">
+              <input
+                v-model="form.mail_password_clear"
+                type="checkbox"
+                class="rounded border-brand-border text-brand-primary focus:ring-brand-primary/30"
+                :disabled="saving || !form.mail_password_configured"
+                @change="form.mail_password = ''"
+              />
+              {{ t('settings.clearMailPassword') }}
+            </label>
+          </label>
+
           <label class="block space-y-1.5">
             <span class="text-sm font-bold text-brand-text">{{ t('settings.fields.mailFromAddress') }}</span>
             <input
@@ -438,20 +693,18 @@ async function onSave(): Promise<void> {
               :placeholder="t('settings.mailFromAddressPlaceholder')"
               :disabled="saving"
               :aria-invalid="Boolean(fieldErrors.mail_from_address)"
-              :aria-describedby="fieldErrors.mail_from_address ? 'settings-mail-from-address-error' : 'settings-mail-from-hint'"
               autocomplete="off"
               dir="ltr"
               @input="clearFieldError('mail_from_address')"
             />
             <p
               v-if="fieldErrors.mail_from_address"
-              id="settings-mail-from-address-error"
               class="text-xs font-medium text-rose-700"
               role="alert"
             >
               {{ fieldErrors.mail_from_address }}
             </p>
-            <p v-else id="settings-mail-from-hint" class="text-xs text-brand-text-muted">
+            <p v-else class="text-xs text-brand-text-muted">
               {{ t('settings.mailFromFallbackHint') }}
             </p>
           </label>
@@ -465,21 +718,63 @@ async function onSave(): Promise<void> {
               :class="fieldErrors.mail_from_name ? 'border-rose-500' : 'border-brand-border'"
               :placeholder="t('settings.mailFromNamePlaceholder')"
               :disabled="saving"
-              :aria-invalid="Boolean(fieldErrors.mail_from_name)"
-              :aria-describedby="fieldErrors.mail_from_name ? 'settings-mail-from-name-error' : undefined"
               autocomplete="off"
               @input="clearFieldError('mail_from_name')"
             />
-            <p
-              v-if="fieldErrors.mail_from_name"
-              id="settings-mail-from-name-error"
-              class="text-xs font-medium text-rose-700"
-              role="alert"
-            >
+            <p v-if="fieldErrors.mail_from_name" class="text-xs font-medium text-rose-700" role="alert">
               {{ fieldErrors.mail_from_name }}
             </p>
-            <p v-else class="text-xs text-brand-text-muted">{{ t('settings.mailFromFallbackHint') }}</p>
+            <p v-else class="text-xs text-brand-text-muted">{{ t('settings.mailFromProviderHint') }}</p>
           </label>
+        </div>
+
+        <div
+          v-if="canUpdate"
+          class="mt-8 space-y-4 rounded-xl border border-brand-border bg-brand-bg/60 p-4 sm:p-5"
+        >
+          <div>
+            <h3 class="text-sm font-bold text-brand-text">{{ t('settings.testEmail.title') }}</h3>
+            <p class="mt-1 text-xs text-brand-text-muted">{{ t('settings.testEmail.hint') }}</p>
+            <p v-if="dirty" class="mt-2 text-xs font-medium text-amber-800">
+              {{ t('settings.testEmail.saveFirst') }}
+            </p>
+          </div>
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-start">
+            <label class="block min-w-0 flex-1 space-y-1.5">
+              <span class="sr-only">{{ t('settings.testEmail.email') }}</span>
+              <input
+                v-model="testEmail"
+                type="email"
+                class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none transition placeholder:text-brand-text-muted focus:border-brand-primary/50 focus:ring-2 focus:ring-brand-primary/15"
+                :placeholder="t('settings.testEmail.placeholder')"
+                :disabled="testSending || form.mail_status !== 'tenant_smtp'"
+                autocomplete="off"
+                dir="ltr"
+              />
+              <p v-if="testEmailError" class="text-xs font-medium text-rose-700" role="alert">
+                {{ testEmailError }}
+              </p>
+            </label>
+            <button
+              type="button"
+              class="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-brand-primary/30 bg-brand-primary-soft px-4 text-sm font-bold text-brand-primary-dark transition hover:bg-brand-primary/15 disabled:cursor-not-allowed disabled:opacity-50"
+              :disabled="!canSendTest"
+              :aria-busy="testSending"
+              @click="onSendTestEmail"
+            >
+              <LoaderCircle v-if="testSending" class="h-4 w-4 animate-spin" aria-hidden="true" />
+              <Mail v-else class="h-4 w-4" aria-hidden="true" />
+              {{ testSending ? t('settings.testEmail.sending') : t('settings.testEmail.send') }}
+            </button>
+          </div>
+          <p
+            v-if="testResult"
+            class="text-sm font-medium"
+            :class="testResult.ok ? 'text-emerald-800' : 'text-rose-700'"
+            role="status"
+          >
+            {{ testResult.message }}
+          </p>
         </div>
       </section>
 

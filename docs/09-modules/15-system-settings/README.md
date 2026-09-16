@@ -22,7 +22,7 @@ Give authorized tenant administrators a **single, bounded place** to view and up
 
 - Platform Super Admin tenant registry UI/API (`platform_tenants.*`) — remains separate / TBD.
 - Feature flags, plugins, theme builder, billing, notification preference center.
-- Env/secret management (`APP_KEY`, DB/SMTP passwords, tokens).
+- Env/secret management for `APP_KEY`, DB passwords, API tokens (SMTP mailbox password is an ADR-0016 amended exception — encrypted on `tenants`, never returned by API).
 - Arbitrary JSON/key dump editor.
 - Locale/language productization beyond fixed Arabic.
 - Tenant logo / branding uploads.

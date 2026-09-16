@@ -30,7 +30,20 @@ class Tenant extends Model
         'contact_phone',
         'mail_from_address',
         'mail_from_name',
+        'mail_mailer',
+        'mail_host',
+        'mail_port',
+        'mail_encryption',
+        'mail_username',
+        'mail_password',
         'notes',
+    ];
+
+    /**
+     * @var list<string>
+     */
+    protected $hidden = [
+        'mail_password',
     ];
 
     protected function casts(): array
@@ -39,6 +52,8 @@ class Tenant extends Model
             'status' => TenantStatus::class,
             'suspended_at' => 'datetime',
             'archived_at' => 'datetime',
+            'mail_port' => 'integer',
+            'mail_password' => 'encrypted',
         ];
     }
 

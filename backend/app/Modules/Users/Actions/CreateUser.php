@@ -11,6 +11,7 @@ use App\Core\Authorization\Support\AuthorizationSecurity;
 use App\Core\Tenancy\TenantContext;
 use App\Models\User;
 use App\Modules\Authorization\Models\Role;
+use App\Modules\Settings\Support\TenantMailConfigurationResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -25,14 +26,8 @@ final class CreateUser
         private readonly GrantAuthority $grantAuthority,
         private readonly EffectivePermissions $effectivePermissions,
         private readonly AuthorizationSecurity $security,
+        private readonly TenantMailConfigurationResolver $mailConfigurationResolver,
     ) {}
-
-    /**
-     * Mailers that never deliver to a real inbox (local / test).
-     *
-     * @var list<string>
-     */
-    private const NON_DELIVERING_MAILERS = ['log', 'array'];
 
     /**
      * @param  array{name: string, email: string, role_ids?: list<int>, send_invite?: bool, temporary_password?: string|null, avatar_group?: string}  $data
@@ -118,15 +113,15 @@ final class CreateUser
         });
 
         if ($sendInvite) {
-            $mailer = (string) config('mail.default');
+            $mailConfig = $this->mailConfigurationResolver->resolve($tenant);
 
-            if (in_array($mailer, self::NON_DELIVERING_MAILERS, true)) {
+            if (! $mailConfig->deliverable) {
                 $inviteSent = false;
                 $inviteCode = 'INVITE_MAILER_UNAVAILABLE';
-                Log::warning('User invite skipped: mailer does not deliver to inboxes.', [
+                Log::warning('User invite skipped: no deliverable mail transport.', [
                     'user_id' => $user->id,
                     'email' => $user->email,
-                    'mailer' => $mailer,
+                    'mail_status' => $mailConfig->status,
                     'code' => $inviteCode,
                 ]);
             } else {
@@ -139,7 +134,7 @@ final class CreateUser
                         'user_id' => $user->id,
                         'email' => $user->email,
                         'status' => $status,
-                        'mailer' => $mailer,
+                        'mail_status' => $mailConfig->status,
                         'code' => $inviteCode,
                     ]);
                 }

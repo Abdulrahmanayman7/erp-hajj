@@ -8,15 +8,28 @@ use App\Core\Tenancy\Models\Tenant;
 use App\Core\Tenancy\TenantContext;
 use App\Models\User;
 use App\Modules\Settings\Exceptions\SettingsDomainException;
+use App\Modules\Settings\Support\TenantMailConfigurationResolver;
 use App\Modules\Settings\Support\TenantSettingsResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 final class UpdateTenantSettings
 {
+    /** @var list<string> */
+    private const TECHNICAL_SCALAR_FIELDS = [
+        'mail_mailer',
+        'mail_host',
+        'mail_port',
+        'mail_encryption',
+        'mail_username',
+        'mail_from_address',
+        'mail_from_name',
+    ];
+
     public function __construct(
         private readonly TenantContext $tenantContext,
         private readonly TenantSettingsResolver $resolver,
+        private readonly TenantMailConfigurationResolver $mailResolver,
         private readonly AuthorizationSecurity $security,
     ) {}
 
@@ -24,13 +37,9 @@ final class UpdateTenantSettings
      * @param  array{
      *   general?: array{name?: string, contact_name?: ?string, contact_email?: ?string, contact_phone?: ?string},
      *   regional?: array{timezone?: string},
-     *   technical?: array{mail_from_address?: ?string, mail_from_name?: ?string}
+     *   technical?: array<string, mixed>
      * }  $payload
-     * @return array{
-     *   general: array{name: string, contact_name: ?string, contact_email: ?string, contact_phone: ?string},
-     *   regional: array{timezone: string, locale: string, locale_editable: false},
-     *   technical: array{mail_from_address: ?string, mail_from_name: ?string}
-     * }
+     * @return array<string, mixed>
      */
     public function execute(User $actor, array $payload, Request $request): array
     {
@@ -48,6 +57,12 @@ final class UpdateTenantSettings
                 'timezone' => $locked->timezone,
                 'mail_from_address' => $locked->mail_from_address,
                 'mail_from_name' => $locked->mail_from_name,
+                'mail_mailer' => $locked->mail_mailer,
+                'mail_host' => $locked->mail_host,
+                'mail_port' => $locked->mail_port,
+                'mail_encryption' => $locked->mail_encryption,
+                'mail_username' => $locked->mail_username,
+                'mail_password_configured' => is_string($locked->mail_password) && $locked->mail_password !== '',
             ];
 
             $changes = [];
@@ -98,25 +113,77 @@ final class UpdateTenantSettings
             }
 
             if (isset($payload['technical'])) {
-                foreach (['mail_from_address', 'mail_from_name'] as $field) {
-                    if (! array_key_exists($field, $payload['technical'])) {
+                $technical = $payload['technical'];
+
+                foreach (self::TECHNICAL_SCALAR_FIELDS as $field) {
+                    if (! array_key_exists($field, $technical)) {
                         continue;
                     }
-                    $newValue = $payload['technical'][$field];
+
+                    $newValue = $technical[$field];
                     $oldValue = $beforeSnapshot[$field];
+
+                    if ($field === 'mail_port') {
+                        $normalizedPort = $newValue === null || $newValue === ''
+                            ? null
+                            : (int) $newValue;
+                        if ((int) ($oldValue ?? 0) === (int) ($normalizedPort ?? 0)
+                            && ($oldValue === null) === ($normalizedPort === null)) {
+                            if ($oldValue === null && $normalizedPort === null) {
+                                continue;
+                            }
+                            if ($oldValue !== null && $normalizedPort !== null && (int) $oldValue === $normalizedPort) {
+                                continue;
+                            }
+                        }
+                        $locked->mail_port = $normalizedPort;
+                        $changes['mail_port'] = ['before' => $oldValue, 'after' => $normalizedPort];
+
+                        continue;
+                    }
+
+                    if ($field === 'mail_encryption' && is_string($newValue)) {
+                        $newValue = $this->mailResolver->normalizeEncryption($newValue) ?? trim($newValue);
+                    }
+
+                    if ($field === 'mail_mailer' && is_string($newValue)) {
+                        $newValue = strtolower(trim($newValue));
+                        if ($newValue === '') {
+                            $newValue = null;
+                        }
+                    }
+
                     if ($this->normalizedEquals($oldValue, $newValue)) {
                         continue;
                     }
+
                     $locked->{$field} = is_string($newValue) ? trim($newValue) : $newValue;
                     if ($locked->{$field} === '') {
                         $locked->{$field} = null;
                     }
                     $changes[$field] = ['before' => $oldValue, 'after' => $locked->{$field}];
                 }
+
+                $clearPassword = (bool) ($technical['mail_password_clear'] ?? false);
+                $newPassword = $technical['mail_password'] ?? null;
+                $hasNewPassword = is_string($newPassword) && trim($newPassword) !== '';
+
+                if ($clearPassword && ! $hasNewPassword) {
+                    if ($beforeSnapshot['mail_password_configured']) {
+                        $locked->mail_password = null;
+                        $changes['mail_auth_updated'] = ['before' => true, 'after' => false];
+                    }
+                } elseif ($hasNewPassword) {
+                    $locked->mail_password = trim($newPassword);
+                    $changes['mail_auth_updated'] = [
+                        'before' => $beforeSnapshot['mail_password_configured'],
+                        'after' => true,
+                    ];
+                }
+                // Blank / omitted password → keep existing encrypted value.
             }
 
             if ($changes === []) {
-                // True no-op: success without audit.
                 $this->tenantContext->set($locked->fresh() ?? $locked);
 
                 return $this->resolver->resolve($locked);
@@ -142,7 +209,6 @@ final class UpdateTenantSettings
                 'after_values' => $afterValues,
             ], $request);
 
-            // Keep in-memory TenantContext aligned with persisted row.
             $fresh = $locked->fresh() ?? $locked;
             $this->tenantContext->clear();
             $this->tenantContext->set($fresh);

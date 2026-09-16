@@ -206,8 +206,15 @@ async function submitForm(): Promise<void> {
       toast.success(t('users.successCreate'))
     } else if (created.invite_sent === true) {
       toast.success(t('users.successCreateInvite'))
-    } else {
+      try {
+        localStorage.removeItem(INVITE_MAIL_UNAVAILABLE_KEY)
+      } catch {
+        // ignore
+      }
+    } else if (created.invite_code === 'INVITE_MAILER_UNAVAILABLE') {
       markInviteMailUnavailable()
+      toast.info(t('users.inviteFailedBody'), 8000)
+    } else {
       toast.info(t('users.inviteFailedBody'), 8000)
     }
   } catch (error) {

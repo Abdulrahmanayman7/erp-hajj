@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   buildSettingsPatch,
+  emptySettingsForm,
   isSettingsDirty,
   listTimezones,
   settingsToForm,
@@ -22,14 +23,17 @@ const sample: TenantSettings = {
     locale_editable: false,
   },
   technical: {
+    status: 'unavailable',
+    deliverable: false,
+    mail_mailer: null,
+    mail_host: null,
+    mail_port: null,
+    mail_encryption: null,
+    mail_username: null,
+    mail_password_configured: false,
     mail_from_address: null,
     mail_from_name: null,
   },
-}
-
-const emptyMailFields = {
-  mail_from_address: '',
-  mail_from_name: '',
 }
 
 describe('settingsValidation', () => {
@@ -40,6 +44,8 @@ describe('settingsValidation', () => {
     expect(form.timezone).toBe('Asia/Riyadh')
     expect(form.mail_from_address).toBe('')
     expect(form.mail_from_name).toBe('')
+    expect(form.mail_password_configured).toBe(false)
+    expect(form.mail_password).toBe('')
   })
 
   it('detects dirty state and builds partial patch', () => {
@@ -68,6 +74,56 @@ describe('settingsValidation', () => {
     })
   })
 
+  it('builds SMTP patch and preserves blank password', () => {
+    const baseline = settingsToForm({
+      ...sample,
+      technical: {
+        ...sample.technical,
+        status: 'tenant_smtp',
+        deliverable: true,
+        mail_mailer: 'smtp',
+        mail_host: 'smtp.hostinger.com',
+        mail_port: 465,
+        mail_encryption: 'ssl',
+        mail_username: 'noreply@example.com',
+        mail_password_configured: true,
+      },
+    })
+    expect(baseline.mail_password).toBe('')
+    expect(isSettingsDirty({ ...baseline, mail_from_name: 'x' }, baseline)).toBe(true)
+    const patch = buildSettingsPatch({ ...baseline, mail_from_name: 'x' }, baseline)
+    expect(patch?.technical?.mail_password).toBeUndefined()
+    expect(patch?.technical?.mail_from_name).toBe('x')
+  })
+
+  it('includes new SMTP password only when typed', () => {
+    const baseline = settingsToForm(sample)
+    const form = {
+      ...baseline,
+      mail_mailer: 'smtp',
+      mail_host: 'smtp.example.com',
+      mail_port: '465',
+      mail_encryption: 'ssl',
+      mail_username: 'u@example.com',
+      mail_password: 'secret-pass',
+    }
+    const patch = buildSettingsPatch(form, baseline)
+    expect(patch?.technical?.mail_mailer).toBe('smtp')
+    expect(patch?.technical?.mail_password).toBe('secret-pass')
+  })
+
+  it('validates incomplete SMTP', () => {
+    const errors = validateSettingsForm({
+      ...emptySettingsForm(),
+      name: 'رفيع',
+      mail_mailer: 'smtp',
+      mail_host: '',
+      mail_port: '',
+    })
+    expect(errors.mail_host).toBeTruthy()
+    expect(errors.mail_port).toBeTruthy()
+  })
+
   it('returns to clean when a changed value is reverted', () => {
     const baseline = settingsToForm(sample)
     const changed = { ...baseline, name: 'اسم مؤقت' }
@@ -92,12 +148,9 @@ describe('settingsValidation', () => {
 
   it('validates required name and email', () => {
     const errors = validateSettingsForm({
+      ...emptySettingsForm(),
       name: '',
-      contact_name: '',
       contact_email: 'bad',
-      contact_phone: '',
-      timezone: 'Asia/Riyadh',
-      ...emptyMailFields,
     })
     expect(errors.name).toBeTruthy()
     expect(errors.contact_email).toBeTruthy()
@@ -105,37 +158,28 @@ describe('settingsValidation', () => {
 
   it('rejects invalid mail_from_address', () => {
     const errors = validateSettingsForm({
+      ...emptySettingsForm(),
       name: 'رفيع',
-      contact_name: '',
-      contact_email: '',
-      contact_phone: '',
-      timezone: 'Asia/Riyadh',
       mail_from_address: 'bad',
-      mail_from_name: '',
     })
     expect(errors.mail_from_address).toBeTruthy()
   })
 
   it('rejects HTML in name', () => {
     const errors = validateSettingsForm({
+      ...emptySettingsForm(),
       name: '<b>x</b>',
-      contact_name: '',
-      contact_email: '',
-      contact_phone: '',
-      timezone: 'Asia/Riyadh',
-      ...emptyMailFields,
     })
     expect(errors.name).toBeTruthy()
   })
 
   it('validates contact fields with the API length and HTML rules', () => {
     const errors = validateSettingsForm({
+      ...emptySettingsForm(),
       name: 'رفيع',
       contact_name: '<strong>علي</strong>',
       contact_email: 'a'.repeat(250) + '@example.com',
       contact_phone: '0'.repeat(51),
-      timezone: 'Asia/Riyadh',
-      ...emptyMailFields,
     })
 
     expect(errors.contact_name).toBeTruthy()
@@ -155,12 +199,9 @@ describe('settingsValidation', () => {
 
   it('rejects unsupported timezone values before PATCH', () => {
     const errors = validateSettingsForm({
+      ...emptySettingsForm(),
       name: 'رفيع',
-      contact_name: '',
-      contact_email: '',
-      contact_phone: '',
       timezone: 'Asia/Jordan',
-      ...emptyMailFields,
     })
     expect(errors.timezone).toBeTruthy()
   })
@@ -168,12 +209,9 @@ describe('settingsValidation', () => {
   it('allows an existing non-curated timezone only when it is the loaded value', () => {
     const errors = validateSettingsForm(
       {
+        ...emptySettingsForm(),
         name: 'رفيع',
-        contact_name: '',
-        contact_email: '',
-        contact_phone: '',
         timezone: 'Pacific/Honolulu',
-        ...emptyMailFields,
       },
       { allowTimezone: 'Pacific/Honolulu' },
     )

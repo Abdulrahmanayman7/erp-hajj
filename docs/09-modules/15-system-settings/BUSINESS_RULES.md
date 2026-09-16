@@ -22,15 +22,19 @@
 | `contact_phone` | هاتف جهة الاتصال | string | null | yes | nullable, string, max 50 | Tenant admin | Operational display only | no | yes |
 | `mail_from_address` | بريد المرسل | string | null | yes | nullable, email, max 255; blank/null → `config('mail.from.address')` at send time | Tenant admin | Invite / password-reset From address | no | yes |
 | `mail_from_name` | اسم المرسل | string | null | yes | nullable, string, max 255, no HTML; blank/null → `config('mail.from.name')` | Tenant admin | Invite / password-reset From name | no | yes |
+| `mail_mailer` | طريقة الإرسال | string | null | yes | `smtp` only when enabling tenant transport | Tenant admin | Delivery | no | yes |
+| `mail_host` / `mail_port` / `mail_encryption` / `mail_username` | SMTP | mixed | null | yes | required together when `mail_mailer=smtp`; encryption `tls\|ssl\|none` | Tenant admin | Delivery | no | yes |
+| `mail_password` | كلمة مرور SMTP | encrypted text | null | yes | never returned; blank omit preserves; `mail_password_clear` clears | Tenant admin | Delivery | no | flag `mail_auth_updated` only |
 
 ### Mail architecture (non-negotiable)
 
 | Concern | Where |
 |---|---|
-| SMTP transport (`MAIL_MAILER`, host, port, username, password, encryption) | **Server environment only** |
-| Sender identity (`mail_from_address`, `mail_from_name`) | **Tenant Settings → technical** |
-| Resolution | tenant value if non-blank → else `config('mail.from.*')` |
-| Cross-tenant safety | From set per `MailMessage` from the recipient user’s `tenant_id`; never `Config::set` |
+| Tenant SMTP (complete) | **Primary** — Settings → technical columns on `tenants` |
+| Server `.env` / `config/mail.php` | **Fallback** when tenant SMTP incomplete |
+| `MAIL_MAILER=log\|array` | **Not deliverable** — invitations fall back to manual password |
+| Sender identity | tenant From → else `config('mail.from.*')` |
+| Isolation | Per-send `MailManager::build()` / `tenant_mail` channel — never global `Config::set` of tenant credentials |
 
 ### Explicitly **not** in catalog (unchanged)
 
@@ -48,7 +52,7 @@
 | Custody due-soon days | **Global config** | `config('notifications.custody_expected_return_soon_days')` |
 | Document max upload | **Global / PHP** | Documents module + server limits |
 | Inventory low-stock | **Per-item minimum** + scanner; no tenant toggle | Inventory module |
-| Secrets / SMTP passwords / env | **Forbidden** | Deployment configuration |
+| APP_KEY / DB passwords / API tokens | **Forbidden** | Deployment configuration |
 
 ## 3. Timezone source of truth
 

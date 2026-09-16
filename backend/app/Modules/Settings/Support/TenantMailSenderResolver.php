@@ -6,7 +6,7 @@ use App\Core\Tenancy\Models\Tenant;
 
 /**
  * Resolves effective From identity for tenant outbound mail.
- * SMTP transport stays global (env); only envelope From is tenant-scoped.
+ * Transport resolution lives in TenantMailConfigurationResolver.
  */
 final class TenantMailSenderResolver
 {

@@ -9,7 +9,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * @property array{
  *   general: array{name: string, contact_name: ?string, contact_email: ?string, contact_phone: ?string},
  *   regional: array{timezone: string, locale: string, locale_editable: false},
- *   technical: array{mail_from_address: ?string, mail_from_name: ?string}
+ *   technical: array<string, mixed>
  * } $resource
  */
 class TenantSettingsResource extends JsonResource
@@ -35,6 +35,14 @@ class TenantSettingsResource extends JsonResource
                 'locale_editable' => false,
             ],
             'technical' => [
+                'status' => $data['technical']['status'],
+                'deliverable' => (bool) $data['technical']['deliverable'],
+                'mail_mailer' => $data['technical']['mail_mailer'],
+                'mail_host' => $data['technical']['mail_host'],
+                'mail_port' => $data['technical']['mail_port'],
+                'mail_encryption' => $data['technical']['mail_encryption'],
+                'mail_username' => $data['technical']['mail_username'],
+                'mail_password_configured' => (bool) $data['technical']['mail_password_configured'],
                 'mail_from_address' => $data['technical']['mail_from_address'],
                 'mail_from_name' => $data['technical']['mail_from_name'],
             ],

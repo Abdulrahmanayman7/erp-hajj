@@ -5,9 +5,10 @@ import * as settingsApi from './settingsApi'
 vi.mock('@/shared/api/http', () => ({
   apiGet: vi.fn(),
   apiPatch: vi.fn(),
+  apiPost: vi.fn(),
 }))
 
-import { apiGet, apiPatch } from '@/shared/api/http'
+import { apiGet, apiPatch, apiPost } from '@/shared/api/http'
 
 const sample = {
   general: {
@@ -22,6 +23,14 @@ const sample = {
     locale_editable: false as const,
   },
   technical: {
+    status: 'unavailable' as const,
+    deliverable: false,
+    mail_mailer: null,
+    mail_host: null,
+    mail_port: null,
+    mail_encryption: null,
+    mail_username: null,
+    mail_password_configured: false,
     mail_from_address: null,
     mail_from_name: null,
   },
@@ -31,6 +40,7 @@ describe('settingsApi', () => {
   beforeEach(() => {
     vi.mocked(apiGet).mockReset()
     vi.mocked(apiPatch).mockReset()
+    vi.mocked(apiPost).mockReset()
   })
 
   it('loads tenant settings', async () => {
@@ -61,6 +71,20 @@ describe('settingsApi', () => {
     expect(data.regional.timezone).toBe('Africa/Cairo')
     expect(apiPatch).toHaveBeenCalledWith('/api/v1/tenant-settings', {
       regional: { timezone: 'Africa/Cairo' },
+    })
+  })
+
+  it('sends test email', async () => {
+    vi.mocked(apiPost).mockResolvedValue({
+      success: true,
+      message: 'تم إرسال رسالة الاختبار بنجاح.',
+      data: { sent: true },
+    })
+
+    const message = await settingsApi.sendTenantTestEmail('test@example.com')
+    expect(message).toContain('بنجاح')
+    expect(apiPost).toHaveBeenCalledWith('/api/v1/tenant-settings/test-email', {
+      email: 'test@example.com',
     })
   })
 })

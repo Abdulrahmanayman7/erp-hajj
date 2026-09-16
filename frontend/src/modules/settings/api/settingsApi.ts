@@ -1,4 +1,4 @@
-import { apiGet, apiPatch } from '@/shared/api/http'
+import { apiGet, apiPatch, apiPost } from '@/shared/api/http'
 
 import type { TenantSettings, UpdateTenantSettingsPayload } from '../types/settings'
 
@@ -12,4 +12,11 @@ export async function updateTenantSettings(
 ): Promise<TenantSettings> {
   const response = await apiPatch<TenantSettings>('/api/v1/tenant-settings', payload)
   return response.data
+}
+
+export async function sendTenantTestEmail(email: string): Promise<string> {
+  const response = await apiPost<{ sent: boolean }>('/api/v1/tenant-settings/test-email', {
+    email,
+  })
+  return response.message || 'تم إرسال رسالة الاختبار بنجاح.'
 }

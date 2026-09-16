@@ -9,6 +9,7 @@ use App\Modules\Audit\Models\AuditLog;
 use App\Modules\Authorization\Models\Permission;
 use App\Modules\Authorization\Models\Role;
 use App\Modules\Dashboard\Support\DashboardClock;
+use App\Modules\Settings\Support\TenantMailConfigurationResolver;
 use App\Modules\Settings\Support\TenantSettingsResolver;
 use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\Sanctum;
@@ -97,7 +98,18 @@ test('owner can GET and PATCH tenant settings', function (): void {
             'data' => [
                 'general' => ['name', 'contact_name', 'contact_email', 'contact_phone'],
                 'regional' => ['timezone', 'locale', 'locale_editable'],
-                'technical' => ['mail_from_address', 'mail_from_name'],
+                'technical' => [
+                    'status',
+                    'deliverable',
+                    'mail_mailer',
+                    'mail_host',
+                    'mail_port',
+                    'mail_encryption',
+                    'mail_username',
+                    'mail_password_configured',
+                    'mail_from_address',
+                    'mail_from_name',
+                ],
             ],
         ]);
 
@@ -482,4 +494,227 @@ test('empty technical mail sender clears to null for server fallback', function 
 
     expect($tenant->fresh()->mail_from_address)->toBeNull()
         ->and($tenant->fresh()->mail_from_name)->toBeNull();
+});
+
+test('owner can configure tenant SMTP without receiving password back', function (): void {
+    config(['mail.default' => 'log']);
+    $tenant = Tenant::factory()->create();
+    actingAsTenantOwner($tenant);
+
+    spaPatchJson('/api/v1/tenant-settings', [
+        'technical' => [
+            'mail_mailer' => 'smtp',
+            'mail_host' => 'smtp.hostinger.com',
+            'mail_port' => 465,
+            'mail_encryption' => 'ssl',
+            'mail_username' => 'noreply@example.com',
+            'mail_password' => 'super-secret-smtp',
+            'mail_from_address' => 'noreply@example.com',
+            'mail_from_name' => 'رفيع ERP',
+        ],
+    ])->assertOk()
+        ->assertJsonPath('data.technical.status', 'tenant_smtp')
+        ->assertJsonPath('data.technical.deliverable', true)
+        ->assertJsonPath('data.technical.mail_host', 'smtp.hostinger.com')
+        ->assertJsonPath('data.technical.mail_password_configured', true)
+        ->assertJsonMissingPath('data.technical.mail_password');
+
+    $fresh = $tenant->fresh();
+    expect($fresh->mail_host)->toBe('smtp.hostinger.com')
+        ->and($fresh->mail_password)->toBe('super-secret-smtp');
+
+    $raw = DB::table('tenants')->where('id', $tenant->id)->value('mail_password');
+    expect($raw)->not->toBe('super-secret-smtp')
+        ->and($raw)->not->toBeNull();
+
+    spaGetJson('/api/v1/tenant-settings')
+        ->assertOk()
+        ->assertJsonPath('data.technical.mail_password_configured', true)
+        ->assertJsonMissingPath('data.technical.mail_password');
+});
+
+test('blank SMTP password on update preserves existing password', function (): void {
+    $tenant = Tenant::factory()->create([
+        'mail_mailer' => 'smtp',
+        'mail_host' => 'smtp.example.com',
+        'mail_port' => 465,
+        'mail_encryption' => 'ssl',
+        'mail_username' => 'user@example.com',
+        'mail_password' => 'keep-me',
+    ]);
+    actingAsTenantOwner($tenant);
+
+    spaPatchJson('/api/v1/tenant-settings', [
+        'technical' => [
+            'mail_from_name' => 'Updated Name',
+        ],
+    ])->assertOk();
+
+    expect($tenant->fresh()->mail_password)->toBe('keep-me')
+        ->and($tenant->fresh()->mail_from_name)->toBe('Updated Name');
+});
+
+test('mail_password_clear removes stored SMTP password', function (): void {
+    $tenant = Tenant::factory()->create([
+        'mail_mailer' => 'smtp',
+        'mail_host' => 'smtp.example.com',
+        'mail_port' => 465,
+        'mail_encryption' => 'ssl',
+        'mail_username' => 'user@example.com',
+        'mail_password' => 'remove-me',
+    ]);
+    actingAsTenantOwner($tenant);
+
+    spaPatchJson('/api/v1/tenant-settings', [
+        'technical' => [
+            'mail_password_clear' => true,
+        ],
+    ])->assertOk()
+        ->assertJsonPath('data.technical.mail_password_configured', false);
+
+    expect($tenant->fresh()->mail_password)->toBeNull();
+});
+
+test('invalid SMTP port and encryption are rejected', function (): void {
+    actingAsTenantOwner();
+
+    spaPatchJson('/api/v1/tenant-settings', [
+        'technical' => [
+            'mail_mailer' => 'smtp',
+            'mail_host' => 'smtp.example.com',
+            'mail_port' => 99999,
+            'mail_encryption' => 'ssl',
+        ],
+    ])->assertStatus(422);
+
+    spaPatchJson('/api/v1/tenant-settings', [
+        'technical' => [
+            'mail_mailer' => 'smtp',
+            'mail_host' => 'smtp.example.com',
+            'mail_port' => 465,
+            'mail_encryption' => 'weird',
+        ],
+    ])->assertStatus(422);
+
+    spaPatchJson('/api/v1/tenant-settings', [
+        'technical' => [
+            'mail_mailer' => 'log',
+        ],
+    ])->assertStatus(422);
+});
+
+test('SMTP password never appears in TENANT_SETTINGS_UPDATED audit', function (): void {
+    $tenant = Tenant::factory()->create();
+    actingAsTenantOwner($tenant);
+
+    spaPatchJson('/api/v1/tenant-settings', [
+        'technical' => [
+            'mail_mailer' => 'smtp',
+            'mail_host' => 'smtp.example.com',
+            'mail_port' => 465,
+            'mail_encryption' => 'ssl',
+            'mail_username' => 'user@example.com',
+            'mail_password' => 'audit-secret-value',
+        ],
+    ])->assertOk();
+
+    $audit = AuditLog::query()
+        ->where('tenant_id', $tenant->id)
+        ->where('event_type', AuthorizationSecurityEvent::TENANT_SETTINGS_UPDATED)
+        ->latest('id')
+        ->first();
+
+    expect($audit)->not->toBeNull();
+    $payload = json_encode($audit->toArray(), JSON_UNESCAPED_UNICODE);
+    expect($payload)->not->toContain('audit-secret-value')
+        ->and($payload)->not->toContain('"mail_password"')
+        ->and(data_get($audit->after_values, 'mail_auth_updated'))->toBeTrue();
+});
+
+test('tenant A cannot read or update tenant B SMTP settings', function (): void {
+    $tenantA = Tenant::factory()->create([
+        'mail_mailer' => 'smtp',
+        'mail_host' => 'smtp-a.example.com',
+        'mail_port' => 465,
+        'mail_encryption' => 'ssl',
+        'mail_username' => 'a@example.com',
+        'mail_password' => 'secret-a',
+    ]);
+    $tenantB = Tenant::factory()->create([
+        'mail_mailer' => 'smtp',
+        'mail_host' => 'smtp-b.example.com',
+        'mail_port' => 587,
+        'mail_encryption' => 'tls',
+        'mail_username' => 'b@example.com',
+        'mail_password' => 'secret-b',
+    ]);
+
+    actingAsTenantOwner($tenantA);
+    spaGetJson('/api/v1/tenant-settings')
+        ->assertOk()
+        ->assertJsonPath('data.technical.mail_host', 'smtp-a.example.com')
+        ->assertJsonMissing(['data' => ['technical' => ['mail_host' => 'smtp-b.example.com']]]);
+
+    spaPatchJson('/api/v1/tenant-settings', [
+        'technical' => ['mail_host' => 'smtp-a-updated.example.com'],
+    ])->assertOk();
+
+    expect($tenantA->fresh()->mail_host)->toBe('smtp-a-updated.example.com')
+        ->and($tenantB->fresh()->mail_host)->toBe('smtp-b.example.com')
+        ->and($tenantB->fresh()->mail_password)->toBe('secret-b');
+});
+
+test('test email requires saved tenant SMTP and authorization', function (): void {
+    config(['mail.default' => 'log']);
+    $tenant = Tenant::factory()->create();
+    actingAsTenantOwner($tenant);
+
+    spaPostJson('/api/v1/tenant-settings/test-email', [
+        'email' => 'not-an-email',
+    ])->assertStatus(422);
+
+    spaPostJson('/api/v1/tenant-settings/test-email', [
+        'email' => 'probe@example.com',
+    ])->assertStatus(422)
+        ->assertJsonPath('code', 'SETTINGS_MAIL_TEST_REQUIRES_SMTP');
+
+    $viewer = tenantUser($tenant, ['email' => 'settings-test-view@example.com']);
+    settingsGrantExactPermissions($viewer, ['tenant_settings.view']);
+    Sanctum::actingAs($viewer);
+
+    spaPostJson('/api/v1/tenant-settings/test-email', [
+        'email' => 'probe@example.com',
+    ])->assertForbidden();
+});
+
+test('complete tenant SMTP is deliverable even when server mailer is log', function (): void {
+    config(['mail.default' => 'log']);
+
+    $tenant = Tenant::factory()->create([
+        'mail_mailer' => 'smtp',
+        'mail_host' => 'smtp.example.com',
+        'mail_port' => 465,
+        'mail_encryption' => 'ssl',
+        'mail_username' => 'user@example.com',
+        'mail_password' => 'secret',
+        'mail_from_address' => 'from@example.com',
+        'mail_from_name' => 'Tenant',
+    ]);
+
+    $resolved = app(TenantMailConfigurationResolver::class)->resolve($tenant);
+
+    expect($resolved->deliverable)->toBeTrue()
+        ->and($resolved->status)->toBe('tenant_smtp')
+        ->and($resolved->fromAddress)->toBe('from@example.com')
+        ->and($resolved->usesTenantSmtp())->toBeTrue();
+
+    $incomplete = Tenant::factory()->create([
+        'mail_mailer' => 'smtp',
+        'mail_host' => null,
+        'mail_port' => 465,
+        'mail_encryption' => 'ssl',
+    ]);
+    $fallback = app(TenantMailConfigurationResolver::class)->resolve($incomplete);
+    expect($fallback->deliverable)->toBeFalse()
+        ->and($fallback->status)->toBe('unavailable');
 });

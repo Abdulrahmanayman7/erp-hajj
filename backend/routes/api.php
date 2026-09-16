@@ -57,6 +57,7 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
 
         Route::get('/tenant-settings', [TenantSettingsController::class, 'show'])->name('tenant-settings.show');
         Route::patch('/tenant-settings', [TenantSettingsController::class, 'update'])->name('tenant-settings.update');
+        Route::post('/tenant-settings/test-email', [TenantSettingsController::class, 'testEmail'])->name('tenant-settings.test-email');
 
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
         Route::post('/users', [UserController::class, 'store'])->name('users.store');

@@ -408,3 +408,33 @@ test('non-owner cannot assign tenant_owner role', function (): void {
         ->assertStatus(422)
         ->assertJsonPath('code', 'USER_SELF_ROLE_ESCALATION_FORBIDDEN');
 });
+
+test('invite succeeds with tenant SMTP while server MAIL_MAILER is log', function (): void {
+    Event::fake([AuthorizationSecurityEvent::class]);
+    config(['mail.default' => 'log']);
+    Notification::fake();
+
+    $tenant = Tenant::factory()->create([
+        'mail_mailer' => 'smtp',
+        'mail_host' => 'smtp.example.com',
+        'mail_port' => 465,
+        'mail_encryption' => 'ssl',
+        'mail_username' => 'noreply@example.com',
+        'mail_password' => 'smtp-secret',
+        'mail_from_address' => 'noreply@example.com',
+        'mail_from_name' => 'Tenant SMTP',
+    ]);
+    actingAsTenantOwner($tenant);
+
+    spaPostJson('/api/v1/users', [
+        'name' => 'SMTP Invitee',
+        'email' => 'smtp-invitee@example.com',
+        'send_invite' => true,
+    ])
+        ->assertCreated()
+        ->assertJsonPath('data.invite_sent', true)
+        ->assertJsonPath('data.invite_code', null);
+
+    $invitee = User::query()->where('email', 'smtp-invitee@example.com')->firstOrFail();
+    Notification::assertSentTo($invitee, ResetPassword::class);
+});

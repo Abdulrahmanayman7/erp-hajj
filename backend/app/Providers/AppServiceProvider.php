@@ -50,6 +50,7 @@ use App\Modules\Notifications\Models\Notification;
 use App\Modules\Notifications\Policies\NotificationPolicy;
 use App\Modules\OrganizationStructure\Models\OrganizationUnit;
 use App\Modules\OrganizationStructure\Policies\OrganizationUnitPolicy;
+use App\Modules\Settings\Mail\TenantMailChannel;
 use App\Modules\Settings\Policies\TenantSettingsPolicy;
 use App\Modules\Settings\Support\TenantMailSenderResolver;
 use App\Modules\Tasks\Models\Task;
@@ -60,6 +61,7 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Notification as NotificationFacade;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
@@ -75,6 +77,11 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Password::defaults(fn (): Password => Password::min(8)->letters()->numbers());
+
+        // Tenant-aware mail channel for all notification mail (isolated SMTP; no Config::set).
+        NotificationFacade::extend('mail', function ($app) {
+            return $app->make(TenantMailChannel::class);
+        });
 
         ResetPassword::createUrlUsing(function (User $user, string $token): string {
             $frontend = rtrim((string) config('app.frontend_url', env('FRONTEND_URL', 'http://localhost:5173')), '/');

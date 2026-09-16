@@ -9,7 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Tenant email sender settings (Technical):** `tenants.mail_from_address` / `mail_from_name` via Settings API group `technical`; UI section «إعدادات البريد الإلكتروني»; invite/password-reset `MailMessage->from()` resolves tenant values with fallback to `config('mail.from.*')`. SMTP credentials remain env-only.
+- **Tenant SMTP configuration (Technical Settings):** nullable `tenants.mail_*` SMTP columns (`mail_password` encrypted); Settings UI for host/port/encryption/username/password + From identity; `POST /api/v1/tenant-settings/test-email`; isolated per-send mailer via `MailManager::build()` (no global `Config::set`); invitations and password-reset use tenant SMTP when complete, else server fallback; `log`/`array` are not deliverable. ADR-0016 §6 amended.
+
+- **Tenant email sender settings (Technical):** `tenants.mail_from_address` / `mail_from_name` via Settings API group `technical`; UI section «إعدادات البريد الإلكتروني»; invite/password-reset `MailMessage->from()` resolves tenant values with fallback to `config('mail.from.*')`.
 
 - **Change Request draft (awaiting approval):** PWA + Web Push background notifications — see `docs/00-project/CHANGE_REQUEST_PWA_WEB_PUSH.md`. No PWA/push code until approved.
 - **User create invite feedback:** API returns `invite_sent` + `invite_code` (`INVITE_MAILER_UNAVAILABLE` | `INVITE_SEND_FAILED`); UI forces manual temporary password when invite mail is unavailable; Hostinger SMTP ops note in `docs/08-deployment/HOSTINGER_SMTP.md`.

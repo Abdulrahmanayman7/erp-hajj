@@ -3,7 +3,9 @@
 namespace App\Modules\Settings\Requests;
 
 use App\Modules\Settings\Exceptions\SettingsDomainException;
+use App\Modules\Settings\Support\TenantMailConfigurationResolver;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class UpdateTenantSettingsRequest extends FormRequest
@@ -18,7 +20,17 @@ class UpdateTenantSettingsRequest extends FormRequest
     private const REGIONAL_ALLOWED = ['timezone'];
 
     /** @var list<string> */
-    private const TECHNICAL_ALLOWED = ['mail_from_address', 'mail_from_name'];
+    private const TECHNICAL_ALLOWED = [
+        'mail_mailer',
+        'mail_host',
+        'mail_port',
+        'mail_encryption',
+        'mail_username',
+        'mail_password',
+        'mail_password_clear',
+        'mail_from_address',
+        'mail_from_name',
+    ];
 
     /** @var list<string> */
     private const IMMUTABLE_ROOT = [
@@ -52,6 +64,18 @@ class UpdateTenantSettingsRequest extends FormRequest
             'regional.timezone' => ['sometimes', 'required', 'string', 'max:64'],
             'regional.locale' => ['prohibited'],
             'technical' => ['sometimes', 'array'],
+            'technical.mail_mailer' => ['sometimes', 'nullable', 'string', Rule::in(['smtp'])],
+            'technical.mail_host' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'technical.mail_port' => ['sometimes', 'nullable', 'integer', 'min:1', 'max:65535'],
+            'technical.mail_encryption' => [
+                'sometimes',
+                'nullable',
+                'string',
+                Rule::in(TenantMailConfigurationResolver::ALLOWED_ENCRYPTION),
+            ],
+            'technical.mail_username' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'technical.mail_password' => ['sometimes', 'nullable', 'string', 'max:500'],
+            'technical.mail_password_clear' => ['sometimes', 'boolean'],
             'technical.mail_from_address' => ['sometimes', 'nullable', 'email', 'max:255'],
             'technical.mail_from_name' => ['sometimes', 'nullable', 'string', 'max:255'],
             'tenant_id' => ['prohibited'],
@@ -143,6 +167,26 @@ class UpdateTenantSettingsRequest extends FormRequest
                 }
             }
 
+            $technical = is_array($payload['technical'] ?? null) ? $payload['technical'] : [];
+            $mailer = isset($technical['mail_mailer'])
+                ? strtolower(trim((string) $technical['mail_mailer']))
+                : null;
+
+            if ($mailer === 'smtp') {
+                $host = trim((string) ($technical['mail_host'] ?? ''));
+                if ($host === '' && array_key_exists('mail_host', $technical)) {
+                    $validator->errors()->add('technical.mail_host', 'خادم SMTP مطلوب عند تفعيل SMTP.');
+                }
+                if (array_key_exists('mail_port', $technical)
+                    && ($technical['mail_port'] === null || $technical['mail_port'] === '')) {
+                    $validator->errors()->add('technical.mail_port', 'منفذ SMTP مطلوب عند تفعيل SMTP.');
+                }
+                if (array_key_exists('mail_encryption', $technical)
+                    && ($technical['mail_encryption'] === null || $technical['mail_encryption'] === '')) {
+                    $validator->errors()->add('technical.mail_encryption', 'التشفير مطلوب عند تفعيل SMTP.');
+                }
+            }
+
             if (isset($payload['regional']['timezone']) && is_string($payload['regional']['timezone'])) {
                 $tz = $payload['regional']['timezone'];
                 if (! in_array($tz, timezone_identifiers_list(), true)) {
@@ -156,7 +200,7 @@ class UpdateTenantSettingsRequest extends FormRequest
      * @return array{
      *   general?: array{name?: string, contact_name?: ?string, contact_email?: ?string, contact_phone?: ?string},
      *   regional?: array{timezone?: string},
-     *   technical?: array{mail_from_address?: ?string, mail_from_name?: ?string}
+     *   technical?: array<string, mixed>
      * }
      */
     public function settingsPayload(): array
