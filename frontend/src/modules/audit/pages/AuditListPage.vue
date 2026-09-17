@@ -14,6 +14,7 @@ import type { ListAuditLogsParams } from '../types/audit'
 import { useCurrentUserQuery } from '@/modules/auth/queries/useCurrentUserQuery'
 import AppMobileFilters from '@/shared/components/AppMobileFilters.vue'
 import AppPageHeader from '@/shared/components/AppPageHeader.vue'
+import AppDateInput from '@/shared/components/AppDateInput.vue'
 import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
 
 const { t } = useI18n()
@@ -166,18 +167,18 @@ function formatTime(iso: string): string {
           </label>
           <label class="block text-sm">
             <span class="mb-1 block text-brand-text-secondary">{{ t('audit.filters.dateFrom') }}</span>
-            <input
+            <AppDateInput
               v-model="filters.date_from"
-              type="date"
-              class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+              :placeholder="t('audit.filters.dateFrom')"
+              :aria-label="t('audit.filters.dateFrom')"
             />
           </label>
           <label class="block text-sm">
             <span class="mb-1 block text-brand-text-secondary">{{ t('audit.filters.dateTo') }}</span>
-            <input
+            <AppDateInput
               v-model="filters.date_to"
-              type="date"
-              class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+              :placeholder="t('audit.filters.dateTo')"
+              :aria-label="t('audit.filters.dateTo')"
             />
           </label>
           <label class="block text-sm">
@@ -219,18 +220,18 @@ function formatTime(iso: string): string {
           </label>
           <label class="block text-sm">
             <span class="mb-1 block text-brand-text-secondary">{{ t('audit.filters.dateFrom') }}</span>
-            <input
+            <AppDateInput
               v-model="filters.date_from"
-              type="date"
-              class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+              :placeholder="t('audit.filters.dateFrom')"
+              :aria-label="t('audit.filters.dateFrom')"
             />
           </label>
           <label class="block text-sm">
             <span class="mb-1 block text-brand-text-secondary">{{ t('audit.filters.dateTo') }}</span>
-            <input
+            <AppDateInput
               v-model="filters.date_to"
-              type="date"
-              class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+              :placeholder="t('audit.filters.dateTo')"
+              :aria-label="t('audit.filters.dateTo')"
             />
           </label>
           <label class="block text-sm">

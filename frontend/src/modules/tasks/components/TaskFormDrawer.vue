@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { Loader2, X } from 'lucide-vue-next'
 import { listDecisions } from '@/modules/decisions/api/decisionsApi'
 import { listEmployees } from '@/modules/employees/api/employeesApi'
+import AppDateInput from '@/shared/components/AppDateInput.vue'
 import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 import { employeeSelectOption, numberedEntityOption, toSelectId } from '@/shared/lookups/selectOptions'
@@ -97,8 +98,8 @@ const emptyDecision = computed<AppSelectOption>(() => ({
         </section>
         <section class="space-y-3">
           <h4 class="font-bold">{{ t('tasks.sections.dates') }}</h4>
-          <label class="block"><span>{{ t('tasks.fields.startDate') }}</span><input :value="form.start_date" type="date" class="mt-1 h-11 w-full rounded-xl border border-brand-border px-3" @input="patch({ start_date: ($event.target as HTMLInputElement).value })" /></label>
-          <label class="block"><span>{{ t('tasks.fields.dueDate') }}</span><input :value="form.due_date" type="date" class="mt-1 h-11 w-full rounded-xl border border-brand-border px-3" @input="patch({ due_date: ($event.target as HTMLInputElement).value })" /><p v-if="fieldErrors.due_date" class="text-xs text-red-600">{{ t(`tasks.validation.${fieldErrors.due_date}`) }}</p></label>
+          <label class="block"><span>{{ t('tasks.fields.startDate') }}</span><AppDateInput class="mt-1" :model-value="form.start_date" @update:model-value="patch({ start_date: $event })" /></label>
+          <label class="block"><span>{{ t('tasks.fields.dueDate') }}</span><AppDateInput class="mt-1" :model-value="form.due_date" :invalid="Boolean(fieldErrors.due_date)" @update:model-value="patch({ due_date: $event })" /><p v-if="fieldErrors.due_date" class="text-xs text-red-600">{{ t(`tasks.validation.${fieldErrors.due_date}`) }}</p></label>
         </section>
         <p v-if="formError" class="text-red-700">{{ formError }}</p>
       </div><footer class="flex flex-col-reverse gap-2 border-t border-brand-border px-4 py-3 sm:flex-row sm:justify-end" style="padding-bottom: max(12px, env(safe-area-inset-bottom))"><button type="button" class="inline-flex h-11 items-center justify-center rounded-xl border border-brand-border px-4 text-sm font-semibold" @click="emit('close')">{{ t('tasks.cancel') }}</button><button type="submit" class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white" :disabled="submitting"><Loader2 v-if="submitting" class="inline h-4 w-4 animate-spin" /> {{ t(isEdit ? 'tasks.editCta' : 'tasks.createCta') }}</button></footer></form>

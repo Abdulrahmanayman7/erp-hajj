@@ -126,6 +126,7 @@ onMounted(() => {
       </div>
 
       <div class="sidebar-body relative z-[1] flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div class="relative flex min-h-0 flex-1 flex-col overflow-hidden">
         <nav
           class="sidebar-nav flex min-h-0 flex-1 flex-col gap-2 overflow-x-hidden overflow-y-auto overscroll-contain px-3 py-2"
         >
@@ -196,9 +197,10 @@ onMounted(() => {
         </nav>
 
         <div
-          class="sidebar-scroll-hint pointer-events-none absolute inset-x-0 bottom-[5.25rem] h-10 bg-gradient-to-t from-[#05291f] to-transparent"
+          class="sidebar-scroll-hint pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-[#05291f] to-transparent"
           aria-hidden="true"
         />
+        </div>
 
         <div class="sidebar-footer shrink-0 border-t border-white/[0.08] p-3.5 pt-3">
           <div v-if="collapsed" class="flex justify-center">

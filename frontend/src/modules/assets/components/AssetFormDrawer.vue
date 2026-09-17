@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { Loader2, X } from 'lucide-vue-next'
 
 import { listWarehouses } from '@/modules/inventory/api/warehousesApi'
+import AppDateInput from '@/shared/components/AppDateInput.vue'
 import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 import { toSelectId, warehouseSelectOption } from '@/shared/lookups/selectOptions'
@@ -202,11 +203,10 @@ const selectedWarehouse = computed(() =>
                 </label>
                 <label class="block">
                   <span class="text-sm font-medium text-brand-text">{{ t('assets.fields.acquisitionDate') }}</span>
-                  <input
-                    :value="form.acquisition_date"
-                    type="date"
-                    class="mt-1 h-11 w-full rounded-xl border border-brand-border px-3 text-sm"
-                    @input="patch({ acquisition_date: ($event.target as HTMLInputElement).value })"
+                  <AppDateInput
+                    class="mt-1"
+                    :model-value="form.acquisition_date"
+                    @update:model-value="patch({ acquisition_date: $event })"
                   />
                 </label>
               </div>

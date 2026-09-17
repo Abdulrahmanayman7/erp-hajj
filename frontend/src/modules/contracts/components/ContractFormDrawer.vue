@@ -5,6 +5,7 @@ import { Loader2, X } from 'lucide-vue-next'
 
 import { listCategories } from '../api/categoriesApi'
 import { listEmployees } from '@/modules/employees/api/employeesApi'
+import AppDateInput from '@/shared/components/AppDateInput.vue'
 import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 import { employeeSelectOption, namedCodeOption, toSelectId } from '@/shared/lookups/selectOptions'
@@ -287,13 +288,11 @@ onUnmounted(() => {
                     <span class="mb-2 block text-sm font-semibold text-brand-text">
                       {{ t('contracts.fields.startDate') }}
                     </span>
-                    <input
-                      :value="form.start_date"
-                      type="date"
-                      required
-                      class="h-12 w-full rounded-[11px] border border-brand-border bg-brand-surface px-3.5 text-sm text-brand-text outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15 disabled:bg-brand-bg disabled:opacity-70"
+                    <AppDateInput
+                      :model-value="form.start_date"
                       :disabled="submitting"
-                      @input="patch({ start_date: ($event.target as HTMLInputElement).value })"
+                      :invalid="Boolean(fieldErrors.start_date)"
+                      @update:model-value="patch({ start_date: $event })"
                     />
                     <p v-if="fieldErrors.start_date" class="mt-1.5 text-xs text-red-600">
                       {{ fieldErrors.start_date }}
@@ -303,12 +302,11 @@ onUnmounted(() => {
                     <span class="mb-2 block text-sm font-semibold text-brand-text">
                       {{ t('contracts.fields.endDate') }}
                     </span>
-                    <input
-                      :value="form.end_date"
-                      type="date"
-                      class="h-12 w-full rounded-[11px] border border-brand-border bg-brand-surface px-3.5 text-sm text-brand-text outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15 disabled:bg-brand-bg disabled:opacity-70"
+                    <AppDateInput
+                      :model-value="form.end_date"
                       :disabled="submitting"
-                      @input="patch({ end_date: ($event.target as HTMLInputElement).value })"
+                      :invalid="Boolean(fieldErrors.end_date)"
+                      @update:model-value="patch({ end_date: $event })"
                     />
                     <p v-if="fieldErrors.end_date" class="mt-1.5 text-xs text-red-600">
                       {{ fieldErrors.end_date }}

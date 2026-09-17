@@ -9,6 +9,7 @@ import { ApiError } from '@/shared/api/http'
 import AppMobileFilters from '@/shared/components/AppMobileFilters.vue'
 import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
+import AppDateInput from '@/shared/components/AppDateInput.vue'
 import AppTooltip from '@/shared/components/AppTooltip.vue'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
 import { usePermissions } from '@/shared/composables/usePermissions'
@@ -446,18 +447,18 @@ function canEditRow(meeting: Meeting): boolean {
           />
           <label class="block">
             <span class="sr-only">{{ t('meetings.filters.dateFrom') }}</span>
-            <input
+            <AppDateInput
               v-model="filters.date_from"
-              type="date"
-              class="h-11 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+              :placeholder="t('meetings.filters.dateFrom')"
+              :aria-label="t('meetings.filters.dateFrom')"
             />
           </label>
           <label class="block">
             <span class="sr-only">{{ t('meetings.filters.dateTo') }}</span>
-            <input
+            <AppDateInput
               v-model="filters.date_to"
-              type="date"
-              class="h-11 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+              :placeholder="t('meetings.filters.dateTo')"
+              :aria-label="t('meetings.filters.dateTo')"
             />
           </label>
           <label
@@ -478,18 +479,18 @@ function canEditRow(meeting: Meeting): boolean {
           />
           <label class="block">
             <span class="mb-1.5 block text-sm font-semibold text-brand-text">{{ t('meetings.filters.dateFrom') }}</span>
-            <input
+            <AppDateInput
               v-model="filters.date_from"
-              type="date"
-              class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+              :placeholder="t('meetings.filters.dateFrom')"
+              :aria-label="t('meetings.filters.dateFrom')"
             />
           </label>
           <label class="block">
             <span class="mb-1.5 block text-sm font-semibold text-brand-text">{{ t('meetings.filters.dateTo') }}</span>
-            <input
+            <AppDateInput
               v-model="filters.date_to"
-              type="date"
-              class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+              :placeholder="t('meetings.filters.dateTo')"
+              :aria-label="t('meetings.filters.dateTo')"
             />
           </label>
           <label

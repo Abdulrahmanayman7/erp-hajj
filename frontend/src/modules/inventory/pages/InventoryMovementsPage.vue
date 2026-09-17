@@ -9,15 +9,16 @@ import AppMobileFilters from '@/shared/components/AppMobileFilters.vue'
 import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
+import AppDateInput from '@/shared/components/AppDateInput.vue'
 import { toSelectId, warehouseSelectOption } from '@/shared/lookups/selectOptions'
 
 import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
 
 import { useInventoryMovementsQuery } from '../queries/useMovementsQuery'
+import InventoryQuantityBeforeAfter from '../components/InventoryQuantityBeforeAfter.vue'
 import type { ListInventoryMovementsParams, MovementType } from '../types/movements'
 import { MOVEMENT_TYPES } from '../types/movements'
 import {
-  formatQuantity,
   formatSignedQuantity,
   movementTypeBadgeClass,
   resolveInventoryListState,
@@ -145,16 +146,8 @@ function formatDateTime(value: string | null): string {
             @update:model-value="filters.warehouse_id = toSelectId($event)"
           />
           <AppSelect v-model="filters.type" :options="typeOptions" />
-          <input
-            v-model="filters.occurred_from"
-            type="date"
-            class="h-11 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
-          />
-          <input
-            v-model="filters.occurred_to"
-            type="date"
-            class="h-11 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
-          />
+          <AppDateInput v-model="filters.occurred_from" :placeholder="t('inventory.columns.occurredAt')" />
+          <AppDateInput v-model="filters.occurred_to" :placeholder="t('inventory.columns.occurredAt')" />
         </div>
       </template>
       <template #filters>
@@ -168,16 +161,8 @@ function formatDateTime(value: string | null): string {
             @update:model-value="filters.warehouse_id = toSelectId($event)"
           />
           <AppSelect v-model="filters.type" :options="typeOptions" />
-          <input
-            v-model="filters.occurred_from"
-            type="date"
-            class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
-          />
-          <input
-            v-model="filters.occurred_to"
-            type="date"
-            class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
-          />
+          <AppDateInput v-model="filters.occurred_from" :placeholder="t('inventory.columns.occurredAt')" />
+          <AppDateInput v-model="filters.occurred_to" :placeholder="t('inventory.columns.occurredAt')" />
         </div>
       </template>
     </AppMobileFilters>
@@ -294,9 +279,12 @@ function formatDateTime(value: string | null): string {
                 >
                   {{ formatSignedQuantity(movement.quantity, movement.direction) }}
                 </td>
-                <td class="px-4 py-3 text-xs">
-                  {{ formatQuantity(movement.balance_before) }} →
-                  {{ formatQuantity(movement.balance_after) }}
+                <td class="px-4 py-3">
+                  <InventoryQuantityBeforeAfter
+                    compact
+                    :before="movement.balance_before"
+                    :after="movement.balance_after"
+                  />
                 </td>
                 <td class="max-w-[12rem] truncate px-4 py-3">{{ movement.reason || '—' }}</td>
                 <td class="px-4 py-3">{{ movement.reference || '—' }}</td>
@@ -344,6 +332,15 @@ function formatDateTime(value: string | null): string {
               <dt>{{ t('inventory.columns.warehouse') }}</dt>
               <dd class="mt-0.5 font-medium text-brand-text">
                 {{ movement.warehouse?.name || '—' }}
+              </dd>
+            </div>
+            <div class="col-span-2">
+              <dt class="sr-only">{{ t('inventory.columns.beforeAfter') }}</dt>
+              <dd>
+                <InventoryQuantityBeforeAfter
+                  :before="movement.balance_before"
+                  :after="movement.balance_after"
+                />
               </dd>
             </div>
             <div class="col-span-2">

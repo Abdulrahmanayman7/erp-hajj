@@ -1428,6 +1428,8 @@ export const ar = {
       type: 'النوع',
       quantity: 'الكمية',
       beforeAfter: 'قبل / بعد',
+      quantityBefore: 'الكمية قبل',
+      quantityAfter: 'الكمية بعد',
       reason: 'السبب',
       reference: 'المرجع',
       performer: 'المنفّذ',

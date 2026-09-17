@@ -171,3 +171,25 @@ test('reset revokes database sessions for the user', function (): void {
 
     expect(DB::table('sessions')->where('user_id', $user->id)->count())->toBe(0);
 });
+
+test('password reset email html is rtl without changing arabic copy', function (): void {
+    $user = User::factory()->create([
+        'name' => 'مستخدم الاختبار',
+        'email' => 'rtl-mail@example.com',
+    ]);
+
+    $mail = (new ResetPassword('test-token'))->toMail($user);
+    $html = (string) $mail->render();
+
+    expect($mail->subject)->toBe('تعيين كلمة المرور — رفيع');
+    expect($html)
+        ->toContain('dir="rtl"')
+        ->toContain('direction: rtl')
+        ->toContain('مرحبًا '.$user->name)
+        ->toContain('تم إنشاء حسابك أو طلب إعادة تعيين كلمة المرور في منصة رفيع.')
+        ->toContain('اضغط الزر أدناه لتعيين كلمة مرور جديدة.')
+        ->toContain('تعيين كلمة المرور')
+        ->toContain('رابط التعيين صالح لمدة 60 دقيقة.')
+        ->toContain('إذا لم تطلب ذلك، يمكنك تجاهل هذه الرسالة.')
+        ->toContain('مع التحية، فريق رفيع');
+});

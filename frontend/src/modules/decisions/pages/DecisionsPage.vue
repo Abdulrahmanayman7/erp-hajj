@@ -10,6 +10,7 @@ import AppMobileFilters from '@/shared/components/AppMobileFilters.vue'
 import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
+import AppDateInput from '@/shared/components/AppDateInput.vue'
 import { employeeSelectOption, toSelectId } from '@/shared/lookups/selectOptions'
 import AppTooltip from '@/shared/components/AppTooltip.vue'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
@@ -382,26 +383,10 @@ async function save(): Promise<void> {
             class="h-11 w-28 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
             :placeholder="t('decisions.filters.meetingId')"
           />
-          <input
-            v-model="filters.effective_date_from"
-            type="date"
-            class="h-11 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
-          />
-          <input
-            v-model="filters.effective_date_to"
-            type="date"
-            class="h-11 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
-          />
-          <input
-            v-model="filters.due_date_from"
-            type="date"
-            class="h-11 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
-          />
-          <input
-            v-model="filters.due_date_to"
-            type="date"
-            class="h-11 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
-          />
+          <AppDateInput v-model="filters.effective_date_from" :placeholder="t('decisions.columns.effectiveDate')" />
+          <AppDateInput v-model="filters.effective_date_to" :placeholder="t('decisions.columns.effectiveDate')" />
+          <AppDateInput v-model="filters.due_date_from" :placeholder="t('decisions.columns.dueDate')" />
+          <AppDateInput v-model="filters.due_date_to" :placeholder="t('decisions.columns.dueDate')" />
         </div>
       </template>
       <template #filters>
@@ -430,31 +415,15 @@ async function save(): Promise<void> {
           <label class="block">
             <span class="mb-1.5 block text-sm font-semibold text-brand-text">{{ t('decisions.columns.effectiveDate') }}</span>
             <div class="grid grid-cols-2 gap-2">
-              <input
-                v-model="filters.effective_date_from"
-                type="date"
-                class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
-              />
-              <input
-                v-model="filters.effective_date_to"
-                type="date"
-                class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
-              />
+              <AppDateInput v-model="filters.effective_date_from" :placeholder="t('decisions.columns.effectiveDate')" />
+              <AppDateInput v-model="filters.effective_date_to" :placeholder="t('decisions.columns.effectiveDate')" />
             </div>
           </label>
           <label class="block">
             <span class="mb-1.5 block text-sm font-semibold text-brand-text">{{ t('decisions.columns.dueDate') }}</span>
             <div class="grid grid-cols-2 gap-2">
-              <input
-                v-model="filters.due_date_from"
-                type="date"
-                class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
-              />
-              <input
-                v-model="filters.due_date_to"
-                type="date"
-                class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
-              />
+              <AppDateInput v-model="filters.due_date_from" :placeholder="t('decisions.columns.dueDate')" />
+              <AppDateInput v-model="filters.due_date_to" :placeholder="t('decisions.columns.dueDate')" />
             </div>
           </label>
         </div>

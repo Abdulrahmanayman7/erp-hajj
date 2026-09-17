@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { Loader2, X } from 'lucide-vue-next'
 
 import { listPositions } from '../api/positionsApi'
+import AppDateInput from '@/shared/components/AppDateInput.vue'
 import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 import { positionSelectOption, toSelectId } from '@/shared/lookups/selectOptions'
@@ -242,12 +243,10 @@ onUnmounted(() => {
                 <span class="mb-2 block text-sm font-semibold text-brand-text">
                   {{ t('employees.fields.hireDate') }}
                 </span>
-                <input
-                  :value="form.hire_date"
-                  type="date"
-                  class="h-12 w-full rounded-[11px] border border-brand-border bg-brand-surface px-3.5 text-sm text-brand-text outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15 disabled:bg-brand-bg disabled:opacity-70"
+                <AppDateInput
+                  :model-value="form.hire_date"
                   :disabled="submitting"
-                  @input="patch({ hire_date: ($event.target as HTMLInputElement).value })"
+                  @update:model-value="patch({ hire_date: $event })"
                 />
               </label>
 

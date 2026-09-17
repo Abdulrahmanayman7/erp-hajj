@@ -21,6 +21,7 @@ import AppMobileFilters from '@/shared/components/AppMobileFilters.vue'
 import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
+import AppDateInput from '@/shared/components/AppDateInput.vue'
 import { toSelectId, userSelectOption } from '@/shared/lookups/selectOptions'
 import AppTooltip from '@/shared/components/AppTooltip.vue'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
@@ -376,16 +377,14 @@ function linkLabel(doc: Document): string {
                   : Number(($event.target as HTMLInputElement).value)
             "
           />
-          <input
+          <AppDateInput
             v-model="filters.uploaded_from"
-            type="date"
-            class="h-11 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+            :placeholder="t('documents.filters.uploadedFrom')"
             :aria-label="t('documents.filters.uploadedFrom')"
           />
-          <input
+          <AppDateInput
             v-model="filters.uploaded_to"
-            type="date"
-            class="h-11 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+            :placeholder="t('documents.filters.uploadedTo')"
             :aria-label="t('documents.filters.uploadedTo')"
           />
         </div>
@@ -416,16 +415,14 @@ function linkLabel(doc: Document): string {
                   : Number(($event.target as HTMLInputElement).value)
             "
           />
-          <input
+          <AppDateInput
             v-model="filters.uploaded_from"
-            type="date"
-            class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+            :placeholder="t('documents.filters.uploadedFrom')"
             :aria-label="t('documents.filters.uploadedFrom')"
           />
-          <input
+          <AppDateInput
             v-model="filters.uploaded_to"
-            type="date"
-            class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+            :placeholder="t('documents.filters.uploadedTo')"
             :aria-label="t('documents.filters.uploadedTo')"
           />
         </div>

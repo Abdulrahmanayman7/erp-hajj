@@ -20,6 +20,8 @@ import PermissionGuard from '@/shared/components/PermissionGuard.vue'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import { useToast } from '@/shared/composables/useToast'
 
+import InventoryQuantityBeforeAfter from '../components/InventoryQuantityBeforeAfter.vue'
+
 import InventoryItemFormDrawer from '../components/InventoryItemFormDrawer.vue'
 import { useUpdateInventoryItemMutation } from '../mutations/useItemMutations'
 import { useInventoryCategoriesQuery } from '../queries/useCategoriesQuery'
@@ -486,8 +488,9 @@ function assignForm(next: InventoryItemFormState): void {
               <li
                 v-for="movement in movements"
                 :key="movement.id"
-                class="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 transition hover:bg-[#EDF6F1]/60"
+                class="space-y-2 px-5 py-3.5 transition hover:bg-[#EDF6F1]/60"
               >
+                <div class="flex flex-wrap items-center justify-between gap-3">
                 <div class="flex min-w-0 flex-wrap items-center gap-2">
                   <span
                     class="inline-flex items-center rounded-lg border border-brand-border bg-brand-bg px-2 py-1 font-mono text-[11px] font-bold text-brand-text"
@@ -511,6 +514,11 @@ function assignForm(next: InventoryItemFormState): void {
                 >
                   {{ formatSignedQuantity(movement.quantity, movement.direction) }}
                 </span>
+                </div>
+                <InventoryQuantityBeforeAfter
+                  :before="movement.balance_before"
+                  :after="movement.balance_after"
+                />
               </li>
             </ul>
           </section>
