@@ -43,6 +43,46 @@ export const router = createRouter({
       meta: { guestOnly: true, layout: 'guest' },
     },
     {
+      path: '/setup',
+      name: 'platform-setup',
+      component: () => import('@/modules/platform/pages/PlatformSetupPage.vue'),
+      meta: { guestOnly: true, layout: 'guest' },
+    },
+    {
+      path: '/platform',
+      redirect: '/platform/tenants',
+    },
+    {
+      path: '/platform/tenants',
+      name: 'platform-tenants',
+      component: () => import('@/modules/platform/pages/PlatformTenantsPage.vue'),
+      meta: {
+        requiresAuth: true,
+        layout: 'platform',
+        permission: 'platform_tenants.view',
+      },
+    },
+    {
+      path: '/platform/tenants/create',
+      name: 'platform-tenants-create',
+      component: () => import('@/modules/platform/pages/PlatformTenantCreatePage.vue'),
+      meta: {
+        requiresAuth: true,
+        layout: 'platform',
+        permission: 'platform_tenants.create',
+      },
+    },
+    {
+      path: '/platform/tenants/:id',
+      name: 'platform-tenant-details',
+      component: () => import('@/modules/platform/pages/PlatformTenantDetailsPage.vue'),
+      meta: {
+        requiresAuth: true,
+        layout: 'platform',
+        permission: 'platform_tenants.view',
+      },
+    },
+    {
       path: '/app',
       name: 'app-home',
       component: () => import('@/modules/dashboard/pages/DashboardPage.vue'),
@@ -74,6 +114,12 @@ export const router = createRouter({
       path: '/app/organization',
       name: 'organization',
       component: () => import('@/modules/organization/pages/OrganizationPage.vue'),
+      meta: { requiresAuth: true, layout: 'app', permission: 'organization_units.view' },
+    },
+    {
+      path: '/app/organization-tree',
+      name: 'organization-tree',
+      component: () => import('@/modules/organization/pages/OrganizationTreePage.vue'),
       meta: { requiresAuth: true, layout: 'app', permission: 'organization_units.view' },
     },
     {

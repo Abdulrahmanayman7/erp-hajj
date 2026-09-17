@@ -83,6 +83,12 @@ final class SyncRolePermissions
                 throw AuthorizationDomainException::permissionNotFound();
             }
 
+            foreach ($permissions as $permission) {
+                if (PermissionCatalog::isPlatformPermission($permission->name)) {
+                    throw AuthorizationDomainException::permissionAssignmentForbidden();
+                }
+            }
+
             return $permissions;
         }
 

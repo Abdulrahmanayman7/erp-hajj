@@ -1,7 +1,7 @@
 # Tenancy — API (planned contract)
 
-> **Status:** Approved contract — no endpoints exist yet
-> **Last updated:** 2026-08-06
+> **Status:** Implemented (Platform Tenant Management + First Setup)
+> **Last updated:** 2026-09-17
 
 All endpoints follow [API_STANDARDS.md](../../04-api/API_STANDARDS.md): `/api/v1`, standardized envelope, Form Request validation, Policy checks, audited transitions, correlation ID on every request.
 
@@ -23,18 +23,32 @@ PATCH /api/v1/tenant-settings          # tenant_settings.update (audited: TENANT
 Lives under the **`/api/v1/platform/` prefix**: platform routes get their own middleware group (platform-user check, `PlatformContext` entry; no tenant context) and can never be confused with tenant-scoped resources. A separate version root (`/platform/v1`) was rejected — one API version discipline is simpler.
 
 ```text
+GET   /api/v1/platform/setup/status                 # public; { available: bool }
+POST  /api/v1/platform/setup                        # public when available; first Platform Admin
+
 GET   /api/v1/platform/tenants                      # platform_tenants.view (paginated; filter by status)
-POST  /api/v1/platform/tenants                      # platform_tenants.create (audited; validates tenant_code pattern + global uniqueness)
+POST  /api/v1/platform/tenants                      # platform_tenants.create → ProvisionTenant (audited)
 GET   /api/v1/platform/tenants/{tenant}             # platform_tenants.view
-PATCH /api/v1/platform/tenants/{tenant}             # platform_tenants.update (audited; tenant_code is IMMUTABLE — attempts to change it fail validation)
-POST  /api/v1/platform/tenants/{tenant}/activate    # platform_tenants.activate (audited; pending→active, suspended→active)
-POST  /api/v1/platform/tenants/{tenant}/suspend     # platform_tenants.suspend (audited; body: reason required)
-POST  /api/v1/platform/tenants/{tenant}/archive     # platform_tenants.archive (audited; body: reason required; terminal)
+PATCH /api/v1/platform/tenants/{tenant}             # platform_tenants.update (audited; tenant_code IMMUTABLE)
+GET   /api/v1/platform/tenants/{tenant}/users       # platform_tenants.update (ownership candidates)
+POST  /api/v1/platform/tenants/{tenant}/activate    # platform_tenants.activate
+POST  /api/v1/platform/tenants/{tenant}/suspend     # platform_tenants.suspend (body: reason required)
+POST  /api/v1/platform/tenants/{tenant}/archive     # platform_tenants.archive (body: reason required; terminal)
+POST  /api/v1/platform/tenants/{tenant}/transfer-ownership  # platform_tenants.update (body: new_owner_id)
+```
+
+Tenant-scoped (not platform business-data via `platform_tenants.view`):
+
+```text
+GET   /api/v1/organization-tree                     # organization_units.view + tenant context
 ```
 
 - Lifecycle transitions are explicit action endpoints (project rule: no generic status PATCH). Allowed transitions per [DATA_MODEL.md](DATA_MODEL.md); invalid ones (including anything from `archived`) return `422 INVALID_TENANT_TRANSITION`.
-- `tenant_code` on create: required, `/^[a-z0-9]+(?:-[a-z0-9]+)*$/`, max 63, lowercase enforced, globally unique. First tenant: `rafee` / **رفيع** (documented expected values — not seeded by this specification).
+- `tenant_code` on create: required, `/^[a-z0-9]+(?:-[a-z0-9]+)*$/`, max 63, lowercase enforced, globally unique.
+- First Setup closes when an active Platform Administrator with an active platform role exists — **not** when a tenant exists.
+- Invite after `ProvisionTenant` commit: invite failure does not roll back the tenant.
 - `{tenant}` binds against the platform-scoped `tenants` table; tenant users receive `403` from the platform middleware before binding.
+- `platform_tenants.access_data` remains catalogued but is **not** granted to default Super Admin and has **no** business-data endpoints in this release.
 
 ## Error codes introduced by this module
 

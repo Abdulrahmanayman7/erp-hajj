@@ -1,6 +1,8 @@
 <?php
 
+use App\Core\Authorization\Models\PlatformRole;
 use App\Core\Authorization\PermissionCatalogSynchronizer;
+use App\Core\Authorization\ProvisionDefaultPlatformRoles;
 use App\Core\Authorization\ProvisionDefaultTenantRoles;
 use App\Core\Tenancy\Models\Tenant;
 use App\Core\Tenancy\TenantContext;
@@ -54,6 +56,29 @@ function actingAsTenantOwner(?Tenant $tenant = null): User
     Sanctum::actingAs($owner);
 
     return $owner;
+}
+
+/**
+ * Sync platform catalog/roles and authenticate as platform_super_admin.
+ */
+function actingAsPlatformAdmin(array $attributes = []): User
+{
+    app(PermissionCatalogSynchronizer::class)->sync();
+    app(ProvisionDefaultPlatformRoles::class)->execute();
+
+    $user = platformUser(array_merge([
+        'email' => 'platform-admin-'.uniqid('', true).'@example.com',
+    ], $attributes));
+
+    $role = PlatformRole::query()->where('code', PlatformRole::CODE_SUPER_ADMIN)->firstOrFail();
+    $user->platformRoles()->attach($role->id, [
+        'assigned_by' => null,
+        'created_at' => now(),
+    ]);
+
+    Sanctum::actingAs($user->fresh());
+
+    return $user->fresh();
 }
 
 function assignRole(User $user, string $roleCode): void

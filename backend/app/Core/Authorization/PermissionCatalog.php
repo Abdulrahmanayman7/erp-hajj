@@ -27,9 +27,14 @@ final class PermissionCatalog
         'audit_logs' => 'سجل التدقيق',
         'dashboard' => 'لوحة التحكم',
         'tenant_settings' => 'إعدادات المنشأة',
+        'platform_tenants' => 'إدارة المنشآت (المنصة)',
     ];
 
     /**
+     * Tenant-grantable permission definitions only.
+     * Platform permissions live in {@see platformDefinitions()} and are never
+     * included in tenant role templates via {@see allNames()}.
+     *
      * @return list<array{name: string, display_name: string, module: string, description: string|null}>
      */
     public static function definitions(): array
@@ -137,11 +142,64 @@ final class PermissionCatalog
     }
 
     /**
+     * Platform-only permissions (grantable via platform_roles only).
+     * `platform_tenants.access_data` is catalogued for exceptional access but
+     * has no MVP endpoints and is excluded from the default platform_super_admin role.
+     *
+     * @return list<array{name: string, display_name: string, module: string, description: string|null}>
+     */
+    public static function platformDefinitions(): array
+    {
+        return [
+            ['name' => 'platform_tenants.view', 'display_name' => 'عرض سجل المنشآت', 'module' => 'platform_tenants', 'description' => 'عرض قائمة المنشآت وتفاصيلها في لوحة المنصة'],
+            ['name' => 'platform_tenants.create', 'display_name' => 'إنشاء منشأة', 'module' => 'platform_tenants', 'description' => 'إنشاء منشأة جديدة مع مالكها'],
+            ['name' => 'platform_tenants.update', 'display_name' => 'تحديث منشأة', 'module' => 'platform_tenants', 'description' => 'تحديث بيانات المنشأة التشغيلية (دون تغيير الرمز)'],
+            ['name' => 'platform_tenants.activate', 'display_name' => 'تفعيل منشأة', 'module' => 'platform_tenants', 'description' => 'تفعيل منشأة معلّقة أو معلقة'],
+            ['name' => 'platform_tenants.suspend', 'display_name' => 'تعليق منشأة', 'module' => 'platform_tenants', 'description' => 'تعليق منشأة نشطة مع سبب'],
+            ['name' => 'platform_tenants.archive', 'display_name' => 'أرشفة منشأة', 'module' => 'platform_tenants', 'description' => 'أرشفة منشأة بشكل نهائي مع سبب'],
+            ['name' => 'platform_tenants.access_data', 'display_name' => 'وصول استثنائي لبيانات المنشأة', 'module' => 'platform_tenants', 'description' => 'وصول قراءة استثنائي إلى بيانات منشأة عبر runAsTenant (بدون نقاط نهاية في MVP)'],
+        ];
+    }
+
+    /**
+     * Full catalog for synchronizer (tenant + platform).
+     *
+     * @return list<array{name: string, display_name: string, module: string, description: string|null}>
+     */
+    public static function allDefinitions(): array
+    {
+        return array_merge(self::definitions(), self::platformDefinitions());
+    }
+
+    /**
+     * Tenant permission names only — used by default tenant role templates.
+     *
      * @return list<string>
      */
     public static function allNames(): array
     {
         return array_column(self::definitions(), 'name');
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function allPlatformNames(): array
+    {
+        return array_column(self::platformDefinitions(), 'name');
+    }
+
+    /**
+     * Default platform_super_admin grants (excludes access_data).
+     *
+     * @return list<string>
+     */
+    public static function defaultPlatformSuperAdminPermissions(): array
+    {
+        return array_values(array_filter(
+            self::allPlatformNames(),
+            fn (string $name): bool => $name !== 'platform_tenants.access_data',
+        ));
     }
 
     /**

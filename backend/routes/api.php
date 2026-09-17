@@ -29,7 +29,10 @@ use App\Modules\Meetings\Controllers\MeetingAttendeeController;
 use App\Modules\Meetings\Controllers\MeetingController;
 use App\Modules\Meetings\Controllers\MeetingRecommendationController;
 use App\Modules\Notifications\Controllers\NotificationController;
+use App\Modules\OrganizationStructure\Controllers\OrganizationTreeController;
 use App\Modules\OrganizationStructure\Controllers\OrganizationUnitController;
+use App\Modules\Platform\Controllers\PlatformSetupController;
+use App\Modules\Platform\Controllers\PlatformTenantController;
 use App\Modules\Settings\Controllers\TenantSettingsController;
 use App\Modules\Tasks\Controllers\TaskController;
 use App\Modules\Users\Controllers\UserController;
@@ -37,6 +40,23 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->name('api.v1.')->group(function (): void {
     Route::get('/health', HealthController::class)->name('health');
+
+    Route::prefix('platform')->name('platform.')->group(function (): void {
+        Route::get('/setup/status', [PlatformSetupController::class, 'status'])->name('setup.status');
+        Route::post('/setup', [PlatformSetupController::class, 'store'])->name('setup.store');
+
+        Route::middleware(['auth:sanctum', 'user.active', 'platform.user', 'platform.context'])->group(function (): void {
+            Route::get('/tenants', [PlatformTenantController::class, 'index'])->name('tenants.index');
+            Route::post('/tenants', [PlatformTenantController::class, 'store'])->name('tenants.store');
+            Route::get('/tenants/{tenant}', [PlatformTenantController::class, 'show'])->name('tenants.show');
+            Route::patch('/tenants/{tenant}', [PlatformTenantController::class, 'update'])->name('tenants.update');
+            Route::post('/tenants/{tenant}/activate', [PlatformTenantController::class, 'activate'])->name('tenants.activate');
+            Route::post('/tenants/{tenant}/suspend', [PlatformTenantController::class, 'suspend'])->name('tenants.suspend');
+            Route::post('/tenants/{tenant}/archive', [PlatformTenantController::class, 'archive'])->name('tenants.archive');
+            Route::post('/tenants/{tenant}/transfer-ownership', [PlatformTenantController::class, 'transferOwnership'])->name('tenants.transfer-ownership');
+            Route::get('/tenants/{tenant}/users', [PlatformTenantController::class, 'users'])->name('tenants.users');
+        });
+    });
 
     Route::prefix('auth')->name('auth.')->group(function (): void {
         Route::post('/login', [AuthController::class, 'login'])->name('login');
@@ -77,6 +97,8 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::delete('/roles/{role}', [RoleController::class, 'destroy'])->name('roles.destroy');
 
         Route::get('/permissions', [PermissionController::class, 'index'])->name('permissions.index');
+
+        Route::get('/organization-tree', [OrganizationTreeController::class, 'show'])->name('organization-tree.show');
 
         Route::get('/organization-units', [OrganizationUnitController::class, 'index'])->name('organization-units.index');
         Route::post('/organization-units', [OrganizationUnitController::class, 'store'])->name('organization-units.store');

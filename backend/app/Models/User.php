@@ -5,6 +5,8 @@ namespace App\Models;
 use App\Core\Auth\AvatarGroup;
 use App\Core\Auth\UserStatus;
 use App\Core\Authorization\EffectivePermissions;
+use App\Core\Authorization\EffectivePlatformPermissions;
+use App\Core\Authorization\Models\PlatformRole;
 use App\Core\Tenancy\Models\Tenant;
 use App\Modules\Authorization\Models\Role;
 use App\Modules\Employees\Models\Employee;
@@ -76,6 +78,12 @@ class User extends Authenticatable
             ->withPivot(['tenant_id', 'assigned_by', 'created_at']);
     }
 
+    public function platformRoles(): BelongsToMany
+    {
+        return $this->belongsToMany(PlatformRole::class, 'platform_user_roles')
+            ->withPivot(['assigned_by', 'created_at']);
+    }
+
     public function employee(): HasOne
     {
         return $this->hasOne(Employee::class);
@@ -93,6 +101,10 @@ class User extends Authenticatable
 
     public function hasPermission(string $permission): bool
     {
+        if ($this->isPlatformUser()) {
+            return app(EffectivePlatformPermissions::class)->hasPermission($this, $permission);
+        }
+
         return app(EffectivePermissions::class)->hasPermission($this, $permission);
     }
 
@@ -101,11 +113,19 @@ class User extends Authenticatable
      */
     public function hasAnyPermission(array $permissions): bool
     {
+        if ($this->isPlatformUser()) {
+            return app(EffectivePlatformPermissions::class)->hasAnyPermission($this, $permissions);
+        }
+
         return app(EffectivePermissions::class)->hasAnyPermission($this, $permissions);
     }
 
     public function hasRole(string $roleCode): bool
     {
+        if ($this->isPlatformUser()) {
+            return app(EffectivePlatformPermissions::class)->hasRole($this, $roleCode);
+        }
+
         return app(EffectivePermissions::class)->hasRole($this, $roleCode);
     }
 }

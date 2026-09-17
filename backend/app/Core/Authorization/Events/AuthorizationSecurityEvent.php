@@ -257,6 +257,22 @@ final class AuthorizationSecurityEvent
 
     public const TENANT_EMAIL_TEST_SENT = 'TENANT_EMAIL_TEST_SENT';
 
+    public const TENANT_CREATED = 'TENANT_CREATED';
+
+    public const TENANT_UPDATED = 'TENANT_UPDATED';
+
+    public const TENANT_ACTIVATED = 'TENANT_ACTIVATED';
+
+    public const TENANT_SUSPENDED = 'TENANT_SUSPENDED';
+
+    public const TENANT_ARCHIVED = 'TENANT_ARCHIVED';
+
+    public const TENANT_OWNER_ASSIGNED = 'TENANT_OWNER_ASSIGNED';
+
+    public const TENANT_OWNER_CHANGED = 'TENANT_OWNER_CHANGED';
+
+    public const PLATFORM_ADMIN_BOOTSTRAPPED = 'PLATFORM_ADMIN_BOOTSTRAPPED';
+
     /**
      * @param  array<string, mixed>  $context
      */

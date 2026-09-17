@@ -23,6 +23,7 @@ const fieldErrors = ref<Record<string, string>>({})
 const formError = ref('')
 
 const resetSuccess = computed(() => route.query.reset === '1')
+const setupSuccess = computed(() => route.query.setup === '1')
 
 function fieldMessage(key: string | undefined): string | undefined {
   if (!key) return undefined
@@ -203,6 +204,14 @@ function onSubmit(): void {
                 {{ t('auth.loginSubtitle') }}
               </p>
             </div>
+
+            <p
+              v-if="setupSuccess"
+              class="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900 sm:mt-4"
+              role="status"
+            >
+              {{ t('platform.setup.successBanner') }}
+            </p>
 
             <p
               v-if="resetSuccess"

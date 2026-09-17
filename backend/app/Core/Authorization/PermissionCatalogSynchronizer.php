@@ -22,8 +22,10 @@ final class PermissionCatalogSynchronizer
         $created = 0;
         $updated = 0;
 
-        DB::transaction(function () use (&$created, &$updated): void {
-            foreach (PermissionCatalog::definitions() as $definition) {
+        $definitions = PermissionCatalog::allDefinitions();
+
+        DB::transaction(function () use ($definitions, &$created, &$updated): void {
+            foreach ($definitions as $definition) {
                 $existing = Permission::query()->where('name', $definition['name'])->first();
 
                 if ($existing === null) {
@@ -51,7 +53,7 @@ final class PermissionCatalogSynchronizer
         $result = [
             'created' => $created,
             'updated' => $updated,
-            'total' => count(PermissionCatalog::definitions()),
+            'total' => count($definitions),
         ];
 
         $this->security->record(AuthorizationSecurityEvent::PERMISSION_CATALOG_SYNCED, [

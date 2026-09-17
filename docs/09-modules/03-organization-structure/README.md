@@ -30,10 +30,15 @@ This module is **not** multi-tenancy. A **tenant** is the customer/company bound
 |---|---|
 | Backend | `backend/app/Modules/OrganizationStructure/` |
 | Frontend | `frontend/src/modules/organization/` |
-| App route | `/app/organization` |
+| App route | `/app/organization` (manage units) · `/app/organization-tree` (read-only projection) |
 | Sidebar | الهيكل التنظيمي (permission `organization_units.view`) |
-| API | `/api/v1/organization-units` |
+| Topbar | أيقونة شجرة المنشأة بجانب اسم المنشأة (نفس الصلاحية) |
+| API | `/api/v1/organization-units` · `GET /api/v1/organization-tree` |
 | Config | `backend/config/organization.php` (`max_depth`, default 8) |
+
+## Organization Tree projection
+
+Read-only view over existing Tenant + Ownership + Organization Units + Positions + Employees. Does **not** change domain models. Owner appears under Ownership only (not as an org manager unless already linked). Platform users without tenant context cannot call this endpoint (`TENANT_CONTEXT_MISSING`); `platform_tenants.view` does not grant business-data access.
 
 ## Personas
 

@@ -84,9 +84,18 @@ Application **must** validate user and role belong to the same tenant before ins
 
 Tenant RBAC tables must not store platform grants.
 
-**Recommended MVP:** `platform_roles` (no tenant_id) + `platform_user_roles` + `platform_role_permissions` **or** a single bootstrap: seeder attaches all `platform_tenants.*` to a code `super_admin` platform role assigned to designated platform users.
+**Implemented:** `platform_roles` (no `tenant_id`) + `platform_role_permissions` + `platform_user_roles`.
 
-Exact platform tables ship when platform admin UI is built; Sprint 006 must at least **reject** attaching `platform_tenants.*` to tenant `role_permissions`.
+| Table | Purpose |
+|---|---|
+| `platform_roles` | Platform-only roles (`code` unique); default `platform_super_admin` |
+| `platform_role_permissions` | Links platform roles → global `permissions` rows (`platform_tenants.*`) |
+| `platform_user_roles` | Assigns platform roles to users with `users.tenant_id` NULL |
+
+- Effective resolution: `EffectivePlatformPermissions` (cached; empty for tenant users).
+- First Setup (`POST /api/v1/platform/setup`) creates the first platform admin + provisions the Super Admin role; closes when any active platform admin with an active platform role exists (not when a tenant exists).
+- `platform_tenants.*` are never assignable to tenant roles (`SyncRolePermissions` / `GrantAuthority`).
+- Default Super Admin does **not** include `platform_tenants.access_data`.
 
 ---
 

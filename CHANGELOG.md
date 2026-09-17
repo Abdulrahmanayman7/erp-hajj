@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Platform Tenant Management (no-code provisioning):** Platform RBAC (`platform_roles` / `platform_role_permissions` / `platform_user_roles`); First Setup (`/setup` + `/api/v1/platform/setup*`); `ProvisionTenant` + lifecycle activate/suspend/archive; Ownership V1 transfer; Platform UI wizard; Organization Tree projection (`GET /api/v1/organization-tree` + topbar shortcut). Docs: `docs/08-deployment/HOSTINGER_FIRST_SETUP.md`.
+
 - **Tenant SMTP configuration (Technical Settings):** nullable `tenants.mail_*` SMTP columns (`mail_password` encrypted); Settings UI for host/port/encryption/username/password + From identity; `POST /api/v1/tenant-settings/test-email`; isolated per-send mailer via `MailManager::build()` (no global `Config::set`); invitations and password-reset use tenant SMTP when complete, else server fallback; `log`/`array` are not deliverable. ADR-0016 §6 amended.
 
 - **Tenant email sender settings (Technical):** `tenants.mail_from_address` / `mail_from_name` via Settings API group `technical`; UI section «إعدادات البريد الإلكتروني»; invite/password-reset `MailMessage->from()` resolves tenant values with fallback to `config('mail.from.*')`.

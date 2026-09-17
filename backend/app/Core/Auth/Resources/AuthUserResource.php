@@ -3,6 +3,7 @@
 namespace App\Core\Auth\Resources;
 
 use App\Core\Authorization\EffectivePermissions;
+use App\Core\Authorization\EffectivePlatformPermissions;
 use App\Core\Tenancy\Models\Tenant;
 use App\Core\Tenancy\TenantContext;
 use App\Models\User;
@@ -13,6 +14,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 /**
  * Authentication-safe current-user payload — no secrets.
  * Sprint 006: additive roles + sorted effective permissions.
+ * Platform users reuse the same `roles` / `permissions` keys (platform RBAC).
  *
  * @mixin User
  */
@@ -28,12 +30,19 @@ class AuthUserResource extends JsonResource
 
         $tenant = $user->relationLoaded('tenant') ? $user->tenant : $user->tenant()->first();
         $effective = app(EffectivePermissions::class);
+        $platformEffective = app(EffectivePlatformPermissions::class);
 
         $roles = [];
         $permissions = [];
         $employeeId = null;
 
-        if (! $user->isPlatformUser() && $user->tenant_id !== null) {
+        if ($user->isPlatformUser()) {
+            if (! $user->relationLoaded('platformRoles')) {
+                $user->load(['platformRoles' => fn ($q) => $q->where('platform_roles.is_active', true)]);
+            }
+            $roles = $platformEffective->activeRolesPayload($user);
+            $permissions = $platformEffective->forUser($user);
+        } elseif ($user->tenant_id !== null) {
             $tenantModel = $tenant instanceof Tenant
                 ? $tenant
                 : Tenant::query()->find($user->tenant_id);

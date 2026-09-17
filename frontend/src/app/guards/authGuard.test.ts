@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { ApiError } from '@/shared/api/http'
 import { currentUserQueryKey } from '@/modules/auth/queries/useCurrentUserQuery'
+import { platformSetupStatusQueryKey } from '@/modules/platform/queries/usePlatformSetupStatusQuery'
 
 import { createAuthGuard } from './authGuard'
 
@@ -10,12 +11,23 @@ vi.mock('@/modules/auth/api/authApi', () => ({
   fetchCurrentUser: vi.fn(),
 }))
 
-import { fetchCurrentUser } from '@/modules/auth/api/authApi'
+vi.mock('@/modules/platform/api/platformSetupApi', () => ({
+  fetchPlatformSetupStatus: vi.fn(),
+}))
 
-function route(meta: Record<string, unknown>, fullPath = '/app', name = 'app-home') {
+import { fetchCurrentUser } from '@/modules/auth/api/authApi'
+import { fetchPlatformSetupStatus } from '@/modules/platform/api/platformSetupApi'
+
+function route(
+  meta: Record<string, unknown>,
+  fullPath = '/app',
+  name = 'app-home',
+  path = fullPath,
+) {
   return {
     matched: [{ meta }],
     fullPath,
+    path,
     name,
     query: {},
   } as never
@@ -27,6 +39,8 @@ describe('createAuthGuard', () => {
   beforeEach(() => {
     queryClient = new QueryClient()
     vi.mocked(fetchCurrentUser).mockReset()
+    vi.mocked(fetchPlatformSetupStatus).mockReset()
+    vi.mocked(fetchPlatformSetupStatus).mockResolvedValue({ available: false })
   })
 
   it('redirects unauthenticated users from protected routes to login', async () => {
@@ -58,6 +72,38 @@ describe('createAuthGuard', () => {
     const result = await guard(route({ guestOnly: true }, '/login', 'login'), {} as never, (() => undefined) as never)
 
     expect(result).toMatchObject({ name: 'app-home' })
+  })
+
+  it('redirects authenticated platform users from guest routes to platform tenants', async () => {
+    queryClient.setQueryData(currentUserQueryKey, {
+      id: 1,
+      name: 'Platform',
+      email: 'p@example.com',
+      status: 'active',
+      is_platform_user: true,
+      tenant: null,
+      roles: [],
+      permissions: ['platform_tenants.view'],
+    })
+
+    const guard = createAuthGuard(queryClient)
+    const result = await guard(route({ guestOnly: true }, '/login', 'login'), {} as never, (() => undefined) as never)
+
+    expect(result).toMatchObject({ name: 'platform-tenants' })
+  })
+
+  it('redirects guests to setup when bootstrap is available', async () => {
+    vi.mocked(fetchCurrentUser).mockRejectedValue(new ApiError(401, {
+      success: false,
+      message: 'unauth',
+      code: 'AUTH_UNAUTHENTICATED',
+    }))
+    queryClient.setQueryData(platformSetupStatusQueryKey, { available: true })
+
+    const guard = createAuthGuard(queryClient)
+    const result = await guard(route({ guestOnly: true }, '/login', 'login'), {} as never, (() => undefined) as never)
+
+    expect(result).toMatchObject({ name: 'platform-setup' })
   })
 
   it('preserves a safe redirect path', async () => {
@@ -111,5 +157,54 @@ describe('createAuthGuard', () => {
     )
 
     expect(result).toMatchObject({ name: 'app-forbidden' })
+  })
+
+  it('soft-redirects platform users away from tenant app routes', async () => {
+    queryClient.setQueryData(currentUserQueryKey, {
+      id: 1,
+      name: 'Platform',
+      email: 'p@example.com',
+      status: 'active',
+      is_platform_user: true,
+      tenant: null,
+      roles: [],
+      permissions: ['platform_tenants.view'],
+    })
+
+    const guard = createAuthGuard(queryClient)
+    const result = await guard(
+      route({ requiresAuth: true, permission: 'dashboard.view' }, '/app', 'app-home', '/app'),
+      {} as never,
+      (() => undefined) as never,
+    )
+
+    expect(result).toMatchObject({ name: 'platform-tenants' })
+  })
+
+  it('blocks tenant users from platform routes', async () => {
+    queryClient.setQueryData(currentUserQueryKey, {
+      id: 1,
+      name: 'Tenant',
+      email: 't@example.com',
+      status: 'active',
+      is_platform_user: false,
+      tenant: null,
+      roles: [],
+      permissions: ['dashboard.view'],
+    })
+
+    const guard = createAuthGuard(queryClient)
+    const result = await guard(
+      route(
+        { requiresAuth: true, permission: 'platform_tenants.view' },
+        '/platform/tenants',
+        'platform-tenants',
+        '/platform/tenants',
+      ),
+      {} as never,
+      (() => undefined) as never,
+    )
+
+    expect(result).toMatchObject({ name: 'app-home' })
   })
 })

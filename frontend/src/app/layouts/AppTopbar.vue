@@ -7,6 +7,7 @@ import {
   ChevronDown,
   ChevronsLeft,
   ChevronsRight,
+  FolderTree,
   LogOut,
   Maximize2,
   Minimize2,
@@ -20,11 +21,13 @@ import AppTooltip from '@/shared/components/AppTooltip.vue'
 import UserAvatar from '@/shared/components/UserAvatar.vue'
 import { useAppChromeNavigation } from '@/shared/composables/useAppChromeNavigation'
 import { useFullscreen } from '@/shared/composables/useFullscreen'
+import { usePermissions } from '@/shared/composables/usePermissions'
 import { useSidebarCollapse } from '@/shared/composables/useSidebarCollapse'
 
 const { t } = useI18n()
 const route = useRoute()
 const { data: user } = useCurrentUserQuery()
+const { can } = usePermissions()
 const { mutate: logout, isPending: isLoggingOut } = useLogoutMutation()
 const { collapsed, toggleCollapsed } = useSidebarCollapse()
 const { isFullscreen, toggleFullscreen } = useFullscreen()
@@ -42,6 +45,10 @@ const menuRoot = ref<HTMLElement | null>(null)
 
 const displayName = computed(() => user.value?.name ?? t('auth.userFallback'))
 const roleLabel = computed(() => user.value?.roles?.[0]?.name ?? t('auth.systemManager'))
+const tenantName = computed(() => user.value?.tenant?.name ?? null)
+const canOpenOrganizationTree = computed(
+  () => !!user.value?.tenant && can('organization_units.view'),
+)
 const sidebarToggleLabel = computed(() =>
   collapsed.value ? t('shell.expandSidebar') : t('shell.collapseSidebar'),
 )
@@ -71,6 +78,8 @@ const breadcrumbs = computed(() => {
       crumbs[crumbs.length - 1] = { label: t('nav.rolesShort'), to: '/app/roles' }
       crumbs.push({ label: t('roles.actions.permissions'), to: null })
     }
+  } else if (path.startsWith('/app/organization-tree')) {
+    crumbs.push({ label: t('organizationTree.title'), to: null })
   } else if (path.startsWith('/app/organization')) {
     crumbs.push({ label: t('nav.organization'), to: null })
   } else if (path.startsWith('/app/employees')) {
@@ -236,6 +245,39 @@ onUnmounted(() => {
     </div>
 
     <div class="flex items-center gap-1 sm:gap-2">
+      <div
+        v-if="tenantName"
+        class="me-1 hidden max-w-[220px] items-center gap-1.5 rounded-xl border border-brand-border/80 bg-brand-bg/50 px-2.5 py-1.5 lg:flex"
+      >
+        <p class="min-w-0 truncate text-xs font-semibold text-brand-text" :title="tenantName">
+          {{ tenantName }}
+        </p>
+        <AppTooltip v-if="canOpenOrganizationTree" :text="t('organizationTree.openFromShell')" side="bottom">
+          <RouterLink
+            to="/app/organization-tree"
+            class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-brand-primary transition hover:bg-brand-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25"
+            :aria-label="t('organizationTree.openFromShell')"
+          >
+            <FolderTree class="h-4 w-4" :stroke-width="2" aria-hidden="true" />
+          </RouterLink>
+        </AppTooltip>
+      </div>
+
+      <!-- Mobile: org tree shortcut -->
+      <AppTooltip
+        v-if="canOpenOrganizationTree"
+        :text="t('organizationTree.openFromShell')"
+        side="bottom"
+      >
+        <RouterLink
+          to="/app/organization-tree"
+          class="inline-flex h-10 w-10 items-center justify-center rounded-xl text-brand-primary transition hover:bg-brand-bg lg:hidden"
+          :aria-label="t('organizationTree.openFromShell')"
+        >
+          <FolderTree class="h-5 w-5" :stroke-width="2" aria-hidden="true" />
+        </RouterLink>
+      </AppTooltip>
+
       <!-- Notifications: topbar on md+, bottom nav on mobile -->
       <div class="hidden md:block">
         <NotificationBell />

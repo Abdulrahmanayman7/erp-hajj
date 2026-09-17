@@ -18,10 +18,18 @@ class PermissionController
     {
         $this->authorize('viewPermissions', Role::class);
 
-        $query = Permission::query()->orderBy('module')->orderBy('name');
+        // Tenant catalog only — platform_tenants.* are never listed or assignable here.
+        $query = Permission::query()
+            ->where('module', '!=', 'platform_tenants')
+            ->orderBy('module')
+            ->orderBy('name');
 
         if ($request->filled('module')) {
-            $query->where('module', $request->query('module'));
+            $module = (string) $request->query('module');
+            if ($module === 'platform_tenants') {
+                return ApiResponse::success(data: ['modules' => []]);
+            }
+            $query->where('module', $module);
         }
 
         if ($request->filled('search')) {

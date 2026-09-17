@@ -5,7 +5,9 @@ use App\Core\Auth\Middleware\EnsureUserIsActive;
 use App\Core\Authorization\Exceptions\AuthorizationDomainException;
 use App\Core\Shared\ApiResponse;
 use App\Core\Shared\Middleware\AssignCorrelationId;
+use App\Core\Tenancy\Middleware\EnsurePlatformUser;
 use App\Core\Tenancy\Middleware\EnsureTenantIsActive;
+use App\Core\Tenancy\Middleware\EnterPlatformContext;
 use App\Core\Tenancy\Middleware\ResolveTenantContext;
 use App\Modules\Contracts\Exceptions\ContractDomainException;
 use App\Modules\Decisions\Exceptions\DecisionDomainException;
@@ -14,6 +16,7 @@ use App\Modules\Employees\Exceptions\EmployeeDomainException;
 use App\Modules\Meetings\Exceptions\MeetingDomainException;
 use App\Modules\Notifications\Exceptions\NotificationDomainException;
 use App\Modules\OrganizationStructure\Exceptions\OrganizationDomainException;
+use App\Modules\Platform\Exceptions\PlatformDomainException;
 use App\Modules\Settings\Exceptions\SettingsDomainException;
 use App\Modules\Tasks\Exceptions\TaskDomainException;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -57,6 +60,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'tenant.active' => EnsureTenantIsActive::class,
             'user.active' => EnsureUserIsActive::class,
+            'platform.user' => EnsurePlatformUser::class,
+            'platform.context' => EnterPlatformContext::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
@@ -98,6 +103,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(fn (DocumentDomainException $e): JsonResponse => $e->render());
         $exceptions->render(fn (NotificationDomainException $e): JsonResponse => $e->render());
         $exceptions->render(fn (SettingsDomainException $e): JsonResponse => $e->render());
+        $exceptions->render(fn (PlatformDomainException $e): JsonResponse => $e->render());
 
         $exceptions->render(function (AuthorizationException $e, Request $request): ?JsonResponse {
             if (! $request->is('api/*')) {

@@ -20,6 +20,8 @@ Describe the production topology and operational requirements for ERP Hajj. The 
 
 Infrastructure provider subscription and exact Saudi hosting choice remain TBD where contractually required — see [ENVIRONMENTS.md](ENVIRONMENTS.md).
 
+For a **fresh Hostinger deployment** (First Setup → Platform Admin → first Tenant), follow [HOSTINGER_FIRST_SETUP.md](HOSTINGER_FIRST_SETUP.md). Do not use Demo seeders as the production bootstrap path.
+
 ## Frontend (Vercel or equivalent)
 
 Expected project settings:

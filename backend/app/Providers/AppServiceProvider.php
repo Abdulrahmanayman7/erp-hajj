@@ -7,9 +7,11 @@ use App\Core\Audit\Listeners\PersistAuthSecurityAudit;
 use App\Core\Auth\Events\AuthSecurityEvent;
 use App\Core\Auth\Listeners\LogAuthSecurityEvent;
 use App\Core\Authorization\EffectivePermissions;
+use App\Core\Authorization\EffectivePlatformPermissions;
 use App\Core\Authorization\Events\AuthorizationSecurityEvent;
 use App\Core\Authorization\Listeners\LogAuthorizationSecurityEvent;
 use App\Core\Shared\CorrelationId;
+use App\Core\Tenancy\Models\Tenant;
 use App\Models\User;
 use App\Modules\Assets\Models\Asset;
 use App\Modules\Assets\Models\AssetCategory;
@@ -50,6 +52,7 @@ use App\Modules\Notifications\Models\Notification;
 use App\Modules\Notifications\Policies\NotificationPolicy;
 use App\Modules\OrganizationStructure\Models\OrganizationUnit;
 use App\Modules\OrganizationStructure\Policies\OrganizationUnitPolicy;
+use App\Modules\Platform\Policies\PlatformTenantPolicy;
 use App\Modules\Settings\Mail\TenantMailChannel;
 use App\Modules\Settings\Policies\TenantSettingsPolicy;
 use App\Modules\Settings\Support\TenantMailSenderResolver;
@@ -72,6 +75,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->scoped(CorrelationId::class);
         $this->app->scoped(EffectivePermissions::class);
+        $this->app->scoped(EffectivePlatformPermissions::class);
     }
 
     public function boot(): void
@@ -127,6 +131,7 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::policy(User::class, UserPolicy::class);
         Gate::policy(Role::class, RolePolicy::class);
+        Gate::policy(Tenant::class, PlatformTenantPolicy::class);
         Gate::policy(OrganizationUnit::class, OrganizationUnitPolicy::class);
         Gate::policy(Employee::class, EmployeePolicy::class);
         Gate::policy(Position::class, PositionPolicy::class);
