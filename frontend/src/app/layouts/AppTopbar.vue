@@ -146,84 +146,89 @@ onUnmounted(() => {
 
 <template>
   <header
-    class="app-topbar flex h-14 shrink-0 items-center justify-between gap-3 border-b border-brand-border bg-brand-surface px-3 shadow-none md:h-[72px] md:rounded-[1.5rem] md:border md:px-6 md:shadow-[0_10px_28px_-24px_rgba(23,32,29,0.28)] lg:px-8"
+    class="app-topbar flex h-12 shrink-0 items-center justify-between gap-2 px-3 md:h-14 md:gap-3 md:px-4 xl:h-16 xl:px-5"
     style="padding-inline-start: max(12px, env(safe-area-inset-left, 0px)); padding-inline-end: max(12px, env(safe-area-inset-right, 0px)); padding-top: env(safe-area-inset-top, 0px)"
   >
     <div class="flex min-w-0 items-center gap-2 md:gap-3">
-      <AppTooltip :text="t('shell.goBack')" side="bottom">
-        <button
-          type="button"
-          class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-brand-text-secondary transition duration-200 hover:bg-brand-bg hover:text-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25 active:scale-[0.96]"
-          :aria-label="t('shell.goBack')"
-          @click="goBack"
-        >
-          <ArrowRight class="h-5 w-5" :stroke-width="2.25" aria-hidden="true" />
-        </button>
-      </AppTooltip>
+      <!-- Desktop chrome tools (≥1280) -->
+      <div class="hidden items-center gap-1 xl:flex">
+        <AppTooltip :text="t('shell.goBack')" side="bottom">
+          <button
+            type="button"
+            class="app-btn-ghost"
+            :aria-label="t('shell.goBack')"
+            @click="goBack"
+          >
+            <ArrowRight class="h-5 w-5" :stroke-width="2" aria-hidden="true" />
+          </button>
+        </AppTooltip>
 
-      <AppTooltip :text="`${t('shell.refresh')} — ${t('shell.hardRefreshHint')}`" side="bottom">
-        <button
-          type="button"
-          class="relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-brand-text-secondary transition duration-200 hover:bg-brand-bg hover:text-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25 active:scale-[0.96] select-none"
-          :aria-label="refreshLabel"
-          :aria-valuemin="0"
-          :aria-valuemax="100"
-          :aria-valuenow="hardRefreshProgress"
-          :aria-busy="isHoldingRefresh"
-          @pointerdown.prevent="onRefreshPointerDown"
-          @pointerup="onRefreshPointerUp"
-          @pointerleave="onRefreshPointerCancel"
-          @pointercancel="onRefreshPointerCancel"
-        >
-          <span
-            v-if="isHoldingRefresh"
-            class="absolute inset-1 rounded-[0.65rem] bg-brand-primary/10"
-            :style="{ opacity: Math.max(0.2, hardRefreshProgress / 100) }"
-            aria-hidden="true"
-          />
-          <RefreshCw
-            class="relative h-5 w-5"
-            :class="{ 'animate-spin': isHoldingRefresh }"
-            :stroke-width="2.25"
-            aria-hidden="true"
-          />
-        </button>
-      </AppTooltip>
+        <AppTooltip :text="`${t('shell.refresh')} — ${t('shell.hardRefreshHint')}`" side="bottom">
+          <button
+            type="button"
+            class="app-btn-ghost relative select-none"
+            :aria-label="refreshLabel"
+            :aria-valuemin="0"
+            :aria-valuemax="100"
+            :aria-valuenow="hardRefreshProgress"
+            :aria-busy="isHoldingRefresh"
+            @pointerdown.prevent="onRefreshPointerDown"
+            @pointerup="onRefreshPointerUp"
+            @pointerleave="onRefreshPointerCancel"
+            @pointercancel="onRefreshPointerCancel"
+          >
+            <span
+              v-if="isHoldingRefresh"
+              class="absolute inset-1 rounded-[8px] bg-brand-primary/10"
+              :style="{ opacity: Math.max(0.2, hardRefreshProgress / 100) }"
+              aria-hidden="true"
+            />
+            <RefreshCw
+              class="relative h-5 w-5"
+              :class="{ 'animate-spin': isHoldingRefresh }"
+              :stroke-width="2"
+              aria-hidden="true"
+            />
+          </button>
+        </AppTooltip>
 
-      <AppTooltip :text="sidebarToggleLabel" side="bottom">
-        <button
-          type="button"
-          class="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl text-brand-primary-dark transition duration-200 hover:bg-brand-bg hover:text-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25 active:scale-[0.96] motion-reduce:transition-none motion-reduce:active:scale-100 md:inline-flex"
-          :aria-label="sidebarToggleLabel"
-          :aria-expanded="!collapsed"
-          aria-controls="app-sidebar"
-          @click="toggleCollapsed"
-        >
-          <ChevronsRight
-            v-if="!collapsed"
-            class="h-5 w-5"
-            :stroke-width="2.25"
-            aria-hidden="true"
-          />
-          <ChevronsLeft
-            v-else
-            class="h-5 w-5"
-            :stroke-width="2.25"
-            aria-hidden="true"
-          />
-        </button>
-      </AppTooltip>
+        <AppTooltip :text="sidebarToggleLabel" side="bottom">
+          <button
+            type="button"
+            class="app-btn-ghost text-brand-primary-dark"
+            :aria-label="sidebarToggleLabel"
+            :aria-expanded="!collapsed"
+            aria-controls="app-sidebar"
+            @click="toggleCollapsed"
+          >
+            <ChevronsRight
+              v-if="!collapsed"
+              class="h-5 w-5"
+              :stroke-width="2"
+              aria-hidden="true"
+            />
+            <ChevronsLeft v-else class="h-5 w-5" :stroke-width="2" aria-hidden="true" />
+          </button>
+        </AppTooltip>
 
-      <div class="hidden h-7 w-px shrink-0 bg-brand-border/90 md:block" aria-hidden="true" />
+        <div class="mx-1 h-5 w-px shrink-0 bg-brand-border" aria-hidden="true" />
+      </div>
 
-      <!-- Mobile: compact page context -->
+      <!-- Mobile: brand mark only -->
       <div class="min-w-0 md:hidden">
-        <p class="truncate text-sm font-bold text-brand-text">{{ pageTitle }}</p>
-        <p class="truncate text-[11px] text-brand-text-secondary">{{ t('shell.productLabel') }}</p>
+        <p class="truncate text-[17px] font-bold leading-none tracking-tight text-brand-primary-dark">
+          {{ t('auth.companyName') }}
+        </p>
+      </div>
+
+      <!-- Tablet: page title -->
+      <div class="hidden min-w-0 md:block xl:hidden">
+        <p class="truncate text-[15px] font-semibold text-brand-text">{{ pageTitle }}</p>
+        <p v-if="tenantName" class="truncate text-xs text-brand-text-muted">{{ tenantName }}</p>
       </div>
 
       <!-- Desktop breadcrumbs -->
-      <nav class="hidden min-w-0 text-sm md:block" aria-label="مسار التنقل">
+      <nav class="hidden min-w-0 text-sm xl:block" aria-label="مسار التنقل">
         <ol class="flex flex-wrap items-center gap-1.5 text-brand-text-secondary">
           <li
             v-for="(crumb, index) in breadcrumbs"
@@ -244,18 +249,18 @@ onUnmounted(() => {
       </nav>
     </div>
 
-    <div class="flex items-center gap-1 sm:gap-2">
+    <div class="flex items-center gap-0.5">
       <div
         v-if="tenantName"
-        class="me-1 hidden max-w-[220px] items-center gap-1.5 rounded-xl border border-brand-border/80 bg-brand-bg/50 px-2.5 py-1.5 lg:flex"
+        class="me-1 hidden max-w-[200px] items-center gap-1 rounded-[10px] bg-[var(--surface-subtle)] px-2.5 py-1 xl:flex"
       >
-        <p class="min-w-0 truncate text-xs font-semibold text-brand-text" :title="tenantName">
+        <p class="min-w-0 truncate text-xs font-medium text-brand-text" :title="tenantName">
           {{ tenantName }}
         </p>
         <AppTooltip v-if="canOpenOrganizationTree" :text="t('organizationTree.openFromShell')" side="bottom">
           <RouterLink
             to="/app/organization-tree"
-            class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-brand-primary transition hover:bg-brand-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25"
+            class="app-btn-ghost !h-8 !w-8 text-brand-primary"
             :aria-label="t('organizationTree.openFromShell')"
           >
             <FolderTree class="h-4 w-4" :stroke-width="2" aria-hidden="true" />
@@ -263,7 +268,6 @@ onUnmounted(() => {
         </AppTooltip>
       </div>
 
-      <!-- Mobile: org tree shortcut -->
       <AppTooltip
         v-if="canOpenOrganizationTree"
         :text="t('organizationTree.openFromShell')"
@@ -271,22 +275,19 @@ onUnmounted(() => {
       >
         <RouterLink
           to="/app/organization-tree"
-          class="inline-flex h-10 w-10 items-center justify-center rounded-xl text-brand-primary transition hover:bg-brand-bg lg:hidden"
+          class="app-btn-ghost hidden text-brand-primary md:inline-flex xl:hidden"
           :aria-label="t('organizationTree.openFromShell')"
         >
-          <FolderTree class="h-5 w-5" :stroke-width="2" aria-hidden="true" />
+          <FolderTree class="h-5 w-5" :stroke-width="1.75" aria-hidden="true" />
         </RouterLink>
       </AppTooltip>
 
-      <!-- Notifications: topbar on md+, bottom nav on mobile -->
-      <div class="hidden md:block">
-        <NotificationBell />
-      </div>
+      <NotificationBell />
 
       <AppTooltip :text="fullscreenToggleLabel" side="bottom">
         <button
           type="button"
-          class="hidden h-10 w-10 items-center justify-center rounded-xl text-brand-text-secondary transition hover:bg-brand-bg hover:text-brand-primary md:inline-flex"
+          class="app-btn-ghost hidden xl:inline-flex"
           :aria-label="fullscreenToggleLabel"
           :aria-pressed="isFullscreen"
           @click="toggleFullscreen"
@@ -306,30 +307,31 @@ onUnmounted(() => {
         </button>
       </AppTooltip>
 
-      <div ref="menuRoot" class="relative ms-1">
+      <div ref="menuRoot" class="relative">
         <button
           type="button"
-          class="inline-flex max-w-[240px] items-center gap-2 rounded-xl px-1.5 py-1.5 transition hover:bg-brand-bg sm:px-2"
+          class="inline-flex max-w-[220px] items-center gap-2 rounded-[10px] p-1 transition hover:bg-[var(--surface-muted)] md:px-1.5"
           :aria-expanded="menuOpen"
           aria-haspopup="menu"
           @click.stop="toggleMenu"
         >
           <UserAvatar :user="user" size="lg" :lazy="false" />
-          <div class="hidden min-w-0 text-start sm:block">
-            <p class="truncate text-sm font-semibold text-brand-text">{{ displayName }}</p>
-            <p class="truncate text-xs text-brand-text-secondary">{{ roleLabel }}</p>
+          <div class="hidden min-w-0 text-start xl:block">
+            <p class="truncate text-sm font-semibold leading-tight text-brand-text">{{ displayName }}</p>
+            <p class="truncate text-xs leading-tight text-brand-text-muted">{{ roleLabel }}</p>
           </div>
-          <ChevronDown class="hidden h-4 w-4 text-brand-text-muted sm:block" :stroke-width="1.75" />
+          <ChevronDown class="hidden h-4 w-4 text-brand-text-muted xl:block" :stroke-width="1.75" />
         </button>
 
         <div
           v-if="menuOpen"
-          class="absolute inset-e-0 top-full z-40 mt-3 w-44 overflow-hidden rounded-xl border border-brand-border bg-brand-surface p-1 shadow-[0_14px_32px_-18px_rgba(23,32,29,0.38)]"
+          class="absolute inset-e-0 top-full z-40 mt-2 w-44 overflow-hidden rounded-[14px] border border-brand-border bg-brand-surface p-1"
+          style="box-shadow: var(--shadow-overlay)"
           role="menu"
         >
           <button
             type="button"
-            class="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-[13px] font-medium text-brand-danger transition hover:bg-red-50/90 disabled:opacity-60"
+            class="flex w-full items-center gap-2 rounded-[8px] px-2.5 py-2 text-[13px] font-medium text-brand-danger transition hover:bg-[var(--danger-soft)] disabled:opacity-60"
             role="menuitem"
             :disabled="isLoggingOut"
             @click="onLogout"

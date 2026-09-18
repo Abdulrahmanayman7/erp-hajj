@@ -9,7 +9,7 @@ const year = computed(() => new Date().getFullYear())
 
 <template>
   <footer
-    class="shrink-0 rounded-[1.5rem] border border-brand-border bg-brand-surface px-5 py-4 shadow-[0_10px_28px_-24px_rgba(23,32,29,0.22)] sm:px-6 lg:px-8"
+    class="shrink-0 rounded-[16px] border border-brand-border bg-brand-surface px-5 py-4 sm:px-6 lg:px-8"
   >
     <div
       class="mx-auto flex w-full max-w-[1440px] flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"

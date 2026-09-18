@@ -1,0 +1,1 @@
+var e=[`AUTH_ACCOUNT_DISABLED`,`TENANT_PENDING`,`TENANT_SUSPENDED`,`TENANT_ARCHIVED`,`TENANT_CONTEXT_INVALID`];function t(t){return!!t&&e.includes(t)}export{t};

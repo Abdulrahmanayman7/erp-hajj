@@ -113,7 +113,7 @@ onUnmounted(() => {
   <div ref="root" class="relative">
     <button
       type="button"
-      class="relative inline-flex h-10 w-10 items-center justify-center rounded-xl text-brand-text-secondary transition hover:bg-brand-bg hover:text-brand-primary"
+      class="relative inline-flex h-11 w-11 items-center justify-center rounded-[10px] text-brand-text-secondary transition hover:bg-[var(--surface-muted)] hover:text-brand-primary"
       :aria-label="t('nav.notifications')"
       :aria-expanded="open"
       aria-haspopup="dialog"

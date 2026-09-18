@@ -1,0 +1,1 @@
+import{i as e}from"./http-CFRgc7IN.js";import{t}from"./useQuery-C5kBDYW2.js";async function n(){return(await e(`/api/v1/dashboard`)).data}var r=[`dashboard`];function i(){return t({queryKey:r,queryFn:n,refetchOnWindowFocus:!0})}export{i as n,r as t};

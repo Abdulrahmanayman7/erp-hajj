@@ -240,7 +240,7 @@ onMounted(() => {
     <!-- Persistent tablet+ edge handle: stays visible when expanded or collapsed -->
     <button
       type="button"
-      class="sidebar-edge-toggle absolute top-24 z-30 hidden h-10 w-10 items-center justify-center rounded-full border border-brand-border bg-brand-surface text-brand-primary shadow-[0_8px_24px_-12px_rgba(23,32,29,0.45)] transition hover:bg-brand-bg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/30 active:scale-[0.96] md:inline-flex"
+      class="sidebar-edge-toggle absolute top-24 z-30 hidden h-10 w-10 items-center justify-center rounded-full border border-brand-border bg-brand-surface text-brand-primary shadow-[0_8px_24px_-12px_rgba(23,32,29,0.45)] transition hover:bg-brand-bg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/30 active:scale-[0.96] xl:inline-flex"
       :aria-label="sidebarToggleLabel"
       :aria-expanded="!collapsed"
       aria-controls="app-sidebar"

@@ -9,7 +9,6 @@ import {
   getTopKpis,
   effectiveSeverity,
   isSafeAppHref,
-  severityCardClass,
   severityValueClass,
 } from '../utils/dashboardDisplay'
 
@@ -28,45 +27,52 @@ const iconFor: Partial<Record<DashboardKpiKey, Component>> = {
   custodies_overdue: IdCard,
   meetings_today: CalendarDays,
 }
+
+function iconTone(severity: string, value: number): string {
+  if (value <= 0) return 'app-kpi-icon--neutral'
+  if (severity === 'critical') return 'app-kpi-icon--critical'
+  if (severity === 'warning') return 'app-kpi-icon--warning'
+  return 'app-kpi-icon--info'
+}
 </script>
 
 <template>
-  <div
-    v-if="entries.length > 0"
-    class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3"
-  >
-    <component
-      :is="isSafeAppHref(entry.kpi.href) ? RouterLink : 'div'"
-      v-for="entry in entries"
-      :key="entry.key"
-      :to="isSafeAppHref(entry.kpi.href) ? entry.kpi.href : undefined"
-      class="group relative min-h-[112px] min-w-0 overflow-hidden rounded-2xl border p-3.5 transition sm:min-h-[128px] sm:p-5"
-      :class="[
-        severityCardClass(effectiveSeverity(entry.kpi.severity, entry.kpi.value)),
-        isSafeAppHref(entry.kpi.href)
-          ? 'hover:border-brand-primary/30 hover:shadow-[0_10px_28px_-20px_rgba(6,78,59,0.35)]'
-          : '',
-      ]"
-    >
-      <div class="flex items-start justify-between gap-2 sm:gap-3">
+  <section v-if="entries.length > 0" class="space-y-3">
+    <h2 class="app-type-section">{{ t('dashboard.overview') }}</h2>
+    <div class="grid grid-cols-2 gap-2.5 md:gap-3 xl:grid-cols-3">
+      <component
+        :is="isSafeAppHref(entry.kpi.href) ? RouterLink : 'div'"
+        v-for="entry in entries"
+        :key="entry.key"
+        :to="isSafeAppHref(entry.kpi.href) ? entry.kpi.href : undefined"
+        class="app-surface-flat group flex min-h-[96px] min-w-0 flex-col p-3 transition md:min-h-[104px] md:p-3.5"
+        :class="
+          isSafeAppHref(entry.kpi.href)
+            ? 'hover:border-brand-primary/25 [@media(hover:hover)]:hover:bg-[var(--surface-subtle)]'
+            : ''
+        "
+      >
         <span
-          class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
-          :class="entry.kpi.value > 0 ? 'bg-white/70 text-brand-primary-dark' : 'bg-brand-bg text-brand-text-muted'"
+          class="inline-flex h-8 w-8 items-center justify-center rounded-[8px]"
+          :class="iconTone(effectiveSeverity(entry.kpi.severity, entry.kpi.value), entry.kpi.value)"
           aria-hidden="true"
         >
-          <component :is="iconFor[entry.key] ?? ClipboardList" class="h-[18px] w-[18px]" :stroke-width="1.9" />
+          <component
+            :is="iconFor[entry.key] ?? ClipboardList"
+            class="h-4 w-4"
+            :stroke-width="1.85"
+          />
         </span>
-        <span class="max-w-[55%] text-end text-[11px] font-semibold leading-snug text-brand-text-muted sm:max-w-none sm:text-xs">
-          {{ entry.kpi.value > 0 ? t('dashboard.requiresFollowUp') : t('dashboard.allClear') }}
-        </span>
-      </div>
-      <p class="mt-3 break-words text-sm font-semibold leading-snug text-brand-text-secondary sm:mt-4">
-        {{ entry.kpi.label }}
-      </p>
-      <p
-        class="mt-1 text-2xl font-bold tabular-nums tracking-tight"
-        :class="severityValueClass(effectiveSeverity(entry.kpi.severity, entry.kpi.value))"
-      >{{ entry.kpi.value }}</p>
-    </component>
-  </div>
+        <p
+          class="app-type-kpi mt-2.5"
+          :class="severityValueClass(effectiveSeverity(entry.kpi.severity, entry.kpi.value))"
+        >
+          {{ entry.kpi.value }}
+        </p>
+        <p class="mt-0.5 line-clamp-2 text-[12px] font-medium leading-snug text-brand-text-secondary md:text-[13px]">
+          {{ entry.kpi.label }}
+        </p>
+      </component>
+    </div>
+  </section>
 </template>

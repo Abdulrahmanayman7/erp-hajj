@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Responsive UX QA (Phase 1.5):** tablet filters use sheet (not compressed desktop toolbar); mobile header lean (title + notifications + avatar); Quick Action Escape + safe-area; Dashboard greeting/KPI density polish; Tasks apply-count CTA; touch targets ≥44px on shell chrome.
+- **Visual design rebuild (Phase 1.6):** semantic surface/radius/shadow/typography tokens; calm AppShell (light tablet rail, native bottom nav, brand mobile topbar); Dashboard intro + status + compact KPI rebuild; Tasks segmented control + mobile card hierarchy + filter sheet polish. No additional module migration.
+
 - **PWA install experience hardening:** global RAFEEA icons (transparent `any` + brand-green maskable), improved `manifest.webmanifest` (standalone/RTL), iOS meta, locked mobile viewport + 16px input anti-focus-zoom, standalone detection (`html.is-standalone`), `usePwaInstall` + soft install card (More sheet / Platform mobile), safer shell SW (`erp-hajj-shell-v2`: network-first navigations, cache-first hashed assets, never cache `/api/*`). Docs: `docs/08-deployment/PWA.md`.
 
 - **Platform Tenant Management (no-code provisioning):** Platform RBAC (`platform_roles` / `platform_role_permissions` / `platform_user_roles`); First Setup (`/setup` + `/api/v1/platform/setup*`); `ProvisionTenant` + lifecycle activate/suspend/archive; Ownership V1 transfer; Platform UI wizard; Organization Tree projection (`GET /api/v1/organization-tree` + topbar shortcut). Docs: `docs/08-deployment/HOSTINGER_FIRST_SETUP.md`.

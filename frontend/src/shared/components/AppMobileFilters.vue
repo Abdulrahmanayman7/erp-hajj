@@ -10,13 +10,16 @@ const props = withDefaults(
     search?: string
     searchPlaceholder?: string
     activeCount?: number
-    /** When false, hide the mobile search field (filters-only pages). */
+    /** When false, hide the mobile/tablet search field (filters-only pages). */
     showSearch?: boolean
+    /** Optional primary apply CTA label (e.g. عرض X مهمة). */
+    applyLabel?: string
   }>(),
   {
     search: '',
     searchPlaceholder: '',
     showSearch: true,
+    applyLabel: undefined,
   },
 )
 
@@ -34,6 +37,10 @@ const filterLabel = computed(() => {
   const count = props.activeCount ?? 0
   return count > 0 ? t('shell.filtersWithCount', { count }) : t('shell.filters')
 })
+
+const resolvedApplyLabel = computed(
+  () => props.applyLabel?.trim() || t('shell.applyFilters'),
+)
 
 function openSheet(): void {
   open.value = true
@@ -75,8 +82,11 @@ onUnmounted(() => {
 
 <template>
   <div class="space-y-3">
-    <!-- Mobile: search + filters trigger -->
-    <div class="flex items-center gap-2 md:hidden">
+    <!--
+      Mobile + Tablet (<1280): search + filter sheet (touch-first).
+      Desktop (≥1280): dense inline toolbar via #desktop slot.
+    -->
+    <div class="flex items-center gap-2 xl:hidden">
       <div v-if="showSearch" class="relative min-w-0 flex-1">
         <Search
           class="pointer-events-none absolute inset-s-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text-muted"
@@ -85,54 +95,62 @@ onUnmounted(() => {
         <input
           :value="search"
           type="search"
-          class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface pe-3 ps-10 text-sm text-brand-text outline-none transition placeholder:text-brand-text-muted focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+          class="app-input app-input--search"
           :placeholder="searchPlaceholder"
           @input="emit('update:search', ($event.target as HTMLInputElement).value)"
         />
       </div>
       <button
         type="button"
-        class="inline-flex h-11 shrink-0 items-center gap-2 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text transition hover:bg-brand-bg"
+        class="inline-flex h-11 min-w-11 shrink-0 items-center justify-center gap-2 rounded-[10px] border border-brand-border bg-brand-surface px-3 text-sm font-medium text-brand-text transition hover:bg-[var(--surface-subtle)]"
         :class="[
-          { 'border-brand-primary/40 bg-brand-primary-soft text-brand-primary-dark': (activeCount ?? 0) > 0 },
-          !showSearch ? 'w-full justify-center' : '',
+          { 'border-brand-primary/35 bg-brand-primary-soft text-brand-primary-dark': (activeCount ?? 0) > 0 },
+          !showSearch ? 'w-full' : '',
         ]"
         @click="openSheet"
       >
-        <Filter class="h-4 w-4" :stroke-width="2" />
-        <span>{{ filterLabel }}</span>
+        <Filter class="h-4 w-4 shrink-0" :stroke-width="2" aria-hidden="true" />
+        <span class="truncate">{{ filterLabel }}</span>
       </button>
     </div>
 
-    <!-- Desktop: full toolbar slot -->
-    <div class="hidden md:block">
+    <div class="hidden xl:block">
       <slot name="desktop" />
     </div>
 
     <Teleport to="body">
       <div
         v-if="open"
-        class="fixed inset-0 z-[75] md:hidden"
+        class="fixed inset-0 z-[75] xl:hidden"
         role="dialog"
         aria-modal="true"
         :aria-label="t('shell.filters')"
       >
         <button
           type="button"
-          class="absolute inset-0 bg-brand-text/40"
+          class="absolute inset-0 bg-brand-text/35"
           :aria-label="t('shell.close')"
           @click="closeSheet"
         />
 
         <div
-          class="absolute inset-x-0 bottom-0 flex max-h-[85dvh] flex-col overflow-hidden rounded-t-[1.5rem] border border-brand-border bg-brand-surface"
-          style="padding-bottom: max(12px, env(safe-area-inset-bottom))"
+          class="absolute inset-x-0 bottom-0 flex max-h-[min(85dvh,40rem)] flex-col overflow-hidden rounded-t-[20px] border border-brand-border bg-brand-surface md:inset-inline-end-0 md:inset-inline-start-auto md:w-[min(24rem,100%)] md:rounded-ss-[20px]"
+          style="padding-bottom: max(12px, env(safe-area-inset-bottom)); box-shadow: var(--shadow-overlay)"
         >
-          <div class="flex shrink-0 items-center justify-between gap-3 border-b border-brand-border px-4 py-3">
-            <p class="text-base font-bold text-brand-text">{{ t('shell.filters') }}</p>
+          <div class="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-brand-border md:hidden" aria-hidden="true" />
+          <div class="flex shrink-0 items-center justify-between gap-3 px-4 pb-3 pt-2">
+            <div class="min-w-0">
+              <p class="text-base font-semibold text-brand-text">{{ t('shell.filters') }}</p>
+              <p
+                v-if="(activeCount ?? 0) > 0"
+                class="text-xs text-brand-text-secondary"
+              >
+                {{ t('shell.filtersWithCount', { count: activeCount }) }}
+              </p>
+            </div>
             <button
               type="button"
-              class="inline-flex h-11 w-11 items-center justify-center rounded-xl text-brand-text-secondary transition hover:bg-brand-bg"
+              class="app-btn-ghost"
               :aria-label="t('shell.close')"
               @click="closeSheet"
             >
@@ -140,22 +158,22 @@ onUnmounted(() => {
             </button>
           </div>
 
-          <div class="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4">
+          <div class="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-2">
             <slot name="filters" />
           </div>
 
-          <div class="shrink-0 border-t border-brand-border px-4 py-3">
+          <div class="shrink-0 border-t border-[var(--border-soft)] px-4 py-3">
             <div class="flex flex-col gap-2">
               <button
                 type="button"
-                class="inline-flex h-11 w-full items-center justify-center rounded-xl bg-brand-primary-dark text-sm font-semibold text-white transition hover:bg-brand-primary"
+                class="app-btn-primary w-full"
                 @click="applyAndClose"
               >
-                {{ t('shell.applyFilters') }}
+                {{ resolvedApplyLabel }}
               </button>
               <button
                 type="button"
-                class="inline-flex h-11 w-full items-center justify-center rounded-xl border border-brand-border bg-brand-surface text-sm font-semibold text-brand-text transition hover:bg-brand-bg"
+                class="inline-flex h-11 w-full items-center justify-center rounded-[10px] border border-brand-border bg-brand-surface text-sm font-medium text-brand-text transition hover:bg-[var(--surface-subtle)]"
                 @click="resetAndClose"
               >
                 {{ t('shell.resetFilters') }}

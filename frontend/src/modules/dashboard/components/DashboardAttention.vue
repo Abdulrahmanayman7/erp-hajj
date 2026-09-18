@@ -6,7 +6,6 @@ import { CheckCircle2, CircleAlert } from 'lucide-vue-next'
 
 import type { AttentionItem } from '../types/dashboard'
 import { isSafeAppHref, severityBadgeClass } from '../utils/dashboardDisplay'
-import DashboardSectionCard from './DashboardSectionCard.vue'
 
 const props = defineProps<{
   items?: AttentionItem[] | null
@@ -19,22 +18,28 @@ const isEmpty = computed(() => list.value.length === 0)
 </script>
 
 <template>
-  <DashboardSectionCard :title="t('dashboard.attention')">
-    <div
-      v-if="isEmpty"
-      class="flex items-start gap-3 rounded-xl bg-emerald-50/70 p-4"
-    >
-      <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-emerald-700" aria-hidden="true" />
-      <div>
-        <p class="text-sm font-bold text-emerald-900">{{ t('dashboard.attentionClearTitle') }}</p>
-        <p class="mt-1 text-xs leading-5 text-emerald-800">{{ t('dashboard.attentionClearDescription') }}</p>
-      </div>
+  <!-- Clear state: single elegant status surface (not nested cards) -->
+  <div
+    v-if="isEmpty"
+    class="app-status-success"
+  >
+    <span class="app-status-success__icon" aria-hidden="true">
+      <CheckCircle2 class="h-5 w-5" :stroke-width="1.9" />
+    </span>
+    <div class="min-w-0 pt-0.5">
+      <p class="text-sm font-semibold text-brand-text">{{ t('dashboard.attentionClearTitle') }}</p>
+      <p class="mt-0.5 text-[13px] leading-relaxed text-brand-text-secondary">
+        {{ t('dashboard.attentionClearDescription') }}
+      </p>
     </div>
-    <ul
-      v-else
-      class="divide-y divide-brand-border"
-      role="list"
-    >
+  </div>
+
+  <section
+    v-else
+    class="app-surface-flat p-4 md:p-5"
+  >
+    <h2 class="app-type-section mb-3">{{ t('dashboard.attention') }}</h2>
+    <ul class="divide-y divide-[var(--border-soft)]" role="list">
       <li
         v-for="(item, index) in list"
         :key="`${item.type}-${item.entity_id ?? item.count ?? index}`"
@@ -42,35 +47,33 @@ const isEmpty = computed(() => list.value.length === 0)
         <component
           :is="isSafeAppHref(item.href) ? RouterLink : 'div'"
           :to="isSafeAppHref(item.href) ? item.href : undefined"
-          class="flex items-start gap-3 py-3 transition"
-          :class="isSafeAppHref(item.href) ? 'hover:bg-brand-primary-soft/40 rounded-xl px-2 -mx-2' : 'px-0'"
+          class="flex items-start gap-3 py-3 transition first:pt-0 last:pb-0"
+          :class="isSafeAppHref(item.href) ? 'hover:opacity-90' : ''"
         >
           <span
-            class="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
+            class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px]"
             :class="severityBadgeClass(item.severity)"
             :aria-label="t(`dashboard.severity.${item.severity}`)"
           >
             <CircleAlert class="h-4 w-4" aria-hidden="true" />
           </span>
           <div class="min-w-0 flex-1">
-            <p class="text-sm font-semibold text-brand-text">
-              {{ item.title }}
-            </p>
+            <p class="text-sm font-semibold text-brand-text">{{ item.title }}</p>
             <p
               v-if="item.subtitle"
-              class="mt-0.5 text-xs text-brand-text-secondary"
+              class="mt-0.5 text-[13px] text-brand-text-secondary"
             >
               {{ item.subtitle }}
             </p>
           </div>
           <span
             v-if="item.count != null"
-            class="shrink-0 rounded-lg bg-brand-bg px-2 py-0.5 text-xs font-bold tabular-nums text-brand-text"
+            class="shrink-0 rounded-[8px] bg-[var(--surface-muted)] px-2 py-0.5 text-xs font-semibold tabular-nums text-brand-text"
           >
             {{ item.count }}
           </span>
         </component>
       </li>
     </ul>
-  </DashboardSectionCard>
+  </section>
 </template>

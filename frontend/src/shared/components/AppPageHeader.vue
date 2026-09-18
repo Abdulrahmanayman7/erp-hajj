@@ -9,12 +9,12 @@ defineProps<{
 <template>
   <header class="app-page-header flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
     <div class="min-w-0">
-      <h1 class="text-[1.5rem] font-bold leading-tight text-brand-text sm:text-[1.75rem]">
+      <h1 class="app-type-page">
         {{ title }}
       </h1>
       <p
         v-if="subtitle"
-        class="mt-1.5 text-sm leading-relaxed text-brand-text-secondary"
+        class="app-type-secondary mt-1.5 max-w-2xl"
       >
         {{ subtitle }}
       </p>
