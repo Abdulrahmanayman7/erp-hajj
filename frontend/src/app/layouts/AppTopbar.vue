@@ -147,10 +147,10 @@ onUnmounted(() => {
 
 <template>
   <header
-    class="app-topbar flex h-12 shrink-0 items-center justify-between gap-2 px-3 md:h-14 md:gap-3 md:px-4 xl:h-16 xl:px-5"
+    class="app-topbar flex h-14 shrink-0 items-center justify-between gap-2 px-3 md:h-16 md:gap-3 md:px-4 xl:px-5"
     style="padding-inline-start: max(12px, env(safe-area-inset-left, 0px)); padding-inline-end: max(12px, env(safe-area-inset-right, 0px)); padding-top: env(safe-area-inset-top, 0px)"
   >
-    <!-- Mobile: hamburger · centered logo · bell -->
+    <!-- Mobile: hamburger · centered brand · bell -->
     <div class="grid w-full grid-cols-[2.75rem_minmax(0,1fr)_2.75rem] items-center md:hidden">
       <button
         type="button"
@@ -162,8 +162,17 @@ onUnmounted(() => {
       >
         <Menu class="h-5 w-5" :stroke-width="1.9" aria-hidden="true" />
       </button>
-      <RouterLink to="/app" class="flex items-center justify-center" :aria-label="t('auth.companyName')">
-        <img :src="rafeeaLogo" alt="" class="h-8 w-8 object-contain" width="32" height="32" decoding="async" />
+      <RouterLink
+        to="/app"
+        class="flex min-w-0 items-center justify-center gap-1.5"
+        :aria-label="t('auth.companyName')"
+      >
+        <span class="app-brand-mark app-brand-mark--sm">
+          <img :src="rafeeaLogo" alt="" class="app-brand-mark__img" width="40" height="40" decoding="async" />
+        </span>
+        <span class="text-[15px] font-extrabold tracking-tight text-brand-primary-dark">
+          {{ t('auth.companyName') }}
+        </span>
       </RouterLink>
       <div class="flex justify-end">
         <NotificationBell />
@@ -338,10 +347,15 @@ onUnmounted(() => {
 
       <RouterLink
         to="/app"
-        class="ms-1 hidden shrink-0 items-center xl:hidden md:flex"
+        class="ms-2 hidden shrink-0 items-center gap-2 xl:hidden md:flex"
         :aria-label="t('auth.companyName')"
       >
-        <img :src="rafeeaLogo" alt="" class="h-8 w-8 object-contain" width="32" height="32" decoding="async" />
+        <span class="app-brand-mark app-brand-mark--sm">
+          <img :src="rafeeaLogo" alt="" class="app-brand-mark__img" width="40" height="40" decoding="async" />
+        </span>
+        <span class="text-sm font-extrabold tracking-tight text-brand-primary-dark">
+          {{ t('auth.companyName') }}
+        </span>
       </RouterLink>
 
       <div ref="desktopMenuRoot" class="relative hidden xl:block">

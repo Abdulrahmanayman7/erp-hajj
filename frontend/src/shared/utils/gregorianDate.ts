@@ -102,14 +102,28 @@ export function formatIsoDateAr(value: string | null | undefined, fallback = '')
 export function formatDatetimeLocalAr(value: string | null | undefined, fallback = ''): string {
   const date = parseDatetimeLocal(value)
   if (!date) return fallback
-  return new Intl.DateTimeFormat('ar-u-ca-gregory', {
+  return new Intl.DateTimeFormat('ar-u-ca-gregory-nu-latn', {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
-    hour: '2-digit',
+    hour: 'numeric',
     minute: '2-digit',
-    hour12: false,
+    hour12: true,
   }).format(date)
+}
+
+export type DayPeriod = 'am' | 'pm'
+
+export function hour24To12(hours: number): { hour: number; period: DayPeriod } {
+  const safe = ((Math.trunc(hours) % 24) + 24) % 24
+  const period: DayPeriod = safe >= 12 ? 'pm' : 'am'
+  const hour = safe % 12 === 0 ? 12 : safe % 12
+  return { hour, period }
+}
+
+export function hour12To24(hour: number, period: DayPeriod): number {
+  const normalized = hour === 12 ? 0 : hour
+  return period === 'pm' ? normalized + 12 : normalized
 }
 
 export type CalendarCell = {

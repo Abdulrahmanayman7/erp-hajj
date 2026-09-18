@@ -16,6 +16,8 @@ describe('PWA manifest', () => {
       display: string
       start_url: string
       scope: string
+      theme_color: string
+      background_color: string
       icons: Array<{ src: string; purpose: string; sizes: string }>
     }
 
@@ -26,6 +28,8 @@ describe('PWA manifest', () => {
     expect(manifest.scope).toBe('/')
     expect(manifest.short_name).toBe('رفيع')
     expect(manifest.name).toContain('ERP Hajj')
+    expect(manifest.theme_color).toBe('#ffffff')
+    expect(manifest.background_color).toBe('#064e3b')
 
     const purposes = manifest.icons.map((icon) => icon.purpose).sort()
     expect(purposes).toEqual(['any', 'any', 'maskable', 'maskable'])

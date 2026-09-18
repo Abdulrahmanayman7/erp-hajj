@@ -11,7 +11,7 @@
   "display_override": ["standalone"],
   "orientation": "any",
   "background_color": "#064e3b",
-  "theme_color": "#064e3b",
+  "theme_color": "#ffffff",
   "categories": ["business", "productivity"],
   "icons": [
     {

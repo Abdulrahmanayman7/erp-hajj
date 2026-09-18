@@ -9,7 +9,6 @@ import { useLogoutMutation } from '@/modules/auth/mutations/useLogoutMutation'
 import { useCurrentUserQuery } from '@/modules/auth/queries/useCurrentUserQuery'
 import AppConfirmDialog from '@/shared/components/AppConfirmDialog.vue'
 import AppToastHost from '@/shared/components/AppToastHost.vue'
-import AppTooltip from '@/shared/components/AppTooltip.vue'
 import PwaInstallCard from '@/shared/components/PwaInstallCard.vue'
 import UserAvatar from '@/shared/components/UserAvatar.vue'
 
@@ -108,55 +107,52 @@ const navItems = computed(() => [
 
     <!-- Tablet 768–1279: compact rail -->
     <aside
-      class="platform-sidebar hidden h-full min-h-0 w-[76px] shrink-0 flex-col self-stretch md:flex xl:hidden"
+      class="platform-sidebar hidden h-full min-h-0 w-[var(--app-nav-rail-width)] shrink-0 flex-col self-stretch md:flex xl:hidden"
       :aria-label="t('nav.platformArea')"
     >
-      <div class="flex flex-col items-center gap-2 px-1.5 pb-2 pt-3">
+      <div class="flex flex-col items-center gap-2 px-2 pb-3 pt-4">
         <RouterLink
           to="/platform/tenants"
-          class="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-[#05291f] ring-1 ring-white/15"
+          class="app-nav-rail__logo"
           :aria-label="t('nav.platformArea')"
         >
-          <img
-            :src="rafeeaLogo"
-            alt=""
-            class="h-7 w-7 object-contain"
-            width="28"
-            height="28"
-            decoding="async"
-          />
+          <span class="app-brand-mark app-brand-mark--md">
+            <img
+              :src="rafeeaLogo"
+              alt=""
+              class="app-brand-mark__img"
+              width="48"
+              height="48"
+              decoding="async"
+            />
+          </span>
         </RouterLink>
       </div>
-      <nav class="flex min-h-0 flex-1 flex-col items-center gap-1 overflow-y-auto px-1.5 py-2">
-        <AppTooltip
+      <nav class="flex min-h-0 flex-1 flex-col items-stretch gap-1 overflow-y-auto px-2 py-1">
+        <RouterLink
           v-for="item in navItems"
           :key="item.to"
-          :text="item.label"
-          side="bottom"
+          :to="item.to"
+          class="app-nav-rail__item"
+          :class="{ 'app-nav-rail__item--active': item.active }"
+          :aria-current="item.active ? 'page' : undefined"
+          :title="item.label"
         >
-          <RouterLink
-            :to="item.to"
-            class="inline-flex h-11 w-11 items-center justify-center rounded-[10px] transition"
-            :class="item.active ? 'bg-white/16 text-white' : 'text-white/78 hover:bg-white/10 hover:text-white'"
-            :aria-label="item.label"
-            :aria-current="item.active ? 'page' : undefined"
-          >
-            <component :is="item.icon" class="h-5 w-5" :stroke-width="1.75" />
-          </RouterLink>
-        </AppTooltip>
+          <component :is="item.icon" class="h-5 w-5 shrink-0" :stroke-width="1.75" />
+          <span class="app-nav-rail__label">{{ item.label }}</span>
+        </RouterLink>
       </nav>
-      <div class="flex flex-col items-center gap-2 border-t border-white/10 px-1.5 py-3">
-        <AppTooltip :text="t('auth.logout')" side="bottom">
-          <button
-            type="button"
-            class="inline-flex h-11 w-11 items-center justify-center rounded-[10px] text-white/78 transition hover:bg-white/10 hover:text-white disabled:opacity-60"
-            :aria-label="t('auth.logout')"
-            :disabled="isLoggingOut"
-            @click="logout()"
-          >
-            <LogOut class="h-5 w-5" :stroke-width="1.75" />
-          </button>
-        </AppTooltip>
+      <div class="flex flex-col items-stretch gap-2 border-t border-white/10 px-2 py-3">
+        <button
+          type="button"
+          class="app-nav-rail__item"
+          :aria-label="t('auth.logout')"
+          :disabled="isLoggingOut"
+          @click="logout()"
+        >
+          <LogOut class="h-5 w-5 shrink-0" :stroke-width="1.75" />
+          <span class="app-nav-rail__label">{{ t('auth.logout') }}</span>
+        </button>
       </div>
     </aside>
 
@@ -168,10 +164,12 @@ const navItems = computed(() => [
         <div class="flex min-w-0 items-center gap-2.5">
           <RouterLink
             to="/platform/tenants"
-            class="flex h-9 w-9 shrink-0 items-center justify-center md:hidden"
+            class="flex shrink-0 items-center gap-1.5 md:hidden"
             :aria-label="t('nav.platformArea')"
           >
-            <img :src="rafeeaLogo" alt="" class="h-8 w-8 object-contain" width="32" height="32" decoding="async" />
+            <span class="app-brand-mark app-brand-mark--sm">
+              <img :src="rafeeaLogo" alt="" class="app-brand-mark__img" width="40" height="40" decoding="async" />
+            </span>
           </RouterLink>
           <div class="min-w-0">
             <p class="truncate text-xs font-semibold text-brand-text-muted">{{ t('nav.platformArea') }}</p>
@@ -242,6 +240,7 @@ const navItems = computed(() => [
 .platform-sidebar {
   border-radius: var(--radius-card-lg);
   background: linear-gradient(180deg, #0a5c45 0%, #064e3b 55%, #04382b 100%);
+  color: #fff;
   box-shadow: 0 12px 28px -20px rgb(6 78 59 / 0.5);
 }
 </style>

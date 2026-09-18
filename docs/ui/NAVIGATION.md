@@ -24,7 +24,7 @@ Every consumer (sidebar, rail, More sheet, quick actions) **must** derive from t
 ## Tablet (768–1279px)
 
 - **No permanent full sidebar.**
-- Compact **Navigation Rail** (~76px) with primary icons (dashboard, tasks, meetings, employees, documents — if permitted) + More.
+- Compact **Navigation Rail** (~96px) with icon + short Arabic label (home, tasks, meetings, employees, documents, contracts — if permitted) + More.
 - More opens **overlay drawer from the right** over content (does not push layout).
 - Topbar: compact title; omit desktop browser-like chrome overload.
 

@@ -2,9 +2,9 @@
 
 ## Navigation rail
 
-- Width ~72–80px
-- Icon + optional tiny label or tooltip
-- Active state (brand soft fill)
+- Width ~96px
+- Icon + short Arabic label (two-line clamp)
+- Active state (white/gold ring on dark green)
 - Does **not** permanently consume 250–300px
 
 ## Overlay navigation

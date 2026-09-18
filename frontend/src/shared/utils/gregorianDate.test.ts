@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest'
 import {
   formatDatetimeLocalAr,
   formatIsoDateAr,
+  hour12To24,
+  hour24To12,
   isDatetimeLocal,
   isIsoDate,
   joinDatetimeLocal,
@@ -47,6 +49,17 @@ describe('gregorianDate', () => {
     })
     expect(parseDatetimeLocal('2026-09-18T19:14')?.getHours()).toBe(19)
     expect(toDatetimeLocal(new Date(2026, 8, 18, 7, 14))).toBe('2026-09-18T07:14')
-    expect(formatDatetimeLocalAr('2026-09-18T19:14')).toContain('2026')
+    const labeled = formatDatetimeLocalAr('2026-09-18T19:14')
+    expect(labeled).toContain('2026')
+    expect(labeled.includes('م') || labeled.toLowerCase().includes('pm')).toBe(true)
+  })
+
+  it('converts 24-hour time to 12-hour with a period', () => {
+    expect(hour24To12(0)).toEqual({ hour: 12, period: 'am' })
+    expect(hour24To12(12)).toEqual({ hour: 12, period: 'pm' })
+    expect(hour24To12(19)).toEqual({ hour: 7, period: 'pm' })
+    expect(hour12To24(7, 'pm')).toBe(19)
+    expect(hour12To24(12, 'am')).toBe(0)
+    expect(hour12To24(12, 'pm')).toBe(12)
   })
 })

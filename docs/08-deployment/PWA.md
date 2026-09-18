@@ -31,7 +31,8 @@ Manual PWA (no `vite-plugin-pwa` / Workbox):
 - `lang`: `ar` · `dir`: `rtl`
 - `start_url` / `scope`: `/` (not tenant-bound)
 - `display`: `standalone` (+ `display_override: ["standalone"]`)
-- `theme_color` / `background_color`: `#064e3b`
+- `theme_color`: `#ffffff` (matches in-app chrome so iOS/Android do not paint a green band under the bottom nav)
+- `background_color`: `#064e3b` (install splash only)
 - `orientation`: `any` (phones + tablets)
 
 ## Service worker / cache

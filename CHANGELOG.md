@@ -32,6 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Mobile chrome / datetime picker:** 12-hour time with صباحاً/مساءً in `AppDateTimeInput`; PWA `theme_color` and standalone body match the light surface so the iOS home-indicator band is not brand-green; mobile/tablet brand mark crops the padded logo and shows the رفيع wordmark; tablet nav rail shows labels, a larger gold-ring logo, and a 96px professional column.
+
 - **Local CORS localhost vs 127.0.0.1:** browsers treat these as distinct origins. CORS now allows `FRONTEND_URL`, optional `CORS_ALLOWED_ORIGINS`, and the loopback twin of `FRONTEND_URL`, so Vite at `http://localhost:5173` works when the API was configured with `http://127.0.0.1:5173` (and the reverse). Still never `*` with credentialed cookies.
 
 ### Changed

@@ -6,19 +6,26 @@ import { useBodyScrollLock } from '@/shared/composables/useBodyScrollLock'
 import {
   GREGORIAN_MONTHS_AR,
   formatDatetimeLocalAr,
+  hour12To24,
+  hour24To12,
   isDatetimeLocal,
   joinDatetimeLocal,
   monthGrid,
   splitDatetimeLocal,
   toIsoDate,
   twelveYearBlock,
+  type DayPeriod,
 } from '@/shared/utils/gregorianDate'
 
 type CalendarPanel = 'days' | 'months' | 'years'
 
 const WEEKDAYS = ['سبت', 'أحد', 'اثنين', 'ثلاثاء', 'أربعاء', 'خميس', 'جمعة'] as const
-const HOURS = Array.from({ length: 24 }, (_, index) => index)
+const HOURS_12 = Array.from({ length: 12 }, (_, index) => index + 1)
 const MINUTES = Array.from({ length: 60 }, (_, index) => index)
+const PERIODS: Array<{ value: DayPeriod; label: string }> = [
+  { value: 'am', label: 'صباحاً' },
+  { value: 'pm', label: 'مساءً' },
+]
 
 defineOptions({ inheritAttrs: false })
 
@@ -98,6 +105,9 @@ const yearBlockLabel = computed(() => `${yearOptions.value[0]} – ${yearOptions
 const draftValue = computed(() =>
   draftDate.value ? joinDatetimeLocal(draftDate.value, draftHours.value, draftMinutes.value) : '',
 )
+
+const draftHour12 = computed(() => hour24To12(draftHours.value).hour)
+const draftPeriod = computed(() => hour24To12(draftHours.value).period)
 
 function syncDraftFromValue(): void {
   const parts = splitDatetimeLocal(value.value)
@@ -200,8 +210,15 @@ function pick(iso: string): void {
   setPanel('days')
 }
 
-function onHoursChange(event: Event): void {
-  draftHours.value = Number((event.target as HTMLSelectElement).value)
+function onHour12Change(event: Event): void {
+  const hour = Number((event.target as HTMLSelectElement).value)
+  draftHours.value = hour12To24(hour, draftPeriod.value)
+  emitDraft()
+}
+
+function onPeriodChange(event: Event): void {
+  const period = (event.target as HTMLSelectElement).value as DayPeriod
+  draftHours.value = hour12To24(draftHour12.value, period)
   emitDraft()
 }
 
@@ -500,29 +517,43 @@ onUnmounted(() => {
 
           <div class="mt-3 border-t border-brand-border pt-3">
             <p class="mb-2 text-xs font-semibold text-brand-text-secondary">الوقت</p>
-            <div class="flex items-center gap-2" dir="ltr">
-              <label class="min-w-0 flex-1">
-                <span class="sr-only">الساعة</span>
+            <div class="flex items-stretch gap-2">
+              <div class="flex min-w-0 flex-1 items-center gap-2" dir="ltr">
+                <label class="min-w-0 flex-1">
+                  <span class="sr-only">الساعة</span>
+                  <select
+                    class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+                    :value="draftHour12"
+                    @change="onHour12Change"
+                  >
+                    <option v-for="hour in HOURS_12" :key="hour" :value="hour">
+                      {{ String(hour).padStart(2, '0') }}
+                    </option>
+                  </select>
+                </label>
+                <span class="text-sm font-bold text-brand-text-muted" aria-hidden="true">:</span>
+                <label class="min-w-0 flex-1">
+                  <span class="sr-only">الدقيقة</span>
+                  <select
+                    class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+                    :value="draftMinutes"
+                    @change="onMinutesChange"
+                  >
+                    <option v-for="minute in MINUTES" :key="minute" :value="minute">
+                      {{ String(minute).padStart(2, '0') }}
+                    </option>
+                  </select>
+                </label>
+              </div>
+              <label class="w-[6.75rem] shrink-0">
+                <span class="sr-only">صباحاً أو مساءً</span>
                 <select
-                  class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
-                  :value="draftHours"
-                  @change="onHoursChange"
+                  class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface px-2 text-sm font-semibold text-brand-text outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+                  :value="draftPeriod"
+                  @change="onPeriodChange"
                 >
-                  <option v-for="hour in HOURS" :key="hour" :value="hour">
-                    {{ String(hour).padStart(2, '0') }}
-                  </option>
-                </select>
-              </label>
-              <span class="text-sm font-bold text-brand-text-muted" aria-hidden="true">:</span>
-              <label class="min-w-0 flex-1">
-                <span class="sr-only">الدقيقة</span>
-                <select
-                  class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
-                  :value="draftMinutes"
-                  @change="onMinutesChange"
-                >
-                  <option v-for="minute in MINUTES" :key="minute" :value="minute">
-                    {{ String(minute).padStart(2, '0') }}
+                  <option v-for="period in PERIODS" :key="period.value" :value="period.value">
+                    {{ period.label }}
                   </option>
                 </select>
               </label>

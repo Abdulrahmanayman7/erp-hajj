@@ -63,7 +63,7 @@ Arabic line-height: `--leading-arabic` ≈ 1.65.
 
 - `--app-page-pad-x/y`: 16 → 20 → 28 (mobile → tablet → desktop)
 - `--app-section-gap`: 20 → 24 → 28
-- `--app-nav-rail-width`: 76px
+- `--app-nav-rail-width`: 96px
 - `--app-bottom-nav-height`: 60px
 
 ## Shared primitives

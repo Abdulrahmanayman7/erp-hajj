@@ -19,7 +19,7 @@
 |---|---|---|
 | Small mobile | &lt; 640px | Mobile header + bottom nav |
 | Large mobile | 640–767px | Same mobile shell |
-| Tablet portrait | 768–1023px | **Navigation rail** (~76px) + compact header |
+| Tablet portrait | 768–1023px | **Navigation rail** (~96px, icon + label) + compact header |
 | Tablet / small laptop | 1024–1279px | Navigation rail + overlay for full nav |
 | Desktop | ≥ 1280px (`xl`) | Full RTL sidebar (existing) |
 | Large desktop | ≥ 1536px | Same desktop + denser content grids |
@@ -52,7 +52,7 @@ Platform shell (`PlatformLayout`) stays separate but shares tokens/safe-area; it
 | Surface | Behavior |
 |---|---|
 | Desktop sidebar | Existing grouped hierarchy + collapse |
-| Tablet rail | Icons for primary destinations + More → overlay from **inline-end (right in RTL)** |
+| Tablet rail | Icon + short label for primary destinations + More → overlay from **inline-end (right in RTL)** |
 | Mobile bottom | الرئيسية · المهام · **+** · الإشعارات · المزيد |
 | Mobile More | Sectioned sheet (not a shrunk desktop sidebar) |
 | Global + | Permission-gated quick creates (task/meeting/decision/employee/document) |
