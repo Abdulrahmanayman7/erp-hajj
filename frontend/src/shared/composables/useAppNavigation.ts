@@ -43,6 +43,31 @@ export function isAppNavItemActive(path: string, item: AppNavItem): boolean {
   return path === item.to || path.startsWith(`${item.to}/`)
 }
 
+/** Local menu filter only — never searches entities across the system. */
+export function filterNavGroups(
+  groups: AppNavGroup[],
+  options: {
+    visibleKeys?: Set<string> | null
+    query?: string
+    labelOf: (key: string) => string
+  },
+): AppNavGroup[] {
+  const query = (options.query ?? '').trim()
+  const keys = options.visibleKeys
+
+  return groups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => {
+        if (keys && !keys.has(item.key)) return false
+        if (!query) return true
+        const haystack = `${options.labelOf(item.labelKey)} ${options.labelOf(group.labelKey)}`
+        return haystack.includes(query)
+      }),
+    }))
+    .filter((group) => group.items.length > 0)
+}
+
 export function useAppNavigation(): {
   navGroups: ComputedRef<AppNavGroup[]>
   flatItems: ComputedRef<AppNavItem[]>

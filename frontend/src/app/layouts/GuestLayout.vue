@@ -11,13 +11,13 @@ const isFullBleedGuestPage = computed(() => route.name === 'login')
 </script>
 
 <template>
-  <div v-if="isFullBleedGuestPage" class="h-dvh overflow-hidden">
+  <div v-if="isFullBleedGuestPage" class="h-full min-h-0 flex-1 overflow-hidden">
     <slot />
   </div>
 
   <div
     v-else
-    class="relative min-h-screen overflow-hidden bg-gradient-to-bl from-[#033D30] via-[#064E3B] to-[#0A5C46] text-neutral-900"
+    class="relative h-full min-h-0 flex-1 overflow-auto bg-gradient-to-bl from-[#033D30] via-[#064E3B] to-[#0A5C46] text-neutral-900"
   >
     <div
       class="pointer-events-none absolute inset-0 opacity-40"
@@ -29,7 +29,7 @@ const isFullBleedGuestPage = computed(() => route.name === 'login')
       "
     />
 
-    <div class="relative mx-auto flex min-h-screen max-w-lg flex-col justify-center px-4 py-10 sm:px-6">
+    <div class="relative mx-auto flex min-h-full max-w-lg flex-col justify-center px-4 py-10 sm:px-6">
       <div class="mb-8 text-center text-white">
         <p class="text-3xl font-bold tracking-tight sm:text-4xl">{{ t('app.name') }}</p>
         <p class="mt-2 text-sm text-emerald-50/90 sm:text-base">{{ t('app.tagline') }}</p>

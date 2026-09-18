@@ -3,11 +3,14 @@ import { describe, expect, it } from 'vitest'
 import type { DashboardKpis } from '../types/dashboard'
 import {
   effectiveSeverity,
+  formatDashboardCalendar,
   friendlyTimezone,
   getTopKpis,
   hasWorkMetrics,
+  isDashboardDaytime,
   isOperationallyEmpty,
   isSafeAppHref,
+  kpiIconClass,
   TOP_KPI_ORDER,
 } from './dashboardDisplay'
 
@@ -162,5 +165,28 @@ describe('dashboardDisplay', () => {
   it('uses a friendly tenant timezone label', () => {
     expect(friendlyTimezone('Asia/Riyadh')).toBe('الرياض')
     expect(friendlyTimezone('Pacific/Honolulu')).toBe('Pacific/Honolulu')
+  })
+
+  it('maps each top KPI key to a stable icon tone', () => {
+    expect(kpiIconClass('tasks_overdue')).toBe('app-kpi-icon--overdue')
+    expect(kpiIconClass('inventory_attention')).toBe('app-kpi-icon--inventory')
+    expect(kpiIconClass('meetings_today')).toBe('app-kpi-icon--meetings')
+    expect(kpiIconClass('tasks_open')).toBe('app-kpi-icon--info')
+  })
+
+  it('treats morning and afternoon hours as daytime', () => {
+    expect(isDashboardDaytime(8)).toBe(true)
+    expect(isDashboardDaytime(21)).toBe(false)
+    expect(isDashboardDaytime(null)).toBe(true)
+  })
+
+  it('formats a gregorian date card in the tenant timezone', () => {
+    const parts = formatDashboardCalendar('Asia/Riyadh')
+    expect(parts.weekday.length).toBeGreaterThan(0)
+    expect(parts.day.length).toBeGreaterThan(0)
+    expect(parts.gregorian.length).toBeGreaterThan(0)
+    if (parts.hijri) {
+      expect(parts.hijri).not.toBe(parts.gregorian)
+    }
   })
 })

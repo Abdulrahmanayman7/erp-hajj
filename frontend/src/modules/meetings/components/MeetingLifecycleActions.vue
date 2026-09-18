@@ -5,6 +5,7 @@ import { useRouter } from 'vue-router'
 import { Loader2, X } from 'lucide-vue-next'
 
 import { ApiError } from '@/shared/api/http'
+import AppDateTimeInput from '@/shared/components/AppDateTimeInput.vue'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
 import { useConfirm } from '@/shared/composables/useConfirm'
 import { usePermissions } from '@/shared/composables/usePermissions'
@@ -324,11 +325,7 @@ function actionButtonClass(action: MeetingLifecycleAction): string {
               <span class="mb-1.5 block text-sm font-semibold text-brand-text">
                 {{ t('meetings.fields.scheduledAt') }}
               </span>
-              <input
-                v-model="dialogDatetime"
-                type="datetime-local"
-                class="h-11 w-full rounded-xl border border-brand-border px-3 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
-              />
+              <AppDateTimeInput v-model="dialogDatetime" :placeholder="t('meetings.fields.scheduledAt')" />
             </label>
 
             <label

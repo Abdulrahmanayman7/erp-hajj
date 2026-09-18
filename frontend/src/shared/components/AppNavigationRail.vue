@@ -47,7 +47,7 @@ function closeMore(): void {
 
 <template>
   <aside
-    class="app-nav-rail hidden h-full shrink-0 flex-col md:flex xl:hidden"
+    class="app-nav-rail hidden h-full min-h-0 shrink-0 flex-col self-stretch md:flex xl:hidden"
     :aria-label="t('shell.navRail')"
   >
     <div class="flex flex-col items-center gap-2 px-1.5 pb-2 pt-3">
@@ -86,7 +86,7 @@ function closeMore(): void {
       </AppTooltip>
     </nav>
 
-    <div class="flex flex-col items-center gap-2 border-t border-brand-border px-1.5 py-3">
+    <div class="flex flex-col items-center gap-2 border-t border-white/10 px-1.5 py-3">
       <AppTooltip :text="t('nav.more')" side="bottom">
         <button
           type="button"

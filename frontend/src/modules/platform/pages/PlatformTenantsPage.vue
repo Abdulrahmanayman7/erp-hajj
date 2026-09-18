@@ -95,7 +95,13 @@ function resetFilters(): void {
 
 function formatDate(value: string | null): string {
   if (!value) return '—'
-  return new Date(value).toLocaleDateString('ar-SA')
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '—'
+  return new Intl.DateTimeFormat('ar-SA-u-ca-gregory-nu-latn', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(date)
 }
 
 function apiMessage(error: unknown): string {
@@ -192,9 +198,9 @@ function canArchive(tenant: PlatformTenant): boolean {
         <PermissionGuard permission="platform_tenants.create">
           <RouterLink
             :to="{ name: 'platform-tenants-create' }"
-            class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand-primary px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-primary-dark"
+            class="app-btn-primary"
           >
-            <Plus class="h-4 w-4" />
+            <Plus class="h-4 w-4" :stroke-width="2.25" />
             {{ t('platform.tenants.add') }}
           </RouterLink>
         </PermissionGuard>
@@ -208,18 +214,17 @@ function canArchive(tenant: PlatformTenant): boolean {
       @reset="resetFilters"
     >
       <template #desktop>
-        <div
-          class="flex flex-wrap items-center gap-3 rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)]"
-        >
+        <div class="app-surface-flat flex flex-wrap items-center gap-3 p-3.5">
           <div class="relative min-w-48 flex-1">
             <Search
               class="pointer-events-none absolute inset-s-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text-muted"
+              :stroke-width="1.75"
               aria-hidden="true"
             />
             <input
               v-model="filters.search"
               type="search"
-              class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface pe-3 ps-10 text-sm text-brand-text outline-none transition placeholder:text-brand-text-muted focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+              class="app-input app-input--search"
               :placeholder="t('platform.tenants.searchPlaceholder')"
             />
           </div>
@@ -242,21 +247,23 @@ function canArchive(tenant: PlatformTenant): boolean {
       </template>
     </AppMobileFilters>
 
-    <div
-      v-if="isLoading"
-      class="rounded-2xl border border-brand-border bg-brand-surface px-4 py-10 text-center text-sm text-brand-text-secondary"
-    >
-      {{ t('platform.tenants.loading') }}
+    <div v-if="isLoading" class="space-y-3" aria-busy="true">
+      <div
+        v-for="n in 4"
+        :key="n"
+        class="h-[7.5rem] animate-pulse rounded-[14px] border border-brand-border bg-brand-surface lg:h-14"
+      />
     </div>
 
     <div
       v-else-if="isError"
-      class="rounded-2xl border border-red-200 bg-red-50 px-4 py-8 text-center"
+      class="rounded-[14px] border border-red-200/80 bg-[var(--danger-soft)] p-8 text-center"
+      role="alert"
     >
       <p class="text-sm text-red-800">{{ t('platform.tenants.loadError') }}</p>
       <button
         type="button"
-        class="mt-3 inline-flex h-10 items-center rounded-xl bg-red-700 px-4 text-sm font-semibold text-white"
+        class="mt-3 inline-flex min-h-11 items-center justify-center px-3 text-sm font-semibold text-brand-primary-dark underline"
         @click="() => refetch()"
       >
         {{ t('platform.retry') }}
@@ -265,173 +272,218 @@ function canArchive(tenant: PlatformTenant): boolean {
 
     <div
       v-else-if="tenants.length === 0"
-      class="rounded-2xl border border-brand-border bg-brand-surface px-4 py-10 text-center text-sm text-brand-text-secondary"
+      class="app-surface-flat px-6 py-10 text-center sm:py-12"
     >
-      {{ t('platform.tenants.empty') }}
+      <p class="text-base font-semibold text-brand-text">{{ t('platform.tenants.empty') }}</p>
+      <p class="mt-1 text-sm text-brand-text-muted">{{ t('platform.tenants.emptyHint') }}</p>
+      <PermissionGuard permission="platform_tenants.create">
+        <RouterLink
+          :to="{ name: 'platform-tenants-create' }"
+          class="app-btn-primary mt-5"
+        >
+          <Plus class="h-4 w-4" :stroke-width="2.25" />
+          {{ t('platform.tenants.add') }}
+        </RouterLink>
+      </PermissionGuard>
     </div>
 
     <template v-else>
-      <div class="hidden overflow-hidden rounded-2xl border border-brand-border bg-brand-surface md:block">
-        <table class="w-full min-w-[880px] border-collapse text-sm">
-          <thead class="bg-brand-bg/80 text-start text-xs font-semibold uppercase tracking-wide text-brand-text-muted">
-            <tr>
-              <th class="px-4 py-3">{{ t('platform.columns.name') }}</th>
-              <th class="px-4 py-3">{{ t('platform.columns.code') }}</th>
-              <th class="px-4 py-3">{{ t('platform.columns.status') }}</th>
-              <th class="px-4 py-3">{{ t('platform.columns.owner') }}</th>
-              <th class="px-4 py-3">{{ t('platform.columns.contact') }}</th>
-              <th class="px-4 py-3">{{ t('platform.columns.created') }}</th>
-              <th class="px-4 py-3">{{ t('platform.columns.actions') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="tenant in tenants"
-              :key="tenant.id"
-              class="border-t border-brand-border/80 hover:bg-brand-bg/40"
-            >
-              <td class="px-4 py-3 font-semibold text-brand-text">
-                <RouterLink
-                  :to="{ name: 'platform-tenant-details', params: { id: tenant.id } }"
-                  class="hover:text-brand-primary hover:underline"
-                >
-                  {{ tenant.name }}
-                </RouterLink>
-              </td>
-              <td class="px-4 py-3 font-mono text-xs" dir="ltr">{{ tenant.code }}</td>
-              <td class="px-4 py-3">
-                <TenantStatusBadge :status="tenant.status" />
-              </td>
-              <td class="px-4 py-3">
-                <div v-if="tenant.owner" class="min-w-0">
-                  <div class="truncate font-medium">{{ tenant.owner.name }}</div>
-                  <div class="truncate text-xs text-brand-text-muted" dir="ltr">{{ tenant.owner.email }}</div>
-                </div>
-                <span v-else class="text-brand-text-muted">—</span>
-              </td>
-              <td class="px-4 py-3">
-                <div v-if="tenant.contact.name || tenant.contact.email" class="min-w-0">
-                  <div v-if="tenant.contact.name" class="truncate">{{ tenant.contact.name }}</div>
-                  <div
-                    v-if="tenant.contact.email"
-                    class="truncate text-xs text-brand-text-muted"
-                    dir="ltr"
+      <div class="hidden overflow-hidden rounded-[14px] border border-brand-border bg-brand-surface lg:block">
+        <div class="overflow-x-auto">
+          <table class="min-w-full border-separate border-spacing-0 text-sm">
+            <thead>
+              <tr class="bg-[var(--surface-subtle)]">
+                <th class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-start text-xs font-semibold text-brand-text">
+                  {{ t('platform.columns.name') }}
+                </th>
+                <th class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-start text-xs font-semibold text-brand-text">
+                  {{ t('platform.columns.status') }}
+                </th>
+                <th class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-start text-xs font-semibold text-brand-text">
+                  {{ t('platform.columns.owner') }}
+                </th>
+                <th class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-start text-xs font-semibold text-brand-text">
+                  {{ t('platform.columns.contact') }}
+                </th>
+                <th class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-start text-xs font-semibold text-brand-text">
+                  {{ t('platform.columns.created') }}
+                </th>
+                <th class="w-36 whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-semibold text-brand-text">
+                  {{ t('platform.columns.actions') }}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="(tenant, index) in tenants"
+                :key="tenant.id"
+                class="group"
+                :class="index % 2 === 1 ? 'bg-[var(--surface-subtle)]' : 'bg-brand-surface'"
+              >
+                <td class="max-w-[16rem] border-b border-brand-border/80 px-5 py-3.5 group-hover:bg-[#EDF6F1]">
+                  <RouterLink
+                    :to="{ name: 'platform-tenant-details', params: { id: tenant.id } }"
+                    class="block min-w-0"
                   >
-                    {{ tenant.contact.email }}
+                    <span class="block truncate font-semibold text-brand-text hover:text-brand-primary-dark">
+                      {{ tenant.name }}
+                    </span>
+                    <span class="mt-0.5 block truncate font-mono text-[11px] text-brand-text-muted" dir="ltr">
+                      {{ tenant.code }}
+                    </span>
+                  </RouterLink>
+                </td>
+                <td class="border-b border-brand-border/80 px-5 py-3.5 group-hover:bg-[#EDF6F1]">
+                  <TenantStatusBadge :status="tenant.status" />
+                </td>
+                <td class="max-w-[14rem] border-b border-brand-border/80 px-5 py-3.5 group-hover:bg-[#EDF6F1]">
+                  <div v-if="tenant.owner" class="min-w-0">
+                    <p class="truncate font-medium text-brand-text">{{ tenant.owner.name }}</p>
+                    <p class="truncate text-xs text-brand-text-muted" dir="ltr">{{ tenant.owner.email }}</p>
                   </div>
-                </div>
-                <span v-else class="text-brand-text-muted">—</span>
-              </td>
-              <td class="px-4 py-3 text-brand-text-secondary">{{ formatDate(tenant.created_at) }}</td>
-              <td class="px-4 py-3">
-                <div class="flex items-center gap-1">
-                  <AppTooltip :text="t('platform.actions.view')">
-                    <RouterLink
-                      :to="{ name: 'platform-tenant-details', params: { id: tenant.id } }"
-                      class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-brand-text-secondary hover:bg-brand-bg"
+                  <span v-else class="text-brand-text-muted">—</span>
+                </td>
+                <td class="max-w-[14rem] border-b border-brand-border/80 px-5 py-3.5 group-hover:bg-[#EDF6F1]">
+                  <div v-if="tenant.contact.name || tenant.contact.email" class="min-w-0">
+                    <p v-if="tenant.contact.name" class="truncate text-brand-text">{{ tenant.contact.name }}</p>
+                    <p
+                      v-if="tenant.contact.email"
+                      class="truncate text-xs text-brand-text-muted"
+                      dir="ltr"
                     >
-                      <Eye class="h-4 w-4" />
-                    </RouterLink>
-                  </AppTooltip>
+                      {{ tenant.contact.email }}
+                    </p>
+                  </div>
+                  <span v-else class="text-brand-text-muted">—</span>
+                </td>
+                <td class="whitespace-nowrap border-b border-brand-border/80 px-5 py-3.5 text-brand-text-secondary group-hover:bg-[#EDF6F1]">
+                  {{ formatDate(tenant.created_at) }}
+                </td>
+                <td class="border-b border-brand-border/80 px-5 py-3.5 group-hover:bg-[#EDF6F1]">
+                  <div class="flex items-center justify-center gap-0.5">
+                    <AppTooltip :text="t('platform.actions.view')">
+                      <RouterLink
+                        :to="{ name: 'platform-tenant-details', params: { id: tenant.id } }"
+                        class="inline-flex h-11 w-11 items-center justify-center rounded-[8px] text-brand-text-secondary transition hover:bg-brand-surface hover:text-brand-primary-dark"
+                        :aria-label="t('platform.actions.view')"
+                      >
+                        <Eye class="h-4 w-4" :stroke-width="2" />
+                      </RouterLink>
+                    </AppTooltip>
 
-                  <AppTooltip v-if="canActivate(tenant)" :text="t('platform.actions.activate')">
-                    <button
-                      type="button"
-                      class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-emerald-700 hover:bg-emerald-50"
-                      :disabled="lifecyclePending"
-                      @click="onActivate(tenant)"
-                    >
-                      <PlayCircle class="h-4 w-4" />
-                    </button>
-                  </AppTooltip>
+                    <AppTooltip v-if="canActivate(tenant)" :text="t('platform.actions.activate')">
+                      <button
+                        type="button"
+                        class="inline-flex h-11 w-11 items-center justify-center rounded-[8px] text-emerald-700 transition hover:bg-emerald-50"
+                        :aria-label="t('platform.actions.activate')"
+                        :disabled="lifecyclePending"
+                        @click="onActivate(tenant)"
+                      >
+                        <PlayCircle class="h-4 w-4" :stroke-width="2" />
+                      </button>
+                    </AppTooltip>
 
-                  <AppTooltip v-if="canSuspend(tenant)" :text="t('platform.actions.suspend')">
-                    <button
-                      type="button"
-                      class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-orange-700 hover:bg-orange-50"
-                      :disabled="lifecyclePending"
-                      @click="openReason(tenant, 'suspend')"
-                    >
-                      <PauseCircle class="h-4 w-4" />
-                    </button>
-                  </AppTooltip>
+                    <AppTooltip v-if="canSuspend(tenant)" :text="t('platform.actions.suspend')">
+                      <button
+                        type="button"
+                        class="inline-flex h-11 w-11 items-center justify-center rounded-[8px] text-orange-700 transition hover:bg-orange-50"
+                        :aria-label="t('platform.actions.suspend')"
+                        :disabled="lifecyclePending"
+                        @click="openReason(tenant, 'suspend')"
+                      >
+                        <PauseCircle class="h-4 w-4" :stroke-width="2" />
+                      </button>
+                    </AppTooltip>
 
-                  <AppTooltip v-if="canArchive(tenant)" :text="t('platform.actions.archive')">
-                    <button
-                      type="button"
-                      class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-neutral-500 hover:bg-neutral-100"
-                      :disabled="lifecyclePending"
-                      @click="openReason(tenant, 'archive')"
-                    >
-                      <Archive class="h-4 w-4" />
-                    </button>
-                  </AppTooltip>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                    <AppTooltip v-if="canArchive(tenant)" :text="t('platform.actions.archive')">
+                      <button
+                        type="button"
+                        class="inline-flex h-11 w-11 items-center justify-center rounded-[8px] text-brand-text-muted transition hover:bg-[var(--surface-muted)]"
+                        :aria-label="t('platform.actions.archive')"
+                        :disabled="lifecyclePending"
+                        @click="openReason(tenant, 'archive')"
+                      >
+                        <Archive class="h-4 w-4" :stroke-width="2" />
+                      </button>
+                    </AppTooltip>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      <div class="space-y-3 md:hidden">
+      <div class="space-y-2.5 lg:hidden">
         <article
           v-for="tenant in tenants"
           :key="tenant.id"
-          class="rounded-2xl border border-brand-border bg-brand-surface p-4"
+          class="app-surface-flat p-3.5"
         >
           <div class="flex items-start justify-between gap-3">
-            <div class="min-w-0">
-              <RouterLink
-                :to="{ name: 'platform-tenant-details', params: { id: tenant.id } }"
-                class="font-semibold text-brand-text hover:underline"
-              >
-                {{ tenant.name }}
-              </RouterLink>
-              <p class="mt-0.5 font-mono text-xs text-brand-text-muted" dir="ltr">{{ tenant.code }}</p>
-            </div>
+            <RouterLink
+              :to="{ name: 'platform-tenant-details', params: { id: tenant.id } }"
+              class="min-w-0 flex-1"
+            >
+              <p class="app-type-card truncate">{{ tenant.name }}</p>
+              <p class="mt-0.5 font-mono text-[11px] text-brand-text-muted" dir="ltr">{{ tenant.code }}</p>
+            </RouterLink>
             <TenantStatusBadge :status="tenant.status" />
           </div>
 
-          <dl class="mt-3 space-y-1.5 text-sm">
-            <div class="flex justify-between gap-3">
-              <dt class="text-brand-text-muted">{{ t('platform.columns.owner') }}</dt>
-              <dd class="truncate text-end">{{ tenant.owner?.name ?? '—' }}</dd>
+          <dl class="mt-3 grid grid-cols-1 gap-2 text-[13px] sm:grid-cols-2">
+            <div class="min-w-0">
+              <dt class="text-xs text-brand-text-muted">{{ t('platform.columns.owner') }}</dt>
+              <dd class="mt-0.5 truncate font-medium text-brand-text">{{ tenant.owner?.name ?? '—' }}</dd>
             </div>
-            <div class="flex justify-between gap-3">
-              <dt class="text-brand-text-muted">{{ t('platform.columns.created') }}</dt>
-              <dd>{{ formatDate(tenant.created_at) }}</dd>
+            <div class="min-w-0">
+              <dt class="text-xs text-brand-text-muted">{{ t('platform.columns.created') }}</dt>
+              <dd class="mt-0.5 font-medium text-brand-text">{{ formatDate(tenant.created_at) }}</dd>
+            </div>
+            <div v-if="tenant.contact.name || tenant.contact.email" class="min-w-0 sm:col-span-2">
+              <dt class="text-xs text-brand-text-muted">{{ t('platform.columns.contact') }}</dt>
+              <dd class="mt-0.5 truncate font-medium text-brand-text">
+                {{ tenant.contact.name || tenant.contact.email }}
+              </dd>
             </div>
           </dl>
 
-          <div class="mt-3 flex flex-wrap gap-2">
+          <div class="mt-3 flex flex-wrap gap-2 border-t border-[var(--border-soft)] pt-3">
+            <RouterLink
+              :to="{ name: 'platform-tenant-details', params: { id: tenant.id } }"
+              class="inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-[10px] border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text"
+            >
+              <Eye class="h-4 w-4" :stroke-width="2" />
+              {{ t('platform.actions.view') }}
+            </RouterLink>
             <button
               v-if="canActivate(tenant)"
               type="button"
-              class="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl bg-emerald-700 px-3 text-sm font-semibold text-white"
+              class="inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-[10px] bg-emerald-700 px-3 text-sm font-semibold text-white disabled:opacity-60"
               :disabled="lifecyclePending"
               @click="onActivate(tenant)"
             >
-              <PlayCircle class="h-4 w-4" />
+              <PlayCircle class="h-4 w-4" :stroke-width="2" />
               {{ t('platform.actions.activate') }}
             </button>
             <button
               v-if="canSuspend(tenant)"
               type="button"
-              class="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl bg-orange-700 px-3 text-sm font-semibold text-white"
+              class="inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-[10px] bg-orange-700 px-3 text-sm font-semibold text-white disabled:opacity-60"
               :disabled="lifecyclePending"
               @click="openReason(tenant, 'suspend')"
             >
-              <PauseCircle class="h-4 w-4" />
+              <PauseCircle class="h-4 w-4" :stroke-width="2" />
               {{ t('platform.actions.suspend') }}
             </button>
             <button
               v-if="canArchive(tenant)"
               type="button"
-              class="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-brand-border px-3 text-sm font-medium text-brand-text-secondary"
+              class="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-[10px] border border-brand-border px-3 text-sm font-medium text-brand-text-secondary disabled:opacity-60"
               :disabled="lifecyclePending"
               @click="openReason(tenant, 'archive')"
             >
-              <Archive class="h-4 w-4" />
+              <Archive class="h-4 w-4" :stroke-width="2" />
               {{ t('platform.actions.archive') }}
             </button>
           </div>
@@ -440,28 +492,28 @@ function canArchive(tenant: PlatformTenant): boolean {
 
       <div
         v-if="meta && meta.last_page > 1"
-        class="flex items-center justify-between gap-3 rounded-2xl border border-brand-border bg-brand-surface px-4 py-3"
+        class="flex items-center justify-between gap-3"
       >
         <button
           type="button"
-          class="inline-flex h-10 items-center gap-1 rounded-xl border px-3 text-sm disabled:opacity-40"
+          class="inline-flex h-11 items-center gap-1 rounded-[10px] border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text transition hover:bg-[var(--surface-subtle)] disabled:cursor-not-allowed disabled:opacity-40"
           :disabled="filters.page <= 1 || isFetching"
           @click="filters.page -= 1"
         >
-          <ChevronRight class="h-4 w-4" />
+          <ChevronRight class="h-4 w-4" :stroke-width="2" />
           {{ t('platform.prev') }}
         </button>
-        <span class="text-sm text-brand-text-secondary">
+        <span class="text-xs font-semibold text-brand-text-muted">
           {{ t('platform.pageOf', { page: meta.current_page, total: meta.last_page }) }}
         </span>
         <button
           type="button"
-          class="inline-flex h-10 items-center gap-1 rounded-xl border px-3 text-sm disabled:opacity-40"
+          class="inline-flex h-11 items-center gap-1 rounded-[10px] border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text transition hover:bg-[var(--surface-subtle)] disabled:cursor-not-allowed disabled:opacity-40"
           :disabled="filters.page >= meta.last_page || isFetching"
           @click="filters.page += 1"
         >
           {{ t('platform.next') }}
-          <ChevronLeft class="h-4 w-4" />
+          <ChevronLeft class="h-4 w-4" :stroke-width="2" />
         </button>
       </div>
     </template>

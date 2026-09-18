@@ -1,6 +1,19 @@
 import { describe, expect, it } from 'vitest'
 
-import { formatIsoDateAr, isIsoDate, monthGrid, parseIsoDate, toIsoDate, twelveYearBlock } from './gregorianDate'
+import {
+  formatDatetimeLocalAr,
+  formatIsoDateAr,
+  isDatetimeLocal,
+  isIsoDate,
+  joinDatetimeLocal,
+  monthGrid,
+  parseDatetimeLocal,
+  parseIsoDate,
+  splitDatetimeLocal,
+  toDatetimeLocal,
+  toIsoDate,
+  twelveYearBlock,
+} from './gregorianDate'
 
 describe('gregorianDate', () => {
   it('round-trips ISO dates without using the Islamic calendar', () => {
@@ -21,5 +34,19 @@ describe('gregorianDate', () => {
 
   it('builds a 12-year block for year picking', () => {
     expect(twelveYearBlock(2026)).toEqual([2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027])
+  })
+
+  it('round-trips datetime-local values', () => {
+    expect(isDatetimeLocal('2026-09-18T19:14')).toBe(true)
+    expect(isDatetimeLocal('2026-09-18')).toBe(false)
+    expect(joinDatetimeLocal('2026-09-18', 7, 14)).toBe('2026-09-18T07:14')
+    expect(splitDatetimeLocal('2026-09-18T19:14')).toEqual({
+      date: '2026-09-18',
+      hours: 19,
+      minutes: 14,
+    })
+    expect(parseDatetimeLocal('2026-09-18T19:14')?.getHours()).toBe(19)
+    expect(toDatetimeLocal(new Date(2026, 8, 18, 7, 14))).toBe('2026-09-18T07:14')
+    expect(formatDatetimeLocalAr('2026-09-18T19:14')).toContain('2026')
   })
 })

@@ -9,6 +9,7 @@ import { useLogoutMutation } from '@/modules/auth/mutations/useLogoutMutation'
 import { useCurrentUserQuery } from '@/modules/auth/queries/useCurrentUserQuery'
 import AppConfirmDialog from '@/shared/components/AppConfirmDialog.vue'
 import AppToastHost from '@/shared/components/AppToastHost.vue'
+import AppTooltip from '@/shared/components/AppTooltip.vue'
 import PwaInstallCard from '@/shared/components/PwaInstallCard.vue'
 import UserAvatar from '@/shared/components/UserAvatar.vue'
 
@@ -33,26 +34,25 @@ const navItems = computed(() => [
 </script>
 
 <template>
-  <div class="app-shell flex h-dvh overflow-hidden bg-brand-bg text-brand-text md:gap-3 md:p-3 lg:gap-4 lg:p-4">
-    <div class="hidden h-full w-[17.5rem] shrink-0 overflow-visible md:block">
+  <div class="app-shell flex h-full min-h-0 overflow-hidden bg-brand-bg text-brand-text md:gap-3 md:p-3 xl:gap-4 xl:p-4">
+    <!-- Desktop ≥1280: full platform sidebar -->
+    <div class="hidden h-full min-h-0 w-[17.5rem] shrink-0 self-stretch overflow-visible xl:block">
       <aside
-        class="dashboard-sidebar sidebar-glass flex h-full w-full min-h-0 flex-col text-white"
+        class="platform-sidebar flex h-full w-full min-h-0 flex-col text-white"
         :aria-label="t('nav.platformArea')"
       >
-        <div class="sidebar-brand shrink-0 px-3.5 pb-3 pt-3.5">
+        <div class="shrink-0 px-3.5 pb-3 pt-3.5">
           <div class="flex flex-col items-center gap-3 text-center">
             <div
-              class="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-brand-gold to-[#8a6a2e] p-0.5 shadow-lg shadow-brand-gold/25 ring-2 ring-white/10"
+              class="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-brand-gold to-[#8a6a2e] p-0.5 shadow-lg shadow-brand-gold/25 ring-2 ring-white/10"
             >
-              <div
-                class="sidebar-logo-frame flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-[#05291f]"
-              >
+              <div class="flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-[#05291f]">
                 <img
                   :src="rafeeaLogo"
                   :alt="t('auth.companyNameEn')"
-                  class="sidebar-logo"
-                  width="80"
-                  height="80"
+                  class="h-12 w-12 object-contain"
+                  width="48"
+                  height="48"
                   decoding="async"
                 />
               </div>
@@ -73,8 +73,12 @@ const navItems = computed(() => [
             v-for="item in navItems"
             :key="item.to"
             :to="item.to"
-            class="sidebar-nav-link"
-            :class="item.active ? 'sidebar-nav-link--active' : ''"
+            class="flex min-h-11 items-center gap-2.5 rounded-xl px-3 text-sm font-semibold transition"
+            :class="
+              item.active
+                ? 'bg-white/14 text-white'
+                : 'text-white/78 hover:bg-white/10 hover:text-white'
+            "
           >
             <component :is="item.icon" class="h-4 w-4 shrink-0 opacity-90" />
             <span>{{ item.label }}</span>
@@ -91,7 +95,7 @@ const navItems = computed(() => [
           </div>
           <button
             type="button"
-            class="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-white/10 text-sm font-semibold text-white transition hover:bg-white/15 disabled:opacity-60"
+            class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-white/10 text-sm font-semibold text-white transition hover:bg-white/15 disabled:opacity-60"
             :disabled="isLoggingOut"
             @click="logout()"
           >
@@ -102,44 +106,115 @@ const navItems = computed(() => [
       </aside>
     </div>
 
-    <div class="flex min-h-0 min-w-0 flex-1 flex-col md:gap-3 lg:gap-4">
-      <header
-        class="flex shrink-0 items-center justify-between gap-3 border-b border-brand-border bg-brand-surface px-4 py-3 shadow-none md:rounded-[1.5rem] md:border md:shadow-[0_10px_28px_-24px_rgba(23,32,29,0.22)] sm:px-5"
-        style="padding-top: max(12px, env(safe-area-inset-top, 0px))"
-      >
-        <div class="min-w-0">
-          <p class="text-xs font-semibold text-brand-text-muted">{{ t('nav.platformArea') }}</p>
-          <h1 class="truncate text-base font-bold text-brand-text sm:text-lg">
-            {{ t('nav.platformTenants') }}
-          </h1>
-        </div>
-        <div class="flex items-center gap-2 md:hidden">
-          <UserAvatar :user="user" size="sm" />
+    <!-- Tablet 768–1279: compact rail -->
+    <aside
+      class="platform-sidebar hidden h-full min-h-0 w-[76px] shrink-0 flex-col self-stretch md:flex xl:hidden"
+      :aria-label="t('nav.platformArea')"
+    >
+      <div class="flex flex-col items-center gap-2 px-1.5 pb-2 pt-3">
+        <RouterLink
+          to="/platform/tenants"
+          class="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-[#05291f] ring-1 ring-white/15"
+          :aria-label="t('nav.platformArea')"
+        >
+          <img
+            :src="rafeeaLogo"
+            alt=""
+            class="h-7 w-7 object-contain"
+            width="28"
+            height="28"
+            decoding="async"
+          />
+        </RouterLink>
+      </div>
+      <nav class="flex min-h-0 flex-1 flex-col items-center gap-1 overflow-y-auto px-1.5 py-2">
+        <AppTooltip
+          v-for="item in navItems"
+          :key="item.to"
+          :text="item.label"
+          side="bottom"
+        >
+          <RouterLink
+            :to="item.to"
+            class="inline-flex h-11 w-11 items-center justify-center rounded-[10px] transition"
+            :class="item.active ? 'bg-white/16 text-white' : 'text-white/78 hover:bg-white/10 hover:text-white'"
+            :aria-label="item.label"
+            :aria-current="item.active ? 'page' : undefined"
+          >
+            <component :is="item.icon" class="h-5 w-5" :stroke-width="1.75" />
+          </RouterLink>
+        </AppTooltip>
+      </nav>
+      <div class="flex flex-col items-center gap-2 border-t border-white/10 px-1.5 py-3">
+        <AppTooltip :text="t('auth.logout')" side="bottom">
           <button
             type="button"
-            class="inline-flex h-10 items-center gap-1.5 rounded-xl border border-brand-border px-3 text-sm font-semibold"
+            class="inline-flex h-11 w-11 items-center justify-center rounded-[10px] text-white/78 transition hover:bg-white/10 hover:text-white disabled:opacity-60"
+            :aria-label="t('auth.logout')"
             :disabled="isLoggingOut"
             @click="logout()"
           >
+            <LogOut class="h-5 w-5" :stroke-width="1.75" />
+          </button>
+        </AppTooltip>
+      </div>
+    </aside>
+
+    <div class="flex h-full min-h-0 min-w-0 flex-1 flex-col self-stretch md:gap-3 xl:gap-4">
+      <header
+        class="flex h-12 shrink-0 items-center justify-between gap-3 border-b border-brand-border bg-brand-surface px-3 md:h-14 md:rounded-[16px] md:border md:px-4 xl:h-16 xl:px-5"
+        style="padding-inline-start: max(12px, env(safe-area-inset-left, 0px)); padding-inline-end: max(12px, env(safe-area-inset-right, 0px)); padding-top: env(safe-area-inset-top, 0px)"
+      >
+        <div class="flex min-w-0 items-center gap-2.5">
+          <RouterLink
+            to="/platform/tenants"
+            class="flex h-9 w-9 shrink-0 items-center justify-center md:hidden"
+            :aria-label="t('nav.platformArea')"
+          >
+            <img :src="rafeeaLogo" alt="" class="h-8 w-8 object-contain" width="32" height="32" decoding="async" />
+          </RouterLink>
+          <div class="min-w-0">
+            <p class="truncate text-xs font-semibold text-brand-text-muted">{{ t('nav.platformArea') }}</p>
+            <p class="hidden truncate text-sm font-semibold text-brand-text md:block xl:hidden">
+              {{ displayName }}
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-1.5">
+          <div class="hidden items-center gap-2 xl:flex">
+            <UserAvatar :user="user" size="sm" />
+            <div class="min-w-0">
+              <p class="truncate text-sm font-semibold leading-tight text-brand-text">{{ displayName }}</p>
+              <p class="truncate text-xs leading-tight text-brand-text-muted">{{ roleLabel }}</p>
+            </div>
+          </div>
+          <UserAvatar :user="user" size="sm" class="xl:hidden" />
+          <button
+            type="button"
+            class="inline-flex h-11 min-w-11 items-center justify-center gap-1.5 rounded-[10px] px-2 text-sm font-semibold text-brand-text-secondary transition hover:bg-[var(--surface-muted)] disabled:opacity-60 md:hidden"
+            :disabled="isLoggingOut"
+            :aria-label="t('auth.logout')"
+            @click="logout()"
+          >
             <LogOut class="h-4 w-4" />
-            {{ t('auth.logout') }}
           </button>
         </div>
       </header>
 
-      <!-- Mobile nav -->
       <nav
-        class="flex shrink-0 gap-2 overflow-x-auto px-1 md:hidden"
+        class="flex shrink-0 gap-2 overflow-x-auto px-3 md:hidden"
         :aria-label="t('nav.platformArea')"
+        style="padding-inline-start: max(12px, env(safe-area-inset-left, 0px)); padding-inline-end: max(12px, env(safe-area-inset-right, 0px))"
       >
         <RouterLink
           v-for="item in navItems"
           :key="item.to"
           :to="item.to"
-          class="inline-flex h-10 shrink-0 items-center gap-2 rounded-xl border px-3 text-sm font-semibold"
+          class="inline-flex h-11 shrink-0 items-center gap-2 rounded-[10px] border px-3 text-sm font-semibold"
           :class="
             item.active
-              ? 'border-brand-primary bg-brand-primary-soft text-brand-primary-dark'
+              ? 'border-brand-primary/35 bg-brand-primary-soft text-brand-primary-dark'
               : 'border-brand-border bg-brand-surface text-brand-text'
           "
         >
@@ -162,3 +237,11 @@ const navItems = computed(() => [
     <AppConfirmDialog />
   </div>
 </template>
+
+<style scoped>
+.platform-sidebar {
+  border-radius: var(--radius-card-lg);
+  background: linear-gradient(180deg, #0a5c45 0%, #064e3b 55%, #04382b 100%);
+  box-shadow: 0 12px 28px -20px rgb(6 78 59 / 0.5);
+}
+</style>

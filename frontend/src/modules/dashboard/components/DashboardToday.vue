@@ -21,6 +21,8 @@ const { t } = useI18n()
 
 const hasToday = computed(() => props.today != null)
 
+const primaryKeys = ['meetings_today', 'tasks_due_today'] as const
+
 const subsections = computed(() => {
   const today = props.today
   if (!today) return []
@@ -31,6 +33,7 @@ const subsections = computed(() => {
     empty: string
     items: TodayListItem[] | undefined
     present: boolean
+    primary: boolean
   }> = [
     {
       key: 'meetings_today',
@@ -38,6 +41,7 @@ const subsections = computed(() => {
       empty: t('dashboard.emptyMeetingsToday'),
       items: today.meetings_today,
       present: Array.isArray(today.meetings_today),
+      primary: true,
     },
     {
       key: 'tasks_due_today',
@@ -45,6 +49,7 @@ const subsections = computed(() => {
       empty: t('dashboard.emptyTasksToday'),
       items: today.tasks_due_today,
       present: Array.isArray(today.tasks_due_today),
+      primary: true,
     },
     {
       key: 'contracts_expiring',
@@ -52,6 +57,7 @@ const subsections = computed(() => {
       empty: t('dashboard.emptyContracts'),
       items: today.contracts_expiring,
       present: Array.isArray(today.contracts_expiring),
+      primary: false,
     },
     {
       key: 'meetings_upcoming_7d',
@@ -59,11 +65,17 @@ const subsections = computed(() => {
       empty: t('dashboard.emptyUpcoming'),
       items: today.meetings_upcoming_7d,
       present: Array.isArray(today.meetings_upcoming_7d),
+      primary: false,
     },
   ]
 
   return blocks.filter((b) => b.present)
 })
+
+const primaryBlocks = computed(() =>
+  subsections.value.filter((block) => primaryKeys.includes(block.key as (typeof primaryKeys)[number])),
+)
+const secondaryBlocks = computed(() => subsections.value.filter((block) => !block.primary))
 const hasItems = computed(() => subsections.value.some((block) => (block.items?.length ?? 0) > 0))
 
 function itemMeta(item: TodayListItem): string {
@@ -100,7 +112,63 @@ function itemMeta(item: TodayListItem): string {
       class="space-y-5"
     >
       <div
-        v-for="block in subsections"
+        v-if="primaryBlocks.length > 0"
+        class="grid grid-cols-1 gap-4 md:grid-cols-2"
+      >
+        <div
+          v-for="block in primaryBlocks"
+          :key="block.key"
+        >
+          <h4 class="mb-2 flex items-center gap-2 text-sm font-semibold text-brand-text">
+            <CalendarClock class="h-4 w-4 text-brand-primary" aria-hidden="true" />
+            {{ block.title }}
+          </h4>
+          <p
+            v-if="!block.items || block.items.length === 0"
+            class="rounded-xl bg-brand-bg px-3 py-2 text-sm text-brand-text-muted"
+          >
+            {{ block.empty }}
+          </p>
+          <ul
+            v-else
+            class="space-y-0.5"
+            role="list"
+          >
+            <li
+              v-for="item in block.items"
+              :key="`${block.key}-${item.id}`"
+            >
+              <component
+                :is="isSafeAppHref(item.href) ? RouterLink : 'div'"
+                :to="isSafeAppHref(item.href) ? item.href : undefined"
+                class="flex min-h-11 items-center justify-between gap-3 rounded-xl px-2 py-2 text-sm transition"
+                :class="
+                  isSafeAppHref(item.href)
+                    ? 'hover:bg-brand-primary-soft/40'
+                    : ''
+                "
+              >
+                <span class="min-w-0 truncate font-medium text-brand-text">
+                  <span
+                    v-if="item.number"
+                    class="me-2 font-mono text-xs text-brand-text-muted"
+                  >{{ item.number }}</span>
+                  {{ item.title }}
+                </span>
+                <span
+                  v-if="itemMeta(item)"
+                  class="shrink-0 text-xs text-brand-text-secondary"
+                >
+                  {{ itemMeta(item) }}
+                </span>
+              </component>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div
+        v-for="block in secondaryBlocks"
         :key="block.key"
       >
         <h4 class="mb-2 flex items-center gap-2 text-sm font-semibold text-brand-text">

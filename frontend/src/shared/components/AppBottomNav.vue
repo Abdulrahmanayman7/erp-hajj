@@ -5,18 +5,17 @@ import { RouterLink, useRoute } from 'vue-router'
 import { Bell, Home, ListTodo, Menu, Plus } from 'lucide-vue-next'
 
 import { useUnreadCountQuery } from '@/modules/notifications/queries/useNotificationsQuery'
-import { isAppNavItemActive, useAppNavigation } from '@/shared/composables/useAppNavigation'
+import { isAppNavItemActive } from '@/shared/composables/useAppNavigation'
+import { useMobileMore } from '@/shared/composables/useMobileMore'
 import { usePermissions } from '@/shared/composables/usePermissions'
 
-import AppMobileMoreSheet from './AppMobileMoreSheet.vue'
 import QuickActionSheet from './QuickActionSheet.vue'
 
 const { t } = useI18n()
 const route = useRoute()
 const { can } = usePermissions()
-const { flatItems } = useAppNavigation()
+const { moreOpen, openMore } = useMobileMore()
 const { data: unread } = useUnreadCountQuery()
-const moreOpen = ref(false)
 const quickOpen = ref(false)
 
 const unreadCount = computed(() => unread.value?.unread_count ?? 0)
@@ -52,15 +51,6 @@ const notificationTab = computed(() => ({
   match: 'prefix' as const,
   badge: unreadCount.value,
 }))
-
-const moreItems = computed(() => {
-  const primaryKeys = new Set([
-    ...primaryTabs.value.map((tab) => tab.key),
-    'dashboard',
-    'notifications',
-  ])
-  return flatItems.value.filter((item) => !primaryKeys.has(item.key) && item.key !== 'dashboard')
-})
 
 function isTabActive(tab: { to: string; match: 'exact' | 'prefix' }): boolean {
   return isAppNavItemActive(route.path, {
@@ -120,7 +110,7 @@ function isTabActive(tab: { to: string; match: 'exact' | 'prefix' }): boolean {
         :class="{ 'app-bottom-nav__item--active': moreOpen }"
         :aria-expanded="moreOpen"
         aria-controls="app-mobile-more-sheet"
-        @click="moreOpen = true"
+        @click="openMore"
       >
         <Menu class="h-5 w-5" :stroke-width="1.9" aria-hidden="true" />
         <span class="app-bottom-nav__label">{{ t('nav.more') }}</span>
@@ -128,6 +118,5 @@ function isTabActive(tab: { to: string; match: 'exact' | 'prefix' }): boolean {
     </div>
   </nav>
 
-  <AppMobileMoreSheet :open="moreOpen" :items="moreItems" @close="moreOpen = false" />
   <QuickActionSheet :open="quickOpen" @close="quickOpen = false" />
 </template>

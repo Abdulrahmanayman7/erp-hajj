@@ -9,8 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Create/edit drawers (mobile + tablet):** bottom sheet with max ~92vh on phones (no full-page stretch under the bottom nav); floating inset side panel on tablet; inner form scroll + sticky actions; drawer z-index above bottom nav.
+
 - **Responsive UX QA (Phase 1.5):** tablet filters use sheet (not compressed desktop toolbar); mobile header lean (title + notifications + avatar); Quick Action Escape + safe-area; Dashboard greeting/KPI density polish; Tasks apply-count CTA; touch targets ≥44px on shell chrome.
 - **Visual design rebuild (Phase 1.6):** semantic surface/radius/shadow/typography tokens; calm AppShell (light tablet rail, native bottom nav, brand mobile topbar); Dashboard intro + status + compact KPI rebuild; Tasks segmented control + mobile card hierarchy + filter sheet polish. No additional module migration.
+- **AppShell viewport height fix:** lock `html/body/#app` height chain so sidebar and footer fill the viewport instead of leaving empty space under chrome on detail pages.
 
 - **PWA install experience hardening:** global RAFEEA icons (transparent `any` + brand-green maskable), improved `manifest.webmanifest` (standalone/RTL), iOS meta, locked mobile viewport + 16px input anti-focus-zoom, standalone detection (`html.is-standalone`), `usePwaInstall` + soft install card (More sheet / Platform mobile), safer shell SW (`erp-hajj-shell-v2`: network-first navigations, cache-first hashed assets, never cache `/api/*`). Docs: `docs/08-deployment/PWA.md`.
 

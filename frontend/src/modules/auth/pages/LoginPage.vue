@@ -91,7 +91,7 @@ function onSubmit(): void {
     Arabic UI blocks keep dir="rtl".
   -->
   <div
-    class="login-page relative h-dvh max-h-dvh overflow-hidden bg-[#FDFBF7] text-[#1A3A32]"
+    class="login-page relative h-full max-h-full overflow-hidden bg-[#FDFBF7] text-[#1A3A32]"
     dir="ltr"
     style="padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px)"
   >

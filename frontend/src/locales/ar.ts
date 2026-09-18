@@ -64,6 +64,7 @@ export const ar = {
     productLabel: 'ERP HAJJ',
     moreSubtitle: 'بقية وحدات النظام',
     moreEmpty: 'لا توجد وحدات إضافية متاحة لصلاحياتك',
+    navSearchEmpty: 'لا توجد أقسام مطابقة',
     filters: 'الفلاتر',
     filtersWithCount: 'الفلاتر ({count})',
     applyFilters: 'تطبيق',
@@ -76,6 +77,8 @@ export const ar = {
     navRail: 'شريط التنقل',
     navOverlay: 'قائمة التنقل',
     navOverlaySubtitle: 'جميع أقسام النظام حسب صلاحياتك',
+    navSearchPlaceholder: 'تصفية القائمة…',
+    openMenu: 'فتح القائمة',
   },
   quickActions: {
     title: 'إجراء سريع',
@@ -152,7 +155,10 @@ export const ar = {
     assets: 'الأصول',
     openCount: 'مفتوحة',
     overdueCount: 'متأخرة',
+    dueSoonCount: 'قريبة الاستحقاق',
     activeCount: 'نشطة',
+    dateCardLabel: 'تاريخ اليوم',
+    shortcuts: 'اختصارات',
     severity: {
       info: 'معلومات',
       warning: 'تحذير',
@@ -2159,6 +2165,7 @@ export const ar = {
       loading: 'جارٍ تحميل المنشآت...',
       loadError: 'تعذر تحميل قائمة المنشآت.',
       empty: 'لا توجد منشآت مطابقة.',
+      emptyHint: 'أضف منشأة جديدة لبدء العمل على المنصة.',
     },
     wizard: {
       title: 'إضافة منشأة',

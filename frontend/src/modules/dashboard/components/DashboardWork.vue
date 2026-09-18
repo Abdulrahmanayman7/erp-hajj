@@ -35,14 +35,52 @@ const contractEntries = computed(() => pickKpis(props.kpis, WORK_CONTRACT_KPI_KE
 
 const visible = computed(() => hasWorkMetrics(props.kpis, props.work))
 
+const taskPills = computed(() => {
+  const pills: Array<{ key: string; label: string; value: number; tone: string }> = []
+  if (myTasks.value) {
+    pills.push({
+      key: 'open',
+      label: t('dashboard.openCount'),
+      value: myTasks.value.open,
+      tone: 'bg-brand-primary-soft text-brand-primary-dark',
+    })
+    pills.push({
+      key: 'overdue',
+      label: t('dashboard.overdueCount'),
+      value: myTasks.value.overdue,
+      tone:
+        myTasks.value.overdue > 0
+          ? 'bg-[var(--danger-soft)] text-red-800'
+          : 'bg-[var(--surface-muted)] text-brand-text',
+    })
+    const dueSoon = taskEntries.value.find((entry) => entry.key === 'tasks_due_soon')
+    if (dueSoon) {
+      pills.push({
+        key: 'dueSoon',
+        label: t('dashboard.dueSoonCount'),
+        value: dueSoon.kpi.value,
+        tone: 'bg-[var(--warning-soft)] text-amber-900',
+      })
+    }
+    return pills
+  }
+
+  for (const entry of taskEntries.value) {
+    pills.push({
+      key: entry.key,
+      label: entry.kpi.label,
+      value: entry.kpi.value,
+      tone:
+        effectiveSeverity(entry.kpi.severity, entry.kpi.value) === 'critical'
+          ? 'bg-[var(--danger-soft)] text-red-800'
+          : 'bg-brand-primary-soft text-brand-primary-dark',
+    })
+  }
+  return pills
+})
+
 const groups = computed(() =>
   [
-    {
-      key: 'tasks',
-      title: t('dashboard.workTasks'),
-      icon: ClipboardList,
-      entries: taskEntries.value,
-    },
     {
       key: 'decisions',
       title: t('dashboard.workDecisions'),
@@ -72,51 +110,43 @@ const groups = computed(() =>
   >
     <div class="space-y-4">
       <component
-        :is="isSafeAppHref(myTasks.href) ? RouterLink : 'div'"
-        v-if="myTasks"
-        :to="isSafeAppHref(myTasks.href) ? myTasks.href : undefined"
-        class="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-brand-border bg-brand-bg/70 p-4 transition"
+        :is="myTasks && isSafeAppHref(myTasks.href) ? RouterLink : 'div'"
+        v-if="myTasks || taskPills.length > 0"
+        :to="myTasks && isSafeAppHref(myTasks.href) ? myTasks.href : undefined"
+        class="rounded-xl bg-brand-bg/70 p-4 transition"
         :class="
-          isSafeAppHref(myTasks.href)
-            ? 'hover:border-brand-primary/30 hover:bg-brand-primary-soft/40'
+          myTasks && isSafeAppHref(myTasks.href)
+            ? 'hover:bg-brand-primary-soft/40'
             : ''
         "
       >
-        <div>
-          <p class="text-sm font-bold text-brand-text">
-            {{ t('dashboard.myTasks') }}
-          </p>
-          <p class="mt-1 text-xs text-brand-text-secondary">
-            {{ t('dashboard.myTasksHint') }}
-          </p>
+        <div class="mb-3 flex items-center gap-2">
+          <ClipboardList class="h-4 w-4 text-brand-primary" aria-hidden="true" />
+          <div>
+            <p class="text-sm font-bold text-brand-text">
+              {{ t('dashboard.myTasks') }}
+            </p>
+            <p class="text-xs text-brand-text-secondary">
+              {{ t('dashboard.myTasksHint') }}
+            </p>
+          </div>
         </div>
-        <div class="flex gap-4 text-sm">
-          <div class="text-center">
-            <p class="text-xs text-brand-text-muted">
-              {{ t('dashboard.openCount') }}
-            </p>
-            <p class="mt-0.5 text-lg font-bold tabular-nums text-brand-primary-dark">
-              {{ myTasks.open }}
-            </p>
-          </div>
-          <div class="text-center">
-            <p class="text-xs text-brand-text-muted">
-              {{ t('dashboard.overdueCount') }}
-            </p>
-            <p
-              class="mt-0.5 text-lg font-bold tabular-nums"
-              :class="myTasks.overdue > 0 ? 'text-red-800' : 'text-brand-text'"
-            >
-              {{ myTasks.overdue }}
-            </p>
-          </div>
+        <div class="flex flex-wrap gap-2">
+          <span
+            v-for="pill in taskPills"
+            :key="pill.key"
+            class="inline-flex min-h-8 items-center gap-1.5 rounded-full px-3 text-xs font-semibold tabular-nums"
+            :class="pill.tone"
+          >
+            {{ pill.label }}
+            <span>{{ pill.value }}</span>
+          </span>
         </div>
       </component>
 
       <div
         v-for="group in groups"
         :key="group.key"
-        class="rounded-xl border border-brand-border p-3"
       >
         <h4 class="mb-2 flex items-center gap-2 text-sm font-semibold text-brand-text">
           <component

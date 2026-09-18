@@ -32,6 +32,8 @@ Transform entity tables into tappable cards/rows:
 
 Single column; sticky footer actions with safe-area padding (`.app-sticky-form-actions`).
 
+Create/edit **drawers** on `<md` are bottom sheets (`max-height` ~92dvh, rounded top, inner scroll). On tablet they are inset side panels, not full-bleed pages. Overlay z-index sits above the bottom nav.
+
 ## Loading / empty / error
 
 - Skeletons matching layout (prefer over full-page spinner after first paint)

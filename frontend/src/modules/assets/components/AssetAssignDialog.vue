@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { Loader2, X } from 'lucide-vue-next'
 
 import { listEmployees } from '@/modules/employees/api/employeesApi'
+import AppDateTimeInput from '@/shared/components/AppDateTimeInput.vue'
 import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 import { employeeSelectOption, toSelectId } from '@/shared/lookups/selectOptions'
@@ -87,11 +88,11 @@ function patch(part: Partial<AssignCustodyFormState>): void {
 
           <label class="block">
             <span class="text-sm font-medium">{{ t('assets.fields.expectedReturnAt') }}</span>
-            <input
-              :value="form.expected_return_at"
-              type="datetime-local"
-              class="mt-1 h-11 w-full rounded-xl border border-brand-border px-3 text-sm"
-              @input="patch({ expected_return_at: ($event.target as HTMLInputElement).value })"
+            <AppDateTimeInput
+              class="mt-1"
+              :model-value="form.expected_return_at"
+              :placeholder="t('assets.fields.expectedReturnAt')"
+              @update:model-value="patch({ expected_return_at: $event })"
             />
           </label>
 

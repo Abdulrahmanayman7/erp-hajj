@@ -9,6 +9,7 @@ import {
   getTopKpis,
   effectiveSeverity,
   isSafeAppHref,
+  kpiIconClass,
   severityValueClass,
 } from '../utils/dashboardDisplay'
 
@@ -27,13 +28,6 @@ const iconFor: Partial<Record<DashboardKpiKey, Component>> = {
   custodies_overdue: IdCard,
   meetings_today: CalendarDays,
 }
-
-function iconTone(severity: string, value: number): string {
-  if (value <= 0) return 'app-kpi-icon--neutral'
-  if (severity === 'critical') return 'app-kpi-icon--critical'
-  if (severity === 'warning') return 'app-kpi-icon--warning'
-  return 'app-kpi-icon--info'
-}
 </script>
 
 <template>
@@ -45,7 +39,7 @@ function iconTone(severity: string, value: number): string {
         v-for="entry in entries"
         :key="entry.key"
         :to="isSafeAppHref(entry.kpi.href) ? entry.kpi.href : undefined"
-        class="app-surface-flat group flex min-h-[96px] min-w-0 flex-col p-3 transition md:min-h-[104px] md:p-3.5"
+        class="app-surface-flat group flex min-h-[88px] min-w-0 flex-col p-3 transition md:min-h-[96px] md:p-3.5"
         :class="
           isSafeAppHref(entry.kpi.href)
             ? 'hover:border-brand-primary/25 [@media(hover:hover)]:hover:bg-[var(--surface-subtle)]'
@@ -54,7 +48,7 @@ function iconTone(severity: string, value: number): string {
       >
         <span
           class="inline-flex h-8 w-8 items-center justify-center rounded-[8px]"
-          :class="iconTone(effectiveSeverity(entry.kpi.severity, entry.kpi.value), entry.kpi.value)"
+          :class="kpiIconClass(entry.key)"
           aria-hidden="true"
         >
           <component
@@ -64,7 +58,7 @@ function iconTone(severity: string, value: number): string {
           />
         </span>
         <p
-          class="app-type-kpi mt-2.5"
+          class="app-type-kpi mt-2"
           :class="severityValueClass(effectiveSeverity(entry.kpi.severity, entry.kpi.value))"
         >
           {{ entry.kpi.value }}

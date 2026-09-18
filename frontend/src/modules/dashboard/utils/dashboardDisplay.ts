@@ -168,21 +168,110 @@ export function severityValueClass(severity: DashboardSeverity | string): string
   }
 }
 
-export function formatDashboardDate(timezone?: string | null): string {
-  const options: Intl.DateTimeFormatOptions = {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
+export function kpiIconClass(key: DashboardKpiKey): string {
+  switch (key) {
+    case 'tasks_overdue':
+      return 'app-kpi-icon--overdue'
+    case 'decisions_pending_approval':
+      return 'app-kpi-icon--decisions'
+    case 'contracts_expiring_soon':
+      return 'app-kpi-icon--contracts'
+    case 'inventory_attention':
+      return 'app-kpi-icon--inventory'
+    case 'custodies_overdue':
+      return 'app-kpi-icon--custody'
+    case 'meetings_today':
+      return 'app-kpi-icon--meetings'
+    default:
+      return 'app-kpi-icon--info'
   }
+}
+
+export function dashboardHour(timezone?: string | null): number | null {
   try {
-    return new Intl.DateTimeFormat('ar-SA', {
-      ...options,
-      timeZone: timezone || 'Asia/Riyadh',
-    }).format(new Date())
+    const hour = Number(
+      new Intl.DateTimeFormat('en-GB', {
+        hour: 'numeric',
+        hour12: false,
+        timeZone: timezone || 'Asia/Riyadh',
+      }).format(new Date()),
+    )
+    return Number.isFinite(hour) ? hour : null
   } catch {
-    return new Intl.DateTimeFormat('ar-SA', options).format(new Date())
+    return null
   }
+}
+
+export function isDashboardDaytime(hour: number | null): boolean {
+  if (hour == null) return true
+  return hour >= 6 && hour < 18
+}
+
+export interface DashboardCalendarParts {
+  weekday: string
+  day: string
+  gregorian: string
+  hijri: string | null
+}
+
+function formatWithCalendar(
+  date: Date,
+  options: Intl.DateTimeFormatOptions,
+  calendar?: string,
+): string {
+  const locale = calendar ? `ar-SA-u-ca-${calendar}` : 'ar-SA'
+  return new Intl.DateTimeFormat(locale, options).format(date)
+}
+
+export function formatDashboardCalendar(timezone?: string | null): DashboardCalendarParts {
+  const timeZone = timezone || 'Asia/Riyadh'
+  const now = new Date()
+  const base: Intl.DateTimeFormatOptions = { timeZone }
+
+  let weekday = ''
+  let day = ''
+  let gregorian = ''
+  try {
+    weekday = formatWithCalendar(now, { ...base, weekday: 'long' }, 'gregory')
+    day = formatWithCalendar(now, { ...base, day: 'numeric' }, 'gregory')
+    gregorian = formatWithCalendar(
+      now,
+      { ...base, day: 'numeric', month: 'long', year: 'numeric' },
+      'gregory',
+    )
+  } catch {
+    weekday = new Intl.DateTimeFormat('ar-SA', { weekday: 'long' }).format(now)
+    day = new Intl.DateTimeFormat('ar-SA', { day: 'numeric' }).format(now)
+    gregorian = new Intl.DateTimeFormat('ar-SA', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    }).format(now)
+  }
+
+  let hijri: string | null = null
+  for (const calendar of ['islamic-umalqura', 'islamic'] as const) {
+    try {
+      const label = formatWithCalendar(
+        now,
+        { ...base, day: 'numeric', month: 'long', year: 'numeric' },
+        calendar,
+      )
+      if (label && label !== gregorian) {
+        hijri = label
+        break
+      }
+    } catch {
+      /* Intl calendar not available in this engine */
+    }
+  }
+
+  return { weekday, day, gregorian, hijri }
+}
+
+export function formatDashboardDate(timezone?: string | null): string {
+  const parts = formatDashboardCalendar(timezone)
+  return [parts.weekday, parts.gregorian].filter(Boolean).join(' · ')
 }
 
 export function friendlyTimezone(timezone?: string | null): string {
