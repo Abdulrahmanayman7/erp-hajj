@@ -9,6 +9,7 @@ import { useLogoutMutation } from '@/modules/auth/mutations/useLogoutMutation'
 import { useCurrentUserQuery } from '@/modules/auth/queries/useCurrentUserQuery'
 import AppConfirmDialog from '@/shared/components/AppConfirmDialog.vue'
 import AppToastHost from '@/shared/components/AppToastHost.vue'
+import PwaInstallCard from '@/shared/components/PwaInstallCard.vue'
 import UserAvatar from '@/shared/components/UserAvatar.vue'
 
 const { t } = useI18n()
@@ -103,7 +104,8 @@ const navItems = computed(() => [
 
     <div class="flex min-h-0 min-w-0 flex-1 flex-col md:gap-3 lg:gap-4">
       <header
-        class="flex shrink-0 items-center justify-between gap-3 rounded-[1.5rem] border border-brand-border bg-brand-surface px-4 py-3 shadow-[0_10px_28px_-24px_rgba(23,32,29,0.22)] sm:px-5"
+        class="flex shrink-0 items-center justify-between gap-3 border-b border-brand-border bg-brand-surface px-4 py-3 shadow-none md:rounded-[1.5rem] md:border md:shadow-[0_10px_28px_-24px_rgba(23,32,29,0.22)] sm:px-5"
+        style="padding-top: max(12px, env(safe-area-inset-top, 0px))"
       >
         <div class="min-w-0">
           <p class="text-xs font-semibold text-brand-text-muted">{{ t('nav.platformArea') }}</p>
@@ -147,7 +149,10 @@ const navItems = computed(() => [
       </nav>
 
       <main class="app-shell-main min-h-0 flex-1 overflow-auto">
-        <div class="app-page-container mx-auto w-full max-w-[1440px]">
+        <div class="app-page-container mx-auto w-full max-w-[1440px] space-y-4">
+          <div class="md:hidden">
+            <PwaInstallCard />
+          </div>
           <slot />
         </div>
       </main>

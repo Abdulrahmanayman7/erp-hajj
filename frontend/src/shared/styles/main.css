@@ -23,6 +23,8 @@ html {
   max-width: 100%;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  /* Prefer pan/scroll over double-tap zoom; does not block pinch on all browsers when viewport locked. */
+  touch-action: manipulation;
 }
 
 html,
@@ -40,6 +42,31 @@ body {
   font-family: var(--font-sans);
   color: var(--color-brand-text);
   background-color: var(--color-brand-bg);
+  overflow-x: hidden;
+  overscroll-behavior-y: none;
+}
+
+/* Standalone / installed PWA shell hooks (class set from displayMode.ts). */
+html.is-standalone body {
+  /* Status bar blends with brand chrome when apple status-bar is black-translucent. */
+  background-color: var(--color-brand-primary-dark);
+}
+
+html.is-standalone .app-shell {
+  min-height: 100dvh;
+  max-height: 100dvh;
+}
+
+/*
+  Prevent iOS Safari focus-zoom on form controls without enlarging desktop UI.
+  Only targets interactive fields on coarse/narrow viewports.
+*/
+@media (max-width: 1023px) {
+  input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),
+  select,
+  textarea {
+    font-size: 16px;
+  }
 }
 
 .app-shell {

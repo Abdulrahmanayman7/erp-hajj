@@ -10,6 +10,7 @@ import {
   useAppNavigation,
 } from '@/shared/composables/useAppNavigation'
 import { useBodyScrollLock } from '@/shared/composables/useBodyScrollLock'
+import PwaInstallCard from '@/shared/components/PwaInstallCard.vue'
 
 const props = defineProps<{
   open: boolean
@@ -97,6 +98,8 @@ onUnmounted(() => {
         </div>
 
         <div class="min-h-0 flex-1 space-y-5 overflow-y-auto px-4 py-4">
+          <PwaInstallCard />
+
           <section
             v-for="group in visibleGroups"
             :key="group.key"
