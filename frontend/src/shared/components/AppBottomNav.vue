@@ -84,7 +84,7 @@ function isTabActive(tab: { to: string; match: 'exact' | 'prefix' }): boolean {
         :aria-expanded="quickOpen"
         @click="quickOpen = true"
       >
-        <Plus class="h-6 w-6" :stroke-width="2.25" aria-hidden="true" />
+        <Plus class="h-5 w-5" :stroke-width="2.25" aria-hidden="true" />
       </button>
 
       <RouterLink
