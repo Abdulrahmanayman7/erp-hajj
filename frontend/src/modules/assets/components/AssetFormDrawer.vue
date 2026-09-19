@@ -3,11 +3,13 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Loader2, X } from 'lucide-vue-next'
 
+import { listEmployees } from '@/modules/employees/api/employeesApi'
 import { listWarehouses } from '@/modules/inventory/api/warehousesApi'
 import AppDateInput from '@/shared/components/AppDateInput.vue'
+import AppNumberInput from '@/shared/components/AppNumberInput.vue'
 import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
-import { toSelectId, warehouseSelectOption } from '@/shared/lookups/selectOptions'
+import { employeeSelectOption, toSelectId, warehouseSelectOption } from '@/shared/lookups/selectOptions'
 
 import type { Asset, AssetFormState } from '../types/assets'
 import { ASSET_CONDITIONS } from '../types/assets'
@@ -21,6 +23,8 @@ const props = defineProps<{
   submitting: boolean
   categoryOptions: AppSelectOption[]
   orgUnitOptions: AppSelectOption[]
+  allowAssign?: boolean
+  currentEmployeeName?: string | null
 }>()
 
 const emit = defineEmits<{
@@ -31,6 +35,8 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const isEdit = computed(() => props.editing != null)
+const showEmployeeField = computed(() => Boolean(props.allowAssign || props.currentEmployeeName))
+const employeeLocked = computed(() => Boolean(props.currentEmployeeName) && !props.allowAssign)
 
 const conditionOptions = computed<AppSelectOption[]>(() =>
   ASSET_CONDITIONS.map((condition) => ({
@@ -38,6 +44,14 @@ const conditionOptions = computed<AppSelectOption[]>(() =>
     label: t(`assets.condition.${condition}`),
   })),
 )
+
+const emptyEmployeeOption = computed<AppSelectOption>(() => ({
+  value: '',
+  label: t('assets.noEmployee'),
+}))
+
+const fetchActiveEmployees = (params: { search?: string; page: number; per_page: number }) =>
+  listEmployees({ ...params, status: 'active' })
 
 function patch(part: Partial<AssetFormState>): void {
   emit('update:form', { ...props.form, ...part })
@@ -58,6 +72,7 @@ const selectedWarehouse = computed(() =>
         class="app-drawer-panel absolute inset-y-0 start-0 flex w-full max-w-[560px] flex-col bg-brand-surface shadow-xl"
         role="dialog"
         aria-modal="true"
+        v-autofocus-when
         @click.stop
       >
         <header class="flex shrink-0 items-start justify-between border-b border-brand-border px-4 py-5 sm:px-6">
@@ -183,19 +198,45 @@ const selectedWarehouse = computed(() =>
               </label>
             </section>
 
+            <section v-if="showEmployeeField" class="space-y-4">
+              <h4 class="text-sm font-bold text-brand-text">{{ t('assets.form.sections.custody') }}</h4>
+              <p class="text-xs text-brand-text-muted">
+                {{ employeeLocked ? t('assets.form.custodyLockedHint') : t('assets.form.custodyHint') }}
+              </p>
+              <label class="block">
+                <span class="text-sm font-medium text-brand-text">{{ t('assets.fields.employee') }}</span>
+                <input
+                  v-if="employeeLocked"
+                  readonly
+                  :value="currentEmployeeName"
+                  class="mt-1 h-11 w-full rounded-xl border border-brand-border bg-brand-bg px-3 text-sm text-brand-text"
+                />
+                <AppRemoteSelect
+                  v-else
+                  class="mt-1"
+                  searchable
+                  :model-value="form.employee_id"
+                  query-key="employees-active"
+                  :fetcher="fetchActiveEmployees"
+                  :map-option="employeeSelectOption"
+                  :empty-option="emptyEmployeeOption"
+                  :enabled="open"
+                  @update:model-value="patch({ employee_id: toSelectId($event) })"
+                />
+              </label>
+            </section>
+
             <section class="space-y-4">
               <h4 class="text-sm font-bold text-brand-text">{{ t('assets.form.sections.purchase') }}</h4>
               <p class="text-xs text-brand-text-muted">{{ t('assets.form.purchaseHint') }}</p>
               <div class="grid gap-4 sm:grid-cols-2">
                 <label class="block">
                   <span class="text-sm font-medium text-brand-text">{{ t('assets.fields.purchaseValue') }}</span>
-                  <input
-                    :value="form.purchase_value"
-                    type="number"
-                    min="0"
-                    step="0.01"
+                  <AppNumberInput
+                    :model-value="form.purchase_value"
                     class="mt-1 h-11 w-full rounded-xl border border-brand-border px-3 text-sm"
-                    @input="patch({ purchase_value: ($event.target as HTMLInputElement).value })"
+                    min="0"
+                    @update:model-value="patch({ purchase_value: $event })"
                   />
                   <p v-if="fieldErrors.purchase_value" class="mt-1 text-xs text-red-600">
                     {{ t(`assets.validation.${fieldErrors.purchase_value}`) }}

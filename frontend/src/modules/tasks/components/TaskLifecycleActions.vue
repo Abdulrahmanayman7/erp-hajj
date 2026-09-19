@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { listEmployees } from '@/modules/employees/api/employeesApi'
+import AppNumberInput from '@/shared/components/AppNumberInput.vue'
 import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import { employeeSelectOption, toSelectId } from '@/shared/lookups/selectOptions'
 import { useConfirm } from '@/shared/composables/useConfirm'
@@ -95,7 +96,10 @@ async function runStart(): Promise<void> {
 }
 
 async function submitProgress(): Promise<void> {
-  await progress.mutateAsync({ id: props.task.id, progressPercent: progressValue.value })
+  await progress.mutateAsync({
+    id: props.task.id,
+    progressPercent: Number(progressValue.value) || 0,
+  })
   toast.success(t('tasks.toasts.progressUpdated'))
   closeDialog()
   emit('refreshed')
@@ -201,7 +205,14 @@ async function deleteIt(): Promise<void> {
       <label class="block text-sm font-semibold">{{ t('tasks.fields.progressPercent') }}</label>
       <div class="mt-2 flex items-center gap-3">
         <input v-model.number="progressValue" type="range" min="0" max="100" class="flex-1" />
-        <input v-model.number="progressValue" type="number" min="0" max="100" class="h-10 w-20 rounded-lg border border-brand-border px-2 text-center" />
+        <AppNumberInput
+          :model-value="progressValue"
+          integer
+          min="0"
+          max="100"
+          class="h-10 w-20 rounded-lg border border-brand-border px-2 text-center"
+          @update:model-value="progressValue = $event === '' ? 0 : Number($event)"
+        />
         <span class="text-sm font-semibold">%</span>
       </div>
       <div class="mt-3 flex gap-2">

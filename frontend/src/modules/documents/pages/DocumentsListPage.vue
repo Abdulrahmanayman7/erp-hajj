@@ -18,6 +18,7 @@ import {
 import { listUsers } from '@/modules/users/api/usersApi'
 import { ApiError } from '@/shared/api/http'
 import AppMobileFilters from '@/shared/components/AppMobileFilters.vue'
+import AppNumberInput from '@/shared/components/AppNumberInput.vue'
 import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
@@ -364,17 +365,14 @@ function linkLabel(doc: Document): string {
             @update:model-value="filters.uploaded_by = toSelectId($event)"
           />
           <AppSelect v-model="filters.linkable_type" :options="linkTypeOptions" />
-          <input
-            :value="filters.linkable_id"
-            type="number"
+          <AppNumberInput
+            :model-value="filters.linkable_id"
+            integer
             min="1"
             class="h-11 w-28 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
             :placeholder="t('documents.filters.linkableId')"
-            @input="
-              filters.linkable_id =
-                ($event.target as HTMLInputElement).value === ''
-                  ? ''
-                  : Number(($event.target as HTMLInputElement).value)
+            @update:model-value="
+              filters.linkable_id = $event === '' ? '' : Number($event)
             "
           />
           <AppDateInput
@@ -402,17 +400,14 @@ function linkLabel(doc: Document): string {
             @update:model-value="filters.uploaded_by = toSelectId($event)"
           />
           <AppSelect v-model="filters.linkable_type" :options="linkTypeOptions" />
-          <input
-            :value="filters.linkable_id"
-            type="number"
+          <AppNumberInput
+            :model-value="filters.linkable_id"
+            integer
             min="1"
             class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
             :placeholder="t('documents.filters.linkableId')"
-            @input="
-              filters.linkable_id =
-                ($event.target as HTMLInputElement).value === ''
-                  ? ''
-                  : Number(($event.target as HTMLInputElement).value)
+            @update:model-value="
+              filters.linkable_id = $event === '' ? '' : Number($event)
             "
           />
           <AppDateInput

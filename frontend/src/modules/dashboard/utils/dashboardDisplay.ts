@@ -168,25 +168,6 @@ export function severityValueClass(severity: DashboardSeverity | string): string
   }
 }
 
-export function kpiIconClass(key: DashboardKpiKey): string {
-  switch (key) {
-    case 'tasks_overdue':
-      return 'app-kpi-icon--overdue'
-    case 'decisions_pending_approval':
-      return 'app-kpi-icon--decisions'
-    case 'contracts_expiring_soon':
-      return 'app-kpi-icon--contracts'
-    case 'inventory_attention':
-      return 'app-kpi-icon--inventory'
-    case 'custodies_overdue':
-      return 'app-kpi-icon--custody'
-    case 'meetings_today':
-      return 'app-kpi-icon--meetings'
-    default:
-      return 'app-kpi-icon--info'
-  }
-}
-
 export function dashboardHour(timezone?: string | null): number | null {
   try {
     const hour = Number(

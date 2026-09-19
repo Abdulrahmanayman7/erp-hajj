@@ -5,9 +5,9 @@ import { Loader2, Plus, Trash2 } from 'lucide-vue-next'
 
 import { listEmployees } from '@/modules/employees/api/employeesApi'
 import { ApiError } from '@/shared/api/http'
-import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
+import AppRemoteListSelect from '@/shared/components/AppRemoteListSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
-import { employeeSelectOption, toSelectId } from '@/shared/lookups/selectOptions'
+import { employeeSelectOption, toSelectIds } from '@/shared/lookups/selectOptions'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
 import { useConfirm } from '@/shared/composables/useConfirm'
 import { usePermissions } from '@/shared/composables/usePermissions'
@@ -42,7 +42,7 @@ const addMutation = useAddAttendeeMutation()
 const updateMutation = useUpdateAttendeeMutation()
 const removeMutation = useRemoveAttendeeMutation()
 
-const selectedEmployeeId = ref<number | ''>('')
+const pendingEmployeeIds = ref<number[]>([])
 const formError = ref('')
 
 const readOnly = computed(() => isMeetingLocked(props.meeting.status))
@@ -82,20 +82,31 @@ function apiMessage(error: unknown): string {
 
 async function addAttendee(): Promise<void> {
   formError.value = ''
-  if (selectedEmployeeId.value === '') {
+  const ids = [...pendingEmployeeIds.value]
+  if (ids.length === 0) {
     formError.value = t('meetings.validation.employeeRequired')
     return
   }
+  let added = 0
   try {
-    await addMutation.mutateAsync({
-      meetingId: props.meeting.id,
-      payload: { employee_id: Number(selectedEmployeeId.value) },
-    })
-    selectedEmployeeId.value = ''
-    toast.success(t('meetings.toasts.attendeeAdded'))
+    for (const employeeId of ids) {
+      await addMutation.mutateAsync({
+        meetingId: props.meeting.id,
+        payload: { employee_id: employeeId },
+      })
+      added += 1
+      pendingEmployeeIds.value = ids.slice(added)
+    }
+    pendingEmployeeIds.value = []
+    toast.success(
+      added === 1
+        ? t('meetings.toasts.attendeeAdded')
+        : t('meetings.toasts.attendeesAdded', { count: added }),
+    )
     emit('refreshed')
   } catch (error) {
     formError.value = apiMessage(error)
+    if (added > 0) emit('refreshed')
   }
 }
 
@@ -163,15 +174,15 @@ async function removeAttendee(attendee: MeetingAttendee): Promise<void> {
           <span class="mb-1.5 block text-sm font-semibold text-brand-text">
             {{ t('meetings.fields.addAttendee') }}
           </span>
-          <AppRemoteSelect
-            :model-value="selectedEmployeeId"
+          <AppRemoteListSelect
+            :model-value="pendingEmployeeIds"
             query-key="employees-active"
             :fetcher="fetchActiveEmployees"
             :map-option="employeeSelectOption"
-            :empty-option="{ value: '', label: t('meetings.selectEmployee') }"
             :exclude-values="takenEmployeeIds"
+            :placeholder="t('meetings.selectEmployees')"
             :disabled="isPending"
-            @update:model-value="selectedEmployeeId = toSelectId($event)"
+            @update:model-value="pendingEmployeeIds = toSelectIds($event)"
           />
         </div>
         <button

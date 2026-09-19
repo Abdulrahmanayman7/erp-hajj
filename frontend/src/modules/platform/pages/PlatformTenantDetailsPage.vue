@@ -12,6 +12,7 @@ import {
 
 import { ApiError } from '@/shared/api/http'
 import AppPageHeader from '@/shared/components/AppPageHeader.vue'
+import AppPhoneInput from '@/shared/components/AppPhoneInput.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
 import { useConfirm } from '@/shared/composables/useConfirm'
@@ -351,7 +352,7 @@ async function onTransfer(): Promise<void> {
 
       <div class="grid gap-5 lg:grid-cols-2">
         <!-- Editable fields -->
-        <section class="space-y-4 rounded-2xl border border-brand-border bg-brand-surface p-5">
+        <form class="space-y-4 rounded-2xl border border-brand-border bg-brand-surface p-5" @submit.prevent="saveEdits">
           <h2 class="text-base font-bold">{{ t('platform.details.editSection') }}</h2>
 
           <label class="block">
@@ -409,11 +410,10 @@ async function onTransfer(): Promise<void> {
 
           <label class="block">
             <span class="text-sm font-medium">{{ t('platform.fields.contactPhone') }}</span>
-            <input
+            <AppPhoneInput
+              class="mt-1"
               v-model="form.contact_phone"
-              dir="ltr"
               :disabled="!canEdit"
-              class="mt-1 h-11 w-full rounded-xl border border-brand-border px-3 text-sm disabled:bg-brand-bg"
             />
           </label>
 
@@ -436,17 +436,16 @@ async function onTransfer(): Promise<void> {
 
           <PermissionGuard permission="platform_tenants.update">
             <button
-              type="button"
+              type="submit"
               class="inline-flex h-11 items-center gap-2 rounded-xl bg-brand-primary px-4 text-sm font-semibold text-white disabled:opacity-60"
               :disabled="!canEdit || saving"
-              @click="saveEdits"
             >
               <Loader2 v-if="saving" class="h-4 w-4 animate-spin" />
               <Save v-else class="h-4 w-4" />
               {{ t('platform.actions.save') }}
             </button>
           </PermissionGuard>
-        </section>
+        </form>
 
         <!-- Read-only + ownership -->
         <div class="space-y-5">

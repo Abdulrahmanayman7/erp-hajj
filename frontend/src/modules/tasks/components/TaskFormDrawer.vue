@@ -49,7 +49,7 @@ const emptyDecision = computed<AppSelectOption>(() => ({
 <template>
   <Teleport to="body"><div v-if="open" class="fixed inset-0 z-50" role="presentation">
     <div class="absolute inset-0 bg-black/30" @click="emit('close')" />
-    <aside class="app-drawer-panel absolute inset-y-0 start-0 flex w-full max-w-[540px] flex-col bg-brand-surface shadow-xl" role="dialog" aria-modal="true" @click.stop>
+    <aside class="app-drawer-panel absolute inset-y-0 start-0 flex w-full max-w-[540px] flex-col bg-brand-surface shadow-xl" role="dialog" aria-modal="true" v-autofocus-when @click.stop>
       <header class="flex items-start justify-between border-b border-brand-border px-4 py-5 sm:px-6">
         <div><h3 class="text-lg font-bold">{{ t(isEdit ? 'tasks.editTitle' : 'tasks.createTitle') }}</h3><p class="mt-1 text-sm text-brand-text-secondary">{{ t(isEdit ? 'tasks.editSubtitle' : 'tasks.createSubtitle') }}</p></div>
         <button class="h-9 w-9" :disabled="submitting" @click="emit('close')"><X class="h-4 w-4" /></button>

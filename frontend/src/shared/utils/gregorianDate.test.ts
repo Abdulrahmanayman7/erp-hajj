@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   formatDatetimeLocalAr,
   formatIsoDateAr,
+  formatIsoTimestampAr,
   hour12To24,
   hour24To12,
   isDatetimeLocal,
@@ -61,5 +62,16 @@ describe('gregorianDate', () => {
     expect(hour12To24(7, 'pm')).toBe(19)
     expect(hour12To24(12, 'am')).toBe(0)
     expect(hour12To24(12, 'pm')).toBe(12)
+  })
+
+  it('formats ISO timestamps in the tenant timezone with a 12-hour period', () => {
+    const labeled = formatIsoTimestampAr('2026-09-19T14:18:00+00:00', 'Asia/Riyadh')
+    expect(labeled).toContain('2026')
+    expect(labeled).toContain('سبتمبر')
+    expect(labeled.includes('5:18') || labeled.includes('17:18')).toBe(true)
+    expect(labeled.includes('م') || labeled.toLowerCase().includes('pm')).toBe(true)
+    expect(labeled).not.toContain('T14:18')
+    expect(formatIsoTimestampAr('', 'Asia/Riyadh', '—')).toBe('—')
+    expect(formatIsoTimestampAr('not-a-date', 'Asia/Riyadh', '—')).toBe('—')
   })
 })

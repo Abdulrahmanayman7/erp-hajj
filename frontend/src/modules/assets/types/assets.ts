@@ -154,6 +154,8 @@ export interface AssetFormState {
   purchase_value: string
   acquisition_date: string
   notes: string
+  /** UI-only: optional custody assignee after save. Never sent on POST/PATCH asset. */
+  employee_id: number | ''
 }
 
 export interface AssignCustodyPayload {

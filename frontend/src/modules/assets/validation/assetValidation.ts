@@ -1,8 +1,10 @@
 import type {
   AssetFormState,
   AssetLifecycleAction,
+  AssetPayload,
   AssetStatus,
   AssignCustodyFormState,
+  AssignCustodyPayload,
   LifecycleReasonFormState,
   ReturnCustodyFormState,
 } from '../types/assets'
@@ -306,6 +308,34 @@ export function emptyAssetForm(): AssetFormState {
     purchase_value: '',
     acquisition_date: '',
     notes: '',
+    employee_id: '',
+  }
+}
+
+export function toAssetWritePayload(form: AssetFormState): AssetPayload {
+  return {
+    name: form.name.trim(),
+    description: form.description.trim() || null,
+    category_id: form.category_id === '' ? null : Number(form.category_id),
+    serial_number: form.serial_number.trim() || null,
+    barcode: form.barcode.trim() || null,
+    condition: form.condition || null,
+    warehouse_id: form.warehouse_id === '' ? null : Number(form.warehouse_id),
+    organization_unit_id:
+      form.organization_unit_id === '' ? null : Number(form.organization_unit_id),
+    purchase_value: form.purchase_value.trim() === '' ? null : form.purchase_value.trim(),
+    acquisition_date: form.acquisition_date.trim() || null,
+    notes: form.notes.trim() || null,
+  }
+}
+
+export function optionalAssignFromAssetForm(form: AssetFormState): AssignCustodyPayload | null {
+  if (form.employee_id === '' || form.employee_id == null) return null
+  return {
+    employee_id: Number(form.employee_id),
+    condition_at_assignment: form.condition || 'good',
+    expected_return_at: null,
+    assignment_notes: null,
   }
 }
 

@@ -21,6 +21,7 @@ import type { AppSelectOption } from '@/shared/components/AppSelect.vue'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import { useToast } from '@/shared/composables/useToast'
+import { formatIsoDateAr, formatIsoTimestampAr } from '@/shared/utils/gregorianDate'
 
 import TaskFormDrawer from '../components/TaskFormDrawer.vue'
 import TaskLifecycleActions from '../components/TaskLifecycleActions.vue'
@@ -42,6 +43,7 @@ const { can } = usePermissions()
 const toast = useToast()
 const { data: currentUser } = useCurrentUserQuery()
 const linkedEmployeeId = computed(() => currentUser.value?.employee_id ?? null)
+const tenantTimezone = computed(() => currentUser.value?.tenant?.timezone || 'Asia/Riyadh')
 
 const id = computed(() => {
   const raw = route.params.id
@@ -247,8 +249,8 @@ async function onRefreshed(): Promise<void> {
                   <dt class="text-xs font-semibold text-brand-text-muted">
                     {{ t('tasks.fields.startDate') }}
                   </dt>
-                  <dd class="mt-1 text-sm font-semibold text-brand-text" dir="ltr">
-                    {{ task.start_date ?? '—' }}
+                  <dd class="mt-1 text-sm font-semibold text-brand-text">
+                    {{ formatIsoDateAr(task.start_date, '—') }}
                   </dd>
                 </div>
               </div>
@@ -263,8 +265,8 @@ async function onRefreshed(): Promise<void> {
                   <dt class="text-xs font-semibold text-brand-text-muted">
                     {{ t('tasks.fields.dueDate') }}
                   </dt>
-                  <dd class="mt-1 text-sm font-semibold text-brand-text" dir="ltr">
-                    {{ task.due_date ?? '—' }}
+                  <dd class="mt-1 text-sm font-semibold text-brand-text">
+                    {{ formatIsoDateAr(task.due_date, '—') }}
                   </dd>
                 </div>
               </div>
@@ -419,8 +421,8 @@ async function onRefreshed(): Promise<void> {
                 <p class="text-xs font-semibold text-brand-text-muted">
                   {{ t('tasks.fields.completedAt') }}
                 </p>
-                <p class="mt-1 text-sm font-semibold text-brand-text" dir="ltr">
-                  {{ task.completed_at ?? '—' }}
+                <p class="mt-1 text-sm font-semibold text-brand-text">
+                  {{ formatIsoTimestampAr(task.completed_at, tenantTimezone, '—') }}
                 </p>
               </div>
               <div v-if="task.completion_notes">
@@ -437,6 +439,7 @@ async function onRefreshed(): Promise<void> {
           <TaskTimeline
             :transitions="task.status_transitions ?? []"
             :assignments="task.assignment_history ?? []"
+            :timezone="tenantTimezone"
           />
 
           <EntityDocumentsSection

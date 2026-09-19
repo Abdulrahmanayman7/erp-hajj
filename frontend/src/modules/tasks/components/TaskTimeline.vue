@@ -5,11 +5,18 @@ import { ArrowLeft, MessageSquareText, UserRound } from 'lucide-vue-next'
 
 import type { TaskAssignmentHistoryEntry, TaskTransition } from '../types/tasks'
 import { taskStatusBadgeClass } from '../validation/taskValidation'
+import { formatIsoTimestampAr } from '@/shared/utils/gregorianDate'
 
-const props = defineProps<{
-  transitions: TaskTransition[]
-  assignments: TaskAssignmentHistoryEntry[]
-}>()
+const props = withDefaults(
+  defineProps<{
+    transitions: TaskTransition[]
+    assignments: TaskAssignmentHistoryEntry[]
+    timezone?: string
+  }>(),
+  {
+    timezone: 'Asia/Riyadh',
+  },
+)
 
 const { t } = useI18n()
 
@@ -30,15 +37,7 @@ const orderedAssignments = computed(() =>
 )
 
 function formatTimestamp(value: string | null): string {
-  if (!value) return '—'
-  try {
-    return new Intl.DateTimeFormat('ar-SA', {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    }).format(new Date(value))
-  } catch {
-    return value
-  }
+  return formatIsoTimestampAr(value, props.timezone, '—')
 }
 
 function statusLabel(status: string | null): string {

@@ -1,7 +1,7 @@
 # Assets and Custodies — UI
 
 > **Status:** Implemented (Sprint 015)
-> **Last updated:** 2026-08-11
+> **Last updated:** 2026-09-19
 > Shell: existing AppSidebar / RTL layout — **do not redesign**.
 
 ## Module placement
@@ -24,9 +24,10 @@
 
 ### Create / edit drawer
 
-Sections: بيانات الأصل · التصنيف · المستودع/الجهة · قيمة الشراء (informational) · ملاحظات.
+Sections: بيانات الأصل · التصنيف · المستودع/الجهة · **الموظف / العهدة** (optional) · قيمة الشراء (informational) · ملاحظات.
 `asset_number` read-only after create.
 **No** status dropdown — lifecycle via details actions.
+Optional employee on create/edit (when `assets.assign` and asset is `available`) calls existing `POST /assets/{id}/assign` after save. Current holder on `in_use` is read-only; change via return then assign. Employee is **not** an Asset field.
 
 ### Asset details
 

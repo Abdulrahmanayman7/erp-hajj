@@ -165,9 +165,11 @@ async function removeItem(item: MeetingAgendaItem): Promise<void> {
       </PermissionGuard>
     </div>
 
-    <div
+    <form
       v-if="formOpen"
       class="mt-4 space-y-3 rounded-xl border border-brand-border bg-brand-bg p-4"
+      v-autofocus-when
+      @submit.prevent="submitForm"
     >
       <label class="block">
         <span class="mb-1.5 block text-sm font-semibold text-brand-text">
@@ -202,16 +204,15 @@ async function removeItem(item: MeetingAgendaItem): Promise<void> {
           {{ t('meetings.cancel') }}
         </button>
         <button
-          type="button"
+          type="submit"
           class="inline-flex h-9 items-center gap-2 rounded-lg bg-brand-primary-dark px-3 text-sm font-semibold text-white"
           :disabled="isPending"
-          @click="submitForm"
         >
           <Loader2 v-if="isPending" class="h-3.5 w-3.5 animate-spin" />
           {{ editing ? t('meetings.save') : t('meetings.actions.addAgenda') }}
         </button>
       </div>
-    </div>
+    </form>
 
     <div
       v-if="items.length === 0"

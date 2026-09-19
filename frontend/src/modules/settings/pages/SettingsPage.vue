@@ -6,6 +6,7 @@ import { onBeforeRouteLeave } from 'vue-router'
 
 import { ApiError } from '@/shared/api/http'
 import AppPageHeader from '@/shared/components/AppPageHeader.vue'
+import AppPhoneInput from '@/shared/components/AppPhoneInput.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 import { useConfirm } from '@/shared/composables/useConfirm'
 import { usePermissions } from '@/shared/composables/usePermissions'
@@ -316,6 +317,7 @@ async function onSendTestEmail(): Promise<void> {
     </div>
 
     <template v-else>
+      <form class="space-y-6" @submit.prevent="onSave">
       <div
         v-if="!canUpdate"
         class="flex gap-3 rounded-2xl border border-brand-gold/35 bg-brand-gold-soft px-4 py-4 text-brand-text"
@@ -432,16 +434,17 @@ async function onSendTestEmail(): Promise<void> {
 
           <label class="block space-y-1.5">
             <span class="text-sm font-bold text-brand-text">{{ t('settings.fields.contactPhone') }}</span>
-            <input
-              v-model="form.contact_phone"
-              type="tel"
-              class="h-11 w-full rounded-xl border bg-brand-surface px-3 text-sm text-brand-text outline-none transition focus:border-brand-primary/50 focus:ring-2 focus:ring-brand-primary/15 disabled:bg-brand-bg"
-              :class="fieldErrors.contact_phone ? 'border-rose-500' : 'border-brand-border'"
+            <AppPhoneInput
+              :model-value="form.contact_phone"
               :disabled="saving"
-              :aria-invalid="Boolean(fieldErrors.contact_phone)"
-              :aria-describedby="fieldErrors.contact_phone ? 'settings-contact-phone-error' : undefined"
+              :invalid="Boolean(fieldErrors.contact_phone)"
               autocomplete="tel"
-              @input="clearFieldError('contact_phone')"
+              @update:model-value="
+                (value) => {
+                  form.contact_phone = value
+                  clearFieldError('contact_phone')
+                }
+              "
             />
             <p
               v-if="fieldErrors.contact_phone"
@@ -801,11 +804,10 @@ async function onSendTestEmail(): Promise<void> {
       >
         <div class="app-sticky-form-actions__inner">
           <button
-            type="button"
+            type="submit"
             class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand-primary-dark px-5 text-sm font-bold text-white transition hover:bg-brand-primary disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
             :disabled="!dirty || saving"
             :aria-busy="saving"
-            @click="onSave"
           >
             <LoaderCircle v-if="saving" class="h-4 w-4 animate-spin" aria-hidden="true" />
             <Save v-else class="h-4 w-4" aria-hidden="true" />
@@ -813,6 +815,7 @@ async function onSendTestEmail(): Promise<void> {
           </button>
         </div>
       </div>
+      </form>
     </template>
   </div>
 </template>

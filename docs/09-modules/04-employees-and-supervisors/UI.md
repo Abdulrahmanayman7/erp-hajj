@@ -1,7 +1,7 @@
 # Employees and Supervisors — UI
 
 > **Status:** Implemented (Sprint 008)
-> **Last updated:** 2026-08-09
+> **Last updated:** 2026-09-19
 
 ## Module & navigation
 
@@ -59,7 +59,7 @@ Reuse Users/Roles/Organization **Drawer** pattern.
 | الرقم الوظيفي | read-only placeholder “يُولَّد تلقائياً” | read-only |
 | الوحدة التنظيمية | ✓ required | ✓ |
 | المسمى الوظيفي | optional | optional |
-| الجوال | optional | optional |
+| الجوال | optional (country-code picker, stored as one E.164 string) | optional |
 | البريد | optional | optional |
 | تاريخ الالتحاق | optional | optional |
 | ملاحظات | optional | optional |

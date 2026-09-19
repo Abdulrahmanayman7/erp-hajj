@@ -4,9 +4,9 @@
 
 Simplified:
 
-`[Brand / page title] …… [Notifications] [Avatar]`
+`[Menu] [Brand] …… [Refresh] [Notifications]`
 
-Avoid primary placement of back / refresh / fullscreen (use OS/gesture or in-page actions).
+Refresh: tap = invalidate queries; press-and-hold 5 seconds = hard reload. No back/fullscreen as primary chrome.
 
 ## Bottom navigation
 

@@ -31,6 +31,7 @@ import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
 import AssetCategoriesManagerDrawer from '../components/AssetCategoriesManagerDrawer.vue'
 import AssetFormDrawer from '../components/AssetFormDrawer.vue'
 import {
+  useAssignAssetCustodyMutation,
   useCreateAssetMutation,
   useDeleteAssetMutation,
   useUpdateAssetMutation,
@@ -46,10 +47,13 @@ import {
   canEditAsset,
   canShowCategoriesButton,
   canShowCreateAssetCta,
+  canShowAssignAction,
   emptyAssetForm,
   filterAssetsListParams,
   mapAssetErrorCode,
+  optionalAssignFromAssetForm,
   resolveAssetsListState,
+  toAssetWritePayload,
   validateAssetForm,
 } from '../validation/assetValidation'
 
@@ -164,6 +168,7 @@ watch(
 const createMutation = useCreateAssetMutation()
 const updateMutation = useUpdateAssetMutation()
 const deleteMutation = useDeleteAssetMutation()
+const assignMutation = useAssignAssetCustodyMutation()
 
 const drawerOpen = ref(false)
 const categoriesOpen = ref(false)
@@ -173,11 +178,20 @@ const fieldErrors = reactive<Record<string, string>>({})
 const form = reactive<AssetFormState>(emptyAssetForm())
 
 const submitting = computed(
-  () => createMutation.isPending.value || updateMutation.isPending.value,
+  () =>
+    createMutation.isPending.value ||
+    updateMutation.isPending.value ||
+    assignMutation.isPending.value,
 )
 
 const showCreate = computed(() => canShowCreateAssetCta(permissions.value))
 const showCategories = computed(() => canShowCategoriesButton(permissions.value))
+const formAllowAssign = computed(() =>
+  canShowAssignAction(editing.value?.status ?? 'available', permissions.value),
+)
+const formCurrentEmployeeName = computed(
+  () => editing.value?.current_custody?.employee?.full_name ?? null,
+)
 
 function apiMessage(error: unknown): string {
   if (!(error instanceof ApiError)) return t('assets.errors.generic')
@@ -208,6 +222,7 @@ function openEdit(asset: Asset): void {
     purchase_value: asset.purchase_value != null ? String(asset.purchase_value) : '',
     acquisition_date: asset.acquisition_date ?? '',
     notes: asset.notes ?? '',
+    employee_id: '',
   })
   formError.value = ''
   Object.keys(fieldErrors).forEach((k) => delete fieldErrors[k])
@@ -215,20 +230,16 @@ function openEdit(asset: Asset): void {
 }
 
 function toPayload() {
-  return {
-    name: form.name.trim(),
-    description: form.description.trim() || null,
-    category_id: form.category_id === '' ? null : Number(form.category_id),
-    serial_number: form.serial_number.trim() || null,
-    barcode: form.barcode.trim() || null,
-    condition: form.condition || null,
-    warehouse_id: form.warehouse_id === '' ? null : Number(form.warehouse_id),
-    organization_unit_id:
-      form.organization_unit_id === '' ? null : Number(form.organization_unit_id),
-    purchase_value: form.purchase_value.trim() === '' ? null : form.purchase_value.trim(),
-    acquisition_date: form.acquisition_date.trim() || null,
-    notes: form.notes.trim() || null,
+  return toAssetWritePayload(form)
+}
+
+async function assignAfterSave(assetId: number): Promise<boolean> {
+  const payload = optionalAssignFromAssetForm(form)
+  if (!payload || !canShowAssignAction(editing.value?.status ?? 'available', permissions.value)) {
+    return false
   }
+  await assignMutation.mutateAsync({ id: assetId, payload })
+  return true
 }
 
 async function submitForm(): Promise<void> {
@@ -239,11 +250,33 @@ async function submitForm(): Promise<void> {
 
   try {
     if (editing.value) {
-      await updateMutation.mutateAsync({ id: editing.value.id, payload: toPayload() })
-      toast.success(t('assets.toasts.assetUpdated'))
+      const updated = await updateMutation.mutateAsync({ id: editing.value.id, payload: toPayload() })
+      try {
+        const assigned = await assignAfterSave(updated.id)
+        toast.success(
+          assigned ? t('assets.toasts.assetUpdatedAssigned') : t('assets.toasts.assetUpdated'),
+        )
+      } catch (error) {
+        toast.success(t('assets.toasts.assetUpdated'))
+        toast.error(t('assets.toasts.assignAfterSaveFailed'))
+        formError.value = apiMessage(error)
+        drawerOpen.value = false
+        return
+      }
     } else {
-      await createMutation.mutateAsync(toPayload())
-      toast.success(t('assets.toasts.assetCreated'))
+      const created = await createMutation.mutateAsync(toPayload())
+      try {
+        const assigned = await assignAfterSave(created.id)
+        toast.success(
+          assigned ? t('assets.toasts.assetCreatedAssigned') : t('assets.toasts.assetCreated'),
+        )
+      } catch (error) {
+        toast.success(t('assets.toasts.assetCreated'))
+        toast.error(t('assets.toasts.assignAfterSaveFailed'))
+        formError.value = apiMessage(error)
+        drawerOpen.value = false
+        return
+      }
     }
     drawerOpen.value = false
   } catch (error) {
@@ -562,6 +595,8 @@ async function removeAsset(asset: Asset): Promise<void> {
       :submitting="submitting"
       :category-options="categoryFormOptions"
       :org-unit-options="orgUnitFormOptions"
+      :allow-assign="formAllowAssign"
+      :current-employee-name="formCurrentEmployeeName"
       @close="drawerOpen = false"
       @submit="submitForm"
       @update:form="Object.assign(form, $event)"

@@ -26,7 +26,7 @@ Every consumer (sidebar, rail, More sheet, quick actions) **must** derive from t
 - **No permanent full sidebar.**
 - Compact **Navigation Rail** (~96px) with icon + short Arabic label (home, tasks, meetings, employees, documents, contracts — if permitted) + More.
 - More opens **overlay drawer from the right** over content (does not push layout).
-- Topbar: compact title; omit desktop browser-like chrome overload.
+- Topbar: user + notifications + **refresh** (tap = soft invalidate, press-and-hold 5s = hard reload).
 
 ## Mobile (&lt;768px)
 
@@ -38,7 +38,7 @@ Bottom navigation (fixed, safe-area aware):
 4. الإشعارات → `/app/notifications`
 5. المزيد → sectioned More sheet
 
-Mobile header: brand/title + notifications shortcut + avatar/menu — **no** back/refresh/fullscreen as primary chrome.
+Mobile header: brand + notifications + **refresh** (tap = soft, hold 5s = hard reload). No back/fullscreen as primary chrome.
 
 ## Permissions
 

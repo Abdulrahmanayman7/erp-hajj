@@ -1,17 +1,10 @@
 <script setup lang="ts">
-import { computed, type Component } from 'vue'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
-import { Boxes, CalendarDays, ClipboardList, FileText, Gavel, IdCard } from 'lucide-vue-next'
 
-import type { DashboardKpiKey, DashboardKpis } from '../types/dashboard'
-import {
-  getTopKpis,
-  effectiveSeverity,
-  isSafeAppHref,
-  kpiIconClass,
-  severityValueClass,
-} from '../utils/dashboardDisplay'
+import type { DashboardKpis } from '../types/dashboard'
+import { getTopKpis, effectiveSeverity, isSafeAppHref, severityValueClass } from '../utils/dashboardDisplay'
 
 const props = defineProps<{
   kpis?: DashboardKpis | null
@@ -19,15 +12,6 @@ const props = defineProps<{
 
 const { t } = useI18n()
 const entries = computed(() => getTopKpis(props.kpis))
-
-const iconFor: Partial<Record<DashboardKpiKey, Component>> = {
-  tasks_overdue: ClipboardList,
-  decisions_pending_approval: Gavel,
-  contracts_expiring_soon: FileText,
-  inventory_attention: Boxes,
-  custodies_overdue: IdCard,
-  meetings_today: CalendarDays,
-}
 </script>
 
 <template>
@@ -46,19 +30,8 @@ const iconFor: Partial<Record<DashboardKpiKey, Component>> = {
             : ''
         "
       >
-        <span
-          class="inline-flex h-8 w-8 items-center justify-center rounded-[8px]"
-          :class="kpiIconClass(entry.key)"
-          aria-hidden="true"
-        >
-          <component
-            :is="iconFor[entry.key] ?? ClipboardList"
-            class="h-4 w-4"
-            :stroke-width="1.85"
-          />
-        </span>
         <p
-          class="app-type-kpi mt-2"
+          class="app-type-kpi"
           :class="severityValueClass(effectiveSeverity(entry.kpi.severity, entry.kpi.value))"
         >
           {{ entry.kpi.value }}

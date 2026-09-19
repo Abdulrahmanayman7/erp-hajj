@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { Loader2, X } from 'lucide-vue-next'
 
 import { listUsers } from '@/modules/users/api/usersApi'
+import AppNumberInput from '@/shared/components/AppNumberInput.vue'
 import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 import { toSelectNullableId, userSelectOption } from '@/shared/lookups/selectOptions'
@@ -106,6 +107,7 @@ onUnmounted(() => {
           class="org-drawer-panel absolute inset-y-0 start-0 flex h-dvh w-full max-w-[480px] flex-col bg-brand-surface shadow-[-12px_0_40px_-24px_rgba(23,32,29,0.35)]"
           role="dialog"
           aria-modal="true"
+          v-autofocus-when
           :aria-label="title"
         >
           <header class="flex shrink-0 items-start justify-between gap-3 border-b border-brand-border/70 px-4 py-4">
@@ -217,14 +219,14 @@ onUnmounted(() => {
                 <span class="mb-1.5 block text-sm font-medium text-brand-ink">{{
                   t('organization.fields.sortOrder')
                 }}</span>
-                <input
-                  :value="form.sort_order"
-                  type="number"
+                <AppNumberInput
+                  :model-value="form.sort_order"
+                  integer
                   min="0"
                   class="w-full rounded-xl border border-brand-border bg-white px-3 py-2.5 text-sm text-brand-ink outline-none focus:border-brand-primary"
-                  @input="
+                  @update:model-value="
                     patch({
-                      sort_order: Number(($event.target as HTMLInputElement).value || 0),
+                      sort_order: $event === '' ? 0 : Number($event),
                     })
                   "
                 />

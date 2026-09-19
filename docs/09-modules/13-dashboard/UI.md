@@ -1,7 +1,7 @@
 # Dashboard — UI
 
 > **Status:** Implemented (Sprint 017)
-> **Last updated:** 2026-08-12
+> **Last updated:** 2026-09-19
 > Shell: existing AppLayout / AppTopbar / AppSidebar / RTL — **do not redesign** the shell.
 
 ## Route
@@ -41,8 +41,9 @@ Unread notifications chip (optional): shows `notifications.unread_count` → `/a
   5. `custodies_overdue`
   6. `meetings_today`
 - Use shared **KPI Card** component ([DESIGN_GUIDELINES.md](../../05-ui-ux/DESIGN_GUIDELINES.md)).
+- Each card is **value + Arabic label only** — no decorative icons.
 - Click → `href` from API.
-- Severity styling: critical / warning / info (design tokens).
+- Severity styling: critical / warning / info (design tokens) applied to the numeric value.
 - Desktop: responsive grid (2–3 columns); tablet: 2; mobile: 1 — **no horizontal scroll**.
 
 Secondary KPI values may appear in Work/Resources panels, not necessarily all in the top row.

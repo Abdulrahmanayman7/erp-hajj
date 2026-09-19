@@ -54,6 +54,7 @@ const selectedEmployee = computed(() =>
         class="app-drawer-panel absolute inset-y-0 start-0 flex w-full max-w-[540px] flex-col bg-brand-surface shadow-xl"
         role="dialog"
         aria-modal="true"
+        v-autofocus-when
         @click.stop
       >
         <header class="flex shrink-0 items-start justify-between border-b border-brand-border px-4 py-5 sm:px-6">

@@ -3,6 +3,7 @@ import { computed, nextTick, onUnmounted, ref, watch, type CSSProperties } from 
 import { CalendarDays, ChevronLeft, ChevronRight, X } from 'lucide-vue-next'
 
 import { useBodyScrollLock } from '@/shared/composables/useBodyScrollLock'
+import { POPOVER_BACKDROP_Z_INDEX, POPOVER_Z_INDEX } from '@/shared/ui/overlayZ'
 import {
   GREGORIAN_MONTHS_AR,
   formatIsoDateAr,
@@ -133,14 +134,18 @@ function syncMenuPosition(): void {
   if (!el) return
   const rect = el.getBoundingClientRect()
   const viewportH = window.innerHeight
+  const viewportW = window.innerWidth
   const menuH = 360
+  const menuW = 328
+  const margin = 12
   const spaceBelow = viewportH - rect.bottom
   const openUp = spaceBelow < menuH && rect.top > spaceBelow
   const rtl = getComputedStyle(el).direction === 'rtl'
+  const rawStart = rtl ? viewportW - rect.right : rect.left
   menuPosition.value = {
     top: openUp ? rect.top - 6 : rect.bottom + 6,
-    start: rtl ? window.innerWidth - rect.right : rect.left,
-    minWidth: Math.max(rect.width, 288),
+    start: Math.max(margin, Math.min(rawStart, viewportW - menuW - margin)),
+    minWidth: menuW,
     openUp,
     rtl,
   }
@@ -212,9 +217,9 @@ const menuStyle = computed((): CSSProperties => {
   const pos = menuPosition.value
   const style: CSSProperties = {
     position: 'fixed',
-    minWidth: `${pos.minWidth}px`,
     width: 'min(20.5rem, calc(100vw - 1.5rem))',
-    zIndex: 250,
+    maxWidth: 'min(20.5rem, calc(100vw - 1.5rem))',
+    zIndex: POPOVER_Z_INDEX,
   }
   if (pos.rtl) style.right = `${pos.start}px`
   else style.left = `${pos.start}px`
@@ -311,7 +316,8 @@ onUnmounted(() => {
     <Teleport to="body">
       <div
         v-if="open && !isDesktop"
-        class="fixed inset-0 z-[240] bg-[rgba(15,23,20,0.32)]"
+        :style="{ zIndex: POPOVER_BACKDROP_Z_INDEX }"
+        class="fixed inset-0 bg-[rgba(15,23,20,0.32)]"
         aria-hidden="true"
         @click="close"
       />
@@ -327,11 +333,14 @@ onUnmounted(() => {
           v-if="open"
           data-app-date-menu
           class="overflow-hidden rounded-t-2xl border border-brand-border bg-brand-surface p-3 shadow-xl ring-1 ring-black/5 md:rounded-xl"
-          :class="isDesktop ? 'z-[250]' : 'fixed inset-x-0 bottom-0 z-[250]'"
+          :class="isDesktop ? 'fixed' : 'fixed inset-x-0 bottom-0'"
           :style="
             isDesktop
               ? menuStyle
-              : { paddingBottom: 'max(12px, env(safe-area-inset-bottom, 0px))' }
+              : {
+                  zIndex: POPOVER_Z_INDEX,
+                  paddingBottom: 'max(12px, env(safe-area-inset-bottom, 0px))',
+                }
           "
           role="dialog"
           aria-label="اختيار التاريخ"

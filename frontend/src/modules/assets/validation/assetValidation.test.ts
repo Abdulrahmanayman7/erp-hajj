@@ -16,6 +16,8 @@ import {
   emptyAssignForm,
   emptyReturnForm,
   filterAssetsListParams,
+  optionalAssignFromAssetForm,
+  toAssetWritePayload,
   validateAssetForm,
   validateAssignForm,
   validateLifecycleReasonForm,
@@ -53,6 +55,24 @@ describe('validateAssetForm', () => {
       purchase_value: 'invalid',
     })
     expect(validateAssetForm(assetForm({ name: 'أصل', purchase_value: '10.5' }))).toEqual({})
+  })
+
+  it('omits employee_id from the asset write payload', () => {
+    const payload = toAssetWritePayload(
+      assetForm({ name: 'جهاز', employee_id: 9, notes: '  عهدة  ' }),
+    )
+    expect(payload).toMatchObject({ name: 'جهاز', notes: 'عهدة' })
+    expect(payload).not.toHaveProperty('employee_id')
+  })
+
+  it('builds an optional assign payload only when an employee is selected', () => {
+    expect(optionalAssignFromAssetForm(assetForm({ name: 'جهاز' }))).toBeNull()
+    expect(optionalAssignFromAssetForm(assetForm({ name: 'جهاز', employee_id: 12, condition: 'fair' }))).toEqual({
+      employee_id: 12,
+      condition_at_assignment: 'fair',
+      expected_return_at: null,
+      assignment_notes: null,
+    })
   })
 })
 

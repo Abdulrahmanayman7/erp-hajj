@@ -5,6 +5,7 @@ import { Loader2, X } from 'lucide-vue-next'
 
 import { listPositions } from '../api/positionsApi'
 import AppDateInput from '@/shared/components/AppDateInput.vue'
+import AppPhoneInput from '@/shared/components/AppPhoneInput.vue'
 import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 import { positionSelectOption, toSelectId } from '@/shared/lookups/selectOptions'
@@ -97,13 +98,14 @@ onUnmounted(() => {
           @click="emit('close')"
         />
 
-        <aside
-          class="emp-drawer-panel absolute inset-y-0 start-0 flex h-dvh w-full max-w-[480px] flex-col bg-brand-surface shadow-[-12px_0_40px_-24px_rgba(23,32,29,0.35)]"
-          role="dialog"
-          aria-modal="true"
-          :aria-label="title"
-          @click.stop
-        >
+          <aside
+            class="emp-drawer-panel absolute inset-y-0 start-0 flex h-dvh w-full max-w-[480px] flex-col bg-brand-surface shadow-[-12px_0_40px_-24px_rgba(23,32,29,0.35)]"
+            role="dialog"
+            aria-modal="true"
+            v-autofocus-when
+            :aria-label="title"
+            @click.stop
+          >
           <header
             class="flex shrink-0 items-start justify-between gap-4 border-b border-brand-border px-4 py-5 sm:px-7"
           >
@@ -212,13 +214,10 @@ onUnmounted(() => {
                 <span class="mb-2 block text-sm font-semibold text-brand-text">
                   {{ t('employees.fields.phone') }}
                 </span>
-                <input
-                  :value="form.phone"
-                  type="tel"
-                  dir="ltr"
-                  class="h-12 w-full rounded-[11px] border border-brand-border bg-brand-surface px-3.5 text-sm text-brand-text outline-none transition placeholder:text-brand-text-muted focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15 disabled:bg-brand-bg disabled:opacity-70"
+                <AppPhoneInput
+                  :model-value="form.phone"
                   :disabled="submitting"
-                  @input="patch({ phone: ($event.target as HTMLInputElement).value })"
+                  @update:model-value="patch({ phone: $event })"
                 />
               </label>
 

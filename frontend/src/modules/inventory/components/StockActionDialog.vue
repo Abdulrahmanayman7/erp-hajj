@@ -14,6 +14,7 @@ import {
 
 import { listInventoryItems } from '../api/itemsApi'
 import { listWarehouses } from '../api/warehousesApi'
+import AppNumberInput from '@/shared/components/AppNumberInput.vue'
 import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 import { inventoryItemSelectOption, toSelectId, warehouseSelectOption } from '@/shared/lookups/selectOptions'
@@ -96,6 +97,7 @@ const fetchActiveItems = (params: { search?: string; page: number; per_page: num
         class="relative z-10 flex max-h-[calc(100vh-2rem)] w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-2xl"
         role="dialog"
         aria-modal="true"
+        v-autofocus-when
         @click.stop
       >
         <header
@@ -227,14 +229,13 @@ const fetchActiveItems = (params: { search?: string; page: number; per_page: num
 
             <label class="block">
             <span class="text-sm font-medium">{{ t('inventory.fields.quantity') }}</span>
-            <input
-              :value="form.quantity"
-              type="number"
-              min="0.001"
-              step="0.001"
-              required
+            <AppNumberInput
+              data-autofocus
+              :model-value="form.quantity"
               class="mt-1 h-11 w-full rounded-xl border border-brand-border px-3 text-sm"
-              @input="patch({ quantity: ($event.target as HTMLInputElement).value })"
+              min="0"
+              required
+              @update:model-value="patch({ quantity: $event })"
             />
             <p v-if="fieldErrors.quantity" class="mt-1 text-xs text-red-600">
               {{ t(`inventory.validation.${fieldErrors.quantity}`) }}

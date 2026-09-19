@@ -7,6 +7,7 @@ import { ArrowLeft, ArrowRight, CheckCircle2, Loader2 } from 'lucide-vue-next'
 import PasswordInput from '@/modules/auth/components/PasswordInput.vue'
 import { ApiError } from '@/shared/api/http'
 import AppPageHeader from '@/shared/components/AppPageHeader.vue'
+import AppPhoneInput from '@/shared/components/AppPhoneInput.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 import { listTimezones } from '@/modules/settings/validation/settingsValidation'
 
@@ -96,6 +97,14 @@ function goNext(): void {
   if (step.value < 4) {
     step.value = (step.value + 1) as 1 | 2 | 3 | 4
   }
+}
+
+function onWizardPrimary(): void {
+  if (step.value < 4) {
+    goNext()
+    return
+  }
+  void onCreate()
 }
 
 function goBack(): void {
@@ -289,7 +298,7 @@ async function onCreate(): Promise<void> {
         </li>
       </ol>
 
-      <div class="rounded-2xl border border-brand-border bg-brand-surface p-5 sm:p-6">
+      <form class="rounded-2xl border border-brand-border bg-brand-surface p-5 sm:p-6" @submit.prevent="onWizardPrimary">
         <!-- Step 1 -->
         <div v-if="step === 1" class="space-y-4">
           <h2 class="text-base font-bold">{{ t('platform.wizard.steps.tenant') }}</h2>
@@ -358,10 +367,9 @@ async function onCreate(): Promise<void> {
 
             <label class="block">
               <span class="text-sm font-medium">{{ t('platform.fields.contactPhone') }}</span>
-              <input
+              <AppPhoneInput
+                class="mt-1"
                 v-model="form.contact_phone"
-                dir="ltr"
-                class="mt-1 h-11 w-full rounded-xl border border-brand-border px-3 text-sm"
               />
             </label>
 
@@ -518,9 +526,8 @@ async function onCreate(): Promise<void> {
 
           <button
             v-if="step < 4"
-            type="button"
+            type="submit"
             class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand-primary px-4 text-sm font-semibold text-white"
-            @click="goNext"
           >
             {{ t('platform.wizard.next') }}
             <ArrowLeft class="h-4 w-4" />
@@ -528,17 +535,16 @@ async function onCreate(): Promise<void> {
 
           <button
             v-else
-            type="button"
+            type="submit"
             class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand-primary px-4 text-sm font-semibold text-white disabled:opacity-60"
             :disabled="isSubmitting"
             :aria-busy="isSubmitting"
-            @click="onCreate"
           >
             <Loader2 v-if="isSubmitting" class="h-4 w-4 animate-spin" />
             {{ isSubmitting ? t('platform.wizard.creating') : t('platform.wizard.create') }}
           </button>
         </div>
-      </div>
+      </form>
     </template>
   </div>
 </template>

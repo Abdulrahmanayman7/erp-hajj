@@ -13,6 +13,25 @@ export function useAppChromeNavigation() {
 
   let holdTimer: ReturnType<typeof setInterval> | null = null
   let holdStartedAt = 0
+  let releaseBound = false
+
+  function unbindReleaseListeners(): void {
+    if (!releaseBound || typeof window === 'undefined') {
+      return
+    }
+    window.removeEventListener('pointerup', finishHold, true)
+    window.removeEventListener('touchend', finishHold, true)
+    releaseBound = false
+  }
+
+  function bindReleaseListeners(): void {
+    if (releaseBound || typeof window === 'undefined') {
+      return
+    }
+    window.addEventListener('pointerup', finishHold, true)
+    window.addEventListener('touchend', finishHold, true)
+    releaseBound = true
+  }
 
   function clearHold(): void {
     if (holdTimer != null) {
@@ -22,6 +41,7 @@ export function useAppChromeNavigation() {
     holdStartedAt = 0
     isHoldingRefresh.value = false
     hardRefreshProgress.value = 0
+    unbindReleaseListeners()
   }
 
   function goBack(): void {
@@ -41,15 +61,36 @@ export function useAppChromeNavigation() {
     window.location.reload()
   }
 
+  function finishHold(): void {
+    const wasHolding = isHoldingRefresh.value
+    const progress = hardRefreshProgress.value
+    clearHold()
+
+    if (wasHolding && progress < 100) {
+      void softRefresh()
+    }
+  }
+
   function onRefreshPointerDown(event: PointerEvent): void {
     if (event.button != null && event.button !== 0) {
       return
+    }
+
+    event.preventDefault()
+    const target = event.currentTarget
+    if (target instanceof HTMLElement) {
+      try {
+        target.setPointerCapture(event.pointerId)
+      } catch {
+        // Capture is optional; window-level release listeners still finish the gesture.
+      }
     }
 
     clearHold()
     isHoldingRefresh.value = true
     holdStartedAt = Date.now()
     hardRefreshProgress.value = 0
+    bindReleaseListeners()
 
     holdTimer = setInterval(() => {
       const elapsed = Date.now() - holdStartedAt
@@ -61,16 +102,20 @@ export function useAppChromeNavigation() {
   }
 
   function onRefreshPointerUp(): void {
-    const wasHolding = isHoldingRefresh.value
-    const progress = hardRefreshProgress.value
-    clearHold()
-
-    if (wasHolding && progress < 100) {
-      void softRefresh()
-    }
+    finishHold()
   }
 
-  function onRefreshPointerCancel(): void {
+  function onRefreshPointerLeave(event: PointerEvent): void {
+    if (event.pointerType !== 'mouse') {
+      return
+    }
+    clearHold()
+  }
+
+  function onRefreshPointerCancel(event: PointerEvent): void {
+    if (event.pointerType === 'touch' || event.pointerType === 'pen') {
+      return
+    }
     clearHold()
   }
 
@@ -85,6 +130,7 @@ export function useAppChromeNavigation() {
     isHoldingRefresh: readonly(isHoldingRefresh),
     onRefreshPointerDown,
     onRefreshPointerUp,
+    onRefreshPointerLeave,
     onRefreshPointerCancel,
   }
 }

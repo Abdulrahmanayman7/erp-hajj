@@ -111,6 +111,7 @@ onUnmounted(() => {
           class="user-drawer-panel absolute inset-y-0 start-0 flex h-dvh w-full max-w-[480px] flex-col bg-brand-surface shadow-[-12px_0_40px_-24px_rgba(23,32,29,0.35)]"
           role="dialog"
           aria-modal="true"
+          v-autofocus-when
           :aria-label="title"
           @click.stop
         >

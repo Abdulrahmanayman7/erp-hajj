@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Form phone, number, and Enter:** phone fields use a country-code picker (default +966) stored as one E.164 string; numeric fields no longer show spinner arrows; opening a create/edit form autofocuses the first field; Enter submits the nearest form (textarea stays newline).
+
 - **Create/edit drawers (mobile + tablet):** bottom sheet with max ~92vh on phones (no full-page stretch under the bottom nav); floating inset side panel on tablet; inner form scroll + sticky actions; drawer z-index above bottom nav.
 
 - **Responsive UX QA (Phase 1.5):** tablet filters use sheet (not compressed desktop toolbar); mobile header lean (title + notifications + avatar); Quick Action Escape + safe-area; Dashboard greeting/KPI density polish; Tasks apply-count CTA; touch targets ≥44px on shell chrome.
@@ -32,11 +34,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Meeting schedule calendar:** date/time popover stacks above lifecycle dialogs (`z-490` vs dialog `z-460`) so the Gregorian picker is no longer visible behind the modal.
+
+- **Decisions create/edit employee fields:** issuer (`جهة الإصدار`) and responsible (`المسؤول عن المتابعة`) now have distinct labels and empty states; they no longer look like a duplicated employee picker.
+
+- **Asset create/edit employee:** optional employee picker on the asset drawer assigns custody via existing `POST /assets/{id}/assign` after save (not an Asset field). In-use holder is read-only.
+
+- **Task completion timestamp:** outcome `completed_at` (and task timeline times) render as Gregorian Arabic 12-hour time in the tenant timezone instead of raw UTC ISO.
+
+- **Topbar refresh on mobile/tablet:** tap soft-refreshes queries; press-and-hold 5s hard-reloads. Touch `pointercancel` no longer aborts the hold (iOS long-press).
+
+- **Decisions list layout:** desktop filters split into a compact toolbar + labeled date-range row so date fields no longer stretch full-width; Gregorian date popover stays a fixed calendar width instead of matching a stretched trigger.
+
 - **Mobile chrome / datetime picker:** 12-hour time with صباحاً/مساءً in `AppDateTimeInput`; PWA `theme_color` and standalone body match the light surface so the iOS home-indicator band is not brand-green; mobile/tablet brand mark crops the padded logo and shows the رفيع wordmark; tablet nav rail shows labels, a larger gold-ring logo, and a 96px professional column; compact 49px bottom nav so icons sit in the tab row instead of floating above extra white padding.
 
 - **Local CORS localhost vs 127.0.0.1:** browsers treat these as distinct origins. CORS now allows `FRONTEND_URL`, optional `CORS_ALLOWED_ORIGINS`, and the loopback twin of `FRONTEND_URL`, so Vite at `http://localhost:5173` works when the API was configured with `http://127.0.0.1:5173` (and the reverse). Still never `*` with credentialed cookies.
 
 ### Changed
+
+- **Dashboard overview KPIs:** overview cards (`نظرة عامة`) show value and label only — decorative icons removed.
 
 - **RC 0.1.0 P1 closure attempt (2026-08-13):** Settings timezone Cairo↔Riyadh live API PASS; Chrome route matrix mostly PASS (host resource failures on some desktop navigations); Firefox Playwright launch FAIL; decision-close gate PASS; sustained queue worker ran with empty job queue (insufficient for fanout PASS). Staging/host smoke, host PHP limits, and Product/Owner sign-off remain **OPEN** — **not release-ready**.
 

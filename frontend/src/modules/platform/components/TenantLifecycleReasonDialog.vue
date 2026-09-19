@@ -55,6 +55,7 @@ const confirmClass = computed(() =>
         class="relative z-10 w-full max-w-lg overflow-hidden rounded-2xl bg-brand-surface shadow-xl"
         role="dialog"
         aria-modal="true"
+        v-autofocus-when
         @click.stop
       >
         <header

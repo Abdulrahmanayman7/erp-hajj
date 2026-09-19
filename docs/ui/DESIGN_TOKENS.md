@@ -72,4 +72,3 @@ Arabic line-height: `--leading-arabic` ≈ 1.65.
 - `.app-btn-primary` / `.app-btn-ghost`
 - `.app-segmented` / `.app-segmented__item`
 - `.app-status-success`
-- `.app-kpi-icon--*`

@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight, Eye, Pencil, Plus, Search } from 'lucide-vue
 import { listEmployees } from '@/modules/employees/api/employeesApi'
 import { useOrganizationUnitsFlatQuery } from '@/modules/organization/queries/useOrganizationUnitsQuery'
 import AppMobileFilters from '@/shared/components/AppMobileFilters.vue'
+import AppNumberInput from '@/shared/components/AppNumberInput.vue'
 import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
@@ -90,6 +91,10 @@ const fetchActiveEmployees = (params: { search?: string; page: number; per_page:
 
 const orgOptions = computed<AppSelectOption[]>(() => [
   { value: '', label: t('decisions.filters.allOrgUnits') },
+  ...(orgs.value?.data ?? []).map((x) => ({ value: x.id, label: x.name, hint: x.code })),
+])
+const orgFormOptions = computed<AppSelectOption[]>(() => [
+  { value: '', label: t('decisions.noOrgUnit') },
   ...(orgs.value?.data ?? []).map((x) => ({ value: x.id, label: x.name, hint: x.code })),
 ])
 
@@ -330,11 +335,7 @@ async function save(): Promise<void> {
     >
       <template #actions>
         <PermissionGuard permission="decisions.create">
-          <button
-            type="button"
-            class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white transition hover:bg-brand-primary sm:w-auto"
-            @click="openCreate"
-          >
+          <button type="button" class="app-btn-primary w-full sm:w-auto" @click="openCreate">
             <Plus class="h-4 w-4" :stroke-width="2.25" />
             <span>{{ t('decisions.add') }}</span>
           </button>
@@ -349,44 +350,98 @@ async function save(): Promise<void> {
       @reset="resetFilters"
     >
       <template #desktop>
-        <div
-          class="flex flex-wrap items-center gap-3 rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)]"
-        >
-          <div class="relative min-w-48 flex-1">
-            <Search
-              class="pointer-events-none absolute inset-s-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text-muted"
-              :stroke-width="1.75"
-              aria-hidden="true"
-            />
-            <input
-              v-model="filters.search"
-              type="search"
-              class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface pe-3 ps-10 text-sm text-brand-text outline-none transition placeholder:text-brand-text-muted focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
-              :placeholder="t('decisions.searchPlaceholder')"
-            />
+        <div class="app-surface-flat space-y-3 p-3.5">
+          <div class="flex flex-wrap items-center gap-2.5">
+            <div class="relative min-w-[16rem] flex-[1_1_16rem]">
+              <Search
+                class="pointer-events-none absolute inset-s-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text-muted"
+                :stroke-width="1.75"
+                aria-hidden="true"
+              />
+              <input
+                v-model="filters.search"
+                type="search"
+                class="app-input app-input--search"
+                :placeholder="t('decisions.searchPlaceholder')"
+              />
+            </div>
+            <div class="min-w-[11rem] flex-[0_1_13rem]">
+              <AppSelect v-model="filters.status" :options="statusOptions" />
+            </div>
+            <div class="min-w-[11rem] flex-[0_1_14rem]">
+              <AppSelect v-model="filters.organization_unit_id" :options="orgOptions" searchable />
+            </div>
+            <div class="min-w-[11rem] flex-[0_1_14rem]">
+              <AppRemoteSelect
+                :model-value="filters.responsible_employee_id"
+                query-key="employees-active"
+                :fetcher="fetchActiveEmployees"
+                :map-option="employeeSelectOption"
+                :empty-option="emptyEmployee"
+                @update:model-value="filters.responsible_employee_id = toSelectId($event)"
+              />
+            </div>
+            <div class="min-w-[11rem] flex-[0_1_13rem]">
+              <AppSelect v-model="filters.has_source_recommendation" :options="sourceOptions" />
+            </div>
           </div>
-          <AppSelect v-model="filters.status" :options="statusOptions" />
-          <AppSelect v-model="filters.organization_unit_id" :options="orgOptions" searchable />
-          <AppRemoteSelect
-            :model-value="filters.responsible_employee_id"
-            query-key="employees-active"
-            :fetcher="fetchActiveEmployees"
-            :map-option="employeeSelectOption"
-            :empty-option="emptyEmployee"
-            @update:model-value="filters.responsible_employee_id = toSelectId($event)"
-          />
-          <AppSelect v-model="filters.has_source_recommendation" :options="sourceOptions" />
-          <input
-            v-model.number="filters.meeting_id"
-            type="number"
-            min="1"
-            class="h-11 w-28 rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
-            :placeholder="t('decisions.filters.meetingId')"
-          />
-          <AppDateInput v-model="filters.effective_date_from" :placeholder="t('decisions.columns.effectiveDate')" />
-          <AppDateInput v-model="filters.effective_date_to" :placeholder="t('decisions.columns.effectiveDate')" />
-          <AppDateInput v-model="filters.due_date_from" :placeholder="t('decisions.columns.dueDate')" />
-          <AppDateInput v-model="filters.due_date_to" :placeholder="t('decisions.columns.dueDate')" />
+
+          <div
+            class="flex flex-wrap items-end gap-x-5 gap-y-3 border-t border-[var(--border-soft)] pt-3"
+          >
+            <div class="flex min-w-0 flex-wrap items-center gap-2">
+              <span class="text-xs font-semibold text-brand-text-secondary">
+                {{ t('decisions.columns.effectiveDate') }}
+              </span>
+              <div class="w-[11.5rem] shrink-0">
+                <AppDateInput
+                  v-model="filters.effective_date_from"
+                  :placeholder="t('decisions.filters.dateFrom')"
+                  :aria-label="`${t('decisions.columns.effectiveDate')} — ${t('decisions.filters.dateFrom')}`"
+                />
+              </div>
+              <div class="w-[11.5rem] shrink-0">
+                <AppDateInput
+                  v-model="filters.effective_date_to"
+                  :placeholder="t('decisions.filters.dateTo')"
+                  :aria-label="`${t('decisions.columns.effectiveDate')} — ${t('decisions.filters.dateTo')}`"
+                />
+              </div>
+            </div>
+            <div class="flex min-w-0 flex-wrap items-center gap-2">
+              <span class="text-xs font-semibold text-brand-text-secondary">
+                {{ t('decisions.columns.dueDate') }}
+              </span>
+              <div class="w-[11.5rem] shrink-0">
+                <AppDateInput
+                  v-model="filters.due_date_from"
+                  :placeholder="t('decisions.filters.dateFrom')"
+                  :aria-label="`${t('decisions.columns.dueDate')} — ${t('decisions.filters.dateFrom')}`"
+                />
+              </div>
+              <div class="w-[11.5rem] shrink-0">
+                <AppDateInput
+                  v-model="filters.due_date_to"
+                  :placeholder="t('decisions.filters.dateTo')"
+                  :aria-label="`${t('decisions.columns.dueDate')} — ${t('decisions.filters.dateTo')}`"
+                />
+              </div>
+            </div>
+            <div class="w-[11.5rem] shrink-0">
+              <label class="sr-only" for="decisions-filter-meeting-id">
+                {{ t('decisions.filters.meetingId') }}
+              </label>
+              <AppNumberInput
+                id="decisions-filter-meeting-id"
+                :model-value="filters.meeting_id"
+                integer
+                min="1"
+                class="app-input"
+                :placeholder="t('decisions.filters.meetingId')"
+                @update:model-value="filters.meeting_id = $event === '' ? '' : Number($event)"
+              />
+            </div>
+          </div>
         </div>
       </template>
       <template #filters>
@@ -404,28 +459,41 @@ async function save(): Promise<void> {
           <AppSelect v-model="filters.has_source_recommendation" :options="sourceOptions" />
           <label class="block">
             <span class="mb-1.5 block text-sm font-semibold text-brand-text">{{ t('decisions.filters.meetingId') }}</span>
-            <input
-              v-model.number="filters.meeting_id"
-              type="number"
+            <AppNumberInput
+              :model-value="filters.meeting_id"
+              integer
               min="1"
-              class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+              class="app-input"
               :placeholder="t('decisions.filters.meetingId')"
+              @update:model-value="filters.meeting_id = $event === '' ? '' : Number($event)"
             />
           </label>
-          <label class="block">
-            <span class="mb-1.5 block text-sm font-semibold text-brand-text">{{ t('decisions.columns.effectiveDate') }}</span>
+          <fieldset class="space-y-2">
+            <legend class="text-sm font-semibold text-brand-text">{{ t('decisions.columns.effectiveDate') }}</legend>
             <div class="grid grid-cols-2 gap-2">
-              <AppDateInput v-model="filters.effective_date_from" :placeholder="t('decisions.columns.effectiveDate')" />
-              <AppDateInput v-model="filters.effective_date_to" :placeholder="t('decisions.columns.effectiveDate')" />
+              <AppDateInput
+                v-model="filters.effective_date_from"
+                :placeholder="t('decisions.filters.dateFrom')"
+              />
+              <AppDateInput
+                v-model="filters.effective_date_to"
+                :placeholder="t('decisions.filters.dateTo')"
+              />
             </div>
-          </label>
-          <label class="block">
-            <span class="mb-1.5 block text-sm font-semibold text-brand-text">{{ t('decisions.columns.dueDate') }}</span>
+          </fieldset>
+          <fieldset class="space-y-2">
+            <legend class="text-sm font-semibold text-brand-text">{{ t('decisions.columns.dueDate') }}</legend>
             <div class="grid grid-cols-2 gap-2">
-              <AppDateInput v-model="filters.due_date_from" :placeholder="t('decisions.columns.dueDate')" />
-              <AppDateInput v-model="filters.due_date_to" :placeholder="t('decisions.columns.dueDate')" />
+              <AppDateInput
+                v-model="filters.due_date_from"
+                :placeholder="t('decisions.filters.dateFrom')"
+              />
+              <AppDateInput
+                v-model="filters.due_date_to"
+                :placeholder="t('decisions.filters.dateTo')"
+              />
             </div>
-          </label>
+          </fieldset>
         </div>
       </template>
     </AppMobileFilters>
@@ -724,7 +792,7 @@ async function save(): Promise<void> {
       :form-error="error"
       :field-errors="fieldErrors"
       :submitting="isFormSubmitting"
-      :org-unit-options="orgOptions"
+      :org-unit-options="orgFormOptions"
       @close="drawerOpen = false"
       @submit="save"
       @update:form="assignForm"

@@ -5,17 +5,20 @@ import { Check, ChevronDown, X } from 'lucide-vue-next'
 import { requestSubmitFromControl } from '@/shared/utils/formKeyboard'
 import { POPOVER_Z_INDEX } from '@/shared/ui/overlayZ'
 
-export interface AppSelectOption {
-  value: string | number
-  label: string
-  hint?: string
-  disabled?: boolean
+import type { AppSelectOption } from './AppSelect.vue'
+
+export interface AppListSelectOption extends AppSelectOption {
+  badge?: string
+  tone?: 'default' | 'gold'
 }
+
+const MAX_VISIBLE_CHIPS = 3
 
 const props = withDefaults(
   defineProps<{
-    modelValue?: string | number | null
-    options?: AppSelectOption[]
+    modelValue?: Array<string | number>
+    options?: AppListSelectOption[]
+    selectedOptions?: AppListSelectOption[]
     placeholder?: string
     disabled?: boolean
     searchable?: boolean
@@ -24,41 +27,40 @@ const props = withDefaults(
     loading?: boolean
     error?: boolean
     hasMore?: boolean
-    selectedOption?: AppSelectOption | null
     clearable?: boolean
     size?: 'sm' | 'md'
     teleport?: boolean
   }>(),
   {
-    modelValue: null,
+    modelValue: () => [],
     options: () => [],
+    selectedOptions: () => [],
     placeholder: 'اختر…',
     disabled: false,
-    searchable: false,
-    searchPlaceholder: 'بحث…',
+    searchable: true,
+    searchPlaceholder: '',
     remote: false,
     loading: false,
     error: false,
     hasMore: false,
-    selectedOption: null,
-    clearable: false,
+    clearable: true,
     size: 'md',
     teleport: true,
   },
 )
 
 const emit = defineEmits<{
-  'update:modelValue': [value: string | number | null]
+  'update:modelValue': [value: Array<string | number>]
   search: [value: string]
   'load-more': []
   retry: []
 }>()
 
 const root = ref<HTMLElement | null>(null)
-const triggerRef = ref<HTMLButtonElement | null>(null)
+const triggerRef = ref<HTMLElement | null>(null)
 const open = ref(false)
 const search = ref('')
-const remembered = ref<AppSelectOption | null>(null)
+const remembered = ref<AppListSelectOption[]>([])
 const activeIndex = ref(-1)
 const menuPosition = ref({
   top: 0,
@@ -69,17 +71,30 @@ const menuPosition = ref({
   rtl: false,
 })
 
-function matchesValue(option: AppSelectOption | null | undefined): boolean {
-  return option != null && String(option.value) === String(props.modelValue)
+function valueKey(value: string | number): string {
+  return String(value)
 }
 
-const selected = computed(() => {
-  const fromOptions = props.options.find((option) => matchesValue(option))
-  if (fromOptions) return fromOptions
-  if (matchesValue(props.selectedOption)) return props.selectedOption ?? null
-  if (matchesValue(remembered.value)) return remembered.value
-  return null
+const selectedKeys = computed(() => new Set((props.modelValue ?? []).map(valueKey)))
+
+const optionCatalog = computed(() => {
+  const map = new Map<string, AppListSelectOption>()
+  for (const option of [...remembered.value, ...props.selectedOptions, ...props.options]) {
+    map.set(valueKey(option.value), option)
+  }
+  return map
 })
+
+const selectedItems = computed(() =>
+  (props.modelValue ?? [])
+    .map((value) => optionCatalog.value.get(valueKey(value)))
+    .filter((option): option is AppListSelectOption => option != null),
+)
+
+const visibleChips = computed(() => selectedItems.value.slice(0, MAX_VISIBLE_CHIPS))
+const hiddenChipCount = computed(() => Math.max(0, selectedItems.value.length - MAX_VISIBLE_CHIPS))
+const selectedCount = computed(() => props.modelValue?.length ?? 0)
+const hasValue = computed(() => selectedCount.value > 0)
 
 const filteredOptions = computed(() => {
   const query = search.value.trim().toLowerCase()
@@ -90,14 +105,14 @@ const filteredOptions = computed(() => {
       : props.options.filter((option) => {
           const label = String(option.label ?? '').toLowerCase()
           const hint = String(option.hint ?? '').toLowerCase()
-          return label.includes(query) || hint.includes(query)
+          const badge = String(option.badge ?? '').toLowerCase()
+          return label.includes(query) || hint.includes(query) || badge.includes(query)
         })
 
-  const current = selected.value
-  if (!current || source.some((option) => String(option.value) === String(current.value))) {
-    return source
-  }
-  return [current, ...source]
+  const missing = selectedItems.value.filter(
+    (item) => !source.some((option) => valueKey(option.value) === valueKey(item.value)),
+  )
+  return [...missing, ...source]
 })
 
 watch(search, (value) => {
@@ -106,16 +121,14 @@ watch(search, (value) => {
 
 watch(
   () => props.modelValue,
-  (value) => {
-    if (value === '' || value == null) remembered.value = null
+  (values) => {
+    const keys = new Set((values ?? []).map(valueKey))
+    remembered.value = remembered.value.filter((option) => keys.has(valueKey(option.value)))
   },
 )
 
-const displayLabel = computed(() => selected.value?.label ?? props.placeholder)
-const hasValue = computed(() => selected.value != null)
-
 const triggerClass = computed(() => {
-  const base = props.size === 'sm' ? 'h-9 text-xs' : 'h-11 text-sm'
+  const base = props.size === 'sm' ? 'min-h-9 py-1 text-xs' : 'min-h-11 py-1.5 text-sm'
   if (props.disabled) {
     return `${base} cursor-not-allowed border-brand-border bg-brand-bg text-brand-text-muted opacity-70`
   }
@@ -125,21 +138,23 @@ const triggerClass = computed(() => {
   return `${base} border-brand-border bg-brand-surface text-brand-text hover:border-brand-primary/30`
 })
 
+function isSelected(option: AppListSelectOption): boolean {
+  return selectedKeys.value.has(valueKey(option.value))
+}
+
 function syncMenuPosition(): void {
   const el = triggerRef.value
   if (!el) return
   const rect = el.getBoundingClientRect()
   const viewportH = window.innerHeight
   const viewportW = window.innerWidth
-  const menuMaxH = 320
+  const menuMaxH = 360
   const spaceBelow = viewportH - rect.bottom
   const openUp = spaceBelow < menuMaxH && rect.top > spaceBelow
   const rtl = getComputedStyle(el).direction === 'rtl'
-
-  // Anchor to the trigger's start edge and let the menu grow toward the viewport.
   const available = rtl ? rect.right - 12 : viewportW - rect.left - 12
-  const maxWidth = Math.min(560, Math.max(available, 160))
-  const minWidth = Math.min(Math.max(rect.width, 160), maxWidth)
+  const maxWidth = Math.min(560, Math.max(available, 220))
+  const minWidth = Math.min(Math.max(rect.width, 220), maxWidth)
 
   menuPosition.value = {
     top: openUp ? rect.top - 6 : rect.bottom + 6,
@@ -168,7 +183,13 @@ function toggle(): void {
 }
 
 function onTriggerKeydown(event: KeyboardEvent): void {
-  if (event.key !== 'Enter' || open.value || props.disabled) return
+  if (props.disabled) return
+  if (event.key === 'ArrowDown' || event.key === ' ') {
+    event.preventDefault()
+    if (!open.value) open.value = true
+    return
+  }
+  if (event.key !== 'Enter' || open.value) return
   if (requestSubmitFromControl(root.value)) {
     event.preventDefault()
     event.stopPropagation()
@@ -187,19 +208,38 @@ function close(): void {
   unbindPositionListeners()
 }
 
-function pick(option: AppSelectOption): void {
-  if (option.disabled) return
-  remembered.value = option
-  emit('update:modelValue', option.value)
-  close()
+function remember(option: AppListSelectOption): void {
+  if (remembered.value.some((item) => valueKey(item.value) === valueKey(option.value))) return
+  remembered.value = [...remembered.value, option]
 }
 
-function clear(event: MouseEvent): void {
+function emitValues(next: Array<string | number>): void {
+  emit('update:modelValue', next)
+}
+
+function toggleOption(option: AppListSelectOption): void {
+  if (option.disabled) return
+  remember(option)
+  if (isSelected(option)) {
+    emitValues((props.modelValue ?? []).filter((value) => valueKey(value) !== valueKey(option.value)))
+    return
+  }
+  emitValues([...(props.modelValue ?? []), option.value])
+}
+
+function removeChip(option: AppListSelectOption, event: Event): void {
+  event.preventDefault()
+  event.stopPropagation()
+  if (props.disabled) return
+  emitValues((props.modelValue ?? []).filter((value) => valueKey(value) !== valueKey(option.value)))
+}
+
+function clear(event: Event): void {
   event.preventDefault()
   event.stopPropagation()
   if (props.disabled || !props.clearable) return
-  remembered.value = null
-  emit('update:modelValue', null)
+  remembered.value = []
+  emitValues([])
 }
 
 function loadMore(): void {
@@ -208,7 +248,7 @@ function loadMore(): void {
 
 function onDocumentClick(event: MouseEvent): void {
   const target = event.target as HTMLElement | null
-  if (!root.value?.contains(target) && !target?.closest?.('[data-app-select-menu]')) {
+  if (!root.value?.contains(target) && !target?.closest?.('[data-app-list-select-menu]')) {
     close()
   }
 }
@@ -221,18 +261,20 @@ function onDocumentKeydown(event: KeyboardEvent): void {
     return
   }
 
-  const list = filteredOptions.value.filter((option) => !option.disabled)
-  if (!list.length) return
-
   if (event.key === 'ArrowDown') {
     event.preventDefault()
-    activeIndex.value = (activeIndex.value + 1) % list.length
-  } else if (event.key === 'ArrowUp') {
+    moveActive(1)
+    return
+  }
+  if (event.key === 'ArrowUp') {
     event.preventDefault()
-    activeIndex.value = (activeIndex.value - 1 + list.length) % list.length
-  } else if (event.key === 'Enter' && activeIndex.value >= 0) {
+    moveActive(-1)
+    return
+  }
+  if ((event.key === 'Enter' || event.key === ' ') && activeIndex.value >= 0) {
     event.preventDefault()
-    pick(list[activeIndex.value]!)
+    const option = filteredOptions.value[activeIndex.value]
+    if (option) toggleOption(option)
   }
 }
 
@@ -262,18 +304,30 @@ const menuStyle = computed((): CSSProperties | undefined => {
   return style
 })
 
+function enabledIndexes(): number[] {
+  return filteredOptions.value
+    .map((option, index) => (option.disabled ? -1 : index))
+    .filter((index) => index >= 0)
+}
+
+function moveActive(delta: number): void {
+  const indexes = enabledIndexes()
+  if (!indexes.length) return
+  const currentPos = indexes.indexOf(activeIndex.value)
+  const nextPos =
+    currentPos < 0 ? 0 : (currentPos + delta + indexes.length) % indexes.length
+  activeIndex.value = indexes[nextPos]!
+}
+
 watch(open, async (isOpen) => {
   if (!isOpen) return
-  activeIndex.value = Math.max(
-    0,
-    filteredOptions.value.findIndex(
-      (option) => String(option.value) === String(props.modelValue) && !option.disabled,
-    ),
-  )
+  const indexes = enabledIndexes()
+  const selectedIndex = indexes.find((index) => isSelected(filteredOptions.value[index]!))
+  activeIndex.value = selectedIndex ?? indexes[0] ?? 0
   await nextTick()
   syncMenuPosition()
   bindPositionListeners()
-  root.value?.querySelector<HTMLInputElement>('[data-select-search]')?.focus()
+  root.value?.querySelector<HTMLInputElement>('[data-list-select-search]')?.focus()
 })
 
 let listenersBound = false
@@ -301,28 +355,56 @@ onUnmounted(() => {
 
 <template>
   <div ref="root" class="relative min-w-[11rem]">
-    <button
+    <div
       ref="triggerRef"
-      type="button"
-      class="flex w-full items-center justify-between gap-2 rounded-xl border px-3 font-semibold transition"
+      class="flex w-full items-center justify-between gap-2 rounded-xl border px-2.5 font-semibold transition"
       :class="triggerClass"
-      :disabled="disabled"
+      role="combobox"
+      :tabindex="disabled ? -1 : 0"
+      :aria-disabled="disabled || undefined"
       :aria-expanded="open"
       aria-haspopup="listbox"
+      aria-multiselectable="true"
       @click="toggle"
       @keydown="onTriggerKeydown"
     >
-      <span
-        class="min-w-0 truncate text-start"
-        :class="hasValue ? 'text-brand-text' : 'text-brand-text-muted'"
-      >
-        {{ displayLabel }}
-      </span>
+      <div class="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
+        <template v-if="hasValue">
+          <span
+            v-for="chip in visibleChips"
+            :key="valueKey(chip.value)"
+            class="inline-flex max-w-full items-center gap-1 rounded-lg px-2 py-0.5 text-[11px] font-bold leading-5"
+            :class="
+              chip.tone === 'gold'
+                ? 'bg-brand-gold-soft text-[#8A6A2E] ring-1 ring-brand-gold/35'
+                : 'bg-brand-primary-soft text-brand-primary-dark'
+            "
+          >
+            <span class="min-w-0 truncate">{{ chip.label }}</span>
+            <button
+              v-if="!disabled"
+              type="button"
+              class="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full hover:bg-black/10"
+              :aria-label="`إزالة ${chip.label}`"
+              @click="removeChip(chip, $event)"
+            >
+              <X class="h-3 w-3" :stroke-width="2.5" />
+            </button>
+          </span>
+          <span
+            v-if="hiddenChipCount > 0"
+            class="inline-flex items-center rounded-lg bg-brand-bg px-2 py-0.5 text-[11px] font-bold text-brand-text-secondary"
+          >
+            +{{ hiddenChipCount }}
+          </span>
+        </template>
+        <span v-else class="truncate text-brand-text-muted">{{ placeholder }}</span>
+      </div>
       <button
         v-if="clearable && hasValue && !disabled"
         type="button"
         class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-brand-text-muted hover:bg-brand-bg hover:text-brand-text"
-        aria-label="مسح الاختيار"
+        aria-label="مسح الكل"
         @click="clear"
       >
         <X class="h-3.5 w-3.5" :stroke-width="2.25" />
@@ -332,7 +414,7 @@ onUnmounted(() => {
         :class="open ? 'rotate-180 text-brand-primary' : ''"
         :stroke-width="2.25"
       />
-    </button>
+    </div>
 
     <Teleport to="body" :disabled="!teleport">
       <Transition
@@ -346,17 +428,23 @@ onUnmounted(() => {
         <div
           v-if="open"
           data-app-select-menu
+          data-app-list-select-menu
           class="overflow-hidden rounded-xl border border-brand-border bg-brand-surface shadow-xl ring-1 ring-black/5"
-          :class="teleport ? '' : 'absolute start-0 z-[490] mt-1.5 min-w-full w-max max-w-[min(35rem,calc(100vw-1.5rem))]'"
+          :class="
+            teleport
+              ? ''
+              : 'absolute start-0 z-[490] mt-1.5 min-w-full w-max max-w-[min(35rem,calc(100vw-1.5rem))]'
+          "
           :style="menuStyle"
           role="listbox"
+          aria-multiselectable="true"
         >
           <div v-if="searchable || remote" class="border-b border-brand-border p-2">
             <input
               v-model="search"
-              data-select-search
+              data-list-select-search
               type="search"
-              :placeholder="searchPlaceholder"
+              :placeholder="searchPlaceholder || 'بحث…'"
               class="h-9 w-full rounded-lg border border-brand-border bg-brand-bg px-3 text-sm text-brand-text outline-none focus:border-brand-primary/40 focus:ring-2 focus:ring-brand-primary/15"
               @click.stop
             />
@@ -365,9 +453,14 @@ onUnmounted(() => {
           <ul class="max-h-72 overflow-y-auto p-1.5">
             <li v-if="error" class="px-3 py-6 text-center text-xs font-semibold text-red-700">
               <p>تعذر تحميل الخيارات</p>
-              <button type="button" class="mt-2 underline" data-select-retry @click="emit('retry')">إعادة المحاولة</button>
+              <button type="button" class="mt-2 underline" data-list-select-retry @click="emit('retry')">
+                إعادة المحاولة
+              </button>
             </li>
-            <li v-else-if="loading && !filteredOptions.length" class="px-3 py-6 text-center text-xs font-semibold text-brand-text-muted">
+            <li
+              v-else-if="loading && !filteredOptions.length"
+              class="px-3 py-6 text-center text-xs font-semibold text-brand-text-muted"
+            >
               جارٍ التحميل…
             </li>
             <li
@@ -378,9 +471,9 @@ onUnmounted(() => {
             </li>
             <li
               v-for="(option, index) in filteredOptions"
-              :key="String(option.value)"
+              :key="valueKey(option.value)"
               role="option"
-              :aria-selected="String(option.value) === String(modelValue)"
+              :aria-selected="isSelected(option)"
             >
               <button
                 type="button"
@@ -388,32 +481,45 @@ onUnmounted(() => {
                 :class="
                   option.disabled
                     ? 'cursor-not-allowed opacity-45'
-                    : String(option.value) === String(modelValue)
-                      ? 'bg-brand-primary-soft text-brand-primary-dark'
+                    : isSelected(option)
+                      ? option.tone === 'gold'
+                        ? 'bg-brand-gold-soft text-[#8A6A2E]'
+                        : 'bg-brand-primary-soft text-brand-primary-dark'
                       : index === activeIndex
                         ? 'bg-brand-bg text-brand-text'
                         : 'text-brand-text hover:bg-brand-bg'
                 "
                 :disabled="option.disabled"
-                @click="pick(option)"
+                @click="toggleOption(option)"
               >
                 <span
-                  class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border"
+                  class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border"
                   :class="
-                    String(option.value) === String(modelValue)
-                      ? 'border-brand-primary bg-brand-primary text-white'
+                    isSelected(option)
+                      ? option.tone === 'gold'
+                        ? 'border-brand-gold bg-brand-gold text-white'
+                        : 'border-brand-primary bg-brand-primary text-white'
                       : 'border-brand-border bg-brand-surface'
                   "
                 >
-                  <Check
-                    v-if="String(option.value) === String(modelValue)"
-                    class="h-3 w-3"
-                    :stroke-width="3"
-                  />
+                  <Check v-if="isSelected(option)" class="h-3 w-3" :stroke-width="3" />
                 </span>
                 <span class="min-w-0 flex-1">
-                  <span class="block whitespace-normal break-words font-bold leading-snug">
-                    {{ option.label }}
+                  <span class="flex flex-wrap items-center gap-2">
+                    <span class="whitespace-normal break-words font-bold leading-snug">
+                      {{ option.label }}
+                    </span>
+                    <span
+                      v-if="option.badge"
+                      class="inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold"
+                      :class="
+                        option.tone === 'gold'
+                          ? 'bg-brand-gold-soft text-[#8A6A2E] ring-1 ring-brand-gold/35'
+                          : 'bg-brand-bg text-brand-text-secondary'
+                      "
+                    >
+                      {{ option.badge }}
+                    </span>
                   </span>
                   <span
                     v-if="option.hint"
@@ -429,13 +535,27 @@ onUnmounted(() => {
                 type="button"
                 class="w-full rounded-lg px-3 py-2 text-xs font-bold text-brand-primary-dark hover:bg-brand-primary-soft disabled:opacity-60"
                 :disabled="loading"
-                data-select-load-more
+                data-list-select-load-more
                 @click="loadMore"
               >
                 {{ loading ? 'جارٍ التحميل…' : 'تحميل المزيد' }}
               </button>
             </li>
           </ul>
+
+          <div class="flex items-center justify-between gap-2 border-t border-brand-border px-3 py-2">
+            <span class="text-[11px] font-semibold text-brand-text-muted">
+              {{ selectedCount }} محدد
+            </span>
+            <button
+              type="button"
+              class="rounded-lg px-2.5 py-1 text-xs font-bold text-brand-primary-dark hover:bg-brand-primary-soft"
+              data-list-select-done
+              @click="close"
+            >
+              تم
+            </button>
+          </div>
         </div>
       </Transition>
     </Teleport>

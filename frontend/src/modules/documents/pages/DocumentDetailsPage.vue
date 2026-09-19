@@ -18,6 +18,7 @@ import {
 } from 'lucide-vue-next'
 
 import { ApiError } from '@/shared/api/http'
+import AppNumberInput from '@/shared/components/AppNumberInput.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
 import { useConfirm } from '@/shared/composables/useConfirm'
@@ -334,7 +335,11 @@ const hostLink = computed(() => {
         v-if="editing"
         class="fixed inset-0 z-50 flex items-end bg-[rgba(15,23,20,0.32)] p-0 sm:items-center sm:justify-center sm:p-4"
       >
-        <div class="w-full rounded-t-2xl bg-brand-surface p-5 shadow-xl sm:max-w-lg sm:rounded-2xl">
+        <form
+          class="w-full rounded-t-2xl bg-brand-surface p-5 shadow-xl sm:max-w-lg sm:rounded-2xl"
+          v-autofocus-when
+          @submit.prevent="saveEdit"
+        >
           <h3 class="text-lg font-bold">{{ t('documents.editTitle') }}</h3>
           <div class="mt-4 space-y-3">
             <label class="block space-y-1.5">
@@ -375,16 +380,13 @@ const hostLink = computed(() => {
             </label>
             <label v-if="form.linkable_type" class="block space-y-1.5">
               <span class="text-sm font-medium">{{ t('documents.fields.linkableId') }}</span>
-              <input
-                :value="form.linkable_id"
-                type="number"
+              <AppNumberInput
+                :model-value="form.linkable_id"
+                integer
                 min="1"
                 class="h-11 w-full rounded-xl border border-brand-border px-3"
-                @input="
-                  form.linkable_id =
-                    ($event.target as HTMLInputElement).value === ''
-                      ? ''
-                      : Number(($event.target as HTMLInputElement).value)
+                @update:model-value="
+                  form.linkable_id = $event === '' ? '' : Number($event)
                 "
               />
               <p v-if="fieldErrors.linkable_id" class="text-sm text-red-700">
@@ -398,15 +400,14 @@ const hostLink = computed(() => {
               {{ t('documents.cancel') }}
             </button>
             <button
-              type="button"
+              type="submit"
               class="rounded-xl bg-brand-primary-dark px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
               :disabled="update.isPending.value"
-              @click="saveEdit"
             >
               {{ t('documents.save') }}
             </button>
           </div>
-        </div>
+        </form>
       </div>
     </template>
   </div>

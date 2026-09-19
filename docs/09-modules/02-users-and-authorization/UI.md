@@ -90,7 +90,7 @@ Enterprise RTL list:
 **Drawer (side panel)** for create + edit identity fields:
 
 - name, email
-- roles multi-select (tenant roles only)
+- roles multi-select (tenant roles only) via `AppListSelect`
 - invite checkbox (default on) / temporary-password note when invite unavailable
 - validation + `USER_EMAIL_TAKEN` inline
 

@@ -1,7 +1,7 @@
 # System Settings — UI
 
 > **Status:** Implemented (Sprint 020 + mail sender extension)
-> **Last updated:** 2026-09-16
+> **Last updated:** 2026-09-19
 
 ## Route
 
@@ -22,7 +22,7 @@ Single canonical page — no scattered settings screens.
 
 One page, three sections (no unrelated tabs):
 
-1. **معلومات المنشأة** — name + contact fields, with a responsive two-column form where suitable.
+1. **معلومات المنشأة** — name + contact fields (phone uses country-code picker; stored as one E.164 string), with a responsive two-column form where suitable.
 2. **المنطقة واللغة** — searchable timezone select with a human-friendly display label and IANA ID hint; locale shown as a read-only setting (`العربية` / `ar`).
 3. **إعدادات البريد الإلكتروني** (Technical) — SMTP (host/port/encryption/username/password) + From identity + delivery status + «إرسال رسالة تجريبية». Password never loaded from API; blank keeps saved secret. Status: تم إعداد SMTP / إعدادات الخادم / غير مفعّل.
 

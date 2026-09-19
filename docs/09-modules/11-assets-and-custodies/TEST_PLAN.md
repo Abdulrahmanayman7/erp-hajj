@@ -99,6 +99,7 @@ Failing security / cross-tenant / double-assign tests block merge.
 
 - [ ] Assets list filters / empty/loading/error
 - [ ] Create/edit validation (name required; serial optional)
+- [ ] Create/edit optional employee: write payload omits `employee_id`; assign-after-save only when selected + `assets.assign` + status `available`
 - [ ] Details action visibility by status + permission
 - [ ] Assign dialog validation (employee required)
 - [ ] Return dialog next_status required

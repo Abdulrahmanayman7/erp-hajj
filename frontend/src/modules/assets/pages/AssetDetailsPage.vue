@@ -58,6 +58,7 @@ import {
   availableAssetLifecycleActions,
   canDeleteAsset,
   canEditAsset,
+  canShowAssignAction,
   conditionBadgeClass,
   custodyStatusBadgeClass,
   emptyAssetForm,
@@ -67,6 +68,8 @@ import {
   formatDateTime,
   formatMoney,
   mapAssetErrorCode,
+  optionalAssignFromAssetForm,
+  toAssetWritePayload,
   validateAssetForm,
   validateAssignForm,
   validateLifecycleReasonForm,
@@ -192,6 +195,7 @@ function openEdit(): void {
       asset.value.purchase_value != null ? String(asset.value.purchase_value) : '',
     acquisition_date: asset.value.acquisition_date ?? '',
     notes: asset.value.notes ?? '',
+    employee_id: '',
   })
   formError.value = ''
   Object.keys(fieldErrors).forEach((k) => delete fieldErrors[k])
@@ -205,24 +209,29 @@ async function submitEdit(): Promise<void> {
   Object.assign(fieldErrors, validateAssetForm(form))
   if (Object.keys(fieldErrors).length) return
   try {
-    await updateMutation.mutateAsync({
+    const updated = await updateMutation.mutateAsync({
       id: asset.value.id,
-      payload: {
-        name: form.name.trim(),
-        description: form.description.trim() || null,
-        category_id: form.category_id === '' ? null : Number(form.category_id),
-        serial_number: form.serial_number.trim() || null,
-        barcode: form.barcode.trim() || null,
-        condition: form.condition || null,
-        warehouse_id: form.warehouse_id === '' ? null : Number(form.warehouse_id),
-        organization_unit_id:
-          form.organization_unit_id === '' ? null : Number(form.organization_unit_id),
-        purchase_value: form.purchase_value.trim() === '' ? null : form.purchase_value.trim(),
-        acquisition_date: form.acquisition_date.trim() || null,
-        notes: form.notes.trim() || null,
-      },
+      payload: toAssetWritePayload(form),
     })
-    toast.success(t('assets.toasts.assetUpdated'))
+    const assignPayload = optionalAssignFromAssetForm(form)
+    if (
+      assignPayload &&
+      canShowAssignAction(updated.status, permissions.value)
+    ) {
+      try {
+        await assignMutation.mutateAsync({ id: updated.id, payload: assignPayload })
+        toast.success(t('assets.toasts.assetUpdatedAssigned'))
+      } catch (error) {
+        toast.success(t('assets.toasts.assetUpdated'))
+        toast.error(t('assets.toasts.assignAfterSaveFailed'))
+        formError.value = apiMessage(error)
+        drawerOpen.value = false
+        await refresh()
+        return
+      }
+    } else {
+      toast.success(t('assets.toasts.assetUpdated'))
+    }
     drawerOpen.value = false
     await refresh()
   } catch (error) {
@@ -1015,9 +1024,11 @@ function actionButtonClass(action: AssetLifecycleAction): string {
       :form="form"
       :form-error="formError"
       :field-errors="fieldErrors"
-      :submitting="updateMutation.isPending.value"
+      :submitting="updateMutation.isPending.value || assignMutation.isPending.value"
       :category-options="categoryFormOptions"
       :org-unit-options="orgUnitFormOptions"
+      :allow-assign="canShowAssignAction(asset?.status ?? 'available', permissions)"
+      :current-employee-name="asset?.current_custody?.employee?.full_name ?? null"
       @close="drawerOpen = false"
       @submit="submitEdit"
       @update:form="Object.assign(form, $event)"

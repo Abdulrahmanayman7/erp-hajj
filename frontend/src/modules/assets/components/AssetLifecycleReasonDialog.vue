@@ -47,6 +47,7 @@ function patch(part: Partial<LifecycleReasonFormState>): void {
         class="relative z-10 w-full max-w-lg overflow-hidden rounded-2xl bg-brand-surface shadow-xl"
         role="dialog"
         aria-modal="true"
+        v-autofocus-when
         @click.stop
       >
         <header class="flex items-start justify-between border-b border-brand-border bg-red-50/60 px-4 py-4 sm:px-5">

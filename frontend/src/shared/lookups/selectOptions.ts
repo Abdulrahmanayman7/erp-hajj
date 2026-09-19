@@ -11,6 +11,12 @@ export function toSelectNullableId(value: string | number | null | undefined): n
   return id === '' ? null : id
 }
 
+export function toSelectIds(values: Array<string | number | null | undefined>): number[] {
+  return values
+    .map((value) => toSelectId(value))
+    .filter((id): id is number => id !== '')
+}
+
 export function employeeSelectOption(employee: {
   id: number
   full_name: string

@@ -112,6 +112,32 @@ export function formatDatetimeLocalAr(value: string | null | undefined, fallback
   }).format(date)
 }
 
+const DEFAULT_DISPLAY_TIMEZONE = 'Asia/Riyadh'
+
+export function formatIsoTimestampAr(
+  value: string | null | undefined,
+  timezone = DEFAULT_DISPLAY_TIMEZONE,
+  fallback = '',
+): string {
+  const raw = String(value ?? '').trim()
+  if (!raw) return fallback
+  const date = new Date(raw)
+  if (Number.isNaN(date.getTime())) return fallback
+  try {
+    return new Intl.DateTimeFormat('ar-u-ca-gregory-nu-latn', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+      timeZone: timezone || DEFAULT_DISPLAY_TIMEZONE,
+    }).format(date)
+  } catch {
+    return fallback || raw
+  }
+}
+
 export type DayPeriod = 'am' | 'pm'
 
 export function hour24To12(hours: number): { hour: number; period: DayPeriod } {

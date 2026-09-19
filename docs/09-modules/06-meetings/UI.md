@@ -86,7 +86,7 @@ Use `AppConfirmDialog` — never `window.confirm`.
 
 ## Attendees UX
 
-- Add via employee AppSelect / search
+- Add via employee `AppListSelect` (multi-select + search); persist with existing POST per attendee
 - Show: name, employee_number, optional org/position if already on employee summary APIs
 - Attendance AppSelect: مدعو / حضر / غائب / معتذر
 - No RBAC dump

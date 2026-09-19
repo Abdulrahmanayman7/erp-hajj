@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Loader2, X } from 'lucide-vue-next'
 
+import AppNumberInput from '@/shared/components/AppNumberInput.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 
 import type { InventoryItem, InventoryItemFormState } from '../types/items'
@@ -47,6 +48,7 @@ function patch(part: Partial<InventoryItemFormState>): void {
         class="app-drawer-panel absolute inset-y-0 start-0 flex w-full max-w-[540px] flex-col bg-brand-surface shadow-xl"
         role="dialog"
         aria-modal="true"
+        v-autofocus-when
         @click.stop
       >
         <header class="flex shrink-0 items-start justify-between border-b border-brand-border px-4 py-5 sm:px-6">
@@ -130,13 +132,11 @@ function patch(part: Partial<InventoryItemFormState>): void {
 
             <label class="block">
               <span class="text-sm font-medium text-brand-text">{{ t('inventory.fields.minimumStock') }}</span>
-              <input
-                :value="form.minimum_stock"
-                type="number"
-                min="0"
-                step="0.001"
+              <AppNumberInput
+                :model-value="form.minimum_stock"
                 class="mt-1 h-11 w-full rounded-xl border border-brand-border px-3 text-sm"
-                @input="patch({ minimum_stock: ($event.target as HTMLInputElement).value })"
+                min="0"
+                @update:model-value="patch({ minimum_stock: $event })"
               />
               <p v-if="fieldErrors.minimum_stock" class="mt-1 text-xs text-red-600">
                 {{ t(`inventory.validation.${fieldErrors.minimum_stock}`) }}

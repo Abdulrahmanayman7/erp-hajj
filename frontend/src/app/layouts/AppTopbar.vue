@@ -12,13 +12,13 @@ import {
   Maximize2,
   Menu,
   Minimize2,
-  RefreshCw,
 } from 'lucide-vue-next'
 
 import rafeeaLogo from '@/assets/brand/rafeea-logo.png'
 import { useLogoutMutation } from '@/modules/auth/mutations/useLogoutMutation'
 import { useCurrentUserQuery } from '@/modules/auth/queries/useCurrentUserQuery'
 import NotificationBell from '@/modules/notifications/components/NotificationBell.vue'
+import AppChromeRefreshButton from '@/shared/components/AppChromeRefreshButton.vue'
 import AppTooltip from '@/shared/components/AppTooltip.vue'
 import UserAvatar from '@/shared/components/UserAvatar.vue'
 import { useAppChromeNavigation } from '@/shared/composables/useAppChromeNavigation'
@@ -35,14 +35,7 @@ const { mutate: logout, isPending: isLoggingOut } = useLogoutMutation()
 const { collapsed, toggleCollapsed } = useSidebarCollapse()
 const { moreOpen, openMore } = useMobileMore()
 const { isFullscreen, toggleFullscreen } = useFullscreen()
-const {
-  goBack,
-  hardRefreshProgress,
-  isHoldingRefresh,
-  onRefreshPointerDown,
-  onRefreshPointerUp,
-  onRefreshPointerCancel,
-} = useAppChromeNavigation()
+const { goBack } = useAppChromeNavigation()
 
 const menuOpen = ref(false)
 const tabletMenuRoot = ref<HTMLElement | null>(null)
@@ -59,11 +52,6 @@ const sidebarToggleLabel = computed(() =>
 )
 const fullscreenToggleLabel = computed(() =>
   isFullscreen.value ? t('shell.exitFullscreen') : t('shell.enterFullscreen'),
-)
-const refreshLabel = computed(() =>
-  isHoldingRefresh.value
-    ? t('shell.hardRefreshProgress', { progress: hardRefreshProgress.value })
-    : t('shell.refresh'),
 )
 
 const breadcrumbs = computed(() => {
@@ -150,18 +138,20 @@ onUnmounted(() => {
     class="app-topbar flex h-14 shrink-0 items-center justify-between gap-2 px-3 md:h-16 md:gap-3 md:px-4 xl:px-5"
     style="padding-inline-start: max(12px, env(safe-area-inset-left, 0px)); padding-inline-end: max(12px, env(safe-area-inset-right, 0px)); padding-top: env(safe-area-inset-top, 0px)"
   >
-    <!-- Mobile: hamburger · centered brand · bell -->
-    <div class="grid w-full grid-cols-[2.75rem_minmax(0,1fr)_2.75rem] items-center md:hidden">
-      <button
-        type="button"
-        class="app-btn-ghost"
-        :aria-label="t('shell.openMenu')"
-        :aria-expanded="moreOpen"
-        aria-controls="app-mobile-more-sheet"
-        @click="openMore"
-      >
-        <Menu class="h-5 w-5" :stroke-width="1.9" aria-hidden="true" />
-      </button>
+    <!-- Mobile: hamburger · centered brand · refresh + bell -->
+    <div class="grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center md:hidden">
+      <div class="flex min-w-[5.5rem] items-center">
+        <button
+          type="button"
+          class="app-btn-ghost"
+          :aria-label="t('shell.openMenu')"
+          :aria-expanded="moreOpen"
+          aria-controls="app-mobile-more-sheet"
+          @click="openMore"
+        >
+          <Menu class="h-5 w-5" :stroke-width="1.9" aria-hidden="true" />
+        </button>
+      </div>
       <RouterLink
         to="/app"
         class="flex min-w-0 items-center justify-center gap-1.5"
@@ -174,7 +164,8 @@ onUnmounted(() => {
           {{ t('auth.companyName') }}
         </span>
       </RouterLink>
-      <div class="flex justify-end">
+      <div class="flex min-w-[5.5rem] items-center justify-end gap-0.5">
+        <AppChromeRefreshButton />
         <NotificationBell />
       </div>
     </div>
@@ -228,34 +219,7 @@ onUnmounted(() => {
           </button>
         </AppTooltip>
 
-        <AppTooltip :text="`${t('shell.refresh')} — ${t('shell.hardRefreshHint')}`" side="bottom">
-          <button
-            type="button"
-            class="app-btn-ghost relative select-none"
-            :aria-label="refreshLabel"
-            :aria-valuemin="0"
-            :aria-valuemax="100"
-            :aria-valuenow="hardRefreshProgress"
-            :aria-busy="isHoldingRefresh"
-            @pointerdown.prevent="onRefreshPointerDown"
-            @pointerup="onRefreshPointerUp"
-            @pointerleave="onRefreshPointerCancel"
-            @pointercancel="onRefreshPointerCancel"
-          >
-            <span
-              v-if="isHoldingRefresh"
-              class="absolute inset-1 rounded-[8px] bg-brand-primary/10"
-              :style="{ opacity: Math.max(0.2, hardRefreshProgress / 100) }"
-              aria-hidden="true"
-            />
-            <RefreshCw
-              class="relative h-5 w-5"
-              :class="{ 'animate-spin': isHoldingRefresh }"
-              :stroke-width="2"
-              aria-hidden="true"
-            />
-          </button>
-        </AppTooltip>
+        <AppChromeRefreshButton />
 
         <AppTooltip :text="sidebarToggleLabel" side="bottom">
           <button
@@ -318,6 +282,10 @@ onUnmounted(() => {
             <FolderTree class="h-4 w-4" :stroke-width="2" aria-hidden="true" />
           </RouterLink>
         </AppTooltip>
+      </div>
+
+      <div class="xl:hidden">
+        <AppChromeRefreshButton />
       </div>
 
       <NotificationBell />

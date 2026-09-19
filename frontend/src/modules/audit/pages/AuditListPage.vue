@@ -13,6 +13,7 @@ import {
 import type { ListAuditLogsParams } from '../types/audit'
 import { useCurrentUserQuery } from '@/modules/auth/queries/useCurrentUserQuery'
 import AppMobileFilters from '@/shared/components/AppMobileFilters.vue'
+import AppNumberInput from '@/shared/components/AppNumberInput.vue'
 import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import AppDateInput from '@/shared/components/AppDateInput.vue'
 import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
@@ -158,9 +159,9 @@ function formatTime(iso: string): string {
           </label>
           <label class="block text-sm">
             <span class="mb-1 block text-brand-text-secondary">{{ t('audit.filters.entityId') }}</span>
-            <input
+            <AppNumberInput
               v-model="filters.entity_id"
-              type="number"
+              integer
               min="1"
               class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
             />
@@ -211,9 +212,9 @@ function formatTime(iso: string): string {
           </label>
           <label class="block text-sm">
             <span class="mb-1 block text-brand-text-secondary">{{ t('audit.filters.entityId') }}</span>
-            <input
+            <AppNumberInput
               v-model="filters.entity_id"
-              type="number"
+              integer
               min="1"
               class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
             />
