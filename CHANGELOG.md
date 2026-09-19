@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Local performance dataset dump:** `php artisan performance:seed --confirm-perf --rebuild --dump-sql=erp_hajj_perf/erp_hajj_perf.sql` writes an isolated `erp_hajj_perf` database plus a gitignored `.sql` dump (medium profile: ~75k tasks, ~150k movements, ~500k audit rows). Docs: `docs/07-testing/PERFORMANCE_DATASET.md`.
+
 - **Form phone, number, and Enter:** phone fields use a country-code picker (default +966) stored as one E.164 string; numeric fields no longer show spinner arrows; opening a create/edit form autofocuses the first field; Enter submits the nearest form (textarea stays newline).
 
 - **Create/edit drawers (mobile + tablet):** bottom sheet with max ~92vh on phones (no full-page stretch under the bottom nav); floating inset side panel on tablet; inner form scroll + sticky actions; drawer z-index above bottom nav.

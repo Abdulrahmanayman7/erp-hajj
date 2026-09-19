@@ -48,7 +48,8 @@ final class SeedPerformanceDatasetCommand extends Command
                             {--confirm-perf : Explicit confirmation that this is a disposable local performance fixture}
                             {--database-name=erp_hajj_perf : Isolated database name; must contain "perf"}
                             {--rebuild : Drop and recreate the isolated performance database}
-                            {--scale=medium : Dataset profile; medium is the documented target}';
+                            {--scale=medium : Dataset profile; medium is the documented target}
+                            {--dump-sql= : Optional path for a local mysqldump (.sql); relative paths are from the backend root}';
 
     protected $description = 'Create an isolated perf_large tenant with bulk-inserted local performance fixtures';
 
@@ -121,6 +122,13 @@ final class SeedPerformanceDatasetCommand extends Command
             $counts = $this->seed($tenant->id, (int) $owner['user_id']);
             $this->table(['Table', 'Rows'], collect($counts)->map(fn (int $count, string $table): array => [$table, $count])->all());
             $this->info("Performance fixture ready in [{$database}] for tenant [".self::TENANT_CODE.'].');
+            $this->line('Login: '.self::OWNER_EMAIL.' / PerfFixture@123');
+            $this->warn("Point backend/.env DB_DATABASE={$database} (local only) then restart php artisan serve.");
+
+            $dumpPath = (string) $this->option('dump-sql');
+            if ($dumpPath !== '' && $dumpPath !== '0') {
+                $this->dumpSql($database, $dumpPath);
+            }
 
             return self::SUCCESS;
         } catch (Throwable $e) {
@@ -140,8 +148,24 @@ final class SeedPerformanceDatasetCommand extends Command
         $now = now()->utc()->format('Y-m-d H:i:s');
         $today = Carbon::now('Asia/Riyadh')->startOfDay();
 
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        DB::statement('SET UNIQUE_CHECKS=0');
+
+        try {
+            return $this->seedUnchecked($tenantId, $ownerId, $now, $today);
+        } finally {
+            DB::statement('SET UNIQUE_CHECKS=1');
+            DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        }
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    private function seedUnchecked(int $tenantId, int $ownerId, string $now, Carbon $today): array
+    {
         $this->info('Bulk seeding catalogs, identities, and organization...');
-        $this->insertChunked('users', $this->users($tenantId, $now), 500);
+        $this->insertChunked('users', $this->users($tenantId, $now), 1000);
         $userIds = DB::table('users')->where('tenant_id', $tenantId)->orderBy('id')->pluck('id')->map(fn ($id): int => (int) $id)->all();
         array_unshift($userIds, $ownerId);
         $userIds = array_values(array_unique($userIds));
@@ -161,7 +185,7 @@ final class SeedPerformanceDatasetCommand extends Command
         $assetCategoryIds = $this->ids('asset_categories', $tenantId);
 
         $this->info('Bulk seeding governance and execution data...');
-        $this->insertGenerated('contracts', self::TARGETS['contracts'], 500, function (int $i) use ($tenantId, $ownerId, $unitIds, $employeeIds, $contractCategoryIds, $today, $now): array {
+        $this->insertGenerated('contracts', self::TARGETS['contracts'], 2000, function (int $i) use ($tenantId, $ownerId, $unitIds, $employeeIds, $contractCategoryIds, $today, $now): array {
             $status = ['draft', 'in_review', 'approved', 'signed', 'executing', 'expired'][$i % 6];
             $endDate = $today->copy()->addDays(($i % 730) - 365)->toDateString();
 
@@ -187,7 +211,7 @@ final class SeedPerformanceDatasetCommand extends Command
             ];
         });
 
-        $this->insertGenerated('meetings', self::TARGETS['meetings'], 500, function (int $i) use ($tenantId, $ownerId, $unitIds, $employeeIds, $today, $now): array {
+        $this->insertGenerated('meetings', self::TARGETS['meetings'], 2000, function (int $i) use ($tenantId, $ownerId, $unitIds, $employeeIds, $today, $now): array {
             $scheduledAt = $today->copy()->addMinutes(($i % 2880) - 1440)->utc()->format('Y-m-d H:i:s');
             $status = ['scheduled', 'in_progress', 'completed', 'cancelled'][$i % 4];
 
@@ -214,7 +238,7 @@ final class SeedPerformanceDatasetCommand extends Command
             ];
         });
 
-        $this->insertGenerated('decisions', self::TARGETS['decisions'], 500, function (int $i) use ($tenantId, $ownerId, $unitIds, $employeeIds, $today, $now): array {
+        $this->insertGenerated('decisions', self::TARGETS['decisions'], 2000, function (int $i) use ($tenantId, $ownerId, $unitIds, $employeeIds, $today, $now): array {
             return [
                 'tenant_id' => $tenantId,
                 'decision_number' => sprintf('DEC-%06d', $i + 1),
@@ -235,7 +259,7 @@ final class SeedPerformanceDatasetCommand extends Command
         });
         $decisionIds = $this->ids('decisions', $tenantId);
 
-        $this->insertGenerated('tasks', self::TARGETS['tasks'], 500, function (int $i) use ($tenantId, $ownerId, $unitIds, $employeeIds, $decisionIds, $today, $now): array {
+        $this->insertGenerated('tasks', self::TARGETS['tasks'], 2000, function (int $i) use ($tenantId, $ownerId, $unitIds, $employeeIds, $decisionIds, $today, $now): array {
             $bucket = $i % 10;
             $dueDate = match (true) {
                 $bucket < 2 => $today->copy()->subDays(($i % 60) + 1),
@@ -286,7 +310,7 @@ final class SeedPerformanceDatasetCommand extends Command
         });
         $warehouseIds = $this->ids('warehouses', $tenantId);
 
-        $this->insertGenerated('inventory_items', self::TARGETS['inventory_items'], 500, function (int $i) use ($tenantId, $ownerId, $inventoryCategoryIds, $now): array {
+        $this->insertGenerated('inventory_items', self::TARGETS['inventory_items'], 2000, function (int $i) use ($tenantId, $ownerId, $inventoryCategoryIds, $now): array {
             return [
                 'tenant_id' => $tenantId,
                 'item_number' => sprintf('ITM-%06d', $i + 1),
@@ -305,7 +329,7 @@ final class SeedPerformanceDatasetCommand extends Command
         });
         $itemIds = $this->ids('inventory_items', $tenantId);
 
-        $this->insertGenerated('inventory_balances', self::TARGETS['inventory_balances'], 500, function (int $i) use ($tenantId, $warehouseIds, $itemIds, $now): array {
+        $this->insertGenerated('inventory_balances', self::TARGETS['inventory_balances'], 2000, function (int $i) use ($tenantId, $warehouseIds, $itemIds, $now): array {
             return [
                 'tenant_id' => $tenantId,
                 'warehouse_id' => $warehouseIds[$i % count($warehouseIds)],
@@ -316,7 +340,7 @@ final class SeedPerformanceDatasetCommand extends Command
             ];
         });
 
-        $this->insertGenerated('inventory_movements', self::TARGETS['inventory_movements'], 500, function (int $i) use ($tenantId, $ownerId, $warehouseIds, $itemIds, $today, $now): array {
+        $this->insertGenerated('inventory_movements', self::TARGETS['inventory_movements'], 2000, function (int $i) use ($tenantId, $ownerId, $warehouseIds, $itemIds, $today, $now): array {
             $movement = [
                 ['opening', 'in'],
                 ['receipt', 'in'],
@@ -346,7 +370,7 @@ final class SeedPerformanceDatasetCommand extends Command
             ];
         });
 
-        $this->insertGenerated('assets', self::TARGETS['assets'], 500, function (int $i) use ($tenantId, $ownerId, $warehouseIds, $unitIds, $assetCategoryIds, $today, $now): array {
+        $this->insertGenerated('assets', self::TARGETS['assets'], 2000, function (int $i) use ($tenantId, $ownerId, $warehouseIds, $unitIds, $assetCategoryIds, $today, $now): array {
             return [
                 'tenant_id' => $tenantId,
                 'asset_number' => sprintf('AST-%06d', $i + 1),
@@ -370,7 +394,7 @@ final class SeedPerformanceDatasetCommand extends Command
         });
         $assetIds = $this->ids('assets', $tenantId);
 
-        $this->insertGenerated('asset_custodies', self::TARGETS['asset_custodies'], 500, function (int $i) use ($tenantId, $ownerId, $assetIds, $employeeIds, $today, $now): array {
+        $this->insertGenerated('asset_custodies', self::TARGETS['asset_custodies'], 2000, function (int $i) use ($tenantId, $ownerId, $assetIds, $employeeIds, $today, $now): array {
             $active = $i < 10000;
             $assignedAt = $today->copy()->subDays($i % 90)->format('Y-m-d H:i:s');
 
@@ -402,7 +426,7 @@ final class SeedPerformanceDatasetCommand extends Command
         );
 
         $this->info('Bulk seeding notifications and audit trail...');
-        $this->insertGenerated('notifications', self::TARGETS['notifications'], 500, function (int $i) use ($tenantId, $userIds, $today, $now): array {
+        $this->insertGenerated('notifications', self::TARGETS['notifications'], 2000, function (int $i) use ($tenantId, $userIds, $today, $now): array {
             return [
                 'tenant_id' => $tenantId,
                 'recipient_user_id' => $userIds[$i % count($userIds)],
@@ -412,7 +436,7 @@ final class SeedPerformanceDatasetCommand extends Command
                 'severity' => ['info', 'warning', 'critical'][$i % 3],
                 'entity_type' => 'task',
                 'entity_id' => ($i % self::TARGETS['tasks']) + 1,
-                'dedupe_key' => null,
+                'dedupe_key' => 'perf-n-'.$i,
                 'read_at' => $i % 5 === 0 ? null : $today->copy()->subDays($i % 90)->addMinutes($i % 1440)->format('Y-m-d H:i:s'),
                 'correlation_id' => $i % 100 === 0 ? 'perf-correlation-'.$i : null,
                 'created_at' => $today->copy()->subDays($i % 90)->addMinutes($i % 1440)->format('Y-m-d H:i:s'),
@@ -420,7 +444,7 @@ final class SeedPerformanceDatasetCommand extends Command
             ];
         });
 
-        $this->insertGenerated('audit_logs', self::TARGETS['audit_logs'], 500, function (int $i) use ($tenantId, $ownerId, $today): array {
+        $this->insertGenerated('audit_logs', self::TARGETS['audit_logs'], 2000, function (int $i) use ($tenantId, $ownerId, $today): array {
             return [
                 'tenant_id' => $tenantId,
                 'context_type' => 'tenant',
@@ -443,6 +467,8 @@ final class SeedPerformanceDatasetCommand extends Command
                 'created_at' => $today->copy()->subDays($i % 90)->addMinutes($i % 1440)->format('Y-m-d H:i:s'),
             ];
         });
+
+        $this->bumpSequences($tenantId, $now);
 
         return collect(array_keys(self::TARGETS))
             ->mapWithKeys(fn (string $table): array => [
@@ -599,17 +625,151 @@ final class SeedPerformanceDatasetCommand extends Command
      */
     private function insertGenerated(string $table, int $count, int $chunkSize, callable $row): void
     {
+        $this->line("  → {$table} ({$count})");
         $chunk = [];
         for ($i = 0; $i < $count; $i++) {
             $chunk[] = $row($i);
             if (count($chunk) === $chunkSize) {
                 DB::table($table)->insert($chunk);
                 $chunk = [];
+                if (($i + 1) % 20000 === 0) {
+                    $this->line('    '.($i + 1).'/'.$count);
+                }
             }
         }
         if ($chunk !== []) {
             DB::table($table)->insert($chunk);
         }
+    }
+
+    private function bumpSequences(int $tenantId, string $now): void
+    {
+        $sequences = [
+            'employee_number_sequences' => ['column' => 'next_value', 'next' => self::TARGETS['employees'] + 1],
+            'contract_number_sequences' => ['column' => 'next_value', 'next' => self::TARGETS['contracts'] + 1],
+            'meeting_number_sequences' => ['column' => 'next_value', 'next' => self::TARGETS['meetings'] + 1],
+            'decision_number_sequences' => ['column' => 'next_number', 'next' => self::TARGETS['decisions'] + 1],
+            'task_number_sequences' => ['column' => 'next_number', 'next' => self::TARGETS['tasks'] + 1],
+            'warehouse_number_sequences' => ['column' => 'next_number', 'next' => self::TARGETS['warehouses'] + 1],
+            'inventory_item_number_sequences' => ['column' => 'next_number', 'next' => self::TARGETS['inventory_items'] + 1],
+            'inventory_movement_number_sequences' => ['column' => 'next_number', 'next' => self::TARGETS['inventory_movements'] + 1],
+            'asset_number_sequences' => ['column' => 'next_number', 'next' => self::TARGETS['assets'] + 1],
+            'asset_custody_number_sequences' => ['column' => 'next_number', 'next' => self::TARGETS['asset_custodies'] + 1],
+        ];
+
+        foreach ($sequences as $table => $meta) {
+            DB::table($table)->updateOrInsert(
+                ['tenant_id' => $tenantId],
+                [
+                    $meta['column'] => $meta['next'],
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ],
+            );
+        }
+    }
+
+    private function dumpSql(string $database, string $path): void
+    {
+        $absolute = $this->absoluteDumpPath($path);
+        $directory = dirname($absolute);
+        if (! is_dir($directory) && ! mkdir($directory, 0755, true) && ! is_dir($directory)) {
+            throw new RuntimeException("Cannot create dump directory [{$directory}].");
+        }
+
+        $binary = $this->mysqldumpBinary();
+        $connection = config('database.connections.mysql');
+        $password = (string) ($connection['password'] ?? '');
+        $handle = fopen($absolute, 'wb');
+        if ($handle === false) {
+            throw new RuntimeException("Cannot write dump file [{$absolute}].");
+        }
+
+        $this->info("Dumping [{$database}] to [{$absolute}]...");
+
+        try {
+            $command = [
+                $binary,
+                '--host='.$connection['host'],
+                '--port='.($connection['port'] ?? 3306),
+                '--user='.$connection['username'],
+                '--single-transaction',
+                '--quick',
+                '--routines',
+                '--no-tablespaces',
+                '--default-character-set=utf8mb4',
+                '--databases',
+                $database,
+            ];
+
+            $process = proc_open(
+                $command,
+                [
+                    0 => ['pipe', 'r'],
+                    1 => $handle,
+                    2 => ['pipe', 'w'],
+                ],
+                $pipes,
+                null,
+                $password !== '' ? ['MYSQL_PWD' => $password] : null,
+            );
+
+            if (! is_resource($process)) {
+                throw new RuntimeException('Failed to start mysqldump.');
+            }
+
+            fclose($pipes[0]);
+            $stderr = stream_get_contents($pipes[2]);
+            fclose($pipes[2]);
+            $exit = proc_close($process);
+        } finally {
+            fclose($handle);
+        }
+
+        if ($exit !== 0) {
+            @unlink($absolute);
+            throw new RuntimeException('mysqldump failed: '.trim((string) $stderr));
+        }
+
+        $this->info('SQL dump written ('.number_format((int) filesize($absolute)).' bytes).');
+    }
+
+    private function absoluteDumpPath(string $path): string
+    {
+        if (preg_match('#^(?:[A-Za-z]:[\\\\/]|/)#', $path) === 1) {
+            return $path;
+        }
+
+        return base_path($path);
+    }
+
+    private function mysqldumpBinary(): string
+    {
+        $candidates = [
+            'mysqldump',
+            'C:\\xampp\\mysql\\bin\\mysqldump.exe',
+            'C:\\laragon\\bin\\mysql\\mysql-8.0.30-winx64\\bin\\mysqldump.exe',
+        ];
+
+        foreach ($candidates as $candidate) {
+            if ($candidate === 'mysqldump') {
+                $which = PHP_OS_FAMILY === 'Windows' ? 'where mysqldump' : 'command -v mysqldump';
+                $output = [];
+                $code = 0;
+                exec($which, $output, $code);
+                if ($code === 0 && isset($output[0]) && $output[0] !== '') {
+                    return $output[0];
+                }
+
+                continue;
+            }
+
+            if (is_file($candidate)) {
+                return $candidate;
+            }
+        }
+
+        throw new RuntimeException('mysqldump was not found. Seed the isolated database, then dump it with your MySQL client.');
     }
 
     private function dropDatabase(string $database): void
