@@ -1,8 +1,11 @@
-# Apache rules for the Vue SPA static build (frontend/dist).
-# Use when `dist` is the document root (or a static vhost).
-# Do NOT replace Laravel `public/.htaccess` with this file when API + SPA share one public/.
-# For co-located Hostinger deploys, merge only the Cache-Control FilesMatch blocks
-# from docs/08-deployment/PWA.md into the Laravel htaccess.
+# Hostinger co-located document root (public_html):
+# - Vue SPA build (index.html, /assets, /icons, sw.js, manifest)
+# - Laravel front controller (index.php -> ~/erp-hajj-app/backend)
+#
+# Copied to dist/ by Vite. Deploy this file as public_html/.htaccess.
+# Do NOT replace this with a Laravel-only front-controller htaccess.
+
+DirectoryIndex index.html index.php
 
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
@@ -11,7 +14,21 @@
 
     RewriteEngine On
 
-    # SPA fallback — keep real files (assets, icons, sw, manifest) as-is.
+    # Pass auth headers through to PHP-FPM / CGI (Laravel Sanctum / API).
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    RewriteCond %{HTTP:x-xsrf-token} .
+    RewriteRule .* - [E=HTTP_X_XSRF_TOKEN:%{HTTP:X-XSRF-Token}]
+
+    # Laravel API + Sanctum CSRF — must bypass the Vue SPA fallback.
+    # /sanctum/* is required for same-origin SPA cookie auth (csrf-cookie).
+    RewriteCond %{REQUEST_URI} ^/api/ [NC,OR]
+    RewriteCond %{REQUEST_URI} ^/sanctum/ [NC]
+    RewriteRule ^ index.php [L]
+
+    # Existing files/directories (assets, icons, sw.js, manifest, …) — serve as-is.
+    # Everything else → Vue SPA.
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteRule ^ index.html [L]

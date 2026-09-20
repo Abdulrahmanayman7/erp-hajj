@@ -1,3 +1,8 @@
+# Hostinger public_html template — Vue SPA + Laravel index.php co-located.
+# Keep in sync with frontend/public/.htaccess (source of truth for SPA builds).
+
+DirectoryIndex index.html index.php
+
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes
@@ -5,27 +10,25 @@
 
     RewriteEngine On
 
-    # Handle Authorization Header
+    # Pass auth headers through to PHP-FPM / CGI (Laravel Sanctum / API).
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
-    # Handle X-XSRF-Token Header
     RewriteCond %{HTTP:x-xsrf-token} .
     RewriteRule .* - [E=HTTP_X_XSRF_TOKEN:%{HTTP:X-XSRF-Token}]
 
-    # Redirect Trailing Slashes If Not A Folder...
-    RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteCond %{REQUEST_URI} (.+)/$
-    RewriteRule ^ %1 [L,R=301]
-
-    # Send Requests To Front Controller...
-    RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteCond %{REQUEST_FILENAME} !-f
+    # Laravel API + Sanctum CSRF — must bypass the Vue SPA fallback.
+    RewriteCond %{REQUEST_URI} ^/api/ [NC,OR]
+    RewriteCond %{REQUEST_URI} ^/sanctum/ [NC]
     RewriteRule ^ index.php [L]
+
+    # Existing files/directories — serve as-is; everything else → Vue SPA.
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.html [L]
 </IfModule>
 
 # PWA metadata cache policy when SPA files are co-located in this public/ root.
-# Safe alongside Laravel routing: only applies to matching static filenames.
 # Full guidance: docs/08-deployment/PWA.md
 <IfModule mod_headers.c>
     <FilesMatch "^index\.html$">

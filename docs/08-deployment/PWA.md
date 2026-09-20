@@ -141,6 +141,20 @@ App/Platform shells already use `100dvh` + `env(safe-area-inset-*)` on topbar, b
 
 Same Vue Router + SPA fallback (`vercel.json` / Hostinger rewrite to `index.html`) for `/login`, `/setup`, `/app/*`, `/platform/*` in browser and installed PWA. No separate installed-app auth.
 
+### Hostinger co-located `public_html` (SPA + Laravel)
+
+Production document root (`~/domains/.../public_html`) contains both the Vue build and Laravel’s `index.php` (app code under `~/erp-hajj-app/backend`). Source of truth: **`frontend/public/.htaccess`** (copied into `dist/` on build; mirrored by `deploy/hostinger/public/.htaccess`).
+
+| Request | Target |
+|---|---|
+| `/` (directory index) | `index.html` first (`DirectoryIndex index.html index.php`) |
+| `/api/*` | `index.php` (Laravel) |
+| `/sanctum/*` | `index.php` (CSRF cookie for Sanctum SPA auth) |
+| Existing files (`/assets/*`, `/icons/*`, `/sw.js`, `/manifest.webmanifest`, …) | Served directly |
+| Other paths (`/login`, `/app/*`, …) | `index.html` (Vue Router) |
+
+`backend/public/.htaccess` remains Laravel-only for local API hosts — do **not** overwrite Hostinger `public_html` with it.
+
 ## HTTP Cache-Control (Hostinger / Vercel)
 
 | Resource | Recommended `Cache-Control` |
@@ -154,15 +168,15 @@ Same Vue Router + SPA fallback (`vercel.json` / Hostinger rewrite to `index.html
 Configured in:
 
 - `frontend/vercel.json` (Vercel)
-- `frontend/public/.htaccess` (static Apache `dist` document root — includes SPA → `index.html` fallback)
-- `backend/public/.htaccess` and `deploy/hostinger/public/.htaccess` (Laravel public; FilesMatch only — **does not** replace SPA/API routing)
-
-When co-locating SPA files in Laravel `public/`, **merge** the PWA `FilesMatch` / `SetEnvIf` blocks; never overwrite Laravel’s front-controller rewrite with the SPA-only `.htaccess`.
+- `frontend/public/.htaccess` (Hostinger co-located `public_html`: DirectoryIndex + `/api`/`/sanctum` → PHP + SPA fallback + PWA headers)
+- `deploy/hostinger/public/.htaccess` (same co-located rules as `frontend/public/.htaccess`)
+- `backend/public/.htaccess` (Laravel-only document root; keeps PWA FilesMatch if SPA assets are present — **not** the Hostinger `public_html` router)
 
 ## Hostinger deploy notes
 
 1. Bump `PWA_ASSET_VERSION` only when icons/manifest identity change; run `npm run build` (runs `pwa:sync`).
-2. Publish `dist` including `manifest.webmanifest`, `sw.js`, `icons/`, and (if Apache static root) `.htaccess`.
-3. Ensure Hostinger serves the Cache-Control headers above (`mod_headers` enabled).
-4. After deploy, open the site once (or switch back to the installed PWA) so the new SW activates.
-5. If a device still shows the **old launcher icon**, use the uninstall/reinstall fallback — that is an OS limitation, not a missed deploy.
+2. Publish `dist` into `public_html` including `index.html`, `manifest.webmanifest`, `sw.js`, `icons/`, `assets/`, and **`.htaccess`** (must keep `DirectoryIndex index.html index.php` and `/api` → `index.php`).
+3. Keep Laravel `index.php` in `public_html` pointing at `~/erp-hajj-app/backend`.
+4. Ensure Hostinger serves the Cache-Control headers above (`mod_headers` enabled).
+5. After deploy, open the site once (or switch back to the installed PWA) so the new SW activates.
+6. If a device still shows the **old launcher icon**, use the uninstall/reinstall fallback — that is an OS limitation, not a missed deploy.

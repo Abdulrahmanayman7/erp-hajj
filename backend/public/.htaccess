@@ -1,3 +1,7 @@
+# Laravel-only document root (local `php artisan serve`, API-only hosts).
+# Hostinger production public_html (SPA + API co-located) uses
+# frontend/public/.htaccess — do not copy this file over public_html.
+
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes
@@ -24,7 +28,8 @@
     RewriteRule ^ index.php [L]
 </IfModule>
 
-# PWA metadata cache policy when SPA files are co-located in this public/ root.
+# PWA metadata cache policy if SPA files are ever co-located here.
+# Hostinger co-located routing lives in frontend/public/.htaccess.
 # See docs/08-deployment/PWA.md
 <IfModule mod_headers.c>
     <FilesMatch "^index\.html$">

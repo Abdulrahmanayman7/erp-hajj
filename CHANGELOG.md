@@ -38,6 +38,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Hostinger co-located routing:** `frontend/public/.htaccess` (and `deploy/hostinger/public/.htaccess`) permanently prefer `DirectoryIndex index.html index.php`, route `/api/*` and `/sanctum/*` to Laravel `index.php`, fall other non-file routes to Vue `index.html`, and keep PWA Cache-Control headers.
+
 - **Entity details mobile layout:** detail pages (assets, tasks, meetings, contracts, decisions, documents, warehouses, inventory items) keep lifecycle actions above the summary on phones, use single-column field grids until tablet, convert nested tables to card stacks, and clip horizontal shell overflow so pages like `/app/assets/:id` no longer scroll sideways.
 
 - **Meeting schedule calendar:** date/time popover stacks above lifecycle dialogs (`z-490` vs dialog `z-460`) so the Gregorian picker is no longer visible behind the modal.
