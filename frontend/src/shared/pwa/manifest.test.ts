@@ -3,7 +3,17 @@ import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 
+import {
+  PWA_ASSET_VERSION,
+  PWA_ICON_HREFS,
+  PWA_ICON_PATHS,
+  PWA_MANIFEST_HREF,
+  PWA_SHELL_CACHE,
+  withPwaAssetVersion,
+} from './pwaVersion'
+
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../../../public')
+const frontendRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../..')
 const iconsDir = resolve(root, 'icons')
 
 function pngDimensions(path: string): { width: number; height: number } {
@@ -14,6 +24,15 @@ function pngDimensions(path: string): { width: number; height: number } {
     height: buf.readUInt32BE(20),
   }
 }
+
+describe('PWA version strategy', () => {
+  it('exposes a single asset version used for cache busting and shell cache naming', () => {
+    expect(PWA_ASSET_VERSION).toBe('4')
+    expect(PWA_SHELL_CACHE).toBe(`erp-hajj-shell-v${PWA_ASSET_VERSION}`)
+    expect(withPwaAssetVersion('/icons/icon-192.png')).toBe(`/icons/icon-192.png?v=${PWA_ASSET_VERSION}`)
+    expect(PWA_MANIFEST_HREF).toBe(`/manifest.webmanifest?v=${PWA_ASSET_VERSION}`)
+  })
+})
 
 describe('PWA manifest', () => {
   it('uses global branding and standalone display', () => {
@@ -46,21 +65,48 @@ describe('PWA manifest', () => {
     expect(manifest.icons.every((i) => i.src.startsWith('/icons/'))).toBe(true)
   })
 
-  it('references the required global any and maskable icon paths', () => {
+  it('references versioned global any and maskable icon paths', () => {
     const raw = readFileSync(resolve(root, 'manifest.webmanifest'), 'utf8')
     const manifest = JSON.parse(raw) as {
       icons: Array<{ src: string; purpose: string; sizes: string }>
     }
 
-    const any192 = manifest.icons.find((i) => i.src === '/icons/icon-192.png')
-    const any512 = manifest.icons.find((i) => i.src === '/icons/icon-512.png')
-    const mask192 = manifest.icons.find((i) => i.src === '/icons/icon-192-maskable.png')
-    const mask512 = manifest.icons.find((i) => i.src === '/icons/icon-512-maskable.png')
+    const any192 = manifest.icons.find((i) => i.src === PWA_ICON_HREFS.any192)
+    const any512 = manifest.icons.find((i) => i.src === PWA_ICON_HREFS.any512)
+    const mask192 = manifest.icons.find((i) => i.src === PWA_ICON_HREFS.maskable192)
+    const mask512 = manifest.icons.find((i) => i.src === PWA_ICON_HREFS.maskable512)
 
     expect(any192).toMatchObject({ sizes: '192x192', purpose: 'any' })
     expect(any512).toMatchObject({ sizes: '512x512', purpose: 'any' })
     expect(mask192).toMatchObject({ sizes: '192x192', purpose: 'maskable' })
     expect(mask512).toMatchObject({ sizes: '512x512', purpose: 'maskable' })
+
+    expect(manifest.icons.every((i) => i.src.includes(`?v=${PWA_ASSET_VERSION}`))).toBe(true)
+  })
+})
+
+describe('PWA HTML links', () => {
+  it('points manifest, favicon, and apple-touch-icon at the current asset version', () => {
+    const html = readFileSync(resolve(frontendRoot, 'index.html'), 'utf8')
+
+    expect(html).toContain(`href="${PWA_MANIFEST_HREF}"`)
+    expect(html).toContain(`href="${PWA_ICON_HREFS.favicon32}"`)
+    expect(html).toContain(`href="${PWA_ICON_HREFS.any192}"`)
+    expect(html).toContain(`href="${PWA_ICON_HREFS.appleTouch}"`)
+  })
+})
+
+describe('PWA service worker', () => {
+  it('uses the current shell cache version and never caches API or PWA identity assets', () => {
+    const sw = readFileSync(resolve(root, 'sw.js'), 'utf8')
+
+    expect(sw).toContain(`const CACHE_VERSION = '${PWA_SHELL_CACHE}'`)
+    expect(sw).toContain("url.pathname.startsWith('/api/')")
+    expect(sw).toContain("path === '/manifest.webmanifest'")
+    expect(sw).toContain("path === '/sw.js'")
+    expect(sw).toContain("path.startsWith('/icons/')")
+    expect(sw).toContain('isPwaMetadataRequest')
+    expect(sw).toContain("type === 'SKIP_WAITING'")
   })
 })
 
@@ -81,5 +127,9 @@ describe('PWA icon assets', () => {
       const dims = pngDimensions(path)
       expect(dims).toEqual({ width: item.width, height: item.height })
     }
+
+    // Stable filenames (versioning is via ?v= query, not renamed files).
+    expect(PWA_ICON_PATHS.any192).toBe('/icons/icon-192.png')
+    expect(PWA_ICON_PATHS.maskable512).toBe('/icons/icon-512-maskable.png')
   })
 })

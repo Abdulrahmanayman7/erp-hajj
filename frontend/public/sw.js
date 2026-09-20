@@ -5,9 +5,10 @@
  * - Navigations: network-first (always prefer fresh index.html after deploy).
  * - Hashed /assets/*: cache-first (safe; filenames change per build).
  * - Never cache /api/ or authenticated JSON.
- * - Bump CACHE_VERSION on intentional shell-cache strategy changes.
+ * - Never cache /manifest.webmanifest, /sw.js, or /icons/* (always network).
+ * - Bump PWA_ASSET_VERSION in src/shared/pwa/pwaVersion.ts (then npm run pwa:sync).
  */
-const CACHE_VERSION = 'erp-hajj-shell-v3'
+const CACHE_VERSION = 'erp-hajj-shell-v4'
 const SHELL_CACHE = CACHE_VERSION
 
 self.addEventListener('install', (event) => {
@@ -26,6 +27,12 @@ self.addEventListener('activate', (event) => {
       await self.clients.claim()
     })(),
   )
+})
+
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    void self.skipWaiting()
+  }
 })
 
 /**
@@ -54,6 +61,30 @@ function isHashedAsset(request) {
   }
 }
 
+/**
+ * Manifest, SW script, and install icons must always hit the network so deploys
+ * are not masked by Cache Storage. HTTP Cache-Control still applies at the edge.
+ *
+ * @param {Request} request
+ * @returns {boolean}
+ */
+function isPwaMetadataRequest(request) {
+  try {
+    const url = new URL(request.url)
+    if (url.origin !== self.location.origin) {
+      return false
+    }
+    const path = url.pathname
+    return (
+      path === '/manifest.webmanifest' ||
+      path === '/sw.js' ||
+      path.startsWith('/icons/')
+    )
+  } catch {
+    return false
+  }
+}
+
 self.addEventListener('fetch', (event) => {
   const { request } = event
 
@@ -63,6 +94,11 @@ self.addEventListener('fetch', (event) => {
 
   // Never intercept API — ERP mutations/auth must stay network-driven.
   if (isApiRequest(request)) {
+    return
+  }
+
+  // Do not put PWA identity assets into Cache Storage.
+  if (isPwaMetadataRequest(request)) {
     return
   }
 

@@ -58,6 +58,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **PWA update strategy:** centralized `PWA_ASSET_VERSION` (`4`) with `?v=` cache-busting on manifest/icon/HTML links; shell cache `erp-hajj-shell-v4`; `updateViaCache: "none"` + visibility `registration.update()`; SW never caches manifest/icons; Hostinger/Vercel Cache-Control for `index.html` / `sw.js` / manifest / hashed assets. Docs clarify OS launcher icons may still require uninstall/reinstall. In-app `rafeea-logo.png` unchanged.
+
 - **PWA install icon:** global install/home-screen icons regenerated from `frontend/src/assets/brand/rafeea-app-icon.png` (any + maskable + apple-touch + favicon). In-app UI logo (`rafeea-logo.png`) unchanged. Service worker cache bumped to `erp-hajj-shell-v3`.
 
 - **Dashboard overview KPIs:** overview cards (`نظرة عامة`) show value and label only — decorative icons removed.
