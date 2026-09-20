@@ -435,7 +435,7 @@ function actionButtonClass(action: AssetLifecycleAction): string {
 </script>
 
 <template>
-  <div class="mx-auto max-w-[1200px] space-y-5">
+  <div class="mx-auto min-w-0 max-w-[1200px] space-y-5">
     <div class="flex flex-wrap items-center gap-3">
       <button
         type="button"
@@ -544,15 +544,15 @@ function actionButtonClass(action: AssetLifecycleAction): string {
         </div>
       </section>
 
-      <div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
-        <div class="space-y-5">
+      <div class="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <div class="order-2 min-w-0 space-y-5 xl:order-1">
           <section class="rounded-2xl border border-brand-border bg-brand-surface">
             <header class="border-b border-brand-border px-5 py-4">
               <h3 class="text-sm font-bold text-brand-text">
                 {{ t('assets.details.detailsSummary') }}
               </h3>
             </header>
-            <dl class="grid gap-0 sm:grid-cols-2">
+            <dl class="grid gap-0 md:grid-cols-2">
               <div class="flex gap-3 border-b border-brand-border/80 px-5 py-4 sm:border-e">
                 <span
                   class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-bg text-brand-primary"
@@ -745,7 +745,7 @@ function actionButtonClass(action: AssetLifecycleAction): string {
             >
               {{ t('assets.details.noCurrentCustody') }}
             </p>
-            <dl v-else class="grid gap-0 sm:grid-cols-2">
+            <dl v-else class="grid gap-0 md:grid-cols-2">
               <div class="flex gap-3 border-b border-brand-border/80 px-5 py-4 sm:border-e">
                 <span
                   class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-bg text-brand-primary"
@@ -821,72 +821,107 @@ function actionButtonClass(action: AssetLifecycleAction): string {
             >
               {{ t('assets.details.noCustodyHistory') }}
             </p>
-            <div v-else class="overflow-x-auto">
-              <table class="min-w-full border-separate border-spacing-0 text-sm">
-                <thead>
-                  <tr class="bg-[#F4F6F5]">
-                    <th
-                      v-for="key in [
-                        'custodyNumber',
-                        'employee',
-                        'status',
-                        'assignedAt',
-                        'returnedAt',
-                      ]"
-                      :key="key"
-                      class="whitespace-nowrap border-b border-brand-border px-5 py-3 text-center text-xs font-bold text-brand-text"
+            <div v-else class="space-y-0">
+              <div class="divide-y divide-brand-border/80 lg:hidden">
+                <article
+                  v-for="custody in custodies"
+                  :key="`m-${custody.id}`"
+                  class="space-y-2 px-4 py-3.5"
+                >
+                  <div class="flex flex-wrap items-center justify-between gap-2">
+                    <span
+                      class="inline-flex rounded-lg border border-brand-border bg-brand-bg px-2 py-1 font-mono text-[11px] font-bold text-brand-text"
+                      dir="ltr"
                     >
-                      {{ t(`assets.columns.${key}`) }}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr
-                    v-for="(custody, index) in custodies"
-                    :key="custody.id"
-                    class="group"
-                    :class="index % 2 === 1 ? 'bg-[#FAFBFA]' : 'bg-brand-surface'"
-                  >
-                    <td
-                      class="whitespace-nowrap border-b border-brand-border/80 px-5 py-3 text-center transition-colors group-hover:bg-[#EDF6F1]"
+                      {{ custody.custody_number }}
+                    </span>
+                    <span
+                      class="inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold"
+                      :class="custodyStatusBadgeClass(custody.status)"
                     >
-                      <span
-                        class="inline-flex rounded-lg border border-brand-border bg-brand-bg px-2 py-1 font-mono text-[11px] font-bold text-brand-text"
-                        dir="ltr"
+                      {{ t(`assets.custodyStatus.${custody.status}`) }}
+                    </span>
+                  </div>
+                  <p class="text-sm font-semibold text-brand-text">
+                    {{ custody.employee?.full_name || '—' }}
+                  </p>
+                  <p class="text-xs text-brand-text-secondary">
+                    <span class="font-medium text-brand-text-muted">{{ t('assets.columns.assignedAt') }}:</span>
+                    {{ formatDateTime(custody.assigned_at) }}
+                    <span class="mx-1.5 text-brand-text-muted">·</span>
+                    <span class="font-medium text-brand-text-muted">{{ t('assets.columns.returnedAt') }}:</span>
+                    {{ formatDateTime(custody.returned_at) }}
+                  </p>
+                </article>
+              </div>
+
+              <div class="hidden overflow-x-auto lg:block">
+                <table class="min-w-full border-separate border-spacing-0 text-sm">
+                  <thead>
+                    <tr class="bg-[#F4F6F5]">
+                      <th
+                        v-for="key in [
+                          'custodyNumber',
+                          'employee',
+                          'status',
+                          'assignedAt',
+                          'returnedAt',
+                        ]"
+                        :key="key"
+                        class="whitespace-nowrap border-b border-brand-border px-5 py-3 text-center text-xs font-bold text-brand-text"
                       >
-                        {{ custody.custody_number }}
-                      </span>
-                    </td>
-                    <td
-                      class="max-w-[12rem] whitespace-nowrap border-b border-brand-border/80 px-5 py-3 text-center text-brand-text transition-colors group-hover:bg-[#EDF6F1]"
+                        {{ t(`assets.columns.${key}`) }}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr
+                      v-for="(custody, index) in custodies"
+                      :key="custody.id"
+                      class="group"
+                      :class="index % 2 === 1 ? 'bg-[#FAFBFA]' : 'bg-brand-surface'"
                     >
-                      <span class="block truncate">
-                        {{ custody.employee?.full_name || '—' }}
-                      </span>
-                    </td>
-                    <td
-                      class="whitespace-nowrap border-b border-brand-border/80 px-5 py-3 text-center transition-colors group-hover:bg-[#EDF6F1]"
-                    >
-                      <span
-                        class="inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold"
-                        :class="custodyStatusBadgeClass(custody.status)"
+                      <td
+                        class="whitespace-nowrap border-b border-brand-border/80 px-5 py-3 text-center transition-colors group-hover:bg-[#EDF6F1]"
                       >
-                        {{ t(`assets.custodyStatus.${custody.status}`) }}
-                      </span>
-                    </td>
-                    <td
-                      class="whitespace-nowrap border-b border-brand-border/80 px-5 py-3 text-center text-brand-text transition-colors group-hover:bg-[#EDF6F1]"
-                    >
-                      {{ formatDateTime(custody.assigned_at) }}
-                    </td>
-                    <td
-                      class="whitespace-nowrap border-b border-brand-border/80 px-5 py-3 text-center text-brand-text transition-colors group-hover:bg-[#EDF6F1]"
-                    >
-                      {{ formatDateTime(custody.returned_at) }}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+                        <span
+                          class="inline-flex rounded-lg border border-brand-border bg-brand-bg px-2 py-1 font-mono text-[11px] font-bold text-brand-text"
+                          dir="ltr"
+                        >
+                          {{ custody.custody_number }}
+                        </span>
+                      </td>
+                      <td
+                        class="max-w-[12rem] whitespace-nowrap border-b border-brand-border/80 px-5 py-3 text-center text-brand-text transition-colors group-hover:bg-[#EDF6F1]"
+                      >
+                        <span class="block truncate">
+                          {{ custody.employee?.full_name || '—' }}
+                        </span>
+                      </td>
+                      <td
+                        class="whitespace-nowrap border-b border-brand-border/80 px-5 py-3 text-center transition-colors group-hover:bg-[#EDF6F1]"
+                      >
+                        <span
+                          class="inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold"
+                          :class="custodyStatusBadgeClass(custody.status)"
+                        >
+                          {{ t(`assets.custodyStatus.${custody.status}`) }}
+                        </span>
+                      </td>
+                      <td
+                        class="whitespace-nowrap border-b border-brand-border/80 px-5 py-3 text-center text-brand-text transition-colors group-hover:bg-[#EDF6F1]"
+                      >
+                        {{ formatDateTime(custody.assigned_at) }}
+                      </td>
+                      <td
+                        class="whitespace-nowrap border-b border-brand-border/80 px-5 py-3 text-center text-brand-text transition-colors group-hover:bg-[#EDF6F1]"
+                      >
+                        {{ formatDateTime(custody.returned_at) }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </section>
 
@@ -984,7 +1019,7 @@ function actionButtonClass(action: AssetLifecycleAction): string {
           />
         </div>
 
-        <aside class="space-y-5 xl:sticky xl:top-4 xl:self-start">
+        <aside class="order-1 space-y-5 xl:order-2 xl:sticky xl:top-4 xl:self-start">
           <section class="rounded-2xl border border-brand-border bg-brand-surface">
             <header class="border-b border-brand-border px-5 py-4">
               <h3 class="text-sm font-bold text-brand-text">

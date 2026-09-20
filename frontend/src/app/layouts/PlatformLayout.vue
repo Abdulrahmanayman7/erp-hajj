@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRoute } from 'vue-router'
 import { Building2, LogOut } from 'lucide-vue-next'
@@ -8,6 +8,7 @@ import rafeeaLogo from '@/assets/brand/rafeea-logo.png'
 import { useLogoutMutation } from '@/modules/auth/mutations/useLogoutMutation'
 import { useCurrentUserQuery } from '@/modules/auth/queries/useCurrentUserQuery'
 import AppConfirmDialog from '@/shared/components/AppConfirmDialog.vue'
+import AppPullToRefresh from '@/shared/components/AppPullToRefresh.vue'
 import AppToastHost from '@/shared/components/AppToastHost.vue'
 import PwaInstallCard from '@/shared/components/PwaInstallCard.vue'
 import UserAvatar from '@/shared/components/UserAvatar.vue'
@@ -16,6 +17,7 @@ const { t } = useI18n()
 const route = useRoute()
 const { data: user } = useCurrentUserQuery()
 const { mutate: logout, isPending: isLoggingOut } = useLogoutMutation()
+const mainEl = ref<HTMLElement | null>(null)
 
 const displayName = computed(() => user.value?.name ?? t('auth.userFallback'))
 const roleLabel = computed(() => user.value?.roles?.[0]?.name ?? t('auth.platformUser'))
@@ -221,7 +223,11 @@ const navItems = computed(() => [
         </RouterLink>
       </nav>
 
-      <main class="app-shell-main min-h-0 flex-1 overflow-auto">
+      <main
+        ref="mainEl"
+        class="app-shell-main min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-y-contain"
+      >
+        <AppPullToRefresh :scroller="mainEl" />
         <div class="app-page-container mx-auto w-full max-w-[1440px] space-y-4">
           <div class="md:hidden">
             <PwaInstallCard />

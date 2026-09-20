@@ -438,7 +438,24 @@ html.is-standalone .app-shell {
   }
 }
 
+.app-shell-main {
+  /* Detail pages with wide tables/toolbars must not drag the whole shell sideways. */
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  position: relative;
+  touch-action: pan-y;
+}
+
+.app-shell-main.app-pull-refresh-host > .app-page-container {
+  transform: translateY(var(--pull-refresh-offset, 0px));
+  transition: var(--pull-refresh-transition, none);
+  will-change: transform;
+}
+
 .app-page-container {
+  min-width: 0;
+  max-width: 100%;
   padding-inline-start: max(var(--app-page-pad-x), env(safe-area-inset-left, 0px));
   padding-inline-end: max(var(--app-page-pad-x), env(safe-area-inset-right, 0px));
   padding-top: var(--app-page-pad-y);

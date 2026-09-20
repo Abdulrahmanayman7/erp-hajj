@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Pull-to-Refresh (mobile/tablet):** global gesture on `AppLayout` / `PlatformLayout` — pull at top of the shell scroller to soft-refresh active TanStack Query data (no full page reload); progressive Arabic indicator; blocked during drawers/modals/inputs.
+
 - **Local performance dataset dump:** `php artisan performance:seed --confirm-perf --rebuild --dump-sql=erp_hajj_perf/erp_hajj_perf.sql` writes an isolated `erp_hajj_perf` database plus a gitignored `.sql` dump (medium profile: ~75k tasks, ~150k movements, ~500k audit rows). Docs: `docs/07-testing/PERFORMANCE_DATASET.md`.
 
 - **Form phone, number, and Enter:** phone fields use a country-code picker (default +966) stored as one E.164 string; numeric fields no longer show spinner arrows; opening a create/edit form autofocuses the first field; Enter submits the nearest form (textarea stays newline).
@@ -36,6 +38,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Entity details mobile layout:** detail pages (assets, tasks, meetings, contracts, decisions, documents, warehouses, inventory items) keep lifecycle actions above the summary on phones, use single-column field grids until tablet, convert nested tables to card stacks, and clip horizontal shell overflow so pages like `/app/assets/:id` no longer scroll sideways.
+
 - **Meeting schedule calendar:** date/time popover stacks above lifecycle dialogs (`z-490` vs dialog `z-460`) so the Gregorian picker is no longer visible behind the modal.
 
 - **Decisions create/edit employee fields:** issuer (`جهة الإصدار`) and responsible (`المسؤول عن المتابعة`) now have distinct labels and empty states; they no longer look like a duplicated employee picker.
@@ -53,6 +57,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Local CORS localhost vs 127.0.0.1:** browsers treat these as distinct origins. CORS now allows `FRONTEND_URL`, optional `CORS_ALLOWED_ORIGINS`, and the loopback twin of `FRONTEND_URL`, so Vite at `http://localhost:5173` works when the API was configured with `http://127.0.0.1:5173` (and the reverse). Still never `*` with credentialed cookies.
 
 ### Changed
+
+- **PWA install icon:** global install/home-screen icons regenerated from `frontend/src/assets/brand/rafeea-app-icon.png` (any + maskable + apple-touch + favicon). In-app UI logo (`rafeea-logo.png`) unchanged. Service worker cache bumped to `erp-hajj-shell-v3`.
 
 - **Dashboard overview KPIs:** overview cards (`نظرة عامة`) show value and label only — decorative icons removed.
 

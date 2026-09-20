@@ -7,7 +7,7 @@
  * - Never cache /api/ or authenticated JSON.
  * - Bump CACHE_VERSION on intentional shell-cache strategy changes.
  */
-const CACHE_VERSION = 'erp-hajj-shell-v2'
+const CACHE_VERSION = 'erp-hajj-shell-v3'
 const SHELL_CACHE = CACHE_VERSION
 
 self.addEventListener('install', (event) => {

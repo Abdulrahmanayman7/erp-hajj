@@ -78,6 +78,11 @@ export const ar = {
     refresh: 'تحديث البيانات',
     hardRefreshHint: 'اضغط مطولاً 5 ثوانٍ لإعادة تحميل النظام بالكامل',
     hardRefreshProgress: 'إعادة تحميل كاملة… {progress}%',
+    pullToRefresh: {
+      pull: 'اسحب للتحديث',
+      release: 'اترك للتحديث',
+      refreshing: 'جاري التحديث…',
+    },
     resetFilters: 'إعادة تعيين',
     close: 'إغلاق',
     navRail: 'شريط التنقل',

@@ -61,6 +61,8 @@ Platform shell (`PlatformLayout`) stays separate but shares tokens/safe-area; it
 
 - **Dashboard:** calm enterprise greeting (no photo hero); responsive card grids.
 - **Entity lists:** desktop table OK; mobile/tablet → `EntityListItem` / cards; avoid horizontal page scroll of tables.
+- **Entity details:** single column below `xl`; lifecycle / actions panel renders **above** the summary on mobile (`order-1`) and sticky beside content on desktop; nested tables become card stacks below `lg`; shell main uses `overflow-x: hidden` so wide nested tables never drag the page sideways.
+- **Pull-to-Refresh:** touch-only soft refresh on the shell scroller (see [MOBILE_PATTERNS.md](MOBILE_PATTERNS.md)); desktop unchanged.
 - **Filters:** desktop inline; mobile → bottom sheet with count + apply/reset (`AppMobileFilters`).
 - **Forms:** multi-column desktop; single column mobile; sticky save respects `safe-area-inset-bottom`.
 

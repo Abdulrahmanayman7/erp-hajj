@@ -16,7 +16,7 @@ Define the four environments and their rules. Exact hosting provider / Saudi top
 - Local scheduler when testing scanners: `php artisan schedule:work` or cron `schedule:run`.
 - Mail: `MAIL_MAILER=log` (or Mailpit — choice TBD).
 - **No production data — ever.**
-- Local volume testing uses a separate `erp_hajj_perf` database — see [PERFORMANCE_DATASET.md](../07-testing/PERFORMANCE_DATASET.md).
+- Local volume testing uses the default database name `erp_hajj` — see [PERFORMANCE_DATASET.md](../07-testing/PERFORMANCE_DATASET.md). The previous small local copy is backed up as `backend/erp_hajj_perf/erp_hajj_before_volume.sql`.
 - Seeded test tenants with separate tenant fixtures (at least two tenants to exercise isolation).
 - Bootstrap Owner: `php artisan tenant:bootstrap-owner` after migrate/seed.
 

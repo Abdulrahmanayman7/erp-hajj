@@ -200,7 +200,7 @@ async function saveTask(): Promise<void> {
 </script>
 
 <template>
-  <div class="mx-auto max-w-[1200px] space-y-5">
+  <div class="mx-auto min-w-0 max-w-[1200px] space-y-5">
     <div class="flex flex-wrap items-center gap-3">
       <button
         type="button"
@@ -281,13 +281,13 @@ async function saveTask(): Promise<void> {
         </div>
       </section>
 
-      <div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
-        <div class="space-y-5">
+      <div class="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <div class="order-2 min-w-0 space-y-5 xl:order-1">
           <section class="rounded-2xl border border-brand-border bg-brand-surface">
             <header class="border-b border-brand-border px-5 py-4">
               <h3 class="text-sm font-bold text-brand-text">{{ t('decisions.detailsSummary') }}</h3>
             </header>
-            <dl class="grid gap-0 sm:grid-cols-2">
+            <dl class="grid gap-0 md:grid-cols-2">
               <div class="flex gap-3 border-b border-brand-border/80 px-5 py-4 sm:border-e">
                 <span
                   class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-bg text-brand-primary"
@@ -470,97 +470,137 @@ async function saveTask(): Promise<void> {
             >
               {{ t('decisions.tasksSection.empty') }}
             </p>
-            <div v-else class="overflow-x-auto border-t border-brand-border">
-              <table class="min-w-full border-separate border-spacing-0 text-sm">
-                <thead>
-                  <tr class="bg-[#F4F6F5]">
-                    <th
-                      class="whitespace-nowrap border-b border-brand-border px-5 py-3 text-start text-xs font-bold text-brand-text"
-                    >
-                      {{ t('tasks.columns.number') }}
-                    </th>
-                    <th
-                      class="whitespace-nowrap border-b border-brand-border px-5 py-3 text-start text-xs font-bold text-brand-text"
-                    >
-                      {{ t('tasks.columns.title') }}
-                    </th>
-                    <th
-                      class="whitespace-nowrap border-b border-brand-border px-5 py-3 text-center text-xs font-bold text-brand-text"
-                    >
-                      {{ t('tasks.columns.assignee') }}
-                    </th>
-                    <th
-                      class="whitespace-nowrap border-b border-brand-border px-5 py-3 text-center text-xs font-bold text-brand-text"
-                    >
-                      {{ t('tasks.columns.status') }}
-                    </th>
-                    <th
-                      class="whitespace-nowrap border-b border-brand-border px-5 py-3 text-center text-xs font-bold text-brand-text"
-                    >
-                      {{ t('tasks.columns.dueDate') }}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr
-                    v-for="(taskItem, index) in linkedTasks"
-                    :key="taskItem.id"
-                    class="group"
-                    :class="index % 2 === 1 ? 'bg-[#FAFBFA]' : 'bg-brand-surface'"
-                  >
-                    <td
-                      class="whitespace-nowrap border-b border-brand-border/80 px-5 py-3 transition-colors group-hover:bg-[#EDF6F1]"
-                    >
-                      <RouterLink
-                        :to="`/app/tasks/${taskItem.id}`"
-                        class="inline-flex items-center rounded-lg border border-brand-border bg-brand-bg px-2.5 py-1 font-mono text-[12px] font-bold tracking-wide text-brand-primary-dark transition hover:bg-brand-primary-soft hover:text-brand-primary"
-                        dir="ltr"
-                      >
-                        {{ taskItem.task_number }}
-                      </RouterLink>
-                    </td>
-                    <td
-                      class="border-b border-brand-border/80 px-5 py-3 font-semibold text-brand-text transition-colors group-hover:bg-[#EDF6F1]"
-                    >
-                      <RouterLink
-                        :to="`/app/tasks/${taskItem.id}`"
-                        class="transition hover:text-brand-primary-dark hover:underline hover:underline-offset-2"
-                      >
-                        {{ taskItem.title }}
-                      </RouterLink>
-                    </td>
-                    <td
-                      class="border-b border-brand-border/80 px-5 py-3 text-center text-brand-text transition-colors group-hover:bg-[#EDF6F1]"
-                    >
-                      {{ taskItem.assigned_to_employee?.full_name ?? '—' }}
-                    </td>
-                    <td
-                      class="border-b border-brand-border/80 px-5 py-3 text-center transition-colors group-hover:bg-[#EDF6F1]"
-                    >
-                      <div class="flex flex-wrap items-center justify-center gap-1.5">
-                        <span
-                          class="inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold"
-                          :class="taskStatusBadgeClass(taskItem.status)"
-                        >
-                          {{ t(`tasks.status.${taskItem.status}`) }}
-                        </span>
-                        <span
-                          v-if="taskItem.is_overdue"
-                          class="inline-flex rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-semibold text-red-800 ring-1 ring-inset ring-red-200/80"
-                        >
-                          {{ t('tasks.overdueBadge') }}
-                        </span>
-                      </div>
-                    </td>
-                    <td
-                      class="border-b border-brand-border/80 px-5 py-3 text-center text-brand-text transition-colors group-hover:bg-[#EDF6F1]"
+            <div v-else class="border-t border-brand-border">
+              <div class="divide-y divide-brand-border/80 lg:hidden">
+                <RouterLink
+                  v-for="taskItem in linkedTasks"
+                  :key="`m-${taskItem.id}`"
+                  :to="`/app/tasks/${taskItem.id}`"
+                  class="block space-y-2 px-4 py-3.5 transition active:bg-brand-bg"
+                >
+                  <div class="flex flex-wrap items-center justify-between gap-2">
+                    <span
+                      class="inline-flex items-center rounded-lg border border-brand-border bg-brand-bg px-2.5 py-1 font-mono text-[12px] font-bold tracking-wide text-brand-primary-dark"
                       dir="ltr"
                     >
-                      {{ taskItem.due_date ?? '—' }}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+                      {{ taskItem.task_number }}
+                    </span>
+                    <div class="flex flex-wrap items-center gap-1.5">
+                      <span
+                        class="inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold"
+                        :class="taskStatusBadgeClass(taskItem.status)"
+                      >
+                        {{ t(`tasks.status.${taskItem.status}`) }}
+                      </span>
+                      <span
+                        v-if="taskItem.is_overdue"
+                        class="inline-flex rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-semibold text-red-800 ring-1 ring-inset ring-red-200/80"
+                      >
+                        {{ t('tasks.overdueBadge') }}
+                      </span>
+                    </div>
+                  </div>
+                  <p class="text-sm font-semibold text-brand-text">{{ taskItem.title }}</p>
+                  <p class="text-xs text-brand-text-secondary">
+                    {{ taskItem.assigned_to_employee?.full_name ?? '—' }}
+                    <span class="mx-1.5 text-brand-text-muted">·</span>
+                    <span dir="ltr">{{ taskItem.due_date ?? '—' }}</span>
+                  </p>
+                </RouterLink>
+              </div>
+
+              <div class="hidden overflow-x-auto lg:block">
+                <table class="min-w-full border-separate border-spacing-0 text-sm">
+                  <thead>
+                    <tr class="bg-[#F4F6F5]">
+                      <th
+                        class="whitespace-nowrap border-b border-brand-border px-5 py-3 text-start text-xs font-bold text-brand-text"
+                      >
+                        {{ t('tasks.columns.number') }}
+                      </th>
+                      <th
+                        class="whitespace-nowrap border-b border-brand-border px-5 py-3 text-start text-xs font-bold text-brand-text"
+                      >
+                        {{ t('tasks.columns.title') }}
+                      </th>
+                      <th
+                        class="whitespace-nowrap border-b border-brand-border px-5 py-3 text-center text-xs font-bold text-brand-text"
+                      >
+                        {{ t('tasks.columns.assignee') }}
+                      </th>
+                      <th
+                        class="whitespace-nowrap border-b border-brand-border px-5 py-3 text-center text-xs font-bold text-brand-text"
+                      >
+                        {{ t('tasks.columns.status') }}
+                      </th>
+                      <th
+                        class="whitespace-nowrap border-b border-brand-border px-5 py-3 text-center text-xs font-bold text-brand-text"
+                      >
+                        {{ t('tasks.columns.dueDate') }}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr
+                      v-for="(taskItem, index) in linkedTasks"
+                      :key="taskItem.id"
+                      class="group"
+                      :class="index % 2 === 1 ? 'bg-[#FAFBFA]' : 'bg-brand-surface'"
+                    >
+                      <td
+                        class="whitespace-nowrap border-b border-brand-border/80 px-5 py-3 transition-colors group-hover:bg-[#EDF6F1]"
+                      >
+                        <RouterLink
+                          :to="`/app/tasks/${taskItem.id}`"
+                          class="inline-flex items-center rounded-lg border border-brand-border bg-brand-bg px-2.5 py-1 font-mono text-[12px] font-bold tracking-wide text-brand-primary-dark transition hover:bg-brand-primary-soft hover:text-brand-primary"
+                          dir="ltr"
+                        >
+                          {{ taskItem.task_number }}
+                        </RouterLink>
+                      </td>
+                      <td
+                        class="border-b border-brand-border/80 px-5 py-3 font-semibold text-brand-text transition-colors group-hover:bg-[#EDF6F1]"
+                      >
+                        <RouterLink
+                          :to="`/app/tasks/${taskItem.id}`"
+                          class="transition hover:text-brand-primary-dark hover:underline hover:underline-offset-2"
+                        >
+                          {{ taskItem.title }}
+                        </RouterLink>
+                      </td>
+                      <td
+                        class="border-b border-brand-border/80 px-5 py-3 text-center text-brand-text transition-colors group-hover:bg-[#EDF6F1]"
+                      >
+                        {{ taskItem.assigned_to_employee?.full_name ?? '—' }}
+                      </td>
+                      <td
+                        class="border-b border-brand-border/80 px-5 py-3 text-center transition-colors group-hover:bg-[#EDF6F1]"
+                      >
+                        <div class="flex flex-wrap items-center justify-center gap-1.5">
+                          <span
+                            class="inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold"
+                            :class="taskStatusBadgeClass(taskItem.status)"
+                          >
+                            {{ t(`tasks.status.${taskItem.status}`) }}
+                          </span>
+                          <span
+                            v-if="taskItem.is_overdue"
+                            class="inline-flex rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-semibold text-red-800 ring-1 ring-inset ring-red-200/80"
+                          >
+                            {{ t('tasks.overdueBadge') }}
+                          </span>
+                        </div>
+                      </td>
+                      <td
+                        class="border-b border-brand-border/80 px-5 py-3 text-center text-brand-text transition-colors group-hover:bg-[#EDF6F1]"
+                        dir="ltr"
+                      >
+                        {{ taskItem.due_date ?? '—' }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </section>
 
@@ -571,7 +611,7 @@ async function saveTask(): Promise<void> {
           />
         </div>
 
-        <aside class="space-y-5 xl:sticky xl:top-4 xl:self-start">
+        <aside class="order-1 space-y-5 xl:order-2 xl:sticky xl:top-4 xl:self-start">
           <section class="rounded-2xl border border-brand-border bg-brand-surface">
             <header class="border-b border-brand-border px-5 py-4">
               <h3 class="text-sm font-bold text-brand-text">{{ t('decisions.lifecycleTitle') }}</h3>

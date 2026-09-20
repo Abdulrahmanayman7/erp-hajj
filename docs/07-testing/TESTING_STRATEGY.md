@@ -59,7 +59,7 @@ Define what must be tested and to what standard. Per-module test plans live in e
 ## Environment Rules (see [ENVIRONMENTS.md](../08-deployment/ENVIRONMENTS.md))
 
 - Isolated test database; repeatable migrations; factories for all entities; separate tenant fixtures.
-- Local volume/load fixture (not CI): [PERFORMANCE_DATASET.md](PERFORMANCE_DATASET.md) — isolated `erp_hajj_perf` + optional `.sql` dump. Never production data.
+- Local volume/load fixture (not CI): [PERFORMANCE_DATASET.md](PERFORMANCE_DATASET.md) — same database name `erp_hajj`. Never production data.
 - No production external dependencies; mock storage and notifications where appropriate.
 
 ## Tooling (decided at scaffolding)

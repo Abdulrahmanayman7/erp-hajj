@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 import AppBottomNav from '@/shared/components/AppBottomNav.vue'
 import AppConfirmDialog from '@/shared/components/AppConfirmDialog.vue'
 import AppMobileMoreSheet from '@/shared/components/AppMobileMoreSheet.vue'
 import AppNavigationRail from '@/shared/components/AppNavigationRail.vue'
+import AppPullToRefresh from '@/shared/components/AppPullToRefresh.vue'
 import AppToastHost from '@/shared/components/AppToastHost.vue'
 import { useAppNavigation } from '@/shared/composables/useAppNavigation'
 import { useMobileMore } from '@/shared/composables/useMobileMore'
@@ -16,6 +17,7 @@ import AppTopbar from './AppTopbar.vue'
 const { moreOpen, closeMore } = useMobileMore()
 const { flatItems } = useAppNavigation()
 const moreItems = computed(() => flatItems.value)
+const mainEl = ref<HTMLElement | null>(null)
 </script>
 
 <template>
@@ -33,8 +35,12 @@ const moreItems = computed(() => flatItems.value)
     <div class="flex h-full min-h-0 min-w-0 flex-1 flex-col self-stretch md:gap-3 xl:gap-4">
       <AppTopbar />
 
-      <main class="app-shell-main min-h-0 flex-1 overflow-auto">
-        <div class="app-page-container mx-auto w-full max-w-[1440px]">
+      <main
+        ref="mainEl"
+        class="app-shell-main min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-y-contain"
+      >
+        <AppPullToRefresh :scroller="mainEl" />
+        <div class="app-page-container mx-auto w-full min-w-0 max-w-[1440px]">
           <slot />
         </div>
       </main>

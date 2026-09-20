@@ -1,15 +1,15 @@
-# Local performance dataset
+# Volume dataset (`erp_hajj`)
 
 > **Status:** Local / disposable only  
 > **Last updated:** 2026-09-19
 
 Synthetic volume for trying lists, search, dashboard, and audit under load. **Never production data. Never run in `APP_ENV=production`.**
 
-## What it creates
+The app default database name is **`erp_hajj`**. The volume fixture uses that same name so `.env` does not need `DB_DATABASE` switched.
 
-Isolated MySQL/MariaDB database `erp_hajj_perf` (name must contain `perf`) and tenant `perf_large`.
+Tenant: `perf_large`.
 
-Medium profile (approximate row counts):
+## Medium profile (approximate row counts)
 
 | Table | Rows |
 |---|---|
@@ -26,48 +26,45 @@ Medium profile (approximate row counts):
 | notifications | 200,000 |
 | audit_logs | 500,000 |
 
-## Generate (preferred)
+## Login
 
-From `backend/`:
-
-```bash
-php artisan performance:seed --confirm-perf --rebuild --dump-sql=erp_hajj_perf/erp_hajj_perf.sql
-```
-
-- `--rebuild` drops and recreates only the isolated `perf` database. It does not touch `erp_hajj` / demo DBs.
-- `--dump-sql=` writes a local `.sql` dump (gitignored under `backend/erp_hajj_perf/`). The dump is large (hundreds of MB to ~1 GB); do not commit it.
-
-## Point the app at it
-
-In `backend/.env` (local only):
-
-```env
-DB_DATABASE=erp_hajj_perf
-```
-
-Restart `php artisan serve`. Login:
+Restart `php artisan serve` (`.env` already has `DB_DATABASE=erp_hajj`).
 
 - Email: `owner@perf-large.invalid`
 - Password: `PerfFixture@123`
 
-Restore `DB_DATABASE=erp_hajj` when you are done.
+## SQL dump
 
-## Import an existing dump
+Gitignored under `backend/erp_hajj_perf/`:
+
+| File | Purpose |
+|---|---|
+| `erp_hajj.sql` | Full dump (`CREATE DATABASE` / `USE erp_hajj`) — local MySQL only |
+| `erp_hajj_tables.sql` | Tables only — no `CREATE DATABASE` |
+| `erp_hajj_hostinger.sql.gz` | Same tables dump, gzipped for Hostinger phpMyAdmin |
+| `erp_hajj_before_volume.sql` | Backup of the previous small local `erp_hajj` |
+
+Hostinger phpMyAdmin: select `u561062901_erp_hajj` → Import → `erp_hajj_hostinger.sql.gz`. Do **not** import `erp_hajj.sql` (it tries to create `erp_hajj`, which the Hostinger user cannot access). Importing replaces whatever is already in that database.
+
+Import locally:
 
 ```bash
-mysql -u root -e "CREATE DATABASE IF NOT EXISTS erp_hajj_perf CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-mysql -u root erp_hajj_perf < backend/erp_hajj_perf/erp_hajj_perf.sql
+mysql -u root < backend/erp_hajj_perf/erp_hajj.sql
 ```
 
-If the dump was created with `--databases`, import without selecting a schema:
+## Regenerate (isolated)
+
+Seeding still builds a throwaway `erp_hajj_perf` database first (the name must contain `perf`) so `--rebuild` cannot drop `erp_hajj` by accident:
 
 ```bash
-mysql -u root < backend/erp_hajj_perf/erp_hajj_perf.sql
+php artisan performance:seed --confirm-perf --rebuild --dump-sql=erp_hajj_perf/erp_hajj_tables.sql
 ```
+
+Then move/replace into `erp_hajj` only when you intend to overwrite the default local database.
 
 ## Safety
 
 - Command refuses production.
 - Requires `--confirm-perf`.
-- Database name must contain `perf`.
-- Rows bypass domain Actions for insert speed; they are labeled disposable fixtures.
+- Generator database name must contain `perf`.
+- Importing `erp_hajj.sql` into Hostinger production **replaces** the live tenant. Use a separate Hostinger database, or import `erp_hajj_tables.sql` only into an explicit test schema.

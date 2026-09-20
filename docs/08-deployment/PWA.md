@@ -1,7 +1,7 @@
 # Progressive Web App (Install / Standalone)
 
 > Status: Implemented (shell installability). **Web Push remains out of scope** until [CHANGE_REQUEST_PWA_WEB_PUSH.md](../00-project/CHANGE_REQUEST_PWA_WEB_PUSH.md) is approved.
-> Last updated: 2026-09-18
+> Last updated: 2026-09-20
 
 ## Architecture
 
@@ -18,12 +18,14 @@ Manual PWA (no `vite-plugin-pwa` / Workbox):
 
 ## Global icon policy
 
-- Installed app icon is always the **official global RAFEEA / رفيع** logo from `frontend/src/assets/brand/rafeea-logo.png`.
+- Installed app / PWA icon source: `frontend/src/assets/brand/rafeea-app-icon.png` (global designed app icon).
+- In-app UI branding (sidebar, topbar, login, etc.) continues to use `frontend/src/assets/brand/rafeea-logo.png` and is **not** replaced by the PWA app icon.
 - **Never** tenant logo, org logo, or user avatar.
 - Platform Admin and Tenant users install the **same** app shell/icon.
-- `purpose: any` icons use a **transparent** canvas (no artificial fill added around the artwork).
-- `purpose: maskable` icons use brand `#064e3b` fill with the logo inside the maskable safe zone (OS may crop edges).
-- `apple-touch-icon` is opaque brand-green (iOS prefers non-transparent home-screen icons).
+- Regenerate production icons with: `php frontend/scripts/generate-pwa-icons.php`
+- `purpose: any` icons are near full-bleed from the designed app icon.
+- `purpose: maskable` icons keep extra padding (~20%) so the central Rafeea emblem stays inside the Android safe zone (circle / rounded square / squircle).
+- `apple-touch-icon` is opaque (iOS prefers non-transparent home-screen icons).
 
 ## Manifest
 
@@ -34,10 +36,11 @@ Manual PWA (no `vite-plugin-pwa` / Workbox):
 - `theme_color`: `#ffffff` (matches in-app chrome so iOS/Android do not paint a green band under the bottom nav)
 - `background_color`: `#064e3b` (install splash only)
 - `orientation`: `any` (phones + tablets)
+- Icons: `/icons/icon-192.png`, `/icons/icon-512.png` (`purpose: any`); `/icons/icon-192-maskable.png`, `/icons/icon-512-maskable.png` (`purpose: maskable`)
 
 ## Service worker / cache
 
-Versioned cache name: `erp-hajj-shell-v2`.
+Versioned cache name: `erp-hajj-shell-v3`.
 
 | Request | Behavior |
 |---|---|

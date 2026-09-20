@@ -168,7 +168,7 @@ function assignForm(next: InventoryItemFormState): void {
 </script>
 
 <template>
-  <div class="mx-auto max-w-[1200px] space-y-5">
+  <div class="mx-auto min-w-0 max-w-[1200px] space-y-5">
     <div class="flex flex-wrap items-center gap-3">
       <button
         type="button"
@@ -260,15 +260,15 @@ function assignForm(next: InventoryItemFormState): void {
         </div>
       </section>
 
-      <div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
-        <div class="space-y-5">
+      <div class="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <div class="order-2 min-w-0 space-y-5 xl:order-1">
           <section class="rounded-2xl border border-brand-border bg-brand-surface">
             <header class="border-b border-brand-border px-5 py-4">
               <h3 class="text-sm font-bold text-brand-text">
                 {{ t('inventory.items.detailsSummary') }}
               </h3>
             </header>
-            <dl class="grid gap-0 sm:grid-cols-2">
+            <dl class="grid gap-0 md:grid-cols-2">
               <div class="flex gap-3 border-b border-brand-border/80 px-5 py-4 sm:border-e">
                 <span
                   class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-bg text-brand-primary"
@@ -393,73 +393,116 @@ function assignForm(next: InventoryItemFormState): void {
             >
               {{ t('inventory.balances.empty') }}
             </p>
-            <div v-else class="overflow-x-auto">
-              <table class="min-w-full border-separate border-spacing-0 text-sm">
-                <thead>
-                  <tr class="bg-[#F4F6F5]">
-                    <th
-                      v-for="key in ['warehouse', 'onHand', 'stockState']"
-                      :key="key"
-                      class="whitespace-nowrap border-b border-brand-border px-5 py-3 text-center text-xs font-bold text-brand-text"
-                    >
-                      {{ t(`inventory.columns.${key}`) }}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr
-                    v-for="(balance, index) in balances"
-                    :key="balance.id"
-                    class="group"
-                    :class="index % 2 === 1 ? 'bg-[#FAFBFA]' : 'bg-brand-surface'"
+            <div v-else class="space-y-0">
+              <div class="divide-y divide-brand-border/80 lg:hidden">
+                <article
+                  v-for="balance in balances"
+                  :key="`m-${balance.id}`"
+                  class="space-y-2 px-4 py-3.5"
+                >
+                  <RouterLink
+                    v-if="balance.warehouse"
+                    :to="`/app/warehouses/${balance.warehouse.id}`"
+                    class="flex min-w-0 flex-wrap items-center gap-2"
                   >
-                    <td
-                      class="max-w-[14rem] whitespace-nowrap border-b border-brand-border/80 px-5 py-3 text-center transition-colors group-hover:bg-[#EDF6F1]"
-                    >
-                      <RouterLink
-                        v-if="balance.warehouse"
-                        :to="`/app/warehouses/${balance.warehouse.id}`"
-                        class="inline-flex max-w-full items-center justify-center gap-2"
-                        :title="balance.warehouse.name"
-                      >
-                        <span
-                          class="inline-flex shrink-0 items-center rounded-lg border border-brand-border bg-brand-bg px-2 py-1 font-mono text-[11px] font-bold text-brand-text"
-                          dir="ltr"
-                        >
-                          {{ balance.warehouse.warehouse_number }}
-                        </span>
-                        <span
-                          class="truncate font-semibold text-brand-text transition hover:text-brand-primary-dark hover:underline"
-                        >
-                          {{ balance.warehouse.name }}
-                        </span>
-                      </RouterLink>
-                      <span v-else class="text-brand-text">—</span>
-                    </td>
-                    <td
-                      class="whitespace-nowrap border-b border-brand-border/80 px-5 py-3 text-center font-semibold text-brand-text transition-colors group-hover:bg-[#EDF6F1]"
+                    <span
+                      class="inline-flex shrink-0 items-center rounded-lg border border-brand-border bg-brand-bg px-2 py-1 font-mono text-[11px] font-bold text-brand-text"
                       dir="ltr"
                     >
+                      {{ balance.warehouse.warehouse_number }}
+                    </span>
+                    <span class="min-w-0 flex-1 text-sm font-semibold text-brand-text">
+                      {{ balance.warehouse.name }}
+                    </span>
+                  </RouterLink>
+                  <p v-else class="text-sm text-brand-text">—</p>
+                  <div class="flex flex-wrap items-center justify-between gap-2">
+                    <span class="text-sm font-semibold text-brand-text" dir="ltr">
                       {{ formatQuantity(balance.on_hand) }}
-                    </td>
-                    <td
-                      class="whitespace-nowrap border-b border-brand-border/80 px-5 py-3 text-center transition-colors group-hover:bg-[#EDF6F1]"
+                    </span>
+                    <span
+                      class="inline-flex items-center justify-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold shadow-sm"
+                      :class="stockStateBadgeClass(balance.stock_state)"
                     >
                       <span
-                        class="inline-flex min-w-[6.25rem] items-center justify-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold shadow-sm"
-                        :class="stockStateBadgeClass(balance.stock_state)"
+                        class="h-1.5 w-1.5 shrink-0 rounded-full"
+                        :class="stockStateDotClass(balance.stock_state)"
+                        aria-hidden="true"
+                      />
+                      {{ t(`inventory.stockState.${balance.stock_state}`) }}
+                    </span>
+                  </div>
+                </article>
+              </div>
+
+              <div class="hidden overflow-x-auto lg:block">
+                <table class="min-w-full border-separate border-spacing-0 text-sm">
+                  <thead>
+                    <tr class="bg-[#F4F6F5]">
+                      <th
+                        v-for="key in ['warehouse', 'onHand', 'stockState']"
+                        :key="key"
+                        class="whitespace-nowrap border-b border-brand-border px-5 py-3 text-center text-xs font-bold text-brand-text"
+                      >
+                        {{ t(`inventory.columns.${key}`) }}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr
+                      v-for="(balance, index) in balances"
+                      :key="balance.id"
+                      class="group"
+                      :class="index % 2 === 1 ? 'bg-[#FAFBFA]' : 'bg-brand-surface'"
+                    >
+                      <td
+                        class="max-w-[14rem] whitespace-nowrap border-b border-brand-border/80 px-5 py-3 text-center transition-colors group-hover:bg-[#EDF6F1]"
+                      >
+                        <RouterLink
+                          v-if="balance.warehouse"
+                          :to="`/app/warehouses/${balance.warehouse.id}`"
+                          class="inline-flex max-w-full items-center justify-center gap-2"
+                          :title="balance.warehouse.name"
+                        >
+                          <span
+                            class="inline-flex shrink-0 items-center rounded-lg border border-brand-border bg-brand-bg px-2 py-1 font-mono text-[11px] font-bold text-brand-text"
+                            dir="ltr"
+                          >
+                            {{ balance.warehouse.warehouse_number }}
+                          </span>
+                          <span
+                            class="truncate font-semibold text-brand-text transition hover:text-brand-primary-dark hover:underline"
+                          >
+                            {{ balance.warehouse.name }}
+                          </span>
+                        </RouterLink>
+                        <span v-else class="text-brand-text">—</span>
+                      </td>
+                      <td
+                        class="whitespace-nowrap border-b border-brand-border/80 px-5 py-3 text-center font-semibold text-brand-text transition-colors group-hover:bg-[#EDF6F1]"
+                        dir="ltr"
+                      >
+                        {{ formatQuantity(balance.on_hand) }}
+                      </td>
+                      <td
+                        class="whitespace-nowrap border-b border-brand-border/80 px-5 py-3 text-center transition-colors group-hover:bg-[#EDF6F1]"
                       >
                         <span
-                          class="h-1.5 w-1.5 shrink-0 rounded-full"
-                          :class="stockStateDotClass(balance.stock_state)"
-                          aria-hidden="true"
-                        />
-                        {{ t(`inventory.stockState.${balance.stock_state}`) }}
-                      </span>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+                          class="inline-flex min-w-[6.25rem] items-center justify-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold shadow-sm"
+                          :class="stockStateBadgeClass(balance.stock_state)"
+                        >
+                          <span
+                            class="h-1.5 w-1.5 shrink-0 rounded-full"
+                            :class="stockStateDotClass(balance.stock_state)"
+                            aria-hidden="true"
+                          />
+                          {{ t(`inventory.stockState.${balance.stock_state}`) }}
+                        </span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </section>
 
@@ -530,7 +573,7 @@ function assignForm(next: InventoryItemFormState): void {
           />
         </div>
 
-        <aside class="space-y-5 xl:sticky xl:top-4 xl:self-start">
+        <aside class="order-1 space-y-5 xl:order-2 xl:sticky xl:top-4 xl:self-start">
           <section class="rounded-2xl border border-brand-border bg-brand-surface">
             <header class="border-b border-brand-border px-5 py-4">
               <h3 class="text-sm font-bold text-brand-text">

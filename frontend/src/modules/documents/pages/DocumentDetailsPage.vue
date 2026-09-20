@@ -210,7 +210,7 @@ const hostLink = computed(() => {
 </script>
 
 <template>
-  <div class="mx-auto max-w-[1200px] space-y-5">
+  <div class="mx-auto min-w-0 max-w-[1200px] space-y-5">
     <div class="flex flex-wrap items-center gap-3">
       <button type="button" class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-brand-border bg-brand-surface px-3 text-sm font-semibold text-brand-text transition hover:bg-brand-bg" @click="router.push('/app/documents')">
         <ArrowRight class="h-4 w-4" />
@@ -258,13 +258,13 @@ const hostLink = computed(() => {
         </div>
       </section>
 
-      <div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
-        <div class="space-y-5">
+      <div class="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <div class="order-2 min-w-0 space-y-5 xl:order-1">
           <section class="rounded-2xl border border-brand-border bg-brand-surface">
             <header class="border-b border-brand-border px-5 py-4">
               <h3 class="text-sm font-bold text-brand-text">{{ t('documents.sections.overview') }}</h3>
             </header>
-            <dl class="grid gap-0 sm:grid-cols-2">
+            <dl class="grid gap-0 md:grid-cols-2">
               <div class="flex gap-3 border-b border-brand-border/80 px-5 py-4 sm:border-e">
                 <span class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-bg text-brand-primary"><Tag class="h-4 w-4" :stroke-width="1.75" /></span>
                 <div class="min-w-0"><dt class="text-xs font-semibold text-brand-text-muted">{{ t('documents.fields.category') }}</dt><dd class="mt-1 text-sm font-semibold text-brand-text">{{ document.category?.name ?? '—' }}</dd></div>
@@ -315,7 +315,7 @@ const hostLink = computed(() => {
           </section>
         </div>
 
-        <aside class="space-y-5">
+        <aside class="order-1 space-y-5 xl:order-2">
           <section class="rounded-2xl border border-brand-border bg-brand-surface">
             <header class="flex items-center gap-2 border-b border-brand-border px-5 py-4"><Hash class="h-4 w-4 text-brand-primary" :stroke-width="1.75" /><h3 class="text-sm font-bold text-brand-text">{{ t('documents.fields.checksum') }}</h3></header>
             <p class="px-5 py-4 font-mono text-sm text-brand-text" :title="document.checksum_sha256">{{ truncateChecksum(document.checksum_sha256) }}</p>

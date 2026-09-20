@@ -85,3 +85,8 @@ export function __resetBodyScrollLockForTests(): void {
     document.body.style.width = ''
   }
 }
+
+/** True while any drawer/sheet/modal holds the document scroll lock. */
+export function isDocumentScrollLocked(): boolean {
+  return lockCount > 0
+}
