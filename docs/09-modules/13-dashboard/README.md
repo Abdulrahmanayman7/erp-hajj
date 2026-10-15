@@ -32,7 +32,7 @@ This is an **administrative / operational** dashboard — **not** a BI platform,
 - BI / report builder / arbitrary date-range analytics warehouse.
 - Charting library / pie-chart-heavy design (see [UI.md](UI.md) — **no charts** in Sprint 017).
 - Financial KPIs (revenue, expense, profit, budget, depreciation, contract value rollups as “finance”).
-- Command center, GPS, pilgrims, transportation, crisis ops ([OUT_OF_SCOPE.md](../../00-project/OUT_OF_SCOPE.md)).
+- Command center, GPS, crisis ops ([OUT_OF_SCOPE.md](../../00-project/OUT_OF_SCOPE.md)). Pilgrim, transportation, and accommodation operations are Phase 2 contexts ([ADR-0017](../../10-decisions/ADR-0017-SEASON-PILGRIM-AND-PHASE2-BOUNDED-CONTEXTS.md)) and are not Dashboard widgets in the MVP.
 - Dashboard mutations (approve, assign, stock adjust, close task, etc.).
 - Per-user layout customization / widget drag-drop.
 - Role-name dashboard presets (capability-driven only — ADR-0014).

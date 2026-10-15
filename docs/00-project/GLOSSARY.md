@@ -1,7 +1,7 @@
 # Glossary
 
 > **Status:** Draft
-> **Last updated:** 2026-08-12
+> **Last updated:** 2026-10-04
 
 ## Purpose
 
@@ -43,6 +43,12 @@ Define the shared vocabulary of the project in English with the Arabic business 
 | Permission | صلاحية | The right to perform a specific action, named `module.action`. |
 | Dashboard | لوحة التحكم | Tenant-scoped, permission-aware **operational overview** read model (KPIs + Attention + today/soon). Does not own business data. See ADR-0014 / Sprint 017. |
 | System Settings | إعدادات المنشأة | Tenant-scoped singleton configuration surface (`GET|PATCH /api/v1/tenant-settings`) for identity/regional fields on `tenants` (ADR-0016). Not platform admin, secrets, or feature flags. |
+| Season | موسم | A Hajj season **inside** one Tenant (Draft → Active → Closed). Not a new Tenant. At most one Active season. Phase 2, not implemented (ADR-0017). |
+| Pilgrim | حاج | Stable pilgrim identity inside the Tenant (current personal data). Not a login user unless a later decision says so. |
+| SeasonPilgrim | مشاركة الحاج في الموسم | That Pilgrim’s single participation in one Season. Seasonal operations reference this, not a second registration. Status: Registered → Active → Completed, or Cancelled. |
+| Family Group | مجموعة عائلية | Season-specific group of SeasonPilgrims, owned by the foundation. Optional. At most one group per SeasonPilgrim in that season. Not owned by Accommodation. |
+| Transportation | النقل | Phase 2 bounded context for fleet operations. Does not own pilgrims, seasons, or accommodation. |
+| Accommodation | الإسكان | Phase 2 bounded context and source of truth for time-based occupancy. Not a current-room column on Pilgrim. |
 
 ## Rules
 

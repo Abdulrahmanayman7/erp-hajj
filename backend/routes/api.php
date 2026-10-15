@@ -33,8 +33,25 @@ use App\Modules\OrganizationStructure\Controllers\OrganizationTreeController;
 use App\Modules\OrganizationStructure\Controllers\OrganizationUnitController;
 use App\Modules\Platform\Controllers\PlatformSetupController;
 use App\Modules\Platform\Controllers\PlatformTenantController;
+use App\Modules\SeasonPilgrims\Controllers\PilgrimController;
+use App\Modules\SeasonPilgrims\Controllers\SeasonContextController;
+use App\Modules\SeasonPilgrims\Controllers\SeasonController;
+use App\Modules\SeasonPilgrims\Controllers\SeasonFamilyGroupController;
+use App\Modules\SeasonPilgrims\Controllers\SeasonPilgrimController;
+use App\Modules\SeasonPilgrims\Controllers\SeasonPilgrimGroupController;
+use App\Modules\SeasonPilgrims\Controllers\SeasonProgramController;
 use App\Modules\Settings\Controllers\TenantSettingsController;
 use App\Modules\Tasks\Controllers\TaskController;
+use App\Modules\Transportation\Controllers\TransportEntitlementController;
+use App\Modules\Transportation\Controllers\TransportExternalDriverController;
+use App\Modules\Transportation\Controllers\TransportMovementController;
+use App\Modules\Transportation\Controllers\TransportPassengerController;
+use App\Modules\Transportation\Controllers\TransportPointController;
+use App\Modules\Transportation\Controllers\TransportReviewItemController;
+use App\Modules\Transportation\Controllers\TransportRunController;
+use App\Modules\Transportation\Controllers\TransportSeasonVehicleController;
+use App\Modules\Transportation\Controllers\TransportTimelineController;
+use App\Modules\Transportation\Controllers\TransportVehicleController;
 use App\Modules\Users\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -263,6 +280,142 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
             Route::get('/asset-custodies', [AssetCustodyController::class, 'index'])->name('asset-custodies.index');
             Route::get('/asset-custodies/{custody}', [AssetCustodyController::class, 'show'])->name('asset-custodies.show');
             Route::get('/my-custodies', [MyCustodyController::class, 'index'])->name('my-custodies.index');
+
+            Route::get('/seasons', [SeasonController::class, 'index'])->name('seasons.index');
+            Route::post('/seasons', [SeasonController::class, 'store'])->name('seasons.store');
+            Route::get('/seasons/{season}', [SeasonController::class, 'show'])->name('seasons.show');
+            Route::patch('/seasons/{season}', [SeasonController::class, 'update'])->name('seasons.update');
+            Route::delete('/seasons/{season}', [SeasonController::class, 'destroy'])->name('seasons.destroy');
+            Route::post('/seasons/{season}/activate', [SeasonController::class, 'activate'])->name('seasons.activate');
+            Route::post('/seasons/{season}/close', [SeasonController::class, 'close'])->name('seasons.close');
+            Route::post('/seasons/{season}/reopen', [SeasonController::class, 'reopen'])->name('seasons.reopen');
+            Route::get('/seasons/{season}/closing-readiness', [SeasonController::class, 'closingReadiness'])->name('seasons.closing-readiness');
+
+            Route::get('/pilgrims', [PilgrimController::class, 'index'])->name('pilgrims.index');
+            Route::post('/pilgrims', [PilgrimController::class, 'store'])->name('pilgrims.store');
+            Route::get('/pilgrims/{pilgrim}', [PilgrimController::class, 'show'])->name('pilgrims.show');
+            Route::patch('/pilgrims/{pilgrim}', [PilgrimController::class, 'update'])->name('pilgrims.update');
+            Route::delete('/pilgrims/{pilgrim}', [PilgrimController::class, 'destroy'])->name('pilgrims.destroy');
+            Route::post('/pilgrims/{pilgrim}/identity-documents', [PilgrimController::class, 'storeDocument'])->name('pilgrims.identity-documents.store');
+            Route::patch('/pilgrim-identity-documents/{identity_document}', [PilgrimController::class, 'updateDocument'])->name('pilgrim-identity-documents.update');
+            Route::delete('/pilgrim-identity-documents/{identity_document}', [PilgrimController::class, 'destroyDocument'])->name('pilgrim-identity-documents.destroy');
+
+            // Transportation tenant-level registry (no season context).
+            Route::get('/transport-points', [TransportPointController::class, 'index'])->name('transport-points.index');
+            Route::post('/transport-points', [TransportPointController::class, 'store'])->name('transport-points.store');
+            Route::get('/transport-points/{transport_point}', [TransportPointController::class, 'show'])->name('transport-points.show');
+            Route::patch('/transport-points/{transport_point}', [TransportPointController::class, 'update'])->name('transport-points.update');
+            Route::delete('/transport-points/{transport_point}', [TransportPointController::class, 'destroy'])->name('transport-points.destroy');
+            Route::post('/transport-points/{transport_point}/activate', [TransportPointController::class, 'activate'])->name('transport-points.activate');
+            Route::post('/transport-points/{transport_point}/deactivate', [TransportPointController::class, 'deactivate'])->name('transport-points.deactivate');
+
+            Route::get('/transport-vehicles', [TransportVehicleController::class, 'index'])->name('transport-vehicles.index');
+            Route::post('/transport-vehicles', [TransportVehicleController::class, 'store'])->name('transport-vehicles.store');
+            Route::get('/transport-vehicles/{transport_vehicle}', [TransportVehicleController::class, 'show'])->name('transport-vehicles.show');
+            Route::patch('/transport-vehicles/{transport_vehicle}', [TransportVehicleController::class, 'update'])->name('transport-vehicles.update');
+            Route::delete('/transport-vehicles/{transport_vehicle}', [TransportVehicleController::class, 'destroy'])->name('transport-vehicles.destroy');
+            Route::post('/transport-vehicles/{transport_vehicle}/activate', [TransportVehicleController::class, 'activate'])->name('transport-vehicles.activate');
+            Route::post('/transport-vehicles/{transport_vehicle}/deactivate', [TransportVehicleController::class, 'deactivate'])->name('transport-vehicles.deactivate');
+            Route::put('/transport-vehicles/{transport_vehicle}/links', [TransportVehicleController::class, 'links'])->name('transport-vehicles.links');
+
+            Route::get('/transport-external-drivers', [TransportExternalDriverController::class, 'index'])->name('transport-external-drivers.index');
+            Route::post('/transport-external-drivers', [TransportExternalDriverController::class, 'store'])->name('transport-external-drivers.store');
+            Route::get('/transport-external-drivers/{external_driver}', [TransportExternalDriverController::class, 'show'])->name('transport-external-drivers.show');
+            Route::patch('/transport-external-drivers/{external_driver}', [TransportExternalDriverController::class, 'update'])->name('transport-external-drivers.update');
+            Route::delete('/transport-external-drivers/{external_driver}', [TransportExternalDriverController::class, 'destroy'])->name('transport-external-drivers.destroy');
+            Route::post('/transport-external-drivers/{external_driver}/activate', [TransportExternalDriverController::class, 'activate'])->name('transport-external-drivers.activate');
+            Route::post('/transport-external-drivers/{external_driver}/deactivate', [TransportExternalDriverController::class, 'deactivate'])->name('transport-external-drivers.deactivate');
+
+            // Season-scoped resources: the season comes from the Season Context
+            // (X-Season-Id header, default = Active season), never from payloads.
+            Route::middleware('season.context')->group(function (): void {
+                Route::get('/season-context', [SeasonContextController::class, 'show'])->name('season-context.show');
+
+                Route::get('/season-pilgrims', [SeasonPilgrimController::class, 'index'])->name('season-pilgrims.index');
+                Route::post('/season-pilgrims', [SeasonPilgrimController::class, 'store'])->name('season-pilgrims.store');
+                Route::get('/season-pilgrims/{season_pilgrim}', [SeasonPilgrimController::class, 'show'])->name('season-pilgrims.show');
+                Route::delete('/season-pilgrims/{season_pilgrim}', [SeasonPilgrimController::class, 'destroy'])->name('season-pilgrims.destroy');
+                Route::post('/season-pilgrims/{season_pilgrim}/activate', [SeasonPilgrimController::class, 'activate'])->name('season-pilgrims.activate');
+                Route::post('/season-pilgrims/{season_pilgrim}/complete', [SeasonPilgrimController::class, 'complete'])->name('season-pilgrims.complete');
+                Route::post('/season-pilgrims/{season_pilgrim}/cancel', [SeasonPilgrimController::class, 'cancel'])->name('season-pilgrims.cancel');
+                Route::post('/season-pilgrims/{season_pilgrim}/snapshot/refresh', [SeasonPilgrimController::class, 'refreshSnapshot'])->name('season-pilgrims.snapshot.refresh');
+                Route::post('/season-pilgrims/{season_pilgrim}/snapshot/correct', [SeasonPilgrimController::class, 'correctSnapshot'])->name('season-pilgrims.snapshot.correct');
+                Route::put('/season-pilgrims/{season_pilgrim}/program', [SeasonPilgrimController::class, 'changeProgram'])->name('season-pilgrims.program');
+                Route::put('/season-pilgrims/{season_pilgrim}/pilgrim-group', [SeasonPilgrimController::class, 'assignPilgrimGroup'])->name('season-pilgrims.pilgrim-group');
+                Route::put('/season-pilgrims/{season_pilgrim}/family-group', [SeasonPilgrimController::class, 'setFamilyGroup'])->name('season-pilgrims.family-group');
+
+                Route::get('/season-programs', [SeasonProgramController::class, 'index'])->name('season-programs.index');
+                Route::post('/season-programs', [SeasonProgramController::class, 'store'])->name('season-programs.store');
+                Route::get('/season-programs/{season_program}', [SeasonProgramController::class, 'show'])->name('season-programs.show');
+                Route::patch('/season-programs/{season_program}', [SeasonProgramController::class, 'update'])->name('season-programs.update');
+                Route::delete('/season-programs/{season_program}', [SeasonProgramController::class, 'destroy'])->name('season-programs.destroy');
+                Route::post('/season-programs/{season_program}/activate', [SeasonProgramController::class, 'activate'])->name('season-programs.activate');
+                Route::post('/season-programs/{season_program}/deactivate', [SeasonProgramController::class, 'deactivate'])->name('season-programs.deactivate');
+
+                Route::get('/season-family-groups', [SeasonFamilyGroupController::class, 'index'])->name('season-family-groups.index');
+                Route::post('/season-family-groups', [SeasonFamilyGroupController::class, 'store'])->name('season-family-groups.store');
+                Route::get('/season-family-groups/{family_group}', [SeasonFamilyGroupController::class, 'show'])->name('season-family-groups.show');
+                Route::patch('/season-family-groups/{family_group}', [SeasonFamilyGroupController::class, 'update'])->name('season-family-groups.update');
+                Route::delete('/season-family-groups/{family_group}', [SeasonFamilyGroupController::class, 'destroy'])->name('season-family-groups.destroy');
+                Route::put('/season-family-groups/{family_group}/primary-member', [SeasonFamilyGroupController::class, 'setPrimaryMember'])->name('season-family-groups.primary-member');
+
+                Route::get('/season-pilgrim-groups', [SeasonPilgrimGroupController::class, 'index'])->name('season-pilgrim-groups.index');
+                Route::post('/season-pilgrim-groups', [SeasonPilgrimGroupController::class, 'store'])->name('season-pilgrim-groups.store');
+                Route::get('/season-pilgrim-groups/{pilgrim_group}', [SeasonPilgrimGroupController::class, 'show'])->name('season-pilgrim-groups.show');
+                Route::patch('/season-pilgrim-groups/{pilgrim_group}', [SeasonPilgrimGroupController::class, 'update'])->name('season-pilgrim-groups.update');
+                Route::delete('/season-pilgrim-groups/{pilgrim_group}', [SeasonPilgrimGroupController::class, 'destroy'])->name('season-pilgrim-groups.destroy');
+                Route::post('/season-pilgrim-groups/{pilgrim_group}/supervisors', [SeasonPilgrimGroupController::class, 'assignSupervisor'])->name('season-pilgrim-groups.supervisors.store');
+                Route::post('/season-pilgrim-groups/{pilgrim_group}/supervisors/{supervisor}/end', [SeasonPilgrimGroupController::class, 'endSupervisor'])->name('season-pilgrim-groups.supervisors.end');
+
+                // Transportation (season-scoped).
+                Route::get('/transport-season-vehicles', [TransportSeasonVehicleController::class, 'index'])->name('transport-season-vehicles.index');
+                Route::post('/transport-season-vehicles', [TransportSeasonVehicleController::class, 'store'])->name('transport-season-vehicles.store');
+                Route::get('/transport-season-vehicles/{season_vehicle}', [TransportSeasonVehicleController::class, 'show'])->name('transport-season-vehicles.show');
+                Route::patch('/transport-season-vehicles/{season_vehicle}', [TransportSeasonVehicleController::class, 'update'])->name('transport-season-vehicles.update');
+                Route::delete('/transport-season-vehicles/{season_vehicle}', [TransportSeasonVehicleController::class, 'destroy'])->name('transport-season-vehicles.destroy');
+                Route::put('/transport-season-vehicles/{season_vehicle}/default-crew', [TransportSeasonVehicleController::class, 'defaultCrew'])->name('transport-season-vehicles.default-crew');
+                Route::post('/transport-season-vehicles/{season_vehicle}/activate', [TransportSeasonVehicleController::class, 'activate'])->name('transport-season-vehicles.activate');
+                Route::post('/transport-season-vehicles/{season_vehicle}/deactivate', [TransportSeasonVehicleController::class, 'deactivate'])->name('transport-season-vehicles.deactivate');
+
+                Route::get('/transport-entitlements', [TransportEntitlementController::class, 'index'])->name('transport-entitlements.index');
+                Route::post('/transport-entitlements', [TransportEntitlementController::class, 'store'])->name('transport-entitlements.store');
+                Route::get('/transport-entitlements/{entitlement}', [TransportEntitlementController::class, 'show'])->name('transport-entitlements.show');
+                Route::patch('/transport-entitlements/{entitlement}', [TransportEntitlementController::class, 'update'])->name('transport-entitlements.update');
+                Route::delete('/transport-entitlements/{entitlement}', [TransportEntitlementController::class, 'destroy'])->name('transport-entitlements.destroy');
+
+                Route::get('/transport-movements', [TransportMovementController::class, 'index'])->name('transport-movements.index');
+                Route::post('/transport-movements', [TransportMovementController::class, 'store'])->name('transport-movements.store');
+                Route::get('/transport-movements/{movement}', [TransportMovementController::class, 'show'])->name('transport-movements.show');
+                Route::patch('/transport-movements/{movement}', [TransportMovementController::class, 'update'])->name('transport-movements.update');
+                Route::post('/transport-movements/{movement}/plan', [TransportMovementController::class, 'plan'])->name('transport-movements.plan');
+                Route::post('/transport-movements/{movement}/start', [TransportMovementController::class, 'start'])->name('transport-movements.start');
+                Route::post('/transport-movements/{movement}/complete', [TransportMovementController::class, 'complete'])->name('transport-movements.complete');
+                Route::post('/transport-movements/{movement}/cancel', [TransportMovementController::class, 'cancel'])->name('transport-movements.cancel');
+                Route::get('/transport-movements/{movement}/timeline', [TransportMovementController::class, 'timeline'])->name('transport-movements.timeline');
+                Route::post('/transport-movements/{movement}/runs', [TransportMovementController::class, 'storeRun'])->name('transport-movements.runs.store');
+
+                Route::get('/transport-runs/{run}', [TransportRunController::class, 'show'])->name('transport-runs.show');
+                Route::patch('/transport-runs/{run}', [TransportRunController::class, 'update'])->name('transport-runs.update');
+                Route::post('/transport-runs/{run}/start-boarding', [TransportRunController::class, 'startBoarding'])->name('transport-runs.start-boarding');
+                Route::post('/transport-runs/{run}/depart', [TransportRunController::class, 'depart'])->name('transport-runs.depart');
+                Route::post('/transport-runs/{run}/arrive', [TransportRunController::class, 'arrive'])->name('transport-runs.arrive');
+                Route::post('/transport-runs/{run}/complete', [TransportRunController::class, 'complete'])->name('transport-runs.complete');
+                Route::post('/transport-runs/{run}/cancel', [TransportRunController::class, 'cancel'])->name('transport-runs.cancel');
+                Route::put('/transport-runs/{run}/vehicle', [TransportRunController::class, 'assignVehicle'])->name('transport-runs.vehicle');
+                Route::put('/transport-runs/{run}/driver', [TransportRunController::class, 'assignDriver'])->name('transport-runs.driver');
+                Route::put('/transport-runs/{run}/supervisor', [TransportRunController::class, 'assignSupervisor'])->name('transport-runs.supervisor');
+                Route::get('/transport-runs/{run}/passengers', [TransportRunController::class, 'passengers'])->name('transport-runs.passengers.index');
+                Route::post('/transport-runs/{run}/passengers', [TransportRunController::class, 'addPassengers'])->name('transport-runs.passengers.store');
+                Route::post('/transport-runs/{run}/passengers/board', [TransportRunController::class, 'board'])->name('transport-runs.passengers.board');
+                Route::post('/transport-runs/{run}/passengers/no-show', [TransportRunController::class, 'noShow'])->name('transport-runs.passengers.no-show');
+                Route::post('/transport-runs/{run}/passengers/arrive', [TransportRunController::class, 'arrivePassengers'])->name('transport-runs.passengers.arrive');
+
+                Route::post('/transport-run-passengers/{passenger}/cancel', [TransportPassengerController::class, 'cancel'])->name('transport-run-passengers.cancel');
+                Route::post('/transport-run-passengers/{passenger}/entitlement-override', [TransportPassengerController::class, 'overrideEntitlement'])->name('transport-run-passengers.entitlement-override');
+                Route::post('/transport-timeline-events/{timeline_event}/correct', [TransportTimelineController::class, 'correct'])->name('transport-timeline-events.correct');
+                Route::get('/transport-review-items', [TransportReviewItemController::class, 'index'])->name('transport-review-items.index');
+                Route::post('/transport-review-items/{review_item}/resolve', [TransportReviewItemController::class, 'resolve'])->name('transport-review-items.resolve');
+            });
 
             Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
             Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');

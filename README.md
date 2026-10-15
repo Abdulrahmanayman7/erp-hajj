@@ -25,7 +25,7 @@ Core workflows:
 3. Asset → Available → Assigned as Custody → In Use → Returned → Available / Maintenance / Retired
 4. Inventory: Addition → Storage → Transfer/Issue/Return → Updated Balance
 
-Everything else (mobile apps, pilgrims, transportation, finance, AI, integrations...) is future scope — see [OUT_OF_SCOPE.md](docs/00-project/OUT_OF_SCOPE.md). Known deferrals and incomplete slices: [MVP_KNOWN_LIMITATIONS.md](docs/00-project/MVP_KNOWN_LIMITATIONS.md). System Settings product contract: [docs/09-modules/15-system-settings/](docs/09-modules/15-system-settings/) · [ADR-0016](docs/10-decisions/ADR-0016-TYPED-TENANT-SETTINGS-AND-RESOLUTION.md).
+Everything else (mobile apps, GPS tracking, finance, AI, integrations, and other items in [OUT_OF_SCOPE.md](docs/00-project/OUT_OF_SCOPE.md)) stays deferred. Phase 2 is specified but not built: Season and Pilgrim foundation, Transportation, and Accommodation — [CHANGE_REQUEST_PHASE2_FOUNDATION.md](docs/00-project/CHANGE_REQUEST_PHASE2_FOUNDATION.md). Known deferrals and incomplete slices: [MVP_KNOWN_LIMITATIONS.md](docs/00-project/MVP_KNOWN_LIMITATIONS.md). System Settings product contract: [docs/09-modules/15-system-settings/](docs/09-modules/15-system-settings/) · [ADR-0016](docs/10-decisions/ADR-0016-TYPED-TENANT-SETTINGS-AND-RESOLUTION.md).
 
 ## Technology Stack
 

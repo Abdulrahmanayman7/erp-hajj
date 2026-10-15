@@ -63,6 +63,78 @@ jobs:
         env:
           CACHE_STORE: array
 
+  # SQLite cannot exercise InnoDB locking, MySQL FK/index names or real
+  # concurrent transactions; this job covers them for Transportation.
+  backend-mysql:
+    name: Backend (MySQL 8 — Transportation)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: erp_hajj_testing
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=30
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      DB_CONNECTION: mysql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_DATABASE: erp_hajj_testing
+      DB_USERNAME: root
+      DB_PASSWORD: root
+      CACHE_STORE: array
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, xml, ctype, json, curl, pdo_mysql
+          coverage: none
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: composer-${{ runner.os }}-${{ hashFiles('backend/composer.lock') }}
+          restore-keys: composer-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Migrations (fresh, roll back Transportation, re-migrate)
+        run: |
+          php artisan migrate:fresh --force
+          php artisan migrate:rollback --step=15 --force
+          php artisan migrate --force
+
+      - name: Transportation and SeasonPilgrims tests (MySQL)
+        run: php vendor/bin/pest -c phpunit.mysql.xml tests/Feature/Transportation tests/Feature/SeasonPilgrims
+
+      - name: Transportation concurrency tests (MySQL)
+        run: php vendor/bin/pest -c phpunit.mysql.xml tests/Concurrency
+
   frontend:
     name: Frontend (Vue)
     runs-on: ubuntu-latest

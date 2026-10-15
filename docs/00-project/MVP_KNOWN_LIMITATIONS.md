@@ -1,7 +1,7 @@
 # MVP Known Limitations
 
 > **Status:** Release communication — P1 closure attempt `release/0.1.0-final-validation` (2026-08-13)
-> **Last updated:** 2026-08-13
+> **Last updated:** 2026-10-04
 
 These items are **approved deferrals** or incomplete release gates. They are not accidental omissions unless noted.
 
@@ -31,7 +31,9 @@ From [OUT_OF_SCOPE.md](../00-project/OUT_OF_SCOPE.md) and module ADRs:
 - Multi-UOM conversions, lot/serial, multi-step inventory transfers
 - Asset depreciation, maintenance work-orders, custody void/correction liability workflows
 - MFA/SSO (auth future)
-- Mobile apps, pilgrims, transportation/GPS, BI/AI, dynamic report builders
+- Mobile apps, GPS bus tracking, BI/AI, dynamic report builders
+- Pilgrim-facing mobile app (staff pilgrim records are Phase 2 documentation only — [16-season-and-pilgrims](../09-modules/16-season-and-pilgrims/))
+- Transportation and accommodation **implementation** (specified in Phase 2; not built)
 
 ## Operational limitations (honest)
 

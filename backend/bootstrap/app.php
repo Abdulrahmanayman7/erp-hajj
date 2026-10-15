@@ -17,6 +17,7 @@ use App\Modules\Meetings\Exceptions\MeetingDomainException;
 use App\Modules\Notifications\Exceptions\NotificationDomainException;
 use App\Modules\OrganizationStructure\Exceptions\OrganizationDomainException;
 use App\Modules\Platform\Exceptions\PlatformDomainException;
+use App\Modules\SeasonPilgrims\Context\ResolveSeasonContext;
 use App\Modules\Settings\Exceptions\SettingsDomainException;
 use App\Modules\Tasks\Exceptions\TaskDomainException;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -56,12 +57,14 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->prependToPriorityList(SubstituteBindings::class, EnsureTenantIsActive::class);
         $middleware->prependToPriorityList([EnsureTenantIsActive::class, SubstituteBindings::class], ResolveTenantContext::class);
         $middleware->prependToPriorityList(ResolveTenantContext::class, EnsureUserIsActive::class);
+        $middleware->appendToPriorityList(SubstituteBindings::class, ResolveSeasonContext::class);
 
         $middleware->alias([
             'tenant.active' => EnsureTenantIsActive::class,
             'user.active' => EnsureUserIsActive::class,
             'platform.user' => EnsurePlatformUser::class,
             'platform.context' => EnterPlatformContext::class,
+            'season.context' => ResolveSeasonContext::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

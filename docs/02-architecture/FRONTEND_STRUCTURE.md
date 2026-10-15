@@ -1,7 +1,7 @@
 # Frontend Structure
 
 > **Status:** Approved — Auth (005) through Audit Trail (018) implemented
-> **Last updated:** 2026-08-17
+> **Last updated:** 2026-10-04
 
 ## Purpose
 
@@ -36,6 +36,8 @@ src/
 │   ├── assets/                   # Sprint 015 — implemented (assets + custody UX)
 │   ├── notifications/            # Sprint 016 — implemented (ADR-0013)
 │   └── audit/                    # Sprint 018 — implemented (`/app/audit`; ADR-0015)
+│   # Phase 2 — documented only (ADR-0017); no routes or nav yet:
+│   # season-pilgrims/  transportation/  accommodation/
 ├── shared/
 │   ├── api/              # http client, envelope handling
 │   ├── components/       # generic shared components (see DESIGN_GUIDELINES.md)

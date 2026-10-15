@@ -1,7 +1,7 @@
 # Architecture
 
 > **Status:** Approved
-> **Last updated:** 2026-08-12
+> **Last updated:** 2026-10-04
 
 ## Purpose
 
@@ -28,6 +28,8 @@ Audit Trail (Sprint 018 — **implemented**): semantic immutable `audit_logs` + 
 MVP Integration & Release Hardening (Sprint 019): integration gates, deployment/UAT checklists, health/CORS/env hardening — see [DEPLOYMENT.md](../08-deployment/DEPLOYMENT.md) and [MVP_KNOWN_LIMITATIONS.md](../00-project/MVP_KNOWN_LIMITATIONS.md).
 
 System Settings (Sprint 020 — **implemented**): typed tenant settings over existing Tenant columns; ADR-0016 — see [15-system-settings/](../09-modules/15-system-settings/).
+
+Phase 2 (2026-10-04 — **specified, not implemented**): Season under Tenant, Pilgrim vs SeasonPilgrim, season-specific Family Group, Transportation, and Accommodation as separate contexts. Accommodation owns time-based occupancy. No current-room columns on Pilgrim. See [ADR-0017](../10-decisions/ADR-0017-SEASON-PILGRIM-AND-PHASE2-BOUNDED-CONTEXTS.md) and modules 16–18. Does not change MVP layering, tenancy, or permission enforcement.
 
 ## Style
 

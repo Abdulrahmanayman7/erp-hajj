@@ -1,7 +1,7 @@
 # Backend Structure
 
 > **Status:** Approved — Tenant Foundation (004) through System Settings (020) implemented
-> **Last updated:** 2026-08-13
+> **Last updated:** 2026-10-04
 
 ## Purpose
 
@@ -39,6 +39,11 @@ app/
 │   ├── Dashboard/                  # Sprint 017 — implemented (ADR-0014)
 │   ├── Audit/                      # Sprint 018 — implemented viewer (list/show; ADR-0015)
 │   └── Settings/                   # Sprint 020 — implemented (tenant-settings API; ADR-0016)
+│
+│   # Phase 2 — documented only (ADR-0017). Do not add these folders until an implementation sprint.
+│   # SeasonPilgrims/               # 16 — Season, Pilgrim, SeasonPilgrim, Family Group
+│   # Transportation/               # 17 — fleet operations; no accommodation writes
+│   # Accommodation/                # 18 — occupancy source of truth
 ```
 
 ## Module Contents

@@ -35,6 +35,14 @@ final class AuditEventMapper
      * @var list<array{type: string, id: string, number: string|null, label: string|null}>
      */
     private const ENTITY_HINTS = [
+        ['type' => 'pilgrim_group_supervisor', 'id' => 'pilgrim_group_supervisor_id', 'number' => null, 'label' => 'employee_name'],
+        ['type' => 'pilgrim_identity_document', 'id' => 'pilgrim_identity_document_id', 'number' => null, 'label' => 'pilgrim_name'],
+        ['type' => 'season_pilgrim', 'id' => 'season_pilgrim_id', 'number' => 'reference_number', 'label' => 'pilgrim_name'],
+        ['type' => 'season_program', 'id' => 'season_program_id', 'number' => 'season_program_code', 'label' => 'season_program_name'],
+        ['type' => 'season_family_group', 'id' => 'season_family_group_id', 'number' => null, 'label' => 'season_family_group_name'],
+        ['type' => 'season_pilgrim_group', 'id' => 'season_pilgrim_group_id', 'number' => 'season_pilgrim_group_code', 'label' => 'season_pilgrim_group_name'],
+        ['type' => 'pilgrim', 'id' => 'pilgrim_id', 'number' => null, 'label' => 'pilgrim_name'],
+        ['type' => 'season', 'id' => 'season_id', 'number' => 'season_code', 'label' => 'season_name'],
         ['type' => 'contract', 'id' => 'contract_id', 'number' => 'contract_number', 'label' => 'contract_title'],
         ['type' => 'meeting', 'id' => 'meeting_id', 'number' => 'meeting_number', 'label' => 'meeting_title'],
         ['type' => 'decision', 'id' => 'decision_id', 'number' => 'decision_number', 'label' => 'decision_title'],
