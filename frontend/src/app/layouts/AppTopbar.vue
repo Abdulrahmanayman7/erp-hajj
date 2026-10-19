@@ -90,6 +90,19 @@ const breadcrumbs = computed(() => {
     crumbs.push({ label: t('nav.assets'), to: null })
   } else if (path.startsWith('/app/my-custodies')) {
     crumbs.push({ label: t('nav.myCustodies'), to: null })
+  } else if (path.startsWith('/app/accommodation')) {
+    crumbs.push({ label: t('nav.accommodation'), to: '/app/accommodation' })
+    if (path.includes('/allocation')) {
+      crumbs.push({ label: t('accommodation.nav.allocation'), to: null })
+    } else if (path.includes('/drafts')) {
+      crumbs.push({ label: t('accommodation.nav.drafts'), to: null })
+    } else if (path.includes('/scopes')) {
+      crumbs.push({ label: t('accommodation.nav.scopes'), to: null })
+    } else if (path.includes('/facilities/')) {
+      crumbs.push({ label: t('accommodation.facilityDetails.title'), to: null })
+    } else {
+      crumbs[crumbs.length - 1] = { label: t('nav.accommodation'), to: null }
+    }
   } else if (path.startsWith('/app/audit')) {
     crumbs.push({ label: t('nav.audit'), to: null })
   } else if (path.startsWith('/app/settings')) {

@@ -75,15 +75,22 @@ async function parseBody(
     | undefined
 }
 
+export interface ApiRequestOptions {
+  /** Extra request headers (e.g. X-Season-Id). Never use for tenant identity. */
+  headers?: Record<string, string>
+}
+
 async function request<TData>(
   method: string,
   path: string,
   body?: unknown,
   allowCsrfRetry = true,
+  options?: ApiRequestOptions,
 ): Promise<ApiSuccess<TData>> {
   const headers: Record<string, string> = {
     Accept: 'application/json',
     'X-Requested-With': 'XMLHttpRequest',
+    ...(options?.headers ?? {}),
   }
 
   if (body !== undefined) {
@@ -110,7 +117,7 @@ async function request<TData>(
   if (response.status === 419 && allowCsrfRetry) {
     resetCsrfBootstrap()
     await ensureCsrfCookie()
-    return request<TData>(method, path, body, false)
+    return request<TData>(method, path, body, false, options)
   }
 
   const parsed = await parseBody(response)
@@ -125,41 +132,49 @@ async function request<TData>(
   return parsed as ApiSuccess<TData>
 }
 
-export async function apiGet<TData>(path: string): Promise<ApiSuccess<TData>> {
-  return request<TData>('GET', path)
+export async function apiGet<TData>(
+  path: string,
+  options?: ApiRequestOptions,
+): Promise<ApiSuccess<TData>> {
+  return request<TData>('GET', path, undefined, true, options)
 }
 
 export async function apiPost<TData>(
   path: string,
   body?: unknown,
-  options?: { csrf?: boolean },
+  options?: ApiRequestOptions & { csrf?: boolean },
 ): Promise<ApiSuccess<TData>> {
   if (options?.csrf !== false) {
     await ensureCsrfCookie()
   }
 
-  return request<TData>('POST', path, body)
+  return request<TData>('POST', path, body, true, options)
 }
 
 export async function apiPut<TData>(
   path: string,
   body?: unknown,
+  options?: ApiRequestOptions,
 ): Promise<ApiSuccess<TData>> {
   await ensureCsrfCookie()
-  return request<TData>('PUT', path, body)
+  return request<TData>('PUT', path, body, true, options)
 }
 
 export async function apiPatch<TData>(
   path: string,
   body?: unknown,
+  options?: ApiRequestOptions,
 ): Promise<ApiSuccess<TData>> {
   await ensureCsrfCookie()
-  return request<TData>('PATCH', path, body)
+  return request<TData>('PATCH', path, body, true, options)
 }
 
-export async function apiDelete<TData = null>(path: string): Promise<ApiSuccess<TData>> {
+export async function apiDelete<TData = null>(
+  path: string,
+  options?: ApiRequestOptions,
+): Promise<ApiSuccess<TData>> {
   await ensureCsrfCookie()
-  return request<TData>('DELETE', path)
+  return request<TData>('DELETE', path, undefined, true, options)
 }
 
 /**

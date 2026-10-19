@@ -16,6 +16,7 @@ import {
   Shield,
   Users,
   Warehouse,
+  Tent,
   type LucideIcon,
 } from 'lucide-vue-next'
 
@@ -245,6 +246,27 @@ export function useAppNavigation(): {
         icon: IdCard,
         permission: 'assets.view',
         match: 'exact',
+      })
+    }
+    if (
+      can('accommodation.view') ||
+      can('accommodation.manage_facilities') ||
+      can('accommodation.manage_season_allocation') ||
+      can('accommodation.draft') ||
+      can('accommodation.confirm') ||
+      can('accommodation.manage_scopes') ||
+      can('accommodation.arrive') ||
+      can('accommodation.check_in') ||
+      can('accommodation.check_out') ||
+      can('accommodation.relocate') ||
+      can('accommodation.cancel_assignment')
+    ) {
+      organizationItems.push({
+        key: 'accommodation',
+        labelKey: 'nav.accommodation',
+        to: '/app/accommodation',
+        icon: Tent,
+        match: 'prefix',
       })
     }
     if (organizationItems.length > 0) {

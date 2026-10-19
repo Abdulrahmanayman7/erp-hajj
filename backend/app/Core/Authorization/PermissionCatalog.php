@@ -31,6 +31,7 @@ final class PermissionCatalog
         'season_family_groups' => 'مجموعات العائلات',
         'season_pilgrim_groups' => 'مجموعات الحجاج',
         'transportation' => 'النقل والأسطول',
+        'accommodation' => 'الإسكان والمخيمات',
         'audit_logs' => 'سجل التدقيق',
         'dashboard' => 'لوحة التحكم',
         'tenant_settings' => 'إعدادات المنشأة',
@@ -188,6 +189,18 @@ final class PermissionCatalog
             ['name' => 'transportation.correct_history', 'display_name' => 'تصحيح السجل التشغيلي', 'module' => 'transportation', 'description' => 'تسجيل أحداث بتاريخ سابق وتصحيح أوقات الأحداث التشغيلية مع ذكر السبب'],
             ['name' => 'transportation.resolve_reviews', 'display_name' => 'معالجة بنود المراجعة', 'module' => 'transportation', 'description' => 'إغلاق بنود المراجعة الناتجة عن إلغاء مشاركات الحجاج'],
 
+            ['name' => 'accommodation.view', 'display_name' => 'عرض الإسكان', 'module' => 'accommodation', 'description' => 'عرض المنشآت والتخصيص الموسمي ومسودات التسكين ضمن النطاق الممنوح'],
+            ['name' => 'accommodation.manage_facilities', 'display_name' => 'إدارة منشآت الإسكان', 'module' => 'accommodation', 'description' => 'إنشاء وتعديل المنشآت والمباني والوحدات والمواضع الثابتة'],
+            ['name' => 'accommodation.manage_season_allocation', 'display_name' => 'إدارة تخصيص الموسم', 'module' => 'accommodation', 'description' => 'اختيار المنشآت والوحدات والمواضع للموسم وتخزين نمط التخصيص والسعة والجمهور'],
+            ['name' => 'accommodation.draft', 'display_name' => 'إدارة مسودات التسكين', 'module' => 'accommodation', 'description' => 'إنشاء وتعديل وحذف مسودات التسكين دون حجز السعة'],
+            ['name' => 'accommodation.confirm', 'display_name' => 'تأكيد التسكين', 'module' => 'accommodation', 'description' => 'تأكيد مسودات التسكين مع إنفاذ السعة ونطاق المنشأة'],
+            ['name' => 'accommodation.arrive', 'display_name' => 'تسجيل وصول الإسكان', 'module' => 'accommodation', 'description' => 'تسجيل وصول الحاج للمنشأة دون تسجيل دخول'],
+            ['name' => 'accommodation.check_in', 'display_name' => 'تسجيل دخول الإسكان', 'module' => 'accommodation', 'description' => 'تسجيل دخول الحاج إلى الوحدة أو الموضع'],
+            ['name' => 'accommodation.check_out', 'display_name' => 'تسجيل خروج الإسكان', 'module' => 'accommodation', 'description' => 'تسجيل خروج الحاج بعد تسجيل الدخول'],
+            ['name' => 'accommodation.relocate', 'display_name' => 'نقل التسكين', 'module' => 'accommodation', 'description' => 'نقل التسكين ذرياً مع حجز الوجهة وتحرير المصدر'],
+            ['name' => 'accommodation.cancel_assignment', 'display_name' => 'إلغاء تسكين مؤكد', 'module' => 'accommodation', 'description' => 'إلغاء إقامة مؤكدة قبل تسجيل الدخول وتحرير السعة'],
+            ['name' => 'accommodation.manage_scopes', 'display_name' => 'إدارة نطاقات الإسكان', 'module' => 'accommodation', 'description' => 'منح وإلغاء نطاق المنشأة ونطاق مشرف الموسم'],
+
             ['name' => 'audit_logs.view', 'display_name' => 'عرض سجل التدقيق', 'module' => 'audit_logs', 'description' => 'عرض سجلات تدقيق المنشأة'],
 
             ['name' => 'dashboard.view', 'display_name' => 'عرض لوحة التحكم', 'module' => 'dashboard', 'description' => 'الوصول إلى الصفحة الرئيسية بعد تسجيل الدخول'],
@@ -264,7 +277,10 @@ final class PermissionCatalog
      */
     public static function roleTemplates(): array
     {
-        $all = self::allNames();
+        $all = array_values(array_filter(
+            self::allNames(),
+            static fn (string $name): bool => ! str_starts_with($name, 'accommodation.'),
+        ));
 
         return [
             'tenant_owner' => [

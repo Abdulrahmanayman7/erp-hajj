@@ -44,7 +44,10 @@ it('has no GPS, QR, offline, seat, accommodation or current-vehicle columns', fu
     }
 
     expect(Schema::hasColumn('season_pilgrims', 'current_vehicle_id'))->toBeFalse()
-        ->and(collect(Schema::getTables(Schema::getCurrentSchemaName()))->pluck('name')->filter(fn ($t) => preg_match('/(accommodation|hotel|room|bed|tent|camp|gps|qr_)/i', $t))->all())->toBe([]);
+        ->and(collect(Schema::getTables(Schema::getCurrentSchemaName()))->pluck('name')->filter(
+            fn ($t) => ! str_starts_with((string) $t, 'accommodation_')
+                && preg_match('/(accommodation|hotel|room|bed|tent|camp|gps|qr_)/i', (string) $t)
+        )->all())->toBe([]);
 });
 
 it('exposes no GPS, QR, offline or seat routes', function (): void {

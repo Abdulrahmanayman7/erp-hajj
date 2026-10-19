@@ -1,0 +1,275 @@
+import fs from 'node:fs'
+
+const path = new URL('../src/locales/ar.ts', import.meta.url)
+let source = fs.readFileSync(path, 'utf8')
+
+if (!source.includes("accommodation: 'الإسكان والمخيمات'")) {
+  source = source.replace(
+    "myCustodies: 'عُهَدي',",
+    "myCustodies: 'عُهَدي',\n    accommodation: 'الإسكان والمخيمات',",
+  )
+}
+
+const block = `  accommodation: {
+    loading: 'جارٍ التحميل…',
+    retry: 'إعادة المحاولة',
+    save: 'حفظ',
+    cancel: 'إلغاء',
+    edit: 'تعديل',
+    delete: 'حذف',
+    capacityNotReserved: 'لا يحجز السعة',
+    nav: {
+      overview: 'المنشآت',
+      allocation: 'تخصيص الموسم',
+      drafts: 'المسودات',
+      scopes: 'النطاقات',
+    },
+    overview: {
+      title: 'الإسكان والمخيمات',
+      subtitle: 'إدارة المنشآت والمخيمات ضمن صلاحياتك ونطاق الموسم.',
+      scopeHint: 'عرض القائمة يتطلب صلاحية العرض أو المسودة مع نطاق منشأة أو مشرف موسم. إنشاء المنشآت لا يتطلب نطاقاً مسبقاً.',
+      clientFilterNote: 'البحث والفلاتر يعملان على الصفحة الحالية فقط؛ واجهة البرمجة لا تدعم تصفية الخادم بعد.',
+      manageOnlyEmpty: 'يمكنك إنشاء منشآت بصلاحية الإدارة، لكن عرض القائمة يتطلب صلاحية العرض أو المسودة مع نطاق.',
+      empty: 'لا توجد منشآت ظاهرة لنطاقك الحالي.',
+    },
+    season: {
+      title: 'سياق الموسم',
+      select: 'الموسم التشغيلي',
+      defaultActive: 'الموسم النشط الافتراضي',
+      usingDefault: 'افتراضي نشط',
+      loading: 'جارٍ تحديد الموسم…',
+      unknown: 'غير معروف',
+      noListPermission: 'لا تتوفر صلاحية عرض المواسم؛ يُستخدم الموسم النشط تلقائياً إن وُجد.',
+      closedNotice: 'الموسم مغلق — عمليات الكتابة معطّلة في الواجهة وستُرفض من الخادم.',
+      contextError: 'تعذر تحميل سياق الموسم. تحقق من صلاحية المواسم أو وجود موسم نشط.',
+      refreshing: 'جارٍ تحديث سياق الموسم…',
+      status: {
+        draft: 'مسودة',
+        active: 'نشط',
+        closed: 'مغلق',
+      },
+    },
+    filters: {
+      search: 'بحث',
+      searchPlaceholder: 'رمز أو اسم…',
+      kind: 'النوع',
+      status: 'الحالة',
+      allKinds: 'كل الأنواع',
+      allStatuses: 'كل الحالات',
+    },
+    kind: {
+      hotel: 'فندق',
+      camp: 'مخيم',
+    },
+    structureKind: {
+      building: 'مبنى',
+      floor: 'دور',
+    },
+    unitKind: {
+      room: 'غرفة',
+      tent: 'خيمة',
+    },
+    audience: {
+      male: 'رجال',
+      female: 'نساء',
+      family: 'عائلات',
+    },
+    allocationMode: {
+      capacity: 'سعة',
+      position: 'مواضع',
+    },
+    status: {
+      active: 'نشط',
+      inactive: 'غير نشط',
+    },
+    fields: {
+      code: 'الرمز',
+      name: 'الاسم',
+      kind: 'النوع',
+      status: 'الحالة',
+      actions: 'إجراءات',
+      active: 'نشط',
+      user: 'المستخدم',
+      userId: 'معرّف المستخدم',
+      facility: 'المنشأة',
+      facilityId: 'معرّف المنشأة',
+      unitId: 'معرّف الوحدة',
+      positionId: 'معرّف الموضع',
+      seasonPilgrim: 'مشاركة الحاج',
+      seasonPilgrimId: 'معرّف المشاركة',
+      seasonUnit: 'وحدة الموسم',
+      seasonUnitId: 'معرّف وحدة الموسم',
+      seasonPosition: 'موضع الموسم',
+      interval: 'الفترة',
+      capacity: 'السعة',
+      startsAt: 'البداية (UTC)',
+      endsAt: 'النهاية (UTC)',
+      revokedAt: 'تاريخ الإلغاء',
+      audience: 'الجمهور',
+      allocationMode: 'نمط التخصيص',
+    },
+    pagination: {
+      page: 'صفحة {page} من {last}',
+    },
+    facilities: {
+      create: 'منشأة جديدة',
+      createTitle: 'إنشاء منشأة',
+      createSubtitle: 'منشأة ثابتة عبر المواسم. لن تظهر في قوائم العرض حتى يُمنح نطاق.',
+      open: 'فتح',
+      activate: 'تفعيل',
+      deactivate: 'تعطيل',
+      created: 'تم إنشاء المنشأة',
+      updated: 'تم تحديث المنشأة',
+      deleted: 'تم حذف المنشأة',
+    },
+    facilityDetails: {
+      title: 'تفاصيل المنشأة',
+      subtitle: 'الهياكل والوحدات والمواضع الثابتة.',
+      back: 'عودة للمنشآت',
+      editFacility: 'تعديل المنشأة',
+      deleteFacility: 'حذف المنشأة',
+      structures: 'المباني والأدوار',
+      structuresEmpty: 'لا توجد هياكل بعد. الهياكل اختيارية.',
+      parentStructure: 'الأب',
+      noParent: 'بدون أب',
+      noStructure: 'بدون هيكل',
+      structure: 'الهيكل',
+      unitsWithoutStructure: 'وحدات بدون هيكل',
+      confirmDelete: {
+        title: 'حذف المنشأة؟',
+        body: 'لا يمكن الحذف إن وُجدت سجلات مرتبطة. الحذف نهائي.',
+      },
+    },
+    structures: {
+      create: 'هيكل جديد',
+      createTitle: 'إنشاء هيكل',
+      editTitle: 'تعديل هيكل',
+      created: 'تم إنشاء الهيكل',
+      updated: 'تم تحديث الهيكل',
+      deleted: 'تم حذف الهيكل',
+      confirmDelete: {
+        title: 'حذف الهيكل؟',
+        body: 'سيُرفض الحذف إن وُجدت وحدات أو هياكل فرعية مرتبطة.',
+      },
+    },
+    units: {
+      create: 'وحدة جديدة',
+      addUnderStructure: 'إضافة وحدة',
+      createTitle: 'إنشاء وحدة',
+      editTitle: 'تعديل وحدة',
+      created: 'تم إنشاء الوحدة',
+      updated: 'تم تحديث الوحدة',
+      deleted: 'تم حذف الوحدة',
+      confirmDelete: {
+        title: 'حذف الوحدة؟',
+        body: 'سيُرفض الحذف إن وُجدت مواضع أو تخصيصات موسمية مرتبطة.',
+      },
+    },
+    positions: {
+      title: 'المواضع',
+      create: 'موضع جديد',
+      createTitle: 'إنشاء موضع',
+      editTitle: 'تعديل موضع',
+      empty: 'لا مواضع بعد.',
+      expandHint: 'وسّع الوحدة لإدارة المواضع.',
+      created: 'تم إنشاء الموضع',
+      updated: 'تم تحديث الموضع',
+      deleted: 'تم حذف الموضع',
+      confirmDelete: {
+        title: 'حذف الموضع؟',
+        body: 'سيُرفض الحذف إن وُجدت تخصيصات موسمية مرتبطة.',
+      },
+    },
+    allocation: {
+      title: 'تخصيص الموسم',
+      subtitle: 'اختيار المنشآت والوحدات والمواضع للموسم الحالي دون حجز السعة.',
+      capacityNote: 'السعة المخزّنة إعداد فقط — لا تعني توفّراً أو حجزاً.',
+      audienceUnset: 'بدون جمهور',
+      seasonFacilities: 'منشآت الموسم',
+      seasonUnits: 'وحدات الموسم',
+      seasonPositions: 'مواضع الموسم',
+      addFacility: 'تخصيص منشأة',
+      addUnit: 'تخصيص وحدة',
+      addPosition: 'تخصيص موضع',
+      emptyFacilities: 'لا منشآت مخصّصة لهذا الموسم.',
+      emptyUnits: 'لا وحدات مخصّصة لهذا الموسم.',
+      emptyPositions: 'لا مواضع مخصّصة لهذا الموسم.',
+      created: 'تم التخصيص',
+      updated: 'تم التحديث',
+      deleted: 'تم الحذف',
+      confirmDelete: {
+        title: 'حذف التخصيص؟',
+        body: 'سيُرفض الحذف إن وُجدت سجلات مرتبطة.',
+      },
+    },
+    drafts: {
+      title: 'مسودات التسكين',
+      subtitle: 'مسودات غير حاجزة للسعة. لا يوجد تأكيد في هذه المرحلة.',
+      badge: 'مسودة',
+      create: 'مسودة جديدة',
+      createTitle: 'إنشاء مسودة',
+      editTitle: 'تعديل مسودة',
+      empty: 'لا مسودات ظاهرة لنطاقك.',
+      noCapacityBanner: 'المسودات لا تحجز السعة وقد تتداخل. لا يوجد زر تأكيد في Sprint 1.',
+      noSeasonPosition: 'بدون موضع',
+      created: 'تم إنشاء المسودة',
+      updated: 'تم تحديث المسودة',
+      deleted: 'تم حذف المسودة',
+      confirmDelete: {
+        title: 'حذف المسودة؟',
+        body: 'حذف المسودة نهائي ولا يؤثر على سعة الوحدة المخزّنة.',
+      },
+    },
+    scopes: {
+      title: 'نطاقات الإسكان',
+      subtitle: 'منح وإلغاء نطاق المنشأة ومشرف الموسم. السجل الملغى يُحفظ.',
+      facilityScopes: 'نطاقات المنشأة',
+      supervisorScopes: 'نطاقات المشرف',
+      grantFacility: 'منح نطاق منشأة',
+      grantSupervisor: 'منح نطاق مشرف',
+      grant: 'منح',
+      revoke: 'إلغاء',
+      revokedHistory: 'سجل الملغى',
+      noActiveFacility: 'لا منح سارية للمنشآت.',
+      noActiveSupervisor: 'لا منح سارية للمشرفين.',
+      facilityGranted: 'تم منح نطاق المنشأة',
+      supervisorGranted: 'تم منح نطاق المشرف',
+      revoked: 'تم إلغاء المنح',
+      confirmRevoke: {
+        title: 'إلغاء المنح؟',
+        body: 'سيُحتفظ بالسجل مع تاريخ الإلغاء. يمكن منح نطاق جديد لاحقاً.',
+      },
+    },
+    errors: {
+      generic: 'تعذر إكمال العملية.',
+      load: 'تعذر تحميل البيانات.',
+      validation: 'تحقق من الحقول المطلوبة.',
+      forbidden: 'ليست لديك صلاحية لهذا الإجراء أو النطاق.',
+      notFound: 'العنصر غير موجود أو خارج المنشأة/الموسم.',
+      seasonClosed: 'الموسم مغلق ولا يقبل التعديل.',
+      seasonMissing: 'لا يوجد موسم سياق. اختر موسماً أو فعّل موسماً نشطاً.',
+      codeTaken: 'الرمز مستخدم مسبقاً.',
+      structureCycle: 'لا يمكن إنشاء دورة في هيكل المنشأة.',
+      invalidReference: 'مرجع غير صالح للمنشأة أو الموسم.',
+      referenced: 'لا يمكن الحذف لوجود سجلات مرتبطة.',
+      intervalInvalid: 'نهاية المدة يجب أن تكون بعد بدايتها.',
+      granteeTenant: 'المستخدم الممنوح يجب أن ينتمي لنفس المنشأة.',
+      scopeExists: 'يوجد منح ساري لنفس النطاق.',
+      scopeRevoked: 'هذا المنح ملغى مسبقاً.',
+    },
+  },
+`
+
+if (!source.includes('  accommodation: {')) {
+  if (!source.includes('} as const')) {
+    throw new Error('Could not find closing } as const in ar.ts')
+  }
+  source = source.replace('} as const', `${block}} as const`)
+}
+
+fs.writeFileSync(path, source)
+console.log(
+  source.includes("accommodation: 'الإسكان والمخيمات'") && source.includes('  accommodation: {')
+    ? 'OK_LOCALE'
+    : 'FAIL_LOCALE',
+)

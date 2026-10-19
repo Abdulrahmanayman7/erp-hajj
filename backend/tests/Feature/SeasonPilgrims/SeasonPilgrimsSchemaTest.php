@@ -89,13 +89,11 @@ it('has no current room, bed or accommodation fields', function (): void {
     }
 });
 
-it('creates no accommodation tables', function (): void {
+it('creates no accommodation columns on foundation tables', function (): void {
     $tables = collect(Schema::getTables(Schema::getCurrentSchemaName()))->pluck('name');
 
-    $forbidden = $tables->filter(fn (string $name): bool => (bool) preg_match(
-        '/(accommodation|camp|room|bed|hotel|tent)/i',
-        $name,
-    ));
+    $forbidden = $tables->filter(fn (string $name): bool => ! str_starts_with($name, 'accommodation_')
+        && (bool) preg_match('/(accommodation|camp|room|bed|hotel|tent)/i', $name));
 
     expect($forbidden->values()->all())->toBe([]);
 });

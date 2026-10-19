@@ -3,6 +3,10 @@
 use App\Core\Auth\Controllers\AuthController;
 use App\Core\Auth\Middleware\EnsureUserIsActive;
 use App\Core\Health\HealthController;
+use App\Modules\Accommodation\Controllers\AccommodationAllocationController;
+use App\Modules\Accommodation\Controllers\AccommodationAssignmentController;
+use App\Modules\Accommodation\Controllers\AccommodationMasterDataController;
+use App\Modules\Accommodation\Controllers\AccommodationScopeController;
 use App\Modules\Assets\Controllers\AssetCategoryController;
 use App\Modules\Assets\Controllers\AssetController;
 use App\Modules\Assets\Controllers\AssetCustodyController;
@@ -415,6 +419,60 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
                 Route::post('/transport-timeline-events/{timeline_event}/correct', [TransportTimelineController::class, 'correct'])->name('transport-timeline-events.correct');
                 Route::get('/transport-review-items', [TransportReviewItemController::class, 'index'])->name('transport-review-items.index');
                 Route::post('/transport-review-items/{review_item}/resolve', [TransportReviewItemController::class, 'resolve'])->name('transport-review-items.resolve');
+
+                Route::get('/accommodation/facilities', [AccommodationMasterDataController::class, 'facilities'])->name('accommodation.facilities.index');
+                Route::post('/accommodation/facilities', [AccommodationMasterDataController::class, 'storeFacility'])->name('accommodation.facilities.store');
+                Route::get('/accommodation/facilities/{facility}', [AccommodationMasterDataController::class, 'showFacility'])->name('accommodation.facilities.show');
+                Route::patch('/accommodation/facilities/{facility}', [AccommodationMasterDataController::class, 'updateFacility'])->name('accommodation.facilities.update');
+                Route::delete('/accommodation/facilities/{facility}', [AccommodationMasterDataController::class, 'destroyFacility'])->name('accommodation.facilities.destroy');
+                Route::get('/accommodation/facilities/{facility}/structures', [AccommodationMasterDataController::class, 'structures'])->name('accommodation.structures.index');
+                Route::post('/accommodation/facilities/{facility}/structures', [AccommodationMasterDataController::class, 'storeStructure'])->name('accommodation.structures.store');
+                Route::patch('/accommodation/structures/{structure}', [AccommodationMasterDataController::class, 'updateStructure'])->name('accommodation.structures.update');
+                Route::delete('/accommodation/structures/{structure}', [AccommodationMasterDataController::class, 'destroyStructure'])->name('accommodation.structures.destroy');
+                Route::get('/accommodation/facilities/{facility}/units', [AccommodationMasterDataController::class, 'units'])->name('accommodation.units.index');
+                Route::post('/accommodation/facilities/{facility}/units', [AccommodationMasterDataController::class, 'storeUnit'])->name('accommodation.units.store');
+                Route::patch('/accommodation/units/{unit}', [AccommodationMasterDataController::class, 'updateUnit'])->name('accommodation.units.update');
+                Route::delete('/accommodation/units/{unit}', [AccommodationMasterDataController::class, 'destroyUnit'])->name('accommodation.units.destroy');
+                Route::get('/accommodation/units/{unit}/positions', [AccommodationMasterDataController::class, 'positions'])->name('accommodation.positions.index');
+                Route::post('/accommodation/units/{unit}/positions', [AccommodationMasterDataController::class, 'storePosition'])->name('accommodation.positions.store');
+                Route::patch('/accommodation/positions/{position}', [AccommodationMasterDataController::class, 'updatePosition'])->name('accommodation.positions.update');
+                Route::delete('/accommodation/positions/{position}', [AccommodationMasterDataController::class, 'destroyPosition'])->name('accommodation.positions.destroy');
+
+                Route::get('/accommodation/season-facilities', [AccommodationAllocationController::class, 'facilities'])->name('accommodation.season-facilities.index');
+                Route::post('/accommodation/season-facilities', [AccommodationAllocationController::class, 'storeFacility'])->name('accommodation.season-facilities.store');
+                Route::get('/accommodation/season-facilities/{seasonFacility}', [AccommodationAllocationController::class, 'showFacility'])->name('accommodation.season-facilities.show');
+                Route::patch('/accommodation/season-facilities/{seasonFacility}', [AccommodationAllocationController::class, 'updateFacility'])->name('accommodation.season-facilities.update');
+                Route::delete('/accommodation/season-facilities/{seasonFacility}', [AccommodationAllocationController::class, 'destroyFacility'])->name('accommodation.season-facilities.destroy');
+                Route::get('/accommodation/season-units', [AccommodationAllocationController::class, 'units'])->name('accommodation.season-units.index');
+                Route::post('/accommodation/season-units', [AccommodationAllocationController::class, 'storeUnit'])->name('accommodation.season-units.store');
+                Route::get('/accommodation/season-units/{seasonUnit}', [AccommodationAllocationController::class, 'showUnit'])->name('accommodation.season-units.show');
+                Route::patch('/accommodation/season-units/{seasonUnit}', [AccommodationAllocationController::class, 'updateUnit'])->name('accommodation.season-units.update');
+                Route::delete('/accommodation/season-units/{seasonUnit}', [AccommodationAllocationController::class, 'destroyUnit'])->name('accommodation.season-units.destroy');
+                Route::get('/accommodation/season-positions', [AccommodationAllocationController::class, 'positions'])->name('accommodation.season-positions.index');
+                Route::post('/accommodation/season-positions', [AccommodationAllocationController::class, 'storePosition'])->name('accommodation.season-positions.store');
+                Route::get('/accommodation/season-positions/{seasonPosition}', [AccommodationAllocationController::class, 'showPosition'])->name('accommodation.season-positions.show');
+                Route::patch('/accommodation/season-positions/{seasonPosition}', [AccommodationAllocationController::class, 'updatePosition'])->name('accommodation.season-positions.update');
+                Route::delete('/accommodation/season-positions/{seasonPosition}', [AccommodationAllocationController::class, 'destroyPosition'])->name('accommodation.season-positions.destroy');
+
+                Route::get('/accommodation/assignments', [AccommodationAssignmentController::class, 'index'])->name('accommodation.assignments.index');
+                Route::post('/accommodation/assignments', [AccommodationAssignmentController::class, 'store'])->name('accommodation.assignments.store');
+                Route::post('/accommodation/assignments/confirm-family', [AccommodationAssignmentController::class, 'confirmFamily'])->name('accommodation.assignments.confirm-family');
+                Route::post('/accommodation/assignments/{assignment}/confirm', [AccommodationAssignmentController::class, 'confirm'])->name('accommodation.assignments.confirm');
+                Route::post('/accommodation/assignments/{assignment}/arrive', [AccommodationAssignmentController::class, 'arrive'])->name('accommodation.assignments.arrive');
+                Route::post('/accommodation/assignments/{assignment}/check-in', [AccommodationAssignmentController::class, 'checkIn'])->name('accommodation.assignments.check-in');
+                Route::post('/accommodation/assignments/{assignment}/check-out', [AccommodationAssignmentController::class, 'checkOut'])->name('accommodation.assignments.check-out');
+                Route::post('/accommodation/assignments/{assignment}/relocate', [AccommodationAssignmentController::class, 'relocate'])->name('accommodation.assignments.relocate');
+                Route::post('/accommodation/assignments/{assignment}/cancel', [AccommodationAssignmentController::class, 'cancel'])->name('accommodation.assignments.cancel');
+                Route::get('/accommodation/assignments/{assignment}', [AccommodationAssignmentController::class, 'show'])->name('accommodation.assignments.show');
+                Route::patch('/accommodation/assignments/{assignment}', [AccommodationAssignmentController::class, 'update'])->name('accommodation.assignments.update');
+                Route::delete('/accommodation/assignments/{assignment}', [AccommodationAssignmentController::class, 'destroy'])->name('accommodation.assignments.destroy');
+
+                Route::get('/accommodation/facility-scopes', [AccommodationScopeController::class, 'facilityScopes'])->name('accommodation.facility-scopes.index');
+                Route::post('/accommodation/facility-scopes', [AccommodationScopeController::class, 'storeFacilityScope'])->name('accommodation.facility-scopes.store');
+                Route::post('/accommodation/facility-scopes/{facilityScope}/revoke', [AccommodationScopeController::class, 'revokeFacilityScope'])->name('accommodation.facility-scopes.revoke');
+                Route::get('/accommodation/supervisor-scopes', [AccommodationScopeController::class, 'supervisorScopes'])->name('accommodation.supervisor-scopes.index');
+                Route::post('/accommodation/supervisor-scopes', [AccommodationScopeController::class, 'storeSupervisorScope'])->name('accommodation.supervisor-scopes.store');
+                Route::post('/accommodation/supervisor-scopes/{supervisorScope}/revoke', [AccommodationScopeController::class, 'revokeSupervisorScope'])->name('accommodation.supervisor-scopes.revoke');
             });
 
             Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');

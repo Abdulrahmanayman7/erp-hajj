@@ -9,6 +9,7 @@ use App\Core\Tenancy\Middleware\EnsurePlatformUser;
 use App\Core\Tenancy\Middleware\EnsureTenantIsActive;
 use App\Core\Tenancy\Middleware\EnterPlatformContext;
 use App\Core\Tenancy\Middleware\ResolveTenantContext;
+use App\Modules\Accommodation\Exceptions\AccommodationDomainException;
 use App\Modules\Contracts\Exceptions\ContractDomainException;
 use App\Modules\Decisions\Exceptions\DecisionDomainException;
 use App\Modules\Documents\Exceptions\DocumentDomainException;
@@ -97,6 +98,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $exceptions->render(fn (AuthException $e): JsonResponse => $e->render());
         $exceptions->render(fn (AuthorizationDomainException $e): JsonResponse => $e->render());
+        $exceptions->render(fn (AccommodationDomainException $e): JsonResponse => $e->render());
         $exceptions->render(fn (OrganizationDomainException $e): JsonResponse => $e->render());
         $exceptions->render(fn (EmployeeDomainException $e): JsonResponse => $e->render());
         $exceptions->render(fn (ContractDomainException $e): JsonResponse => $e->render());
