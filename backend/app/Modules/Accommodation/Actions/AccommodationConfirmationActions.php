@@ -21,6 +21,7 @@ use App\Modules\SeasonPilgrims\Enums\SeasonPilgrimStatus;
 use App\Modules\SeasonPilgrims\Models\SeasonFamilyGroup;
 use App\Modules\SeasonPilgrims\Models\SeasonPilgrim;
 use App\Modules\SeasonPilgrims\Support\SeasonGuard;
+use Carbon\CarbonInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 
@@ -132,9 +133,9 @@ final class AccommodationConfirmationActions
             $lockedAssignments = $this->locks->lockAssignments($toConfirm->pluck('id')->all());
 
             $excludeIds = $toConfirm->pluck('id')->map(fn ($id) => (int) $id)->all();
-            /** @var list<array{season_position_id: int, starts_at: \Carbon\CarbonInterface, ends_at: \Carbon\CarbonInterface}> $pendingPositions */
+            /** @var list<array{season_position_id: int, starts_at: CarbonInterface, ends_at: CarbonInterface}> $pendingPositions */
             $pendingPositions = [];
-            /** @var list<array{season_pilgrim_id: int, starts_at: \Carbon\CarbonInterface, ends_at: \Carbon\CarbonInterface}> $pendingPilgrims */
+            /** @var list<array{season_pilgrim_id: int, starts_at: CarbonInterface, ends_at: CarbonInterface}> $pendingPilgrims */
             $pendingPilgrims = [];
             $pendingFamily = [];
 
@@ -388,7 +389,7 @@ final class AccommodationConfirmationActions
     }
 
     /**
-     * @param  list<array{family_group_id: int|null, starts_at: \Carbon\CarbonInterface, ends_at: \Carbon\CarbonInterface}>  $batch
+     * @param  list<array{family_group_id: int|null, starts_at: CarbonInterface, ends_at: CarbonInterface}>  $batch
      */
     private function assertPendingFamilyBatch(array $batch): void
     {

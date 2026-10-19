@@ -7,6 +7,7 @@ use App\Modules\Accommodation\Models\AccommodationAssignment;
 use App\Modules\Accommodation\Models\AccommodationSeasonPosition;
 use App\Modules\Accommodation\Models\AccommodationSeasonUnit;
 use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
 /**
@@ -322,7 +323,7 @@ final class AccommodationCapacityGuard
      * InnoDB REPEATABLE READ (plain SELECT would reuse the TX snapshot).
      *
      * @param  list<int>  $excludeAssignmentIds
-     * @return \Illuminate\Database\Eloquent\Builder<AccommodationAssignment>
+     * @return Builder<AccommodationAssignment>
      */
     private function confirmedOverlappingQuery(
         CarbonInterface $startsAt,

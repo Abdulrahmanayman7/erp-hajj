@@ -17,7 +17,8 @@ function accGateCActor(array $permissions = [
     'accommodation.draft',
     'accommodation.confirm',
     'accommodation.view',
-], string $status = 'active'): array {
+], string $status = 'active'): array
+{
     actingAsTenantOwner();
     $actor = actingAsSameTenantUserWith($permissions);
     $season = withTenant($actor->tenant, function () use ($status): Season {

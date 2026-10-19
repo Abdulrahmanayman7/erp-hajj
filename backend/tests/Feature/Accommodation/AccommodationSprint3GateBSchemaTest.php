@@ -13,6 +13,7 @@ use App\Modules\SeasonPilgrims\Models\Pilgrim;
 use App\Modules\SeasonPilgrims\Models\Season;
 use App\Modules\SeasonPilgrims\Models\SeasonPilgrim;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -35,8 +36,8 @@ function accSprint3UniqueColumnSets(string $table): array
  *   1: SeasonPilgrim,
  *   2: AccommodationSeasonUnit,
  *   3: AccommodationUnit,
- *   4: \Illuminate\Support\Carbon,
- *   5: \Illuminate\Support\Carbon
+ *   4: Carbon,
+ *   5: Carbon
  * }
  */
 function accSprint3GateBFixture(): array

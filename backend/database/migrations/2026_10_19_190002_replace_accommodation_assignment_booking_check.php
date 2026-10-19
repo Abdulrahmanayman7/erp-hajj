@@ -99,7 +99,7 @@ return new class extends Migration
     {
         try {
             DB::statement("alter table accommodation_assignments drop check {$name}");
-        } catch (\Throwable) {
+        } catch (Throwable) {
             DB::statement("alter table accommodation_assignments drop constraint {$name}");
         }
     }
