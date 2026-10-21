@@ -5,10 +5,10 @@ import { useI18n } from 'vue-i18n'
 import type { OperationalStatus } from '../types/accommodation'
 import { effectiveOperationalStatus } from '../validation/accommodationValidation'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   status: OperationalStatus | null
   show?: boolean
-}>()
+}>(), { show: true })
 
 const { t } = useI18n()
 

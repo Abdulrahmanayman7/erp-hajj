@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { Building2, BedDouble, CalendarCheck2, ShieldCheck } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRoute } from 'vue-router'
 
@@ -11,8 +12,10 @@ const { t } = useI18n()
 const route = useRoute()
 const { can, canAny } = usePermissions()
 
+const icons = { overview: Building2, allocation: CalendarCheck2, drafts: BedDouble, scopes: ShieldCheck }
+
 const items = computed(() => {
-  const links: { key: string; to: string; label: string; show: boolean }[] = [
+  const links: { key: keyof typeof icons; to: string; label: string; show: boolean }[] = [
     {
       key: 'overview',
       to: '/app/accommodation',
@@ -55,18 +58,19 @@ function active(to: string): boolean {
 </script>
 
 <template>
-  <nav class="flex flex-wrap gap-2" aria-label="accommodation-subnav">
+  <nav class="grid grid-cols-2 gap-1 rounded-2xl border border-brand-border bg-brand-surface p-1.5 sm:flex" aria-label="accommodation-subnav">
     <RouterLink
       v-for="item in items"
       :key="item.key"
       :to="item.to"
-      class="rounded-lg px-3 py-1.5 text-sm font-medium transition"
+      :aria-current="active(item.to) ? 'page' : undefined" class="flex min-h-12 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-semibold transition"
       :class="
         active(item.to)
-          ? 'bg-brand-primary text-white'
-          : 'bg-brand-bg text-brand-text-secondary hover:text-brand-text'
+          ? 'bg-brand-primary-soft text-brand-primary shadow-sm'
+          : 'text-brand-text-secondary hover:bg-brand-bg hover:text-brand-text'
       "
     >
+      <component :is="icons[item.key]" class="h-4 w-4 shrink-0" />
       {{ item.label }}
     </RouterLink>
   </nav>

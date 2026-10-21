@@ -1,4 +1,4 @@
-import { keepPreviousData, useQuery } from '@tanstack/vue-query'
+import { useQuery } from '@tanstack/vue-query'
 import { storeToRefs } from 'pinia'
 import { computed, type MaybeRefOrGetter, toValue } from 'vue'
 
@@ -17,6 +17,8 @@ import {
 } from '../api/accommodationApi'
 import { fetchSeasonContext, listSeasonsForAccommodation } from '../api/seasonLookupsApi'
 import { useAccommodationSeasonStore } from '../stores/seasonContextStore'
+
+import { collectAccommodationPages } from './useAccommodationOptions'
 
 export const accommodationQueryKey = ['accommodation'] as const
 
@@ -55,7 +57,6 @@ export function useFacilitiesQuery(page: MaybeRefOrGetter<number>, enabled: Mayb
     queryKey: computed(() => [...accommodationQueryKey, 'facilities', seasonKey(), toValue(page)]),
     queryFn: () => listFacilities(toValue(page)),
     enabled: computed(() => toValue(enabled)),
-    placeholderData: keepPreviousData,
   })
 }
 
@@ -73,7 +74,7 @@ export function useStructuresQuery(
 ) {
   return useQuery({
     queryKey: computed(() => [...accommodationQueryKey, 'structures', seasonKey(), toValue(facilityId)]),
-    queryFn: () => listStructures(toValue(facilityId)!),
+    queryFn: async () => ({ data: await collectAccommodationPages((page, size) => listStructures(toValue(facilityId)!, page, size)) }),
     enabled: computed(() => toValue(enabled) && !!toValue(facilityId)),
   })
 }
@@ -84,7 +85,7 @@ export function useUnitsQuery(
 ) {
   return useQuery({
     queryKey: computed(() => [...accommodationQueryKey, 'units', seasonKey(), toValue(facilityId)]),
-    queryFn: () => listUnits(toValue(facilityId)!),
+    queryFn: async () => ({ data: await collectAccommodationPages((page, size) => listUnits(toValue(facilityId)!, page, size)) }),
     enabled: computed(() => toValue(enabled) && !!toValue(facilityId)),
   })
 }
@@ -95,7 +96,7 @@ export function usePositionsQuery(
 ) {
   return useQuery({
     queryKey: computed(() => [...accommodationQueryKey, 'positions', seasonKey(), toValue(unitId)]),
-    queryFn: () => listPositions(toValue(unitId)!),
+    queryFn: async () => ({ data: await collectAccommodationPages((page, size) => listPositions(toValue(unitId)!, page, size)) }),
     enabled: computed(() => toValue(enabled) && !!toValue(unitId)),
   })
 }
@@ -105,7 +106,6 @@ export function useSeasonFacilitiesQuery(page: MaybeRefOrGetter<number>, enabled
     queryKey: computed(() => [...accommodationQueryKey, 'season-facilities', seasonKey(), toValue(page)]),
     queryFn: () => listSeasonFacilities(toValue(page)),
     enabled: computed(() => toValue(enabled)),
-    placeholderData: keepPreviousData,
   })
 }
 
@@ -114,7 +114,6 @@ export function useSeasonUnitsQuery(page: MaybeRefOrGetter<number>, enabled: May
     queryKey: computed(() => [...accommodationQueryKey, 'season-units', seasonKey(), toValue(page)]),
     queryFn: () => listSeasonUnits(toValue(page)),
     enabled: computed(() => toValue(enabled)),
-    placeholderData: keepPreviousData,
   })
 }
 
@@ -123,7 +122,6 @@ export function useSeasonPositionsQuery(page: MaybeRefOrGetter<number>, enabled:
     queryKey: computed(() => [...accommodationQueryKey, 'season-positions', seasonKey(), toValue(page)]),
     queryFn: () => listSeasonPositions(toValue(page)),
     enabled: computed(() => toValue(enabled)),
-    placeholderData: keepPreviousData,
   })
 }
 
@@ -132,7 +130,6 @@ export function useAssignmentsQuery(page: MaybeRefOrGetter<number>, enabled: May
     queryKey: computed(() => [...accommodationQueryKey, 'assignments', seasonKey(), toValue(page)]),
     queryFn: () => listAssignments(toValue(page)),
     enabled: computed(() => toValue(enabled)),
-    placeholderData: keepPreviousData,
   })
 }
 
@@ -141,7 +138,6 @@ export function useFacilityScopesQuery(page: MaybeRefOrGetter<number>, enabled: 
     queryKey: computed(() => [...accommodationQueryKey, 'facility-scopes', seasonKey(), toValue(page)]),
     queryFn: () => listFacilityScopes(toValue(page)),
     enabled: computed(() => toValue(enabled)),
-    placeholderData: keepPreviousData,
   })
 }
 
@@ -150,6 +146,5 @@ export function useSupervisorScopesQuery(page: MaybeRefOrGetter<number>, enabled
     queryKey: computed(() => [...accommodationQueryKey, 'supervisor-scopes', seasonKey(), toValue(page)]),
     queryFn: () => listSupervisorScopes(toValue(page)),
     enabled: computed(() => toValue(enabled)),
-    placeholderData: keepPreviousData,
   })
 }

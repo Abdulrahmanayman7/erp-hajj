@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-vue-next'
@@ -16,6 +16,11 @@ import { toSelectId } from '@/shared/lookups/selectOptions'
 
 import AccommodationSeasonBar from '../components/AccommodationSeasonBar.vue'
 import AccommodationSubnav from '../components/AccommodationSubnav.vue'
+import { useQuery } from '@tanstack/vue-query'
+import { listFacilities } from '../api/accommodationApi'
+import { collectAccommodationPages } from '../queries/useAccommodationOptions'
+import { useAccommodationDialog } from '../composables/useAccommodationDialog'
+import AccommodationWorkspace from '../components/AccommodationWorkspace.vue'
 import { useAccommodationErrors } from '../composables/useAccommodationErrors'
 import {
   useGrantFacilityScopeMutation,
@@ -23,7 +28,7 @@ import {
   useRevokeFacilityScopeMutation,
   useRevokeSupervisorScopeMutation,
 } from '../mutations/useAccommodationMutations'
-import { useFacilitiesQuery, useFacilityScopesQuery, useSupervisorScopesQuery } from '../queries/useAccommodationQueries'
+import { useFacilityScopesQuery, useSupervisorScopesQuery } from '../queries/useAccommodationQueries'
 import { useAccommodationSeasonStore } from '../stores/seasonContextStore'
 import type { AccommodationFacilityScope, AccommodationSupervisorScope, FacilityScopeFormState, SupervisorScopeFormState } from '../types/accommodation'
 import { ACCOMMODATION_READ_PERMISSIONS } from '../types/accommodation'
@@ -73,7 +78,15 @@ const ssListState = computed(() =>
   resolveListState({ isLoading: ssLoading.value, isError: ssError.value, count: supervisorScopes.value.length }),
 )
 
-const { data: facilitiesData } = useFacilitiesQuery(ref(1), canReadFacilities)
+const { data: allFacilities } = useQuery({
+  queryKey: computed(() => ['accommodation', 'facility-options', seasonStore.selectedSeasonId ?? 'default']),
+  queryFn: () => collectAccommodationPages(listFacilities),
+  enabled: canReadFacilities,
+})
+const facilitiesData = computed(() => ({ data: allFacilities.value ?? [] }))
+const facilityName = (id: number) => allFacilities.value?.find(row => row.id === id)?.name ?? '#' + id
+const scopeSection = ref<'facility' | 'supervisor'>('facility')
+watch(() => seasonStore.selectedSeasonId, () => { fsPage.value = 1; ssPage.value = 1; closeDrawer() })
 const facilityOptions = computed<AppSelectOption[]>(() =>
   (facilitiesData.value?.data ?? []).map((row) => ({
     value: row.id,
@@ -178,21 +191,27 @@ async function revokeSupervisor(row: AccommodationSupervisorScope): Promise<void
     toast.error(message(error))
   }
 }
+useAccommodationDialog(() => grantDrawer.value !== null, closeDrawer)
 </script>
 
 <template>
-  <div class="space-y-5">
+  <div class="accommodation-page space-y-5">
     <AppPageHeader :title="t('accommodation.scopes.title')" :subtitle="t('accommodation.scopes.subtitle')" />
 
     <AccommodationSubnav />
     <AccommodationSeasonBar />
+    <AccommodationWorkspace />
 
     <div v-if="!canManage" class="rounded-xl border border-dashed px-4 py-10 text-center text-sm">
       {{ t('accommodation.errors.forbidden') }}
     </div>
 
     <template v-else>
-      <section class="space-y-3">
+      <div class="accommodation-toolbar">
+        <button type="button" class="rounded-xl px-4 py-3 text-sm font-semibold" :class="scopeSection === 'facility' ? 'bg-brand-primary text-white' : 'text-brand-text-secondary'" :aria-pressed="scopeSection === 'facility'" @click="scopeSection = 'facility'">{{ t('accommodation.scopes.facilityScopes') }}</button>
+        <button type="button" class="rounded-xl px-4 py-3 text-sm font-semibold" :class="scopeSection === 'supervisor' ? 'bg-brand-primary text-white' : 'text-brand-text-secondary'" :aria-pressed="scopeSection === 'supervisor'" @click="scopeSection = 'supervisor'">{{ t('accommodation.scopes.supervisorScopes') }}</button>
+      </div>
+      <section v-show="scopeSection === 'facility'" class="space-y-3 rounded-2xl border border-brand-border bg-brand-surface p-5">
         <div class="flex flex-wrap items-center justify-between gap-2">
           <h2 class="text-base font-bold">{{ t('accommodation.scopes.facilityScopes') }}</h2>
           <PermissionGuard permission="accommodation.manage_scopes">
@@ -213,7 +232,7 @@ async function revokeSupervisor(row: AccommodationSupervisorScope): Promise<void
           <button type="button" class="underline" @click="() => refetchFs()">{{ t('accommodation.retry') }}</button>
         </div>
         <template v-else>
-          <div class="overflow-hidden rounded-xl border">
+          <div class="overflow-x-auto rounded-xl border">
             <table class="min-w-full text-sm">
               <thead class="bg-brand-bg text-brand-text-secondary">
                 <tr>
@@ -228,7 +247,7 @@ async function revokeSupervisor(row: AccommodationSupervisorScope): Promise<void
                 </tr>
                 <tr v-for="row in activeFacilityScopes" :key="row.id" class="border-t">
                   <td class="px-4 py-3">{{ row.user_id }}</td>
-                  <td class="px-4 py-3">{{ row.facility_id }}</td>
+                  <td class="px-4 py-3">{{ facilityName(row.facility_id) }}</td>
                   <td class="px-4 py-3">
                     <button type="button" class="text-sm font-semibold text-amber-900 disabled:opacity-50" :disabled="!canWrite" @click="revokeFacility(row)">
                       {{ t('accommodation.scopes.revoke') }}
@@ -241,7 +260,7 @@ async function revokeSupervisor(row: AccommodationSupervisorScope): Promise<void
 
           <div v-if="revokedFacilityScopes.length" class="space-y-2">
             <h3 class="text-sm font-semibold text-brand-text-secondary">{{ t('accommodation.scopes.revokedHistory') }}</h3>
-            <div class="overflow-hidden rounded-xl border border-dashed">
+            <div class="overflow-x-auto rounded-xl border border-dashed">
               <table class="min-w-full text-sm">
                 <thead class="bg-brand-bg/60">
                   <tr>
@@ -253,7 +272,7 @@ async function revokeSupervisor(row: AccommodationSupervisorScope): Promise<void
                 <tbody>
                   <tr v-for="row in revokedFacilityScopes" :key="`revoked-fs-${row.id}`" class="border-t">
                     <td class="px-4 py-2">{{ row.user_id }}</td>
-                    <td class="px-4 py-2">{{ row.facility_id }}</td>
+                    <td class="px-4 py-2">{{ facilityName(row.facility_id) }}</td>
                     <td class="px-4 py-2 text-brand-text-muted">{{ row.revoked_at }}</td>
                   </tr>
                 </tbody>
@@ -271,7 +290,7 @@ async function revokeSupervisor(row: AccommodationSupervisorScope): Promise<void
         </template>
       </section>
 
-      <section class="space-y-3">
+      <section v-show="scopeSection === 'supervisor'" class="space-y-3 rounded-2xl border border-brand-border bg-brand-surface p-5">
         <div class="flex flex-wrap items-center justify-between gap-2">
           <h2 class="text-base font-bold">{{ t('accommodation.scopes.supervisorScopes') }}</h2>
           <PermissionGuard permission="accommodation.manage_scopes">
@@ -286,7 +305,7 @@ async function revokeSupervisor(row: AccommodationSupervisorScope): Promise<void
           <button type="button" class="underline" @click="() => refetchSs()">{{ t('accommodation.retry') }}</button>
         </div>
         <template v-else>
-          <div class="overflow-hidden rounded-xl border">
+          <div class="overflow-x-auto rounded-xl border">
             <table class="min-w-full text-sm">
               <thead class="bg-brand-bg">
                 <tr>
@@ -312,7 +331,7 @@ async function revokeSupervisor(row: AccommodationSupervisorScope): Promise<void
 
           <div v-if="revokedSupervisorScopes.length" class="space-y-2">
             <h3 class="text-sm font-semibold text-brand-text-secondary">{{ t('accommodation.scopes.revokedHistory') }}</h3>
-            <div class="overflow-hidden rounded-xl border border-dashed">
+            <div class="overflow-x-auto rounded-xl border border-dashed">
               <table class="min-w-full text-sm">
                 <thead class="bg-brand-bg/60">
                   <tr>
@@ -344,11 +363,12 @@ async function revokeSupervisor(row: AccommodationSupervisorScope): Promise<void
     <Teleport to="body">
       <div v-if="grantDrawer" class="fixed inset-0 z-50">
         <div class="absolute inset-0 bg-black/30" @click="closeDrawer" />
-        <aside class="app-drawer-panel absolute inset-y-0 start-0 flex w-full max-w-[480px] flex-col bg-brand-surface shadow-xl">
-          <header class="border-b px-5 py-4">
+        <aside role="dialog" aria-modal="true" :aria-label="t('accommodation.experience.eyebrow')" class="accommodation-drawer app-drawer-panel absolute inset-y-0 start-0 flex w-full max-w-[480px] flex-col bg-brand-surface shadow-xl">
+          <header class="relative pe-14 border-b px-5 py-4">
             <h3 class="text-lg font-bold">
               {{ grantDrawer === 'facility' ? t('accommodation.scopes.grantFacility') : t('accommodation.scopes.grantSupervisor') }}
             </h3>
+          <button type="button" class="absolute end-3 top-3 flex h-9 w-9 items-center justify-center rounded-xl text-2xl text-brand-text-secondary hover:bg-brand-primary-soft" :aria-label="t('accommodation.cancel')" @click="closeDrawer"><span aria-hidden="true">×</span></button>
           </header>
           <form class="flex flex-1 flex-col" @submit.prevent="grantDrawer === 'facility' ? submitFacilityGrant() : submitSupervisorGrant()">
             <div class="flex-1 space-y-4 overflow-y-auto px-5 py-5">
@@ -384,6 +404,7 @@ async function revokeSupervisor(row: AccommodationSupervisorScope): Promise<void
               <label v-if="grantDrawer === 'facility'" class="block text-sm">
                 <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.facility') }}</span>
                 <AppSelect
+                  searchable
                   v-if="canReadFacilities && facilityOptions.length"
                   :model-value="facilityScopeForm.facility_id === '' ? '' : facilityScopeForm.facility_id"
                   :options="facilityOptions"

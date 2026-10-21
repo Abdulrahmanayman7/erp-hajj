@@ -16,6 +16,7 @@ import {
   mapAccommodationErrorCode,
   resolveListState,
   toUtcInputValue,
+  toLocalDatetimeInput,
   validateAssignmentForm,
   validateFacilityForm,
 } from './accommodationValidation'
@@ -243,5 +244,14 @@ describe('accommodationValidation', () => {
     const iso = fromLocalDatetimeInput('2027-06-01T19:00')
     expect(iso.endsWith('Z') || iso.includes('+') || iso.includes('T')).toBe(true)
     expect(toUtcInputValue('2027-06-01T19:00:00Z')).toBe('2027-06-01T19:00')
+  })
+
+  it('preserves the instant when editing a local datetime in a non-UTC timezone', () => {
+    // Use a real non-UTC wall time constructed locally so this works in every runner timezone.
+    const local = new Date(2026, 9, 21, 15, 30)
+    const input = toLocalDatetimeInput(local.toISOString())
+    expect(input).toBe('2026-10-21T15:30')
+    expect(fromLocalDatetimeInput(input)).toBe(local.toISOString())
+    expect(toLocalDatetimeInput('invalid')).toBe('')
   })
 })

@@ -14,6 +14,8 @@ import { toSelectId } from '@/shared/lookups/selectOptions'
 
 import AccommodationSeasonBar from '../components/AccommodationSeasonBar.vue'
 import AccommodationSubnav from '../components/AccommodationSubnav.vue'
+import { useAccommodationDialog } from '../composables/useAccommodationDialog'
+import AccommodationWorkspace from '../components/AccommodationWorkspace.vue'
 import { useAccommodationErrors } from '../composables/useAccommodationErrors'
 import {
   useCreateSeasonFacilityMutation,
@@ -27,7 +29,6 @@ import {
   useUpdateSeasonUnitMutation,
 } from '../mutations/useAccommodationMutations'
 import {
-  useFacilitiesQuery,
   usePositionsQuery,
   useSeasonFacilitiesQuery,
   useSeasonPositionsQuery,
@@ -53,6 +54,8 @@ import {
   validateSeasonUnitForm,
 } from '../validation/accommodationValidation'
 
+import { useAccommodationOptions } from '../queries/useAccommodationOptions'
+
 type Section = 'facility' | 'unit' | 'position'
 
 const { t } = useI18n()
@@ -66,6 +69,9 @@ const { canWrite } = storeToRefs(seasonStore)
 const canRead = computed(() => canAny([...ACCOMMODATION_READ_PERMISSIONS]))
 const canManage = computed(() => can('accommodation.manage_season_allocation'))
 
+const activeSection = ref<Section>('facility')
+const catalog = useAccommodationOptions(canRead)
+const { facilityName, unitLabel } = catalog
 const sfPage = ref(1)
 const suPage = ref(1)
 const spPage = ref(1)
@@ -94,7 +100,7 @@ const spListState = computed(() =>
   resolveListState({ isLoading: spLoading.value, isError: spError.value, count: seasonPositions.value.length }),
 )
 
-const { data: facilitiesData } = useFacilitiesQuery(ref(1), canRead)
+const facilitiesData = computed(() => ({ data: catalog.facilities.data.value ?? [] }))
 
 const facilityOptions = computed<AppSelectOption[]>(() =>
   (facilitiesData.value?.data ?? []).map((row) => ({
@@ -122,16 +128,16 @@ const modeOptions = computed<AppSelectOption[]>(() => [
 ])
 
 const seasonFacilityOptions = computed<AppSelectOption[]>(() =>
-  seasonFacilities.value.map((row) => ({
+  (catalog.seasonFacilities.data.value ?? []).map((row) => ({
     value: row.id,
-    label: `#${row.id} · ${t('accommodation.fields.facilityId')} ${row.facility_id}`,
+    label: facilityName(row.facility_id),
   })),
 )
 
 const seasonUnitOptions = computed<AppSelectOption[]>(() =>
-  seasonUnits.value.map((row) => ({
+  (catalog.units.data.value ?? []).map((row) => ({
     value: row.id,
-    label: `#${row.id} · ${t('accommodation.fields.unitId')} ${row.unit_id}`,
+    label: unitLabel(row.id),
   })),
 )
 
@@ -160,7 +166,7 @@ const spForm = reactive<SeasonPositionFormState>({
 
 const suFormFacilityId = computed(() => {
   if (suForm.season_facility_id === '') return null
-  const row = seasonFacilities.value.find((item) => item.id === suForm.season_facility_id)
+  const row = (catalog.seasonFacilities.data.value ?? []).find((item) => item.id === suForm.season_facility_id)
   return row?.facility_id ?? null
 })
 
@@ -171,7 +177,7 @@ const unitOptions = computed<AppSelectOption[]>(() =>
 
 const spFormUnitId = computed(() => {
   if (spForm.season_unit_id === '') return null
-  const row = seasonUnits.value.find((item) => item.id === spForm.season_unit_id)
+  const row = (catalog.units.data.value ?? []).find((item) => item.id === spForm.season_unit_id)
   return row?.unit_id ?? null
 })
 
@@ -190,6 +196,7 @@ const createSpMutation = useCreateSeasonPositionMutation()
 const updateSpMutation = useUpdateSeasonPositionMutation()
 const deleteSpMutation = useDeleteSeasonPositionMutation()
 
+const saving = computed(() => createSfMutation.isPending.value || updateSfMutation.isPending.value || createSuMutation.isPending.value || updateSuMutation.isPending.value || createSpMutation.isPending.value || updateSpMutation.isPending.value)
 function closeDrawer(): void {
   drawerSection.value = null
   editingId.value = null
@@ -255,6 +262,7 @@ function openSpEdit(row: AccommodationSeasonPosition): void {
 }
 
 async function submitSf(): Promise<void> {
+  if (saving.value) return
   const errors = validateSeasonFacilityForm(sfForm)
   if (Object.keys(errors).length) {
     formError.value = t('accommodation.errors.validation')
@@ -286,6 +294,7 @@ async function submitSf(): Promise<void> {
 }
 
 async function submitSu(): Promise<void> {
+  if (saving.value) return
   const errors = validateSeasonUnitForm(suForm)
   if (Object.keys(errors).length) {
     formError.value = t('accommodation.errors.validation')
@@ -316,6 +325,7 @@ async function submitSu(): Promise<void> {
 }
 
 async function submitSp(): Promise<void> {
+  if (saving.value) return
   const errors = validateSeasonPositionForm(spForm)
   if (Object.keys(errors).length) {
     formError.value = t('accommodation.errors.validation')
@@ -361,6 +371,8 @@ async function deleteRow(section: Section, id: number): Promise<void> {
   }
 }
 
+watch(() => seasonStore.selectedSeasonId, () => { sfPage.value = 1; suPage.value = 1; spPage.value = 1; closeDrawer() })
+
 watch(
   () => suForm.season_facility_id,
   () => {
@@ -374,10 +386,11 @@ watch(
     if (drawerSection.value === 'position' && !editingId.value) spForm.position_id = ''
   },
 )
+useAccommodationDialog(() => drawerSection.value !== null, () => { if (!saving.value) closeDrawer() })
 </script>
 
 <template>
-  <div class="space-y-5">
+  <div class="accommodation-page space-y-5">
     <AppPageHeader
       :title="t('accommodation.allocation.title')"
       :subtitle="t('accommodation.allocation.subtitle')"
@@ -385,6 +398,10 @@ watch(
 
     <AccommodationSubnav />
     <AccommodationSeasonBar />
+    <AccommodationWorkspace />
+    <div v-if="catalog.isError.value" role="alert" class="flex items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+      <span>{{ t('accommodation.errors.load') }}</span><button type="button" class="shrink-0 font-semibold underline" @click="catalog.retry()">{{ t('accommodation.retry') }}</button>
+    </div>
 
     <p class="rounded-lg bg-sky-50 px-3 py-2 text-sm text-sky-950 ring-1 ring-sky-200/70">
       {{ t('accommodation.allocation.capacityNotice') }}
@@ -395,8 +412,14 @@ watch(
     </div>
 
     <template v-else>
+      <div class="grid gap-2 rounded-2xl border border-brand-border bg-brand-surface p-2 sm:grid-cols-3" role="group" :aria-label="t('accommodation.allocation.title')">
+        <button v-for="(step, index) in (['facility', 'unit', 'position'] as const)" :key="step" type="button" class="flex min-h-14 items-center gap-3 rounded-xl px-4 py-3 text-start text-sm font-semibold transition" :class="activeSection === step ? 'bg-brand-primary text-white' : 'text-brand-text-secondary hover:bg-brand-bg'" :aria-pressed="activeSection === step" @click="activeSection = step">
+          <span class="flex h-7 w-7 items-center justify-center rounded-lg border border-current/20">{{ index + 1 }}</span>
+          {{ t('accommodation.experience.' + ({ facility: 'facilityStep', unit: 'unitStep', position: 'positionStep' }[step])) }}
+        </button>
+      </div>
       <!-- Season facilities -->
-      <section class="space-y-3">
+      <section v-show="activeSection === 'facility'" class="space-y-3 rounded-2xl border border-brand-border bg-brand-surface p-4 sm:p-5">
         <div class="flex flex-wrap items-center justify-between gap-2">
           <h2 class="text-base font-bold">{{ t('accommodation.allocation.seasonFacilities') }}</h2>
           <PermissionGuard permission="accommodation.manage_season_allocation">
@@ -420,7 +443,7 @@ watch(
         <div v-else-if="sfListState === 'empty'" class="rounded-xl border border-dashed px-4 py-8 text-center text-sm text-brand-text-secondary">
           {{ t('accommodation.allocation.emptySeasonFacilities') }}
         </div>
-        <div v-else class="overflow-hidden rounded-xl border border-brand-border">
+        <div v-else class="overflow-x-auto rounded-xl border border-brand-border">
           <table class="min-w-full text-sm">
             <thead class="bg-brand-bg text-brand-text-secondary">
               <tr>
@@ -433,7 +456,7 @@ watch(
             </thead>
             <tbody>
               <tr v-for="row in seasonFacilities" :key="row.id" class="border-t border-brand-border">
-                <td class="px-4 py-3">{{ row.facility_id }}</td>
+                <td class="px-4 py-3">{{ facilityName(row.facility_id) }}</td>
                 <td class="px-4 py-3">{{ row.audience ? t(`accommodation.audience.${row.audience}`) : '—' }}</td>
                 <td class="px-4 py-3">{{ row.is_active ? t('accommodation.status.active') : t('accommodation.status.inactive') }}</td>
                 <td class="px-4 py-3">
@@ -443,8 +466,8 @@ watch(
                 <td class="px-4 py-3">
                   <PermissionGuard permission="accommodation.manage_season_allocation">
                     <div class="flex gap-2">
-                      <button type="button" class="text-brand-primary" :disabled="!canWrite" @click="openSfEdit(row)"><Pencil class="inline h-3.5 w-3.5" /></button>
-                      <button type="button" class="text-red-700 disabled:opacity-50" :disabled="!canWrite" @click="deleteRow('facility', row.id)"><Trash2 class="inline h-3.5 w-3.5" /></button>
+                      <button type="button" class="text-brand-primary" :disabled="!canWrite" @click="openSfEdit(row)" :aria-label="t('accommodation.edit')"><Pencil class="inline h-3.5 w-3.5" /></button>
+                      <button type="button" class="text-red-700 disabled:opacity-50" :disabled="!canWrite" @click="deleteRow('facility', row.id)" :aria-label="t('accommodation.delete')"><Trash2 class="inline h-3.5 w-3.5" /></button>
                     </div>
                   </PermissionGuard>
                 </td>
@@ -462,7 +485,7 @@ watch(
       </section>
 
       <!-- Season units -->
-      <section class="space-y-3">
+      <section v-show="activeSection === 'unit'" class="space-y-3 rounded-2xl border border-brand-border bg-brand-surface p-4 sm:p-5">
         <div class="flex flex-wrap items-center justify-between gap-2">
           <h2 class="text-base font-bold">{{ t('accommodation.allocation.seasonUnits') }}</h2>
           <PermissionGuard permission="accommodation.manage_season_allocation">
@@ -476,7 +499,7 @@ watch(
           <button type="button" class="underline" @click="() => refetchSu()">{{ t('accommodation.retry') }}</button>
         </div>
         <div v-else-if="suListState === 'empty'" class="rounded-xl border border-dashed px-4 py-8 text-center text-sm">{{ t('accommodation.allocation.emptySeasonUnits') }}</div>
-        <div v-else class="overflow-hidden rounded-xl border">
+        <div v-else class="overflow-x-auto rounded-xl border">
           <table class="min-w-full text-sm">
             <thead class="bg-brand-bg text-brand-text-secondary">
               <tr>
@@ -489,7 +512,7 @@ watch(
             </thead>
             <tbody>
               <tr v-for="row in seasonUnits" :key="row.id" class="border-t">
-                <td class="px-4 py-3">{{ row.unit_id }}</td>
+                <td class="px-4 py-3">{{ unitLabel(row.id) }}</td>
                 <td class="px-4 py-3">{{ t(`accommodation.allocation.mode.${row.allocation_mode}`) }}</td>
                 <td class="px-4 py-3">
                   {{ row.capacity ?? '—' }}
@@ -499,8 +522,8 @@ watch(
                 <td class="px-4 py-3">
                   <PermissionGuard permission="accommodation.manage_season_allocation">
                     <div class="flex gap-2">
-                      <button type="button" :disabled="!canWrite" @click="openSuEdit(row)"><Pencil class="h-3.5 w-3.5" /></button>
-                      <button type="button" class="text-red-700 disabled:opacity-50" :disabled="!canWrite" @click="deleteRow('unit', row.id)"><Trash2 class="h-3.5 w-3.5" /></button>
+                      <button type="button" :disabled="!canWrite" @click="openSuEdit(row)" :aria-label="t('accommodation.edit')"><Pencil class="h-3.5 w-3.5" /></button>
+                      <button type="button" class="text-red-700 disabled:opacity-50" :disabled="!canWrite" @click="deleteRow('unit', row.id)" :aria-label="t('accommodation.delete')"><Trash2 class="h-3.5 w-3.5" /></button>
                     </div>
                   </PermissionGuard>
                 </td>
@@ -518,7 +541,7 @@ watch(
       </section>
 
       <!-- Season positions -->
-      <section class="space-y-3">
+      <section v-show="activeSection === 'position'" class="space-y-3 rounded-2xl border border-brand-border bg-brand-surface p-4 sm:p-5">
         <div class="flex flex-wrap items-center justify-between gap-2">
           <h2 class="text-base font-bold">{{ t('accommodation.allocation.seasonPositions') }}</h2>
           <PermissionGuard permission="accommodation.manage_season_allocation">
@@ -532,7 +555,7 @@ watch(
           <button type="button" class="underline" @click="() => refetchSp()">{{ t('accommodation.retry') }}</button>
         </div>
         <div v-else-if="spListState === 'empty'" class="rounded-xl border border-dashed px-4 py-8 text-center text-sm">{{ t('accommodation.allocation.emptySeasonPositions') }}</div>
-        <div v-else class="overflow-hidden rounded-xl border">
+        <div v-else class="overflow-x-auto rounded-xl border">
           <table class="min-w-full text-sm">
             <thead class="bg-brand-bg">
               <tr>
@@ -545,13 +568,13 @@ watch(
             <tbody>
               <tr v-for="row in seasonPositions" :key="row.id" class="border-t">
                 <td class="px-4 py-3">{{ row.position_id }}</td>
-                <td class="px-4 py-3">{{ row.unit_id }}</td>
+                <td class="px-4 py-3">{{ unitLabel(row.season_unit_id) }}</td>
                 <td class="px-4 py-3">{{ row.is_active ? t('accommodation.status.active') : t('accommodation.status.inactive') }}</td>
                 <td class="px-4 py-3">
                   <PermissionGuard permission="accommodation.manage_season_allocation">
                     <div class="flex gap-2">
-                      <button type="button" :disabled="!canWrite" @click="openSpEdit(row)"><Pencil class="h-3.5 w-3.5" /></button>
-                      <button type="button" class="text-red-700 disabled:opacity-50" :disabled="!canWrite" @click="deleteRow('position', row.id)"><Trash2 class="h-3.5 w-3.5" /></button>
+                      <button type="button" :disabled="!canWrite" @click="openSpEdit(row)" :aria-label="t('accommodation.edit')"><Pencil class="h-3.5 w-3.5" /></button>
+                      <button type="button" class="text-red-700 disabled:opacity-50" :disabled="!canWrite" @click="deleteRow('position', row.id)" :aria-label="t('accommodation.delete')"><Trash2 class="h-3.5 w-3.5" /></button>
                     </div>
                   </PermissionGuard>
                 </td>
@@ -572,9 +595,10 @@ watch(
     <Teleport to="body">
       <div v-if="drawerSection" class="fixed inset-0 z-50">
         <div class="absolute inset-0 bg-black/30" @click="closeDrawer" />
-        <aside class="app-drawer-panel absolute inset-y-0 start-0 flex w-full max-w-[480px] flex-col bg-brand-surface shadow-xl">
-          <header class="border-b px-5 py-4">
-            <h3 class="text-lg font-bold">{{ t('accommodation.allocation.drawerTitle') }}</h3>
+        <aside role="dialog" aria-modal="true" :aria-label="t('accommodation.experience.eyebrow')" class="accommodation-drawer app-drawer-panel absolute inset-y-0 start-0 flex w-full max-w-[480px] flex-col bg-brand-surface shadow-xl">
+          <header class="relative pe-14 border-b px-5 py-4">
+            <h3 class="text-lg font-bold">{{ t('accommodation.experience.' + ({ facility: 'facilityStep', unit: 'unitStep', position: 'positionStep' }[drawerSection])) }}</h3>
+          <button type="button" class="absolute end-3 top-3 flex h-9 w-9 items-center justify-center rounded-xl text-2xl text-brand-text-secondary hover:bg-brand-primary-soft" :aria-label="t('accommodation.cancel')" @click="closeDrawer"><span aria-hidden="true">×</span></button>
           </header>
           <form
             class="flex flex-1 flex-col"
@@ -587,6 +611,7 @@ watch(
                 <label v-if="canRead && !editingId" class="block text-sm">
                   <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.facility') }}</span>
                   <AppSelect
+                  searchable
                     :model-value="sfForm.facility_id === '' ? '' : sfForm.facility_id"
                     :options="facilityOptions"
                     @update:model-value="sfForm.facility_id = toSelectId($event)"
@@ -599,6 +624,7 @@ watch(
                 <label class="block text-sm">
                   <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.audience') }}</span>
                   <AppSelect
+                  searchable
                     :model-value="sfForm.audience"
                     :options="audienceOptions"
                     @update:model-value="sfForm.audience = $event as Audience | ''"
@@ -613,16 +639,19 @@ watch(
                 <label v-if="!editingId" class="block text-sm">
                   <span class="mb-1 block">{{ t('accommodation.allocation.seasonFacility') }}</span>
                   <AppSelect
+                  searchable
                     :model-value="suForm.season_facility_id === '' ? '' : suForm.season_facility_id"
                     :options="seasonFacilityOptions"
                     @update:model-value="suForm.season_facility_id = toSelectId($event)"
                   />
                 </label>
-                <label v-if="!editingId && canRead && unitOptions.length" class="block text-sm">
+                <label v-if="!editingId && canRead" class="block text-sm">
                   <span class="mb-1 block">{{ t('accommodation.fields.unit') }}</span>
                   <AppSelect
+                  searchable
                     :model-value="suForm.unit_id === '' ? '' : suForm.unit_id"
                     :options="unitOptions"
+                    :disabled="!suFormFacilityId"
                     @update:model-value="suForm.unit_id = toSelectId($event)"
                   />
                 </label>
@@ -633,6 +662,7 @@ watch(
                 <label class="block text-sm">
                   <span class="mb-1 block">{{ t('accommodation.allocation.modeLabel') }}</span>
                   <AppSelect
+                  searchable
                     :model-value="suForm.allocation_mode"
                     :options="modeOptions"
                     @update:model-value="suForm.allocation_mode = $event as AllocationMode"
@@ -645,6 +675,7 @@ watch(
                 <label class="block text-sm">
                   <span class="mb-1 block">{{ t('accommodation.fields.audience') }}</span>
                   <AppSelect
+                  searchable
                     :model-value="suForm.audience"
                     :options="audienceRequiredOptions"
                     @update:model-value="suForm.audience = $event as Audience"
@@ -659,16 +690,19 @@ watch(
                 <label v-if="!editingId" class="block text-sm">
                   <span class="mb-1 block">{{ t('accommodation.allocation.seasonUnit') }}</span>
                   <AppSelect
+                  searchable
                     :model-value="spForm.season_unit_id === '' ? '' : spForm.season_unit_id"
                     :options="seasonUnitOptions"
                     @update:model-value="spForm.season_unit_id = toSelectId($event)"
                   />
                 </label>
-                <label v-if="!editingId && positionOptions.length" class="block text-sm">
+                <label v-if="!editingId && canRead" class="block text-sm">
                   <span class="mb-1 block">{{ t('accommodation.fields.position') }}</span>
                   <AppSelect
+                  searchable
                     :model-value="spForm.position_id === '' ? '' : spForm.position_id"
                     :options="positionOptions"
+                    :disabled="!spFormUnitId"
                     @update:model-value="spForm.position_id = toSelectId($event)"
                   />
                 </label>
@@ -685,7 +719,7 @@ watch(
             </div>
             <footer class="flex justify-end gap-2 border-t px-5 py-4">
               <button type="button" class="rounded-lg px-3 py-2 text-sm" @click="closeDrawer">{{ t('accommodation.cancel') }}</button>
-              <button type="submit" class="rounded-lg bg-brand-primary px-3 py-2 text-sm font-semibold text-white">{{ t('accommodation.save') }}</button>
+              <button type="submit" :disabled="saving || !canWrite" class="rounded-lg bg-brand-primary px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">{{ t('accommodation.save') }}</button>
             </footer>
           </form>
         </aside>

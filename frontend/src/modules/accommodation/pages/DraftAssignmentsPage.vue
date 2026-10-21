@@ -2,6 +2,8 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
+import { useQueries } from '@tanstack/vue-query'
+import { apiGet } from '@/shared/api/http'
 import {
   ArrowLeftRight,
   CheckCircle2,
@@ -29,6 +31,9 @@ import { toSelectId } from '@/shared/lookups/selectOptions'
 import { listSeasonFamilyGroupsLookup, listSeasonPilgrimsLookup } from '../api/seasonLookupsApi'
 import AccommodationSeasonBar from '../components/AccommodationSeasonBar.vue'
 import AccommodationSubnav from '../components/AccommodationSubnav.vue'
+import { useAccommodationOptions } from '../queries/useAccommodationOptions'
+import { useAccommodationDialog } from '../composables/useAccommodationDialog'
+import AccommodationWorkspace from '../components/AccommodationWorkspace.vue'
 import BookingStatusBadge from '../components/BookingStatusBadge.vue'
 import OperationalStatusBadge from '../components/OperationalStatusBadge.vue'
 import { useAccommodationErrors } from '../composables/useAccommodationErrors'
@@ -44,7 +49,7 @@ import {
   useRelocateAssignmentMutation,
   useUpdateAssignmentMutation,
 } from '../mutations/useAccommodationMutations'
-import { useAssignmentsQuery, useSeasonPositionsQuery, useSeasonUnitsQuery } from '../queries/useAccommodationQueries'
+import { useAssignmentsQuery } from '../queries/useAccommodationQueries'
 import { useAccommodationSeasonStore } from '../stores/seasonContextStore'
 import type {
   AccommodationAssignment,
@@ -66,11 +71,11 @@ import {
   emptyAssignmentForm,
   fromLocalDatetimeInput,
   resolveListState,
-  toUtcInputValue,
+  toLocalDatetimeInput,
   validateAssignmentForm,
 } from '../validation/accommodationValidation'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const { can, canAny } = usePermissions()
 const toast = useToast()
 const { confirm } = useConfirm()
@@ -92,32 +97,59 @@ const hasAnyOpsPermission = computed(() => canAny([...ACCOMMODATION_OPS_PERMISSI
 const canPickPilgrim = computed(() => can('season_pilgrims.view'))
 const canPickFamily = computed(() => can('season_family_groups.view'))
 
+const catalog = useAccommodationOptions(canRead)
+const { unitLabel } = catalog
+const bookingFilter = ref('')
+const search = ref('')
+const selectedFacilityId = ref<number | ''>('')
 const page = ref(1)
 const { data, isLoading, isError, refetch } = useAssignmentsQuery(page, canRead)
 const assignments = computed(() => data.value?.data ?? [])
+const pilgrimQueries = useQueries({
+  queries: computed(() => [...new Set(assignments.value.map(row => row.season_pilgrim_id))].map(id => ({
+    queryKey: ['accommodation', 'pilgrim-name', seasonStore.selectedSeasonId ?? 'default', id],
+    queryFn: async () => (await apiGet<SeasonPilgrimLookup>(`/api/v1/season-pilgrims/${id}`, { headers: seasonStore.seasonHeaders() })).data,
+    enabled: canPickPilgrim.value,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  }))),
+})
+function pilgrimName(id: number): string {
+  const row = pilgrimQueries.value.find(query => query.data?.id === id)?.data
+  return row?.pilgrim?.full_name ?? row?.reference_number ?? `#${id}`
+}
+const visibleAssignments = computed(() => assignments.value.filter(row => {
+  const query = search.value.trim().toLocaleLowerCase()
+  return (!bookingFilter.value || row.booking_status === bookingFilter.value) &&
+    (!query || [row.id, row.season_pilgrim_id, pilgrimName(row.season_pilgrim_id), row.season_unit_id, unitLabel(row.season_unit_id)].some(value => String(value).toLocaleLowerCase().includes(query)))
+}))
+const bookingFilters = computed<AppSelectOption[]>(() => [
+  { value: '', label: t('accommodation.experience.allBookings') },
+  ...['draft', 'confirmed', 'completed', 'cancelled'].map(status => ({ value: status, label: t('accommodation.bookingStatus.' + status) })),
+])
+const facilityOptions = computed<AppSelectOption[]>(() => (catalog.facilities.data.value ?? [])
+  .filter(row => row.id === selectedFacilityId.value || (row.is_active && catalog.seasonFacilities.data.value?.some(allocation => allocation.facility_id === row.id && allocation.is_active)))
+  .map(row => ({ value: row.id, label: row.name })))
 const meta = computed(() => data.value?.meta)
 const listState = computed(() =>
   resolveListState({ isLoading: isLoading.value, isError: isError.value, count: assignments.value.length }),
 )
 
-const { data: seasonUnitsData } = useSeasonUnitsQuery(ref(1), canRead)
+const seasonUnitsData = computed(() => ({ data: catalog.units.data.value ?? [] }))
 const seasonUnitOptions = computed<AppSelectOption[]>(() =>
-  (seasonUnitsData.value?.data ?? []).map((row) => ({
+  (seasonUnitsData.value?.data ?? []).filter(row => row.is_active).map((row) => ({
     value: row.id,
-    label: `#${row.id} · ${t('accommodation.fields.unitId')} ${row.unit_id}`,
+    label: unitLabel(row.id),
+    hint: `${t('accommodation.audience.' + row.audience)} · ${row.capacity ?? '—'}`,
   })),
 )
 
-const emptySeasonPosition = computed<AppSelectOption>(() => ({
-  value: '',
-  label: t('accommodation.drafts.noSeasonPosition'),
-}))
+const createUnitOptions = computed(() => seasonUnitOptions.value.filter(option => selectedFacilityId.value === '' || catalog.units.data.value?.find(row => row.id === option.value)?.facility_id === selectedFacilityId.value))
 
-const { data: seasonPositionsData } = useSeasonPositionsQuery(ref(1), canRead)
+const seasonPositionsData = computed(() => ({ data: catalog.positions.data.value ?? [] }))
 const allSeasonPositions = computed(() => seasonPositionsData.value?.data ?? [])
 const seasonPositionOptions = computed<AppSelectOption[]>(() => [
-  emptySeasonPosition.value,
-  ...allSeasonPositions.value.map((row) => ({
+  ...allSeasonPositions.value.filter(row => row.is_active && row.season_unit_id === Number(form.season_unit_id)).map((row) => ({
     value: row.id,
     label: `#${row.id} · ${t('accommodation.fields.positionId')} ${row.position_id}`,
   })),
@@ -186,14 +218,14 @@ const selectedFamilyAssignments = computed(() =>
   draftAssignments.value.filter((row) => selectedFamilyAssignmentIds.value.includes(row.id)),
 )
 
+const relocateUnit = computed(() => catalog.units.data.value?.find(row => row.id === Number(relocateDestUnitId.value)))
 const relocatePositionOptions = computed<AppSelectOption[]>(() => {
   const unitId = relocateDestUnitId.value
   const filtered =
     unitId === ''
       ? allSeasonPositions.value
-      : allSeasonPositions.value.filter((row) => row.season_unit_id === Number(unitId))
+      : allSeasonPositions.value.filter((row) => row.is_active && row.season_unit_id === Number(unitId))
   return [
-    emptySeasonPosition.value,
     ...filtered.map((row) => ({
       value: row.id,
       label: `#${row.id} · ${t('accommodation.fields.positionId')} ${row.position_id}`,
@@ -201,16 +233,31 @@ const relocatePositionOptions = computed<AppSelectOption[]>(() => {
   ]
 })
 
+watch(() => seasonStore.selectedSeasonId, () => {
+  page.value = 1
+  search.value = ''
+  bookingFilter.value = ''
+  closeDrawer()
+  closeFamilyPanel()
+  closeCheckout()
+  closeRelocate()
+  lastRelocatePair.value = null
+})
+
 watch(relocateDestUnitId, () => {
   relocateDestPositionId.value = ''
 })
 
+function formatDate(value: string): string {
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? value : new Intl.DateTimeFormat(locale.value, { dateStyle: 'medium', timeStyle: 'short' }).format(date)
+}
 function formatInterval(row: AccommodationAssignment): string {
-  return `${row.starts_at} → ${row.original_ends_at}`
+  return formatDate(row.starts_at) + ' ← ' + formatDate(row.original_ends_at)
 }
 
 function formatEffective(row: AccommodationAssignment): string {
-  return row.effective_ends_at
+  return formatDate(row.effective_ends_at)
 }
 
 function showConfirmFor(row: AccommodationAssignment): boolean {
@@ -272,6 +319,15 @@ function capacityKind(row: AccommodationAssignment): 'reserved' | 'historical' |
   })
 }
 
+function selectUnit(value: string | number | null): void {
+  form.season_unit_id = toSelectId(value)
+  form.season_position_id = ''
+}
+function selectFacility(value: string | number | null): void {
+  selectedFacilityId.value = toSelectId(value)
+  selectUnit('')
+}
+const selectedUnit = computed(() => catalog.units.data.value?.find(row => row.id === Number(form.season_unit_id)))
 function closeDrawer(): void {
   drawerOpen.value = false
   editingId.value = null
@@ -279,6 +335,7 @@ function closeDrawer(): void {
 }
 
 function openCreate(): void {
+  selectedFacilityId.value = ''
   Object.assign(form, emptyAssignmentForm())
   editingId.value = null
   formError.value = ''
@@ -287,12 +344,13 @@ function openCreate(): void {
 
 function openEdit(row: AccommodationAssignment): void {
   if (row.booking_status !== 'draft') return
+  selectedFacilityId.value = catalog.units.data.value?.find(unit => unit.id === row.season_unit_id)?.facility_id ?? ''
   Object.assign(form, {
     season_pilgrim_id: row.season_pilgrim_id,
     season_unit_id: row.season_unit_id,
     season_position_id: row.season_position_id ?? '',
-    starts_at: toUtcInputValue(row.starts_at),
-    original_ends_at: toUtcInputValue(row.original_ends_at),
+    starts_at: toLocalDatetimeInput(row.starts_at),
+    original_ends_at: toLocalDatetimeInput(row.original_ends_at),
   })
   editingId.value = row.id
   formError.value = ''
@@ -300,7 +358,9 @@ function openEdit(row: AccommodationAssignment): void {
 }
 
 async function submit(): Promise<void> {
+  if (createMutation.isPending.value || updateMutation.isPending.value) return
   const errors = validateAssignmentForm(form)
+  if (selectedUnit.value?.allocation_mode === 'position' && form.season_position_id === '') errors.season_position_id = 'required'
   if (Object.keys(errors).length) {
     formError.value = t('accommodation.errors.validation')
     return
@@ -507,7 +567,7 @@ function closeRelocate(): void {
 async function submitRelocate(): Promise<void> {
   const row = relocateRow.value
   if (!row || !showRelocateFor(row) || actionBusy.value) return
-  if (relocateDestUnitId.value === '') {
+  if (relocateDestUnitId.value === '' || (relocateUnit.value?.allocation_mode === 'position' && relocateDestPositionId.value === '')) {
     relocateError.value = t('accommodation.errors.validation')
     return
   }
@@ -515,7 +575,7 @@ async function submitRelocate(): Promise<void> {
     destinationSeasonUnitId: Number(relocateDestUnitId.value),
     destinationSeasonPositionId: relocateDestPositionId.value,
     occurredAtLocal: relocateOccurredAt.value,
-    checkInAfter: relocateCheckInAfter.value,
+    checkInAfter: relocateCheckInAfter.value && can('accommodation.check_in'),
   })
   const ok = await confirm({
     title: t('accommodation.ops.relocateTitle'),
@@ -539,10 +599,14 @@ async function submitRelocate(): Promise<void> {
     toast.error(message(error))
   }
 }
+useAccommodationDialog(() => drawerOpen.value || familyPanelOpen.value || checkoutOpen.value || relocateOpen.value, () => {
+  if (actionBusy.value || createMutation.isPending.value || updateMutation.isPending.value) return
+  closeDrawer(); closeFamilyPanel(); closeCheckout(); closeRelocate()
+})
 </script>
 
 <template>
-  <div class="space-y-5">
+  <div class="accommodation-page space-y-5">
     <AppPageHeader :title="t('accommodation.drafts.title')" :subtitle="t('accommodation.drafts.subtitle')">
       <template #actions>
         <div class="flex flex-wrap gap-2">
@@ -574,6 +638,10 @@ async function submitRelocate(): Promise<void> {
 
     <AccommodationSubnav />
     <AccommodationSeasonBar />
+    <AccommodationWorkspace />
+    <div v-if="catalog.isError.value" role="alert" class="flex items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+      <span>{{ t('accommodation.errors.load') }}</span><button type="button" class="shrink-0 font-semibold underline" @click="catalog.retry()">{{ t('accommodation.retry') }}</button>
+    </div>
 
     <p class="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-950 ring-1 ring-amber-200/80">
       {{ t('accommodation.drafts.noCapacityBanner') }}
@@ -602,6 +670,20 @@ async function submitRelocate(): Promise<void> {
       }}
     </p>
 
+    <div v-if="canRead" class="space-y-3">
+      <div class="accommodation-stats" v-if="!isLoading && !isError">
+        <div class="accommodation-stat"><span>{{ t('accommodation.bookingStatus.draft') }}</span><strong>{{ assignments.filter(row => row.booking_status === 'draft').length }}</strong></div>
+        <div class="accommodation-stat"><span>{{ t('accommodation.bookingStatus.confirmed') }}</span><strong>{{ assignments.filter(row => row.booking_status === 'confirmed').length }}</strong></div>
+        <div class="accommodation-stat"><span>{{ t('accommodation.operationalStatus.checked_in') }}</span><strong>{{ assignments.filter(row => row.booking_status === 'confirmed' && row.operational_status === 'checked_in').length }}</strong></div>
+      </div>
+      <div class="accommodation-toolbar">
+        <input v-model="search" type="search" class="w-full flex-1 sm:min-w-64" :aria-label="t('accommodation.filters.search')" :placeholder="t('accommodation.experience.searchStays')">
+        <div class="w-full sm:w-48"><AppSelect v-model="bookingFilter" :options="bookingFilters" /></div>
+        <button v-if="search || bookingFilter" type="button" class="text-xs font-semibold text-brand-primary" @click="search = ''; bookingFilter = ''">{{ t('accommodation.experience.clearFilters') }}</button>
+        <p class="w-full text-xs text-brand-text-muted">{{ t('accommodation.experience.currentPage') }}</p>
+      </div>
+    </div>
+
     <div v-if="!canRead" class="rounded-xl border border-dashed px-4 py-10 text-center text-sm">
       {{ t('accommodation.errors.forbidden') }}
     </div>
@@ -615,7 +697,7 @@ async function submitRelocate(): Promise<void> {
       {{ t('accommodation.drafts.empty') }}
     </div>
     <div v-else class="overflow-x-auto rounded-xl border border-brand-border bg-brand-surface">
-      <table class="min-w-full text-sm">
+      <table class="accommodation-stays-table min-w-full text-sm">
         <thead class="bg-brand-bg text-brand-text-secondary">
           <tr>
             <th class="px-4 py-3 text-start">{{ t('accommodation.fields.status') }}</th>
@@ -627,8 +709,9 @@ async function submitRelocate(): Promise<void> {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="row in assignments" :key="row.id" class="border-t border-brand-border align-top">
-            <td class="px-4 py-3">
+          <tr v-if="!visibleAssignments.length"><td colspan="6" class="px-4 py-12 text-center text-brand-text-secondary">{{ t('accommodation.experience.noMatches') }}</td></tr>
+          <tr v-for="row in visibleAssignments" :key="row.id" class="border-t border-brand-border align-top">
+            <td :data-label="t('accommodation.fields.status')" class="px-4 py-3">
               <div class="flex flex-col items-start gap-1.5">
                 <BookingStatusBadge :status="row.booking_status" />
                 <OperationalStatusBadge
@@ -643,18 +726,19 @@ async function submitRelocate(): Promise<void> {
                 </span>
               </div>
             </td>
-            <td class="px-4 py-3">{{ row.season_pilgrim_id }}</td>
-            <td class="px-4 py-3">{{ row.season_unit_id }}</td>
-            <td class="px-4 py-3 text-xs text-brand-text-secondary">
-              <div>{{ t('accommodation.fields.originalInterval') }}: {{ formatInterval(row) }}</div>
+            <td :data-label="t('accommodation.fields.seasonPilgrimId')" class="px-4 py-3"><span class="font-semibold">{{ pilgrimName(row.season_pilgrim_id) }}</span><span class="mt-1 block text-xs text-brand-text-muted">#{{ row.id }}</span></td>
+            <td :data-label="t('accommodation.fields.seasonUnitId')" class="px-4 py-3">{{ unitLabel(row.season_unit_id) }}</td>
+            <td :data-label="t('accommodation.fields.interval')" class="px-4 py-3 text-xs text-brand-text-secondary">
+              <div class="mb-2"><span class="font-semibold">{{ t('accommodation.experience.arrival') }}:</span> <time :datetime="row.starts_at">{{ formatDate(row.starts_at) }}</time></div>
+              <div><span class="font-semibold">{{ t('accommodation.experience.departure') }}:</span> <time :datetime="row.original_ends_at">{{ formatDate(row.original_ends_at) }}</time></div>
               <div v-if="row.effective_ends_at !== row.original_ends_at">
                 {{ t('accommodation.fields.effectiveEndsAt') }}: {{ formatEffective(row) }}
               </div>
               <div v-if="row.actual_departed_at">
-                {{ t('accommodation.fields.actualDepartedAt') }}: {{ row.actual_departed_at }}
+                {{ t('accommodation.fields.actualDepartedAt') }}: {{ formatDate(row.actual_departed_at) }}
               </div>
             </td>
-            <td class="px-4 py-3">
+            <td :data-label="t('accommodation.fields.capacity')" class="px-4 py-3">
               <span v-if="capacityKind(row) === 'reserved'" class="text-xs text-emerald-800">
                 {{ t('accommodation.capacityReserved') }}
               </span>
@@ -663,7 +747,7 @@ async function submitRelocate(): Promise<void> {
               </span>
               <span v-else class="text-xs text-amber-800">{{ t('accommodation.capacityNone') }}</span>
             </td>
-            <td class="px-4 py-3">
+            <td :data-label="t('accommodation.fields.actions')" class="px-4 py-3">
               <div class="flex max-w-[18rem] flex-wrap items-center gap-1.5 sm:max-w-none">
                 <PermissionGuard permission="accommodation.confirm">
                   <button
@@ -740,10 +824,10 @@ async function submitRelocate(): Promise<void> {
                 </PermissionGuard>
                 <PermissionGuard v-if="row.booking_status === 'draft'" permission="accommodation.draft">
                   <div class="flex gap-2">
-                    <button type="button" class="text-brand-primary disabled:opacity-50" :disabled="!canWrite" @click="openEdit(row)">
+                    <button type="button" :aria-label="t('accommodation.edit')" class="text-brand-primary disabled:opacity-50" :disabled="!canWrite" @click="openEdit(row)">
                       <Pencil class="h-4 w-4" />
                     </button>
-                    <button type="button" class="text-red-700 disabled:opacity-50" :disabled="!canWrite" @click="remove(row)">
+                    <button type="button" :aria-label="t('accommodation.delete')" class="text-red-700 disabled:opacity-50" :disabled="!canWrite" @click="remove(row)">
                       <Trash2 class="h-4 w-4" />
                     </button>
                   </div>
@@ -765,19 +849,22 @@ async function submitRelocate(): Promise<void> {
     <Teleport to="body">
       <div v-if="drawerOpen" class="fixed inset-0 z-50">
         <div class="absolute inset-0 bg-black/30" @click="closeDrawer" />
-        <aside class="app-drawer-panel absolute inset-y-0 start-0 flex w-full max-w-[480px] flex-col bg-brand-surface shadow-xl">
-          <header class="border-b px-5 py-4">
+        <aside role="dialog" aria-modal="true" :aria-label="t('accommodation.experience.eyebrow')" class="accommodation-drawer app-drawer-panel absolute inset-y-0 start-0 flex w-full max-w-[480px] flex-col bg-brand-surface shadow-xl">
+          <header class="relative pe-14 border-b px-5 py-4">
             <h3 class="text-lg font-bold">
               {{ editingId ? t('accommodation.drafts.editTitle') : t('accommodation.drafts.createTitle') }}
             </h3>
+          <button type="button" class="absolute end-3 top-3 flex h-9 w-9 items-center justify-center rounded-xl text-2xl text-brand-text-secondary hover:bg-brand-primary-soft" :aria-label="t('accommodation.cancel')" @click="closeDrawer"><span aria-hidden="true">×</span></button>
           </header>
           <form class="flex flex-1 flex-col" @submit.prevent="submit">
             <div class="flex-1 space-y-4 overflow-y-auto px-5 py-5">
+              <p v-if="editingId" class="rounded-xl bg-brand-bg p-3 text-sm font-semibold">{{ pilgrimName(Number(form.season_pilgrim_id)) }}</p>
+              <div v-else class="accommodation-form-step"><span>1</span>{{ t('accommodation.experience.personStep') }}</div>
               <label v-if="!editingId && canPickPilgrim" class="block text-sm">
                 <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.seasonPilgrim') }}</span>
                 <AppRemoteSelect
                   :model-value="form.season_pilgrim_id === '' ? null : form.season_pilgrim_id"
-                  query-key="accommodation-season-pilgrims"
+                  :query-key="['accommodation-season-pilgrims', seasonStore.selectedSeasonId]"
                   :fetcher="listSeasonPilgrimsLookup"
                   :map-option="pilgrimSelectOption"
                   @update:model-value="form.season_pilgrim_id = toSelectId($event)"
@@ -787,22 +874,34 @@ async function submitRelocate(): Promise<void> {
                 <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.seasonPilgrimId') }}</span>
                 <input v-model.number="form.season_pilgrim_id" type="number" min="1" class="w-full rounded-lg border px-3 py-2">
               </label>
+              <div class="accommodation-form-step"><span>2</span>{{ t('accommodation.experience.placeStep') }}</div>
+              <label class="block text-sm">
+                <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.facility') }}</span>
+                <AppSelect :model-value="selectedFacilityId" :options="facilityOptions" searchable clearable :placeholder="t('accommodation.experience.choosePlace')" @update:model-value="selectFacility" />
+              </label>
               <label class="block text-sm">
                 <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.seasonUnit') }}</span>
                 <AppSelect
+                  searchable
                   :model-value="form.season_unit_id === '' ? '' : form.season_unit_id"
-                  :options="seasonUnitOptions"
-                  @update:model-value="form.season_unit_id = toSelectId($event)"
+                  :options="createUnitOptions"
+                  :loading="catalog.units.isFetching.value"
+                  :disabled="selectedFacilityId === '' || catalog.isError.value"
+                  :placeholder="t('accommodation.experience.chooseUnit')"
+                  @update:model-value="selectUnit"
                 />
               </label>
-              <label class="block text-sm">
+              <p v-if="selectedUnit" class="rounded-xl bg-brand-primary-soft p-3 text-xs leading-6 text-brand-primary">{{ t('accommodation.audience.' + selectedUnit.audience) }} · {{ t('accommodation.allocationMode.' + selectedUnit.allocation_mode) }} · {{ t('accommodation.fields.capacity') }}: {{ selectedUnit.capacity ?? '—' }}<br>{{ t('accommodation.experience.capacityHint') }}</p>
+              <label v-if="selectedUnit?.allocation_mode === 'position'" class="block text-sm">
                 <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.seasonPosition') }}</span>
                 <AppSelect
+                  searchable
                   :model-value="form.season_position_id === '' ? '' : form.season_position_id"
                   :options="seasonPositionOptions"
                   @update:model-value="form.season_position_id = toSelectId($event)"
                 />
               </label>
+              <div class="accommodation-form-step"><span>3</span>{{ t('accommodation.experience.datesStep') }}</div>
               <label class="block text-sm">
                 <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.startsAt') }}</span>
                 <input v-model="form.starts_at" type="datetime-local" class="w-full rounded-lg border px-3 py-2">
@@ -815,8 +914,8 @@ async function submitRelocate(): Promise<void> {
             </div>
             <footer class="flex justify-end gap-2 border-t px-5 py-4">
               <button type="button" class="rounded-lg px-3 py-2 text-sm" @click="closeDrawer">{{ t('accommodation.cancel') }}</button>
-              <button type="submit" class="rounded-lg bg-brand-primary px-3 py-2 text-sm font-semibold text-white disabled:opacity-50" :disabled="!canWrite">
-                {{ t('accommodation.save') }}
+              <button type="submit" class="rounded-lg bg-brand-primary px-3 py-2 text-sm font-semibold text-white disabled:opacity-50" :disabled="!canWrite || createMutation.isPending.value || updateMutation.isPending.value">
+                {{ t('accommodation.experience.saveDraft') }}
               </button>
             </footer>
           </form>
@@ -827,7 +926,7 @@ async function submitRelocate(): Promise<void> {
     <Teleport to="body">
       <div v-if="familyPanelOpen" class="fixed inset-0 z-50" role="dialog" aria-modal="true" :aria-label="t('accommodation.confirm.familyTitle')">
         <div class="absolute inset-0 bg-black/30" @click="closeFamilyPanel" />
-        <aside class="app-drawer-panel absolute inset-y-0 start-0 flex w-full max-w-[520px] flex-col bg-brand-surface shadow-xl">
+        <aside role="dialog" aria-modal="true" :aria-label="t('accommodation.experience.eyebrow')" class="accommodation-drawer app-drawer-panel absolute inset-y-0 start-0 flex w-full max-w-[520px] flex-col bg-brand-surface shadow-xl">
           <header class="border-b px-5 py-4">
             <h3 class="text-lg font-bold">{{ t('accommodation.confirm.familyTitle') }}</h3>
             <p class="mt-1 text-sm text-brand-text-secondary">{{ t('accommodation.confirm.familyHint') }}</p>
@@ -838,7 +937,7 @@ async function submitRelocate(): Promise<void> {
                 <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.familyGroup') }}</span>
                 <AppRemoteSelect
                   :model-value="familyGroupId === '' ? null : familyGroupId"
-                  query-key="accommodation-season-family-groups"
+                  :query-key="['accommodation-season-family-groups', seasonStore.selectedSeasonId]"
                   :fetcher="listSeasonFamilyGroupsLookup"
                   :map-option="familySelectOption"
                   @update:model-value="familyGroupId = toSelectId($event)"
@@ -871,7 +970,7 @@ async function submitRelocate(): Promise<void> {
                     <label :for="`family-asg-${row.id}`" class="flex-1 text-sm">
                       <span class="font-medium">#{{ row.id }}</span>
                       <span class="ms-2 text-brand-text-secondary">
-                        {{ t('accommodation.fields.seasonPilgrimId') }} {{ row.season_pilgrim_id }}
+                        {{ pilgrimName(row.season_pilgrim_id) }}
                       </span>
                       <div class="text-xs text-brand-text-muted">{{ formatInterval(row) }}</div>
                     </label>
@@ -912,7 +1011,7 @@ async function submitRelocate(): Promise<void> {
         :aria-label="t('accommodation.ops.checkOutTitle')"
       >
         <div class="absolute inset-0 bg-black/30" @click="closeCheckout" />
-        <aside class="app-drawer-panel absolute inset-y-0 start-0 flex w-full max-w-[480px] flex-col bg-brand-surface shadow-xl">
+        <aside role="dialog" aria-modal="true" :aria-label="t('accommodation.experience.eyebrow')" class="accommodation-drawer app-drawer-panel absolute inset-y-0 start-0 flex w-full max-w-[480px] flex-col bg-brand-surface shadow-xl">
           <header class="border-b px-5 py-4">
             <h3 class="text-lg font-bold">{{ t('accommodation.ops.checkOutTitle') }}</h3>
             <p class="mt-1 text-sm text-brand-text-secondary">{{ t('accommodation.ops.checkOutHint') }}</p>
@@ -963,7 +1062,7 @@ async function submitRelocate(): Promise<void> {
         :aria-label="t('accommodation.ops.relocateTitle')"
       >
         <div class="absolute inset-0 bg-black/30" @click="closeRelocate" />
-        <aside class="app-drawer-panel absolute inset-y-0 start-0 flex w-full max-w-[520px] flex-col bg-brand-surface shadow-xl">
+        <aside role="dialog" aria-modal="true" :aria-label="t('accommodation.experience.eyebrow')" class="accommodation-drawer app-drawer-panel absolute inset-y-0 start-0 flex w-full max-w-[520px] flex-col bg-brand-surface shadow-xl">
           <header class="border-b px-5 py-4">
             <h3 class="text-lg font-bold">{{ t('accommodation.ops.relocateTitle') }}</h3>
             <p class="mt-1 text-sm text-brand-text-secondary">{{ t('accommodation.ops.relocateHint') }}</p>
@@ -978,15 +1077,17 @@ async function submitRelocate(): Promise<void> {
               <label class="block text-sm">
                 <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.destinationSeasonUnit') }}</span>
                 <AppSelect
+                  searchable
                   :model-value="relocateDestUnitId === '' ? '' : relocateDestUnitId"
                   :options="seasonUnitOptions"
                   :disabled="actionBusy"
                   @update:model-value="relocateDestUnitId = toSelectId($event)"
                 />
               </label>
-              <label class="block text-sm">
+              <label v-if="relocateUnit?.allocation_mode === 'position'" class="block text-sm">
                 <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.destinationSeasonPosition') }}</span>
                 <AppSelect
+                  searchable
                   :model-value="relocateDestPositionId === '' ? '' : relocateDestPositionId"
                   :options="relocatePositionOptions"
                   :disabled="actionBusy"
@@ -997,7 +1098,7 @@ async function submitRelocate(): Promise<void> {
                 <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.occurredAt') }}</span>
                 <input v-model="relocateOccurredAt" type="datetime-local" class="w-full rounded-lg border px-3 py-2" :disabled="actionBusy">
               </label>
-              <label class="flex items-center gap-2 text-sm">
+              <label v-if="can('accommodation.check_in')" class="flex items-center gap-2 text-sm">
                 <input v-model="relocateCheckInAfter" type="checkbox" :disabled="actionBusy">
                 <span>{{ t('accommodation.fields.checkInAfter') }}</span>
               </label>

@@ -14,6 +14,8 @@ import { useToast } from '@/shared/composables/useToast'
 
 import AccommodationSeasonBar from '../components/AccommodationSeasonBar.vue'
 import AccommodationSubnav from '../components/AccommodationSubnav.vue'
+import { useAccommodationDialog } from '../composables/useAccommodationDialog'
+import AccommodationWorkspace from '../components/AccommodationWorkspace.vue'
 import { useAccommodationErrors } from '../composables/useAccommodationErrors'
 import {
   useCreatePositionMutation,
@@ -79,8 +81,8 @@ const facilityId = computed(() => {
 /** Reads require view|draft + scope (PERMISSIONS.md). manage_facilities alone cannot GET. */
 const canRead = computed(() => canAny([...ACCOMMODATION_READ_PERMISSIONS]))
 const { data: facility, isLoading, isError, refetch } = useFacilityQuery(facilityId, canRead)
-const { data: structuresData, isLoading: structuresLoading } = useStructuresQuery(facilityId, canRead)
-const { data: unitsData, isLoading: unitsLoading } = useUnitsQuery(facilityId, canRead)
+const { data: structuresData, isLoading: structuresLoading, isError: structuresError, refetch: refetchStructures } = useStructuresQuery(facilityId, canRead)
+const { data: unitsData, isLoading: unitsLoading, isError: unitsError, refetch: refetchUnits } = useUnitsQuery(facilityId, canRead)
 
 const structures = computed(() => structuresData.value?.data ?? [])
 const units = computed(() => unitsData.value?.data ?? [])
@@ -112,7 +114,7 @@ const orphanUnits = computed(() => unitsByStructure.value.get('none') ?? [])
 const pageReady = computed(() => {
   if (!canRead.value) return 'forbidden'
   if (isLoading.value || structuresLoading.value || unitsLoading.value) return 'loading'
-  if (isError.value || !facility.value) return 'error'
+  if (isError.value || structuresError.value || unitsError.value || !facility.value) return 'error'
   return 'ready'
 })
 
@@ -399,10 +401,11 @@ async function deletePosition(row: AccommodationPosition): Promise<void> {
 watch(facilityId, () => {
   expandedUnitId.value = null
 })
+useAccommodationDialog(() => drawerKind.value !== null, closeDrawer)
 </script>
 
 <template>
-  <div class="space-y-5">
+  <div class="accommodation-page space-y-5">
     <AppPageHeader
       :title="facility?.name ?? t('accommodation.facilityDetails.title')"
       :subtitle="t('accommodation.facilityDetails.subtitle')"
@@ -440,6 +443,7 @@ watch(facilityId, () => {
 
     <AccommodationSubnav />
     <AccommodationSeasonBar />
+    <AccommodationWorkspace />
 
     <div v-if="!canRead" class="rounded-xl border border-dashed border-brand-border px-4 py-10 text-center text-sm text-brand-text-secondary">
       {{ t('accommodation.errors.forbidden') }}
@@ -449,7 +453,7 @@ watch(facilityId, () => {
     </div>
     <div v-else-if="pageReady === 'error'" class="rounded-xl border border-red-200 bg-red-50 px-4 py-8 text-center">
       <p class="text-sm text-red-800">{{ t('accommodation.errors.load') }}</p>
-      <button type="button" class="mt-3 text-sm font-semibold text-red-900 underline" @click="() => refetch()">
+      <button type="button" class="mt-3 text-sm font-semibold text-red-900 underline" @click="() => { refetch(); refetchStructures(); refetchUnits() }">
         {{ t('accommodation.retry') }}
       </button>
     </div>
@@ -491,7 +495,7 @@ watch(facilityId, () => {
         <div v-if="structures.length === 0" class="rounded-xl border border-dashed border-brand-border px-4 py-8 text-center text-sm text-brand-text-secondary">
           {{ t('accommodation.facilityDetails.structuresEmpty') }}
         </div>
-        <div v-else class="overflow-hidden rounded-xl border border-brand-border">
+        <div v-else class="overflow-x-auto rounded-xl border border-brand-border">
           <table class="min-w-full text-sm">
             <thead class="bg-brand-bg text-brand-text-secondary">
               <tr>
@@ -613,7 +617,7 @@ watch(facilityId, () => {
             </button>
           </PermissionGuard>
         </div>
-        <div class="overflow-hidden rounded-xl border border-brand-border">
+        <div class="overflow-x-auto rounded-xl border border-brand-border">
           <table class="min-w-full text-sm">
             <tbody>
               <tr v-for="unit in orphanUnits" :key="unit.id" class="border-t border-brand-border first:border-t-0">
@@ -645,8 +649,8 @@ watch(facilityId, () => {
     <Teleport to="body">
       <div v-if="drawerKind" class="fixed inset-0 z-50" role="presentation">
         <div class="absolute inset-0 bg-black/30" @click="closeDrawer" />
-        <aside class="app-drawer-panel absolute inset-y-0 start-0 flex w-full max-w-[480px] flex-col bg-brand-surface shadow-xl">
-          <header class="border-b border-brand-border px-5 py-4">
+        <aside role="dialog" aria-modal="true" :aria-label="t('accommodation.experience.eyebrow')" class="accommodation-drawer app-drawer-panel absolute inset-y-0 start-0 flex w-full max-w-[480px] flex-col bg-brand-surface shadow-xl">
+          <header class="relative pe-14 border-b border-brand-border px-5 py-4">
             <h3 class="text-lg font-bold">
               {{
                 drawerKind === 'facility'
@@ -664,6 +668,7 @@ watch(facilityId, () => {
                         : t('accommodation.positions.createTitle')
               }}
             </h3>
+          <button type="button" class="absolute end-3 top-3 flex h-9 w-9 items-center justify-center rounded-xl text-2xl text-brand-text-secondary hover:bg-brand-primary-soft" :aria-label="t('accommodation.cancel')" @click="closeDrawer"><span aria-hidden="true">×</span></button>
           </header>
           <form class="flex flex-1 flex-col" @submit.prevent="
             drawerKind === 'facility' ? submitFacility()
@@ -690,6 +695,7 @@ watch(facilityId, () => {
                 <label class="block text-sm">
                   <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.kind') }}</span>
                   <AppSelect
+                  searchable
                     :model-value="structureForm.kind"
                     :options="[
                       { value: 'building', label: t('accommodation.structureKind.building') },
@@ -705,6 +711,7 @@ watch(facilityId, () => {
                 <label class="block text-sm">
                   <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.facilityDetails.parentStructure') }}</span>
                   <AppSelect
+                  searchable
                     :model-value="structureForm.parent_id === '' ? '' : structureForm.parent_id"
                     :options="parentStructureOptions"
                     @update:model-value="structureForm.parent_id = $event === '' ? '' : Number($event)"
@@ -715,6 +722,7 @@ watch(facilityId, () => {
                 <label class="block text-sm">
                   <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.kind') }}</span>
                   <AppSelect
+                  searchable
                     :model-value="unitForm.unit_kind"
                     :options="[
                       { value: 'room', label: t('accommodation.unitKind.room') },
@@ -730,6 +738,7 @@ watch(facilityId, () => {
                 <label class="block text-sm">
                   <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.facilityDetails.structure') }}</span>
                   <AppSelect
+                  searchable
                     :model-value="unitForm.structure_id === '' ? '' : unitForm.structure_id"
                     :options="unitStructureOptions"
                     @update:model-value="unitForm.structure_id = $event === '' ? '' : Number($event)"
