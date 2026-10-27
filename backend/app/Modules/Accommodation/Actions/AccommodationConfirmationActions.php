@@ -380,7 +380,9 @@ final class AccommodationConfirmationActions
     {
         // Earlier prefix pairs were already checked on previous iterations.
         $last = array_pop($batch);
-        if ($last === null) return;
+        if ($last === null) {
+            return;
+        }
         foreach ($batch as $previous) {
             if ($previous['family_group_id'] !== $last['family_group_id']
                 && $this->capacity->intervalsOverlap($previous['starts_at'], $previous['ends_at'], $last['starts_at'], $last['ends_at'])) {

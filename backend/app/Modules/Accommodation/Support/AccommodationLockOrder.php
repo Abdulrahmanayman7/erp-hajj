@@ -9,8 +9,8 @@ use App\Modules\Accommodation\Models\AccommodationSeasonPosition;
 use App\Modules\Accommodation\Models\AccommodationSeasonUnit;
 use App\Modules\Accommodation\Models\AccommodationUnit;
 use Illuminate\Database\QueryException;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Deterministic InnoDB lock order for future confirmation (Gate B foundation).

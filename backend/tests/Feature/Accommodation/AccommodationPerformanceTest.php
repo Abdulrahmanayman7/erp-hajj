@@ -1,8 +1,8 @@
 <?php
 
-use App\Modules\Accommodation\Models\AccommodationAssignment;
-use App\Modules\Accommodation\Actions\AccommodationConfirmationActions;
 use App\Core\Authorization\Events\AuthorizationSecurityEvent;
+use App\Modules\Accommodation\Actions\AccommodationConfirmationActions;
+use App\Modules\Accommodation\Models\AccommodationAssignment;
 use App\Modules\Audit\Models\AuditLog;
 use App\Modules\SeasonPilgrims\Context\SeasonContext;
 use App\Modules\SeasonPilgrims\Models\SeasonFamilyGroup;

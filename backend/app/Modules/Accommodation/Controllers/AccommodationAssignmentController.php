@@ -49,8 +49,12 @@ class AccommodationAssignmentController
         if ($canReadPilgrims) {
             $query->with(['seasonPilgrim:id,pilgrim_id,reference_number', 'seasonPilgrim.pilgrim:id,full_name']);
         }
-        if (! empty($filters['booking_status'])) $query->where('booking_status', $filters['booking_status']);
-        if (! empty($filters['season_unit_id'])) $query->where('season_unit_id', $filters['season_unit_id']);
+        if (! empty($filters['booking_status'])) {
+            $query->where('booking_status', $filters['booking_status']);
+        }
+        if (! empty($filters['season_unit_id'])) {
+            $query->where('season_unit_id', $filters['season_unit_id']);
+        }
         if (! empty($filters['facility_id'])) {
             $query->whereHas('seasonUnit', fn ($unit) => $unit->where('facility_id', $filters['facility_id']));
         }

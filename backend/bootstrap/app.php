@@ -5,6 +5,7 @@ use App\Core\Auth\Middleware\EnsureUserIsActive;
 use App\Core\Authorization\Exceptions\AuthorizationDomainException;
 use App\Core\Shared\ApiResponse;
 use App\Core\Shared\Middleware\AssignCorrelationId;
+use App\Core\Shared\Middleware\UseArabicLocale;
 use App\Core\Tenancy\Middleware\EnsurePlatformUser;
 use App\Core\Tenancy\Middleware\EnsureTenantIsActive;
 use App\Core\Tenancy\Middleware\EnterPlatformContext;
@@ -51,7 +52,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->statefulApi();
 
         $middleware->api(prepend: [
-            \App\Core\Shared\Middleware\UseArabicLocale::class,
+            UseArabicLocale::class,
             AssignCorrelationId::class,
             ResolveTenantContext::class,
         ]);

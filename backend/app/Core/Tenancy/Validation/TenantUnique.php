@@ -6,6 +6,7 @@ use App\Core\Tenancy\TenantContext;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Lang;
 
 /**
  * Tenant-scoped "unique" rule: uniqueness is checked within the current
@@ -45,7 +46,7 @@ final class TenantUnique implements ValidationRule
         }
 
         if ($query->exists()) {
-            $fail('validation.unique')->translate(['attribute' => \Illuminate\Support\Facades\Lang::has('validation.attributes.'.$attribute) ? __('validation.attributes.'.$attribute) : 'البيان المطلوب']);
+            $fail('validation.unique')->translate(['attribute' => Lang::has('validation.attributes.'.$attribute) ? __('validation.attributes.'.$attribute) : 'البيان المطلوب']);
         }
     }
 }

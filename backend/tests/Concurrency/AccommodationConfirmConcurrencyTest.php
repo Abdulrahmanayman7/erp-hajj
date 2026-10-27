@@ -669,7 +669,6 @@ it('serializes confirmation against position deactivation without leaving an inv
     }
 });
 
-
 it('serializes two overlapping batches without exceeding numeric capacity', function (): void {
     [$tenant, $season, $actor, $unit, $drafts] = accConfirmRaceFixture(capacity: 2, draftCount: 4);
     $jobs = [];

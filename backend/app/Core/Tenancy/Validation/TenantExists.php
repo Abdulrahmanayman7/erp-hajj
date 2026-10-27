@@ -6,6 +6,7 @@ use App\Core\Tenancy\TenantContext;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Lang;
 
 /**
  * Tenant-scoped "exists" rule (docs/02-architecture/MULTI_TENANCY.md §8).
@@ -30,7 +31,7 @@ final class TenantExists implements ValidationRule
             ->exists();
 
         if (! $exists) {
-            $fail('validation.exists')->translate(['attribute' => \Illuminate\Support\Facades\Lang::has('validation.attributes.'.$attribute) ? __('validation.attributes.'.$attribute) : 'البيان المطلوب']);
+            $fail('validation.exists')->translate(['attribute' => Lang::has('validation.attributes.'.$attribute) ? __('validation.attributes.'.$attribute) : 'البيان المطلوب']);
         }
     }
 }

@@ -3,7 +3,6 @@
 use App\Modules\Accommodation\Models\AccommodationAssignment;
 use App\Modules\Accommodation\Models\AccommodationSeasonUnit;
 use App\Modules\Accommodation\Support\AccommodationCapacityGuard;
-use App\Modules\Audit\Models\AuditLog;
 use App\Modules\SeasonPilgrims\Models\SeasonFamilyGroup;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Events\QueryExecuted;
@@ -55,7 +54,9 @@ it('records a reproducible isolated Phase 3 performance baseline', function (): 
                 'effective_ends_at' => $start->addHour()->format('Y-m-d H:i:s'),
             ];
         }
-        foreach (array_chunk($history, 100) as $chunk) DB::table('accommodation_assignments')->insert($chunk);
+        foreach (array_chunk($history, 100) as $chunk) {
+            DB::table('accommodation_assignments')->insert($chunk);
+        }
     });
     $auditRows = [];
     for ($i = 0; $i < 1000; $i++) {
@@ -69,11 +70,15 @@ it('records a reproducible isolated Phase 3 performance baseline', function (): 
             'created_at' => CarbonImmutable::parse('2026-10-01 UTC')->addSeconds($i)->format('Y-m-d H:i:s'),
         ];
     }
-    foreach (array_chunk($auditRows, 50) as $chunk) DB::table('audit_logs')->insert($chunk);
+    foreach (array_chunk($auditRows, 50) as $chunk) {
+        DB::table('audit_logs')->insert($chunk);
+    }
 
     $metrics = (object) ['active' => false, 'count' => 0, 'db_ms' => 0, 'queries' => []];
     DB::listen(function (QueryExecuted $query) use ($metrics): void {
-        if (! $metrics->active) return;
+        if (! $metrics->active) {
+            return;
+        }
         $metrics->count++;
         $metrics->db_ms += $query->time;
         if (! isset($metrics->queries[$query->sql])) {
@@ -83,6 +88,7 @@ it('records a reproducible isolated Phase 3 performance baseline', function (): 
     });
     $percentile = function (array $values, float $p): float {
         sort($values);
+
         return round((float) $values[max(0, (int) ceil(count($values) * $p) - 1)], 4);
     };
     $measure = function (string $name, Closure $operation, int $samples = 21) use ($metrics, $percentile, $driver): array {
@@ -90,9 +96,13 @@ it('records a reproducible isolated Phase 3 performance baseline', function (): 
         $plans = [];
         for ($i = -2; $i < $samples; $i++) {
             DB::beginTransaction();
-            $metrics->count = 0; $metrics->db_ms = 0; $metrics->queries = [];
+            $metrics->count = 0;
+            $metrics->db_ms = 0;
+            $metrics->queries = [];
             $metrics->active = true;
-            if (function_exists('memory_reset_peak_usage')) memory_reset_peak_usage();
+            if (function_exists('memory_reset_peak_usage')) {
+                memory_reset_peak_usage();
+            }
             $memory = memory_get_usage();
             $start = hrtime(true);
             try {
@@ -101,12 +111,16 @@ it('records a reproducible isolated Phase 3 performance baseline', function (): 
                 $peak = memory_get_peak_usage();
                 $metrics->active = false;
                 $payload = is_string($response) ? $response : json_encode($response);
-                if ($i >= 0) $rows[] = ['ms' => $elapsed, 'queries' => $metrics->count, 'db_ms' => $metrics->db_ms,
-                    'memory_bytes' => $memory, 'peak_bytes' => $peak, 'peak_delta_bytes' => max(0, $peak - $memory),
-                    'payload_bytes' => strlen($payload)];
+                if ($i >= 0) {
+                    $rows[] = ['ms' => $elapsed, 'queries' => $metrics->count, 'db_ms' => $metrics->db_ms,
+                        'memory_bytes' => $memory, 'peak_bytes' => $peak, 'peak_delta_bytes' => max(0, $peak - $memory),
+                        'payload_bytes' => strlen($payload)];
+                }
                 if ($i === 0 && $driver === 'mysql') {
                     foreach ($metrics->queries as $query) {
-                        if (! str_starts_with(strtolower($query['sql']), 'select')) continue;
+                        if (! str_starts_with(strtolower($query['sql']), 'select')) {
+                            continue;
+                        }
                         $plans[] = ['query' => $query['sql'], 'executions' => $query['count'],
                             'plan' => DB::select('EXPLAIN '.$query['sql'], $query['bindings'])];
                     }
@@ -125,6 +139,7 @@ it('records a reproducible isolated Phase 3 performance baseline', function (): 
             'median_peak_delta_bytes' => $percentile(array_column($rows, 'peak_delta_bytes'), .5),
             'payload_bytes' => $rows[0]['payload_bytes'], 'raw' => $rows, 'explain' => $plans];
         fwrite(STDERR, $name.' median='.$summary['median_ms'].'ms queries='.$summary['median_queries'].PHP_EOL);
+
         return $summary;
     };
     $results = [];
@@ -139,12 +154,17 @@ it('records a reproducible isolated Phase 3 performance baseline', function (): 
     $results[] = $measure('api_audit_search_1000', fn () => spaGetJson('/api/v1/audit-logs?search='.urlencode('إقامة').'&per_page=100', $world['header'])->assertOk()->getContent());
     $results[] = $measure('capacity_decrease_history_1000', fn () => withTenant($actor->tenant, function () use ($world): string {
         app(AccommodationCapacityGuard::class)->assertCapacityDecreaseAllowed(AccommodationSeasonUnit::query()->findOrFail($world['season_unit']['id']), 200);
+
         return 'ok';
     }), 7);
     $label = getenv('PHASE3_LABEL') ?: 'unnamed';
-    if (! preg_match('/^[a-z0-9_-]+$/', $label)) throw new RuntimeException('Invalid benchmark label.');
+    if (! preg_match('/^[a-z0-9_-]+$/', $label)) {
+        throw new RuntimeException('Invalid benchmark label.');
+    }
     $directory = base_path('../docs/performance/phase3');
-    if (! is_dir($directory)) mkdir($directory, 0777, true);
+    if (! is_dir($directory)) {
+        mkdir($directory, 0777, true);
+    }
     file_put_contents($directory.'/'.$driver.'-'.$label.'.json', json_encode([
         'label' => $label, 'driver' => $driver, 'version' => $driver === 'mysql' ? DB::selectOne('select version() as version')->version : DB::selectOne('select sqlite_version() as version')->version,
         'php' => PHP_VERSION, 'fixture' => ['drafts' => 100, 'historical_stays' => 1000, 'audit_rows' => 1000, 'audit_metadata_bytes_per_row' => 16384],

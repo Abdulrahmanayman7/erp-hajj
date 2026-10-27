@@ -1,6 +1,5 @@
 <?php
 
-use App\Modules\Accommodation\Models\AccommodationAssignment;
 use App\Modules\Accommodation\Models\AccommodationFacilityScope;
 use App\Modules\SeasonPilgrims\Models\Season;
 use Laravel\Sanctum\Sanctum;

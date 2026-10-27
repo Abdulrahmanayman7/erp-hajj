@@ -121,8 +121,8 @@ final class AccommodationCapacityGuard
      * candidate windows: an unrelated historical peak in a gap must not reject
      * an otherwise valid batch. Each stay retains its own half-open endpoints.
      *
-     * @param Collection<int, AccommodationAssignment> $batch
-     * @param list<int> $excludeAssignmentIds
+     * @param  Collection<int, AccommodationAssignment>  $batch
+     * @param  list<int>  $excludeAssignmentIds
      */
     public function assertSeasonUnitBatchPeak(AccommodationSeasonUnit $seasonUnit, Collection $batch, array $excludeAssignmentIds): void
     {
@@ -141,7 +141,9 @@ final class AccommodationCapacityGuard
                 $windows[] = [$row->starts_at, $row->effective_ends_at];
             }
         }
-        if ($windows === []) return;
+        if ($windows === []) {
+            return;
+        }
         $existing = $this->confirmedOverlappingQuery($windows[0][0], $windows[count($windows) - 1][1], $excludeAssignmentIds)
             ->where('season_unit_id', $seasonUnit->id)
             ->get(['starts_at', 'effective_ends_at']);

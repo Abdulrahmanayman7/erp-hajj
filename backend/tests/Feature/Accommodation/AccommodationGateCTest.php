@@ -357,7 +357,6 @@ it('rejects ineligible SeasonPilgrim statuses at confirmation', function (): voi
         ->assertJsonPath('code', 'ACCOMMODATION_INVALID_REFERENCE');
 });
 
-
 it('confirms a batch using real peak intervals and rolls back an over-capacity batch', function (): void {
     [$actor, $season] = accGateCActor();
     $world = accGateCWorld($actor, $season, audience: 'family', capacity: 2);
