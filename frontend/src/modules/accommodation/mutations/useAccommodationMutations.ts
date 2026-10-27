@@ -127,7 +127,7 @@ export function useDeleteUnitMutation() {
 export function useCreatePositionMutation() {
   const invalidate = useInvalidateAccommodation()
   return useMutation({
-    mutationFn: ({ unitId, payload }: { unitId: number; payload: { code: string } }) =>
+    mutationFn: ({ unitId, payload }: { unitId: number; payload: Parameters<typeof createPosition>[1] }) =>
       createPosition(unitId, payload),
     onSuccess: invalidate,
   })
@@ -136,7 +136,7 @@ export function useCreatePositionMutation() {
 export function useUpdatePositionMutation() {
   const invalidate = useInvalidateAccommodation()
   return useMutation({
-    mutationFn: ({ id, payload }: { id: number; payload: { code: string } }) =>
+    mutationFn: ({ id, payload }: { id: number; payload: Parameters<typeof updatePosition>[1] }) =>
       updatePosition(id, payload),
     onSuccess: invalidate,
   })

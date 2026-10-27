@@ -668,3 +668,23 @@ it('serializes confirmation against position deactivation without leaving an inv
         expect(collect($outcomes)->firstWhere('action', 'confirm')['code'])->toBe('ACCOMMODATION_CAPACITY_CONFLICT');
     }
 });
+
+
+it('serializes two overlapping batches without exceeding numeric capacity', function (): void {
+    [$tenant, $season, $actor, $unit, $drafts] = accConfirmRaceFixture(capacity: 2, draftCount: 4);
+    $jobs = [];
+    foreach (array_chunk($drafts, 2) as $batch) {
+        $jobs[] = [
+            'action' => 'confirm_batch', 'tenant_id' => $tenant->id,
+            'season_id' => $season->id, 'actor_id' => $actor->id,
+            'assignment_ids' => array_map(fn ($row) => $row->id, $batch),
+        ];
+    }
+    $outcomes = collect(accConfirmJobsRace($jobs));
+    expect($outcomes->where('ok', true))->toHaveCount(1);
+    expect($outcomes->firstWhere('ok', false)['code'])->toBe('ACCOMMODATION_CAPACITY_CONFLICT');
+    withTenant($tenant, function () use ($unit): void {
+        expect(AccommodationAssignment::query()->where('season_unit_id', $unit->id)->where('booking_status', 'confirmed')->count())->toBe(2);
+        expect(AccommodationAssignment::query()->where('season_unit_id', $unit->id)->where('booking_status', 'draft')->count())->toBe(2);
+    });
+});

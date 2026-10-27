@@ -9,6 +9,7 @@ use App\Modules\Accommodation\Models\AccommodationFacility;
 use App\Modules\Accommodation\Models\AccommodationStructure;
 use App\Modules\Accommodation\Models\AccommodationUnit;
 use App\Modules\Accommodation\Support\AccommodationAudit;
+use App\Modules\Accommodation\Support\AccommodationCodeGenerator;
 use App\Modules\Accommodation\Support\AccommodationPersistence;
 use App\Modules\SeasonPilgrims\Context\SeasonContext;
 use App\Modules\SeasonPilgrims\Support\SeasonGuard;
@@ -33,7 +34,9 @@ final class AccommodationUnitActions
                 'facility_id' => $facility->id,
                 'structure_id' => $structureId,
                 'unit_kind' => $data['unit_kind'],
-                'code' => trim((string) $data['code']),
+                'code' => isset($data['code']) && trim((string) $data['code']) !== ''
+                    ? trim((string) $data['code'])
+                    : app(AccommodationCodeGenerator::class)->next($data['unit_kind']),
                 'created_by' => $actor->id,
             ]));
 

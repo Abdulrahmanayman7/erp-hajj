@@ -30,7 +30,7 @@ final class TenantExists implements ValidationRule
             ->exists();
 
         if (! $exists) {
-            $fail('validation.exists')->translate(['attribute' => $attribute]);
+            $fail('validation.exists')->translate(['attribute' => \Illuminate\Support\Facades\Lang::has('validation.attributes.'.$attribute) ? __('validation.attributes.'.$attribute) : 'البيان المطلوب']);
         }
     }
 }

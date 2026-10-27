@@ -21,7 +21,7 @@ class UnauthorizedPlatformContextException extends RuntimeException
     public function render(): JsonResponse
     {
         return ApiResponse::error(
-            message: 'This operation is not available.',
+            message: 'هذه العملية غير متاحة.',
             code: 'PLATFORM_CONTEXT_UNAUTHORIZED',
             status: 403,
         );

@@ -14,7 +14,7 @@ describe('auditDisplay', () => {
   it('maps known event codes to Arabic labels', () => {
     expect(auditEventLabel('TASK_ASSIGNED')).toBe('تم إسناد مهمة')
     expect(auditEventLabel('DOCUMENT_DOWNLOADED')).toBe('تم تنزيل مستند')
-    expect(auditEventLabel('UNKNOWN_EVENT_X')).toBe('UNKNOWN_EVENT_X')
+    expect(auditEventLabel('UNKNOWN_EVENT_X')).toBe('حدث غير مصنّف')
   })
 
   it('renders system actor as النظام', () => {
@@ -35,7 +35,7 @@ describe('auditDisplay', () => {
   it('formats before/after field labels and values', () => {
     expect(auditFieldLabel('status')).toBe('الحالة')
     expect(formatAuditValue('draft')).toBe('draft')
-    expect(formatAuditValue({ a: 1 })).toContain('a')
+    expect(formatAuditValue({ a: 1 })).toContain('بيان إضافي: 1')
   })
 
   it('resolves deep links only when available', () => {

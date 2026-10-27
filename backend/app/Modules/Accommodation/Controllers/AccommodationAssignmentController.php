@@ -39,6 +39,37 @@ class AccommodationAssignmentController
         if ($ids !== null) {
             $query->whereIn('season_unit_id', AccommodationSeasonUnit::query()->where('season_id', $seasonId)->whereIn('facility_id', $ids)->select('id'));
         }
+        $filters = $request->validate([
+            'search' => ['nullable', 'string', 'max:150'],
+            'booking_status' => ['nullable', 'in:draft,confirmed,completed,cancelled'],
+            'facility_id' => ['nullable', 'integer', 'min:1'],
+            'season_unit_id' => ['nullable', 'integer', 'min:1'],
+        ]);
+        $canReadPilgrims = $request->user()->hasPermission('season_pilgrims.view');
+        if ($canReadPilgrims) {
+            $query->with(['seasonPilgrim:id,pilgrim_id,reference_number', 'seasonPilgrim.pilgrim:id,full_name']);
+        }
+        if (! empty($filters['booking_status'])) $query->where('booking_status', $filters['booking_status']);
+        if (! empty($filters['season_unit_id'])) $query->where('season_unit_id', $filters['season_unit_id']);
+        if (! empty($filters['facility_id'])) {
+            $query->whereHas('seasonUnit', fn ($unit) => $unit->where('facility_id', $filters['facility_id']));
+        }
+        $search = trim($filters['search'] ?? '');
+        if ($search !== '') {
+            // Keep text matching parameterized. Name/reference search requires the existing pilgrim permission.
+            $query->where(function ($match) use ($search, $canReadPilgrims): void {
+                $match->whereHas('seasonUnit.unit', fn ($unit) => $unit->where('code', 'like', '%'.$search.'%'));
+                if (ctype_digit($search)) {
+                    $match->orWhere('id', (int) $search)->orWhere('season_pilgrim_id', (int) $search)->orWhere('season_unit_id', (int) $search);
+                }
+                if ($canReadPilgrims) {
+                    $match->orWhereHas('seasonPilgrim', function ($pilgrim) use ($search): void {
+                        $pilgrim->where('reference_number', 'like', '%'.$search.'%')
+                            ->orWhereHas('pilgrim', fn ($person) => $person->where('full_name', 'like', '%'.$search.'%'));
+                    });
+                }
+            });
+        }
         $page = $query->paginate(AccommodationPagination::perPage($request->query('per_page')));
 
         return ApiResponse::success(data: AccommodationAssignmentResource::collection($page->items())->resolve(), meta: [

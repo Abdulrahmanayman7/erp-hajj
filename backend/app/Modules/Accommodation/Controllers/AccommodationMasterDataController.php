@@ -149,6 +149,7 @@ class AccommodationMasterDataController
         $this->authorize('view', $unit);
         $page = AccommodationPosition::query()
             ->where('unit_id', $unit->id)
+            ->when(trim((string) $request->query('search', '')) !== '', fn ($query) => $query->where('code', 'like', '%'.mb_substr(trim((string) $request->query('search')), 0, 150).'%'))
             ->orderBy('code')
             ->paginate(AccommodationPagination::perPage($request->query('per_page')));
 

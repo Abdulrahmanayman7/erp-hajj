@@ -21,7 +21,7 @@ class InvalidTenantContextException extends RuntimeException
     public function render(): JsonResponse
     {
         return ApiResponse::error(
-            message: 'Your account has an invalid organization relationship. Please contact support.',
+            message: 'تعذر تحديد الشركة المرتبطة بحسابك. يرجى التواصل مع الدعم.',
             code: 'TENANT_CONTEXT_INVALID',
             status: 403,
         );

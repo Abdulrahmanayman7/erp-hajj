@@ -13,7 +13,7 @@ describe('auditDisplay extras', () => {
   })
 
   it('falls back for unknown event codes without crashing', () => {
-    expect(auditEventLabel('FUTURE_EVENT')).toBe('FUTURE_EVENT')
+    expect(auditEventLabel('FUTURE_EVENT')).toBe('حدث غير مصنّف')
   })
 
   it('rejects unsupported entity deep links', () => {

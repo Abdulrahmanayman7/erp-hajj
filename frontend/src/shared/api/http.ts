@@ -1,3 +1,5 @@
+import { assertSession, sessionFetch, sessionGeneration } from './sessionLifetime'
+
 /**
  * Shared API client for the ERP Hajj REST API (/api/v1).
  * Sanctum SPA: credentials include + CSRF cookie bootstrap.
@@ -23,7 +25,7 @@ export class ApiError extends Error {
   readonly errors: Record<string, string[]> | undefined
 
   constructor(status: number, body: ApiErrorBody | undefined) {
-    super(body?.message ?? `Request failed with status ${status}`)
+    super(body?.message ?? (status === 0 ? 'تعذر الاتصال بالخادم. تحقق من الاتصال وحاول مجددًا.' : 'تعذر إكمال الطلب. حاول مجددًا.'))
     this.name = 'ApiError'
     this.status = status
     this.code = body?.code
@@ -49,7 +51,7 @@ export async function ensureCsrfCookie(): Promise<void> {
     return
   }
 
-  const response = await fetch(`${baseUrl}/sanctum/csrf-cookie`, {
+  const response = await sessionFetch(`${baseUrl}/sanctum/csrf-cookie`, {
     method: 'GET',
     credentials: 'include',
     headers: { Accept: 'application/json' },
@@ -69,7 +71,10 @@ export function resetCsrfBootstrap(): void {
 async function parseBody(
   response: Response,
 ): Promise<ApiSuccess<unknown> | ApiErrorBody | undefined> {
-  return (await response.json().catch(() => undefined)) as
+  return (await response.json().catch((error: unknown) => {
+    if (error instanceof DOMException && error.name === 'AbortError') throw error
+    return undefined
+  })) as
     | ApiSuccess<unknown>
     | ApiErrorBody
     | undefined
@@ -78,6 +83,7 @@ async function parseBody(
 export interface ApiRequestOptions {
   /** Extra request headers (e.g. X-Season-Id). Never use for tenant identity. */
   headers?: Record<string, string>
+  signal?: AbortSignal
 }
 
 async function request<TData>(
@@ -104,8 +110,9 @@ async function request<TData>(
 
   let response: Response
   try {
-    response = await fetch(`${baseUrl}${path}`, {
+    response = await sessionFetch(`${baseUrl}${path}`, {
       method,
+      signal: options?.signal,
       headers,
       credentials: 'include',
       body: body === undefined ? undefined : JSON.stringify(body),
@@ -116,7 +123,9 @@ async function request<TData>(
 
   if (response.status === 419 && allowCsrfRetry) {
     resetCsrfBootstrap()
+    const generation = sessionGeneration.value
     await ensureCsrfCookie()
+    assertSession(generation)
     return request<TData>(method, path, body, false, options)
   }
 
@@ -145,7 +154,9 @@ export async function apiPost<TData>(
   options?: ApiRequestOptions & { csrf?: boolean },
 ): Promise<ApiSuccess<TData>> {
   if (options?.csrf !== false) {
+    const generation = sessionGeneration.value
     await ensureCsrfCookie()
+    assertSession(generation)
   }
 
   return request<TData>('POST', path, body, true, options)
@@ -156,7 +167,9 @@ export async function apiPut<TData>(
   body?: unknown,
   options?: ApiRequestOptions,
 ): Promise<ApiSuccess<TData>> {
+  const generation = sessionGeneration.value
   await ensureCsrfCookie()
+  assertSession(generation)
   return request<TData>('PUT', path, body, true, options)
 }
 
@@ -165,7 +178,9 @@ export async function apiPatch<TData>(
   body?: unknown,
   options?: ApiRequestOptions,
 ): Promise<ApiSuccess<TData>> {
+  const generation = sessionGeneration.value
   await ensureCsrfCookie()
+  assertSession(generation)
   return request<TData>('PATCH', path, body, true, options)
 }
 
@@ -173,7 +188,9 @@ export async function apiDelete<TData = null>(
   path: string,
   options?: ApiRequestOptions,
 ): Promise<ApiSuccess<TData>> {
+  const generation = sessionGeneration.value
   await ensureCsrfCookie()
+  assertSession(generation)
   return request<TData>('DELETE', path, undefined, true, options)
 }
 
@@ -185,7 +202,9 @@ export async function apiPostFormData<TData>(
   formData: FormData,
   allowCsrfRetry = true,
 ): Promise<ApiSuccess<TData>> {
+  const generation = sessionGeneration.value
   await ensureCsrfCookie()
+  assertSession(generation)
 
   const headers: Record<string, string> = {
     Accept: 'application/json',
@@ -199,7 +218,7 @@ export async function apiPostFormData<TData>(
 
   let response: Response
   try {
-    response = await fetch(`${baseUrl}${path}`, {
+    response = await sessionFetch(`${baseUrl}${path}`, {
       method: 'POST',
       headers,
       credentials: 'include',
@@ -211,7 +230,9 @@ export async function apiPostFormData<TData>(
 
   if (response.status === 419 && allowCsrfRetry) {
     resetCsrfBootstrap()
+    const generation = sessionGeneration.value
     await ensureCsrfCookie()
+    assertSession(generation)
     return apiPostFormData<TData>(path, formData, false)
   }
 
@@ -259,7 +280,9 @@ export async function apiDownloadBlob(
   path: string,
   allowCsrfRetry = true,
 ): Promise<BlobDownloadResult> {
+  const generation = sessionGeneration.value
   await ensureCsrfCookie()
+  assertSession(generation)
 
   const headers: Record<string, string> = {
     Accept: '*/*',
@@ -273,7 +296,7 @@ export async function apiDownloadBlob(
 
   let response: Response
   try {
-    response = await fetch(`${baseUrl}${path}`, {
+    response = await sessionFetch(`${baseUrl}${path}`, {
       method: 'GET',
       headers,
       credentials: 'include',
@@ -284,7 +307,9 @@ export async function apiDownloadBlob(
 
   if (response.status === 419 && allowCsrfRetry) {
     resetCsrfBootstrap()
+    const generation = sessionGeneration.value
     await ensureCsrfCookie()
+    assertSession(generation)
     return apiDownloadBlob(path, false)
   }
 

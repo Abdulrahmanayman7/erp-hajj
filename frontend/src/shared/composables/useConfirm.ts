@@ -1,3 +1,4 @@
+import { sessionGeneration } from '@/shared/api/sessionLifetime'
 import { readonly, ref } from 'vue'
 
 export type ConfirmVariant = 'danger' | 'primary' | 'warning'
@@ -54,10 +55,17 @@ function confirm(options: ConfirmOptions): Promise<boolean> {
 }
 
 export function useConfirm() {
+  const generation = sessionGeneration.value
   return {
     state: readonly(state),
-    confirm,
+    confirm: (options: ConfirmOptions) => generation === sessionGeneration.value ? confirm(options) : Promise.resolve(false),
     accept: () => close(true),
     cancel: () => close(false),
   }
+}
+
+export function clearConfirmation(): void {
+  close(false)
+  state.value.title = ''
+  state.value.message = ''
 }

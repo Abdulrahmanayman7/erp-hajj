@@ -7,7 +7,7 @@ it('returns the standardized success envelope from /api/v1/health', function ():
         ->assertOk()
         ->assertJson([
             'success' => true,
-            'message' => 'ERP Hajj API is running',
+            'message' => 'خدمة النظام تعمل',
         ])
         ->assertJsonStructure([
             'success',

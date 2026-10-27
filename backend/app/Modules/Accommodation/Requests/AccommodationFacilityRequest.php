@@ -21,7 +21,7 @@ class AccommodationFacilityRequest extends FormRequest
 
         return [
             'kind' => [$required, 'string', Rule::in(['hotel', 'camp'])],
-            'code' => [$required, 'string', 'max:40'],
+            'code' => ['sometimes', 'string', 'max:40'],
             'name' => [$required, 'string', 'max:255'],
             'is_active' => ['sometimes', 'boolean'],
             'tenant_id' => ['prohibited'],

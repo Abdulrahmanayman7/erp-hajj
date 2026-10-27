@@ -49,7 +49,7 @@ export async function getFacility(id: number) {
 
 export async function createFacility(payload: {
   kind: string
-  code: string
+  code?: string
   name: string
 }) {
   const response = await apiPost<AccommodationFacility>(
@@ -62,7 +62,7 @@ export async function createFacility(payload: {
 
 export async function updateFacility(
   id: number,
-  payload: Partial<{ kind: string; code: string; name: string; is_active: boolean }>,
+  payload: Partial<{ kind: string; code?: string; name: string; is_active: boolean }>,
 ) {
   const response = await apiPatch<AccommodationFacility>(
     `/api/v1/accommodation/facilities/${id}`,
@@ -122,7 +122,7 @@ export async function listUnits(facilityId: number, page = 1, perPage = 50) {
 
 export async function createUnit(
   facilityId: number,
-  payload: { unit_kind: string; code: string; structure_id?: number | null },
+  payload: { unit_kind: string; code?: string; structure_id?: number | null },
 ) {
   const response = await apiPost<AccommodationUnit>(
     `/api/v1/accommodation/facilities/${facilityId}/units`,
@@ -134,7 +134,7 @@ export async function createUnit(
 
 export async function updateUnit(
   id: number,
-  payload: Partial<{ unit_kind: string; code: string; structure_id: number | null }>,
+  payload: Partial<{ unit_kind: string; code?: string; structure_id: number | null }>,
 ) {
   const response = await apiPatch<AccommodationUnit>(
     `/api/v1/accommodation/units/${id}`,
@@ -148,15 +148,15 @@ export async function deleteUnit(id: number) {
   await apiDelete(`/api/v1/accommodation/units/${id}`, opts())
 }
 
-export async function listPositions(unitId: number, page = 1, perPage = 50) {
+export async function listPositions(unitId: number, page = 1, perPage = 50, search = '', signal?: AbortSignal) {
   const response = await apiGet<AccommodationPosition[]>(
-    `/api/v1/accommodation/units/${unitId}/positions${pageQuery(page, perPage)}`,
-    opts(),
+    `/api/v1/accommodation/units/${unitId}/positions${pageQuery(page, perPage)}${search ? '&search=' + encodeURIComponent(search) : ''}`,
+    { ...opts(), signal },
   )
   return { data: response.data, meta: listMeta(response.meta) }
 }
 
-export async function createPosition(unitId: number, payload: { code: string }) {
+export async function createPosition(unitId: number, payload: { code?: string }) {
   const response = await apiPost<AccommodationPosition>(
     `/api/v1/accommodation/units/${unitId}/positions`,
     payload,
@@ -165,7 +165,7 @@ export async function createPosition(unitId: number, payload: { code: string }) 
   return response.data
 }
 
-export async function updatePosition(id: number, payload: { code: string }) {
+export async function updatePosition(id: number, payload: { code?: string }) {
   const response = await apiPatch<AccommodationPosition>(
     `/api/v1/accommodation/positions/${id}`,
     payload,
@@ -294,10 +294,15 @@ export async function deleteSeasonPosition(id: number) {
   await apiDelete(`/api/v1/accommodation/season-positions/${id}`, opts())
 }
 
-export async function listAssignments(page = 1, perPage = 15) {
+export interface AssignmentListFilters { search?: string; booking_status?: string; facility_id?: number; season_unit_id?: number }
+
+export async function listAssignments(page = 1, perPage = 15, filters: AssignmentListFilters = {}, signal?: AbortSignal) {
+  const query = new URLSearchParams()
+  for (const [key, value] of Object.entries(filters)) if (value !== undefined && value !== '') query.set(key, String(value))
+  const suffix = query.size ? '&' + query.toString() : ''
   const response = await apiGet<AccommodationAssignment[]>(
-    `/api/v1/accommodation/assignments${pageQuery(page, perPage)}`,
-    opts(),
+    `/api/v1/accommodation/assignments${pageQuery(page, perPage)}${suffix}`,
+    { ...opts(), signal },
   )
   return { data: response.data, meta: listMeta(response.meta) }
 }

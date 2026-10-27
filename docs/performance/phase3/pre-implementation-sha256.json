@@ -1,0 +1,5 @@
+{
+  "backend/app/Modules/Accommodation/Actions/AccommodationConfirmationActions.php": "fdae9b1c591ee22c1242dfa9acfc38230ae6992a2ddf77a8c2dc5a803a5b4474",
+  "backend/app/Modules/Accommodation/Support/AccommodationCapacityGuard.php": "a972e19d73a5b438d7ffab7ba9a05b00b0ce0b9da8bbf238f8d04d19d2fdb453",
+  "backend/app/Modules/Audit/Actions/ListAuditLogs.php": "a1193e446342b834479bafc400317d546ab6eb95e75ab41ef3fc820f7c1ec0fc"
+}

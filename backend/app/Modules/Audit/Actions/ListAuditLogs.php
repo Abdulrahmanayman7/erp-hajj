@@ -20,7 +20,13 @@ final class ListAuditLogs
     {
         $tenant = $this->tenantContext->require();
 
-        $query = AuditLog::query()->where('tenant_id', $tenant->id);
+        // The list resource never emits detail blobs. Keep search, exact COUNT,
+        // ordering and the JSON contract unchanged; detail reads remain full.
+        $query = AuditLog::query()->select([
+            'id', 'tenant_id', 'event_type', 'context_type', 'actor_type', 'actor_user_id', 'actor_label',
+            'entity_type', 'entity_id', 'entity_number', 'entity_label', 'reason',
+            'correlation_id', 'source', 'created_at',
+        ])->where('tenant_id', $tenant->id);
 
         $search = isset($filters['search']) ? trim((string) $filters['search']) : '';
         if ($search !== '') {

@@ -1,3 +1,5 @@
+import type { AssignmentListFilters } from '../api/accommodationApi'
+import { sessionGeneration } from '@/shared/api/sessionLifetime'
 import { useQuery } from '@tanstack/vue-query'
 import { storeToRefs } from 'pinia'
 import { computed, type MaybeRefOrGetter, toValue } from 'vue'
@@ -24,7 +26,7 @@ export const accommodationQueryKey = ['accommodation'] as const
 
 function seasonKey() {
   const store = useAccommodationSeasonStore()
-  return store.selectedSeasonId ?? 'default'
+  return [store.selectedSeasonId ?? 'default', store.contextGeneration]
 }
 
 export function useAccommodationSeasonContextQuery(enabled: MaybeRefOrGetter<boolean> = true) {
@@ -32,10 +34,12 @@ export function useAccommodationSeasonContextQuery(enabled: MaybeRefOrGetter<boo
   const { selectedSeasonId } = storeToRefs(store)
 
   return useQuery({
-    queryKey: computed(() => [...accommodationQueryKey, 'season-context', selectedSeasonId.value ?? 'default']),
+    queryKey: computed(() => [...accommodationQueryKey, 'season-context', selectedSeasonId.value ?? 'default', store.contextGeneration]),
     queryFn: async () => {
+      const context = store.contextGeneration
+      const session = sessionGeneration.value
       const payload = await fetchSeasonContext()
-      store.applyContext(payload)
+      store.applyContext(payload, context, session)
       return payload
     },
     enabled: computed(() => toValue(enabled)),
@@ -125,10 +129,10 @@ export function useSeasonPositionsQuery(page: MaybeRefOrGetter<number>, enabled:
   })
 }
 
-export function useAssignmentsQuery(page: MaybeRefOrGetter<number>, enabled: MaybeRefOrGetter<boolean> = true) {
+export function useAssignmentsQuery(page: MaybeRefOrGetter<number>, enabled: MaybeRefOrGetter<boolean> = true, filters: MaybeRefOrGetter<AssignmentListFilters> = {}) {
   return useQuery({
-    queryKey: computed(() => [...accommodationQueryKey, 'assignments', seasonKey(), toValue(page)]),
-    queryFn: () => listAssignments(toValue(page)),
+    queryKey: computed(() => [...accommodationQueryKey, 'assignments', seasonKey(), toValue(page), toValue(filters)]),
+    queryFn: ({ signal }) => listAssignments(toValue(page), 15, toValue(filters), signal),
     enabled: computed(() => toValue(enabled)),
   })
 }

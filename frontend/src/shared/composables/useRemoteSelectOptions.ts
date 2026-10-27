@@ -22,6 +22,7 @@ export type RemoteSelectFetcher<T> = (params: {
   search?: string
   page: number
   per_page: number
+  signal?: AbortSignal
 }) => Promise<RemoteSelectResponse<T>>
 
 export function useRemoteSelectOptions<T>(options: {
@@ -43,11 +44,12 @@ export function useRemoteSelectOptions<T>(options: {
     ]),
     initialPageParam: 1,
     enabled: computed(() => toValue(options.enabled) !== false),
-    queryFn: ({ pageParam }): Promise<RemoteSelectResponse<T>> =>
+    queryFn: ({ pageParam, signal }): Promise<RemoteSelectResponse<T>> =>
       options.fetcher({
         search: committedSearch.value.trim() || undefined,
         page: Number(pageParam),
         per_page: options.perPage ?? REMOTE_SELECT_PER_PAGE,
+        signal,
       }),
     getNextPageParam: (lastPage) =>
       lastPage.meta.current_page < lastPage.meta.last_page
@@ -67,6 +69,7 @@ export function useRemoteSelectOptions<T>(options: {
 
   return {
     options: optionsList,
+    error: computed(() => query.error.value),
     search,
     committedSearch,
     isLoading: computed(

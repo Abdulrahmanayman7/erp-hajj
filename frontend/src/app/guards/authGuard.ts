@@ -1,3 +1,5 @@
+import { sessionGeneration } from '@/shared/api/sessionLifetime'
+import { clearSession } from '@/modules/auth/sessionIsolation'
 import type { QueryClient } from '@tanstack/vue-query'
 import type { NavigationGuard } from 'vue-router'
 
@@ -65,6 +67,7 @@ export function createAuthGuard(queryClient: QueryClient): NavigationGuard {
     let user = queryClient.getQueryData(currentUserQueryKey) as AuthUser | null | undefined
 
     if (user === undefined) {
+      const generation = sessionGeneration.value
       try {
         user = await queryClient.fetchQuery({
           queryKey: currentUserQueryKey,
@@ -72,7 +75,13 @@ export function createAuthGuard(queryClient: QueryClient): NavigationGuard {
           staleTime: 5 * 60 * 1000,
           retry: false,
         })
+        if (generation !== sessionGeneration.value) return false
       } catch (error) {
+        if (generation !== sessionGeneration.value) return false
+        const setupStatus = queryClient.getQueryData(platformSetupStatusQueryKey)
+        await clearSession(queryClient)
+        // Public bootstrap availability is not account data.
+        if (setupStatus !== undefined) queryClient.setQueryData(platformSetupStatusQueryKey, setupStatus)
         queryClient.setQueryData(currentUserQueryKey, null)
 
         if (error instanceof ApiError && isAuthBlockCode(error.code)) {

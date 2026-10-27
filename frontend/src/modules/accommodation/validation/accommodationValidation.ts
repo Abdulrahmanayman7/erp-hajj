@@ -204,7 +204,6 @@ export function buildConfirmFamilyPayload(
 export function validateFacilityForm(form: FacilityFormState): Record<string, string> {
   const errors: Record<string, string> = {}
   if (!form.kind) errors.kind = 'required'
-  if (!form.code.trim()) errors.code = 'required'
   if (!form.name.trim()) errors.name = 'required'
   return errors
 }
@@ -219,13 +218,11 @@ export function validateStructureForm(form: StructureFormState): Record<string, 
 export function validateUnitForm(form: UnitFormState): Record<string, string> {
   const errors: Record<string, string> = {}
   if (!form.unit_kind) errors.unit_kind = 'required'
-  if (!form.code.trim()) errors.code = 'required'
   return errors
 }
 
-export function validatePositionForm(form: PositionFormState): Record<string, string> {
+export function validatePositionForm(_form: PositionFormState): Record<string, string> {
   const errors: Record<string, string> = {}
-  if (!form.code.trim()) errors.code = 'required'
   return errors
 }
 

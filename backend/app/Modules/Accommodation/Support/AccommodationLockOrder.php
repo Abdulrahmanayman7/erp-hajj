@@ -2,12 +2,14 @@
 
 namespace App\Modules\Accommodation\Support;
 
+use App\Core\Tenancy\TenantContext;
 use App\Modules\Accommodation\Models\AccommodationAssignment;
 use App\Modules\Accommodation\Models\AccommodationPilgrimLock;
 use App\Modules\Accommodation\Models\AccommodationSeasonPosition;
 use App\Modules\Accommodation\Models\AccommodationSeasonUnit;
 use App\Modules\Accommodation\Models\AccommodationUnit;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
 
 /**
@@ -54,9 +56,17 @@ final class AccommodationLockOrder
             return collect();
         }
 
-        foreach ($ids as $seasonPilgrimId) {
-            $this->ensurePilgrimAnchor($seasonId, $seasonPilgrimId);
-        }
+        $tenantId = app(TenantContext::class)->require()->id;
+        $now = now();
+        $rows = array_map(fn (int $id): array => [
+            'tenant_id' => $tenantId, 'season_id' => $seasonId, 'season_pilgrim_id' => $id,
+            'created_at' => $now, 'updated_at' => $now,
+        ], $ids);
+        // Unlike insertOrIgnore this does not suppress FK / invalid-data errors.
+        // Sorted input acquires the same per-pilgrim unique-key locks in order.
+        DB::table('accommodation_pilgrim_locks')->upsert(
+            $rows, ['tenant_id', 'season_id', 'season_pilgrim_id'], ['season_pilgrim_id'],
+        );
 
         return AccommodationPilgrimLock::query()
             ->where('season_id', $seasonId)

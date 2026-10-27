@@ -1,66 +1,11 @@
+import { ar } from '@/locales/ar'
+import { formatIsoTimestampAr } from '@/shared/utils/gregorianDate'
 import type { AuditActorType, AuditDeepLink, AuditLogSummary } from '../types/audit'
 
 /** Canonical event code → Arabic label (stable codes stay English in API/DB). */
-export const AUDIT_EVENT_LABELS: Record<string, string> = {
-  LOGIN_SUCCESS: 'تسجيل دخول ناجح',
-  LOGIN_FAILED: 'فشل تسجيل الدخول',
-  LOGOUT: 'تسجيل خروج',
-  PASSWORD_RESET_REQUESTED: 'طلب إعادة تعيين كلمة المرور',
-  PASSWORD_RESET_COMPLETED: 'اكتمال إعادة تعيين كلمة المرور',
-  ACCOUNT_DISABLED_ACCESS_ATTEMPT: 'محاولة دخول لحساب معطّل',
-  TENANT_BLOCKED_ACCESS_ATTEMPT: 'محاولة دخول لمنشأة محظورة',
-  USER_CREATED: 'إنشاء مستخدم',
-  USER_UPDATED: 'تحديث مستخدم',
-  USER_ENABLED: 'تفعيل مستخدم',
-  USER_DISABLED: 'تعطيل مستخدم',
-  USER_ROLES_CHANGED: 'تغيير أدوار مستخدم',
-  ROLE_CREATED: 'إنشاء دور',
-  ROLE_UPDATED: 'تحديث دور',
-  ROLE_ACTIVATED: 'تفعيل دور',
-  ROLE_DEACTIVATED: 'تعطيل دور',
-  ROLE_DELETED: 'حذف دور',
-  ROLE_PERMISSIONS_CHANGED: 'تغيير صلاحيات دور',
-  PERMISSION_CATALOG_SYNCED: 'مزامنة كتالوج الصلاحيات',
-  CONTRACT_CREATED: 'إنشاء عقد',
-  CONTRACT_UPDATED: 'تحديث عقد',
-  CONTRACT_APPROVED: 'تمت الموافقة على عقد',
-  CONTRACT_SIGNED: 'توقيع عقد',
-  CONTRACT_EXECUTED: 'تنفيذ عقد',
-  CONTRACT_CLOSED: 'إغلاق عقد',
-  CONTRACT_CANCELLED: 'إلغاء عقد',
-  CONTRACT_RENEWED: 'تجديد عقد',
-  MEETING_CREATED: 'إنشاء اجتماع',
-  MEETING_COMPLETED: 'إكمال اجتماع',
-  MEETING_CANCELLED: 'إلغاء اجتماع',
-  DECISION_CREATED: 'إنشاء قرار',
-  DECISION_APPROVED: 'اعتماد قرار',
-  DECISION_CLOSED: 'إغلاق قرار',
-  TASK_CREATED: 'إنشاء مهمة',
-  TASK_ASSIGNED: 'تم إسناد مهمة',
-  TASK_REASSIGNED: 'إعادة إسناد مهمة',
-  TASK_COMPLETED: 'إكمال مهمة',
-  DOCUMENT_UPLOADED: 'رفع مستند',
-  DOCUMENT_DOWNLOADED: 'تم تنزيل مستند',
-  DOCUMENT_DELETED: 'حذف مستند',
-  STOCK_RECEIVED: 'استلام مخزون',
-  STOCK_ISSUED: 'صرف مخزون',
-  STOCK_RETURNED: 'إرجاع مخزون',
-  STOCK_TRANSFERRED: 'تحويل مخزون',
-  STOCK_ADJUSTED: 'تسوية مخزون',
-  ASSET_CREATED: 'تسجيل أصل',
-  ASSET_ASSIGNED: 'تسليم عهدة',
-  ASSET_RETURNED: 'استلام عهدة',
-  ASSET_RETIRED: 'استبعاد أصل',
-}
+export const AUDIT_EVENT_LABELS: Record<string, string> = ar.audit.events
 
-export const AUDIT_FIELD_LABELS: Record<string, string> = {
-  status: 'الحالة',
-  title: 'العنوان',
-  name: 'الاسم',
-  email: 'البريد',
-  quantity: 'الكمية',
-  reason: 'السبب',
-}
+export const AUDIT_FIELD_LABELS: Record<string, string> = ar.audit.fieldLabels
 
 const ENTITY_ROUTES: Record<string, (id: number) => string> = {
   contract: (id) => `/app/contracts/${id}`,
@@ -78,7 +23,7 @@ const ENTITY_ROUTES: Record<string, (id: number) => string> = {
 }
 
 export function auditEventLabel(eventType: string): string {
-  return AUDIT_EVENT_LABELS[eventType] ?? eventType
+  return AUDIT_EVENT_LABELS[eventType] ?? ar.audit.unknownEvent
 }
 
 export function auditActorDisplay(actorType: AuditActorType, actorLabel: string | null): string {
@@ -96,22 +41,26 @@ export function auditEntityDisplay(row: Pick<AuditLogSummary, 'entity_number' | 
   if (parts.length > 0) {
     return parts.join(' — ')
   }
-  return row.entity_type ?? '—'
+  return (ar.audit.entities as Record<string, string>)[row.entity_type ?? ''] ?? ar.audit.unknownEntity
 }
 
 export function auditFieldLabel(key: string): string {
-  return AUDIT_FIELD_LABELS[key] ?? key.replaceAll('_', ' ')
+  return AUDIT_FIELD_LABELS[key] ?? ar.audit.unknownField
 }
 
-export function formatAuditValue(value: unknown): string {
+export function formatAuditValue(value: unknown, key = '', timezone = 'Asia/Riyadh'): string {
   if (value === null || value === undefined) {
     return '—'
   }
   if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    if (typeof value === 'boolean') return value ? ar.audit.values.true : ar.audit.values.false
+    if (typeof value === 'string' && /(_at|_on)$/.test(key) && /^\d{4}-\d{2}-\d{2}/.test(value)) return formatIsoTimestampAr(value, timezone)
+    if (typeof value === 'string' && /^(status|booking_status|operational_status|audience|allocation_mode|kind|unit_kind|source|context_type)$/.test(key)) return (ar.audit.values as Record<string, string>)[value] ?? value
     return String(value)
   }
   try {
-    return JSON.stringify(value)
+    if (Array.isArray(value)) return value.map(item => formatAuditValue(item, key, timezone)).join('، ')
+    return Object.entries(value as Record<string, unknown>).map(([field, item]) => auditFieldLabel(field) + ': ' + formatAuditValue(item, field, timezone)).join('؛ ')
   } catch {
     return '—'
   }

@@ -20,6 +20,7 @@ import { useQuery } from '@tanstack/vue-query'
 import { listFacilities } from '../api/accommodationApi'
 import { collectAccommodationPages } from '../queries/useAccommodationOptions'
 import { useAccommodationDialog } from '../composables/useAccommodationDialog'
+import AccommodationFormDrawer from '../components/AccommodationFormDrawer.vue'
 import AccommodationWorkspace from '../components/AccommodationWorkspace.vue'
 import { useAccommodationErrors } from '../composables/useAccommodationErrors'
 import {
@@ -191,7 +192,7 @@ async function revokeSupervisor(row: AccommodationSupervisorScope): Promise<void
     toast.error(message(error))
   }
 }
-useAccommodationDialog(() => grantDrawer.value !== null, closeDrawer)
+useAccommodationDialog(() => grantDrawer.value !== null, () => { if (!grantFacilityMutation.isPending.value && !grantSupervisorMutation.isPending.value) closeDrawer() })
 </script>
 
 <template>
@@ -232,7 +233,7 @@ useAccommodationDialog(() => grantDrawer.value !== null, closeDrawer)
           <button type="button" class="underline" @click="() => refetchFs()">{{ t('accommodation.retry') }}</button>
         </div>
         <template v-else>
-          <div class="overflow-x-auto rounded-xl border">
+          <div class="accommodation-table-surface overflow-x-auto rounded-2xl border">
             <table class="min-w-full text-sm">
               <thead class="bg-brand-bg text-brand-text-secondary">
                 <tr>
@@ -260,7 +261,7 @@ useAccommodationDialog(() => grantDrawer.value !== null, closeDrawer)
 
           <div v-if="revokedFacilityScopes.length" class="space-y-2">
             <h3 class="text-sm font-semibold text-brand-text-secondary">{{ t('accommodation.scopes.revokedHistory') }}</h3>
-            <div class="overflow-x-auto rounded-xl border border-dashed">
+            <div class="accommodation-table-surface overflow-x-auto rounded-2xl border border-dashed">
               <table class="min-w-full text-sm">
                 <thead class="bg-brand-bg/60">
                   <tr>
@@ -305,7 +306,7 @@ useAccommodationDialog(() => grantDrawer.value !== null, closeDrawer)
           <button type="button" class="underline" @click="() => refetchSs()">{{ t('accommodation.retry') }}</button>
         </div>
         <template v-else>
-          <div class="overflow-x-auto rounded-xl border">
+          <div class="accommodation-table-surface overflow-x-auto rounded-2xl border">
             <table class="min-w-full text-sm">
               <thead class="bg-brand-bg">
                 <tr>
@@ -331,7 +332,7 @@ useAccommodationDialog(() => grantDrawer.value !== null, closeDrawer)
 
           <div v-if="revokedSupervisorScopes.length" class="space-y-2">
             <h3 class="text-sm font-semibold text-brand-text-secondary">{{ t('accommodation.scopes.revokedHistory') }}</h3>
-            <div class="overflow-x-auto rounded-xl border border-dashed">
+            <div class="accommodation-table-surface overflow-x-auto rounded-2xl border border-dashed">
               <table class="min-w-full text-sm">
                 <thead class="bg-brand-bg/60">
                   <tr>
@@ -360,75 +361,57 @@ useAccommodationDialog(() => grantDrawer.value !== null, closeDrawer)
       </section>
     </template>
 
-    <Teleport to="body">
-      <div v-if="grantDrawer" class="fixed inset-0 z-50">
-        <div class="absolute inset-0 bg-black/30" @click="closeDrawer" />
-        <aside role="dialog" aria-modal="true" :aria-label="t('accommodation.experience.eyebrow')" class="accommodation-drawer app-drawer-panel absolute inset-y-0 start-0 flex w-full max-w-[480px] flex-col bg-brand-surface shadow-xl">
-          <header class="relative pe-14 border-b px-5 py-4">
-            <h3 class="text-lg font-bold">
-              {{ grantDrawer === 'facility' ? t('accommodation.scopes.grantFacility') : t('accommodation.scopes.grantSupervisor') }}
-            </h3>
-          <button type="button" class="absolute end-3 top-3 flex h-9 w-9 items-center justify-center rounded-xl text-2xl text-brand-text-secondary hover:bg-brand-primary-soft" :aria-label="t('accommodation.cancel')" @click="closeDrawer"><span aria-hidden="true">×</span></button>
-          </header>
-          <form class="flex flex-1 flex-col" @submit.prevent="grantDrawer === 'facility' ? submitFacilityGrant() : submitSupervisorGrant()">
-            <div class="flex-1 space-y-4 overflow-y-auto px-5 py-5">
-              <label class="block text-sm">
-                <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.user') }}</span>
-                <AppRemoteSelect
-                  v-if="can('users.view')"
-                  :model-value="grantDrawer === 'facility' ? (facilityScopeForm.user_id === '' ? null : facilityScopeForm.user_id) : (supervisorScopeForm.user_id === '' ? null : supervisorScopeForm.user_id)"
-                  query-key="accommodation-scope-users"
-                  :fetcher="listUsers"
-                  :map-option="userSelectOption"
-                  @update:model-value="
-                    grantDrawer === 'facility'
-                      ? (facilityScopeForm.user_id = toSelectId($event))
-                      : (supervisorScopeForm.user_id = toSelectId($event))
-                  "
-                />
-                <input
-                  v-else-if="grantDrawer === 'facility'"
-                  v-model.number="facilityScopeForm.user_id"
-                  type="number"
-                  min="1"
-                  class="w-full rounded-lg border px-3 py-2"
-                >
-                <input
-                  v-else
-                  v-model.number="supervisorScopeForm.user_id"
-                  type="number"
-                  min="1"
-                  class="w-full rounded-lg border px-3 py-2"
-                >
-              </label>
-              <label v-if="grantDrawer === 'facility'" class="block text-sm">
-                <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.facility') }}</span>
-                <AppSelect
-                  searchable
-                  v-if="canReadFacilities && facilityOptions.length"
-                  :model-value="facilityScopeForm.facility_id === '' ? '' : facilityScopeForm.facility_id"
-                  :options="facilityOptions"
-                  @update:model-value="facilityScopeForm.facility_id = toSelectId($event)"
-                />
-                <input
-                  v-else
-                  v-model.number="facilityScopeForm.facility_id"
-                  type="number"
-                  min="1"
-                  class="w-full rounded-lg border px-3 py-2"
-                >
-              </label>
-              <p v-if="formError" class="text-sm text-red-700">{{ formError }}</p>
-            </div>
-            <footer class="flex justify-end gap-2 border-t px-5 py-4">
-              <button type="button" class="rounded-lg px-3 py-2 text-sm" @click="closeDrawer">{{ t('accommodation.cancel') }}</button>
-              <button type="submit" class="rounded-lg bg-brand-primary px-3 py-2 text-sm font-semibold text-white disabled:opacity-50" :disabled="!canWrite">
-                {{ t('accommodation.scopes.grant') }}
-              </button>
-            </footer>
-          </form>
-        </aside>
-      </div>
-    </Teleport>
+    <AccommodationFormDrawer :open="Boolean(grantDrawer)" :submitting="grantFacilityMutation.isPending.value || grantSupervisorMutation.isPending.value" :disabled="!canWrite" @close="closeDrawer" @submit="grantDrawer === 'facility' ? submitFacilityGrant() : submitSupervisorGrant()">
+      <template #title>{{ grantDrawer === 'facility' ? t('accommodation.scopes.grantFacility') : t('accommodation.scopes.grantSupervisor') }}</template>
+
+      <label class="block text-sm">
+        <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.user') }}</span>
+        <AppRemoteSelect
+          v-if="can('users.view')"
+          :model-value="grantDrawer === 'facility' ? (facilityScopeForm.user_id === '' ? null : facilityScopeForm.user_id) : (supervisorScopeForm.user_id === '' ? null : supervisorScopeForm.user_id)"
+          query-key="accommodation-scope-users"
+          :fetcher="listUsers"
+          :map-option="userSelectOption"
+          @update:model-value="
+            grantDrawer === 'facility'
+              ? (facilityScopeForm.user_id = toSelectId($event))
+              : (supervisorScopeForm.user_id = toSelectId($event))
+          "
+        />
+        <input
+          v-else-if="grantDrawer === 'facility'"
+          v-model.number="facilityScopeForm.user_id"
+          type="number"
+          min="1"
+          class="w-full rounded-lg border px-3 py-2"
+        >
+        <input
+          v-else
+          v-model.number="supervisorScopeForm.user_id"
+          type="number"
+          min="1"
+          class="w-full rounded-lg border px-3 py-2"
+        >
+      </label>
+      <label v-if="grantDrawer === 'facility'" class="block text-sm">
+        <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.facility') }}</span>
+        <AppSelect
+          searchable
+          v-if="canReadFacilities && facilityOptions.length"
+          :model-value="facilityScopeForm.facility_id === '' ? '' : facilityScopeForm.facility_id"
+          :options="facilityOptions"
+          @update:model-value="facilityScopeForm.facility_id = toSelectId($event)"
+        />
+        <input
+          v-else
+          v-model.number="facilityScopeForm.facility_id"
+          type="number"
+          min="1"
+          class="w-full rounded-lg border px-3 py-2"
+        >
+      </label>
+      <p v-if="formError" class="text-sm text-red-700">{{ formError }}</p>
+      <template #submit-label>{{ t('accommodation.scopes.grant') }}</template>
+    </AccommodationFormDrawer>
   </div>
 </template>

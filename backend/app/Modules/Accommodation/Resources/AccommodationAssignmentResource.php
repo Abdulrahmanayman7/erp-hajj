@@ -21,6 +21,8 @@ class AccommodationAssignmentResource extends JsonResource
             'id' => $row->id,
             'season_id' => $row->season_id,
             'season_pilgrim_id' => $row->season_pilgrim_id,
+            'pilgrim_label' => $this->when($row->relationLoaded('seasonPilgrim') && $request->user()?->hasPermission('season_pilgrims.view'),
+                fn () => $row->seasonPilgrim?->pilgrim?->full_name ?? $row->seasonPilgrim?->reference_number),
             'season_unit_id' => $row->season_unit_id,
             'unit_id' => $row->unit_id,
             'season_position_id' => $row->season_position_id,

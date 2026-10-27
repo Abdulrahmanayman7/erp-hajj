@@ -125,7 +125,7 @@ async function networkFirstNavigation(request) {
     if (cached) {
       return cached
     }
-    return new Response('Offline', {
+    return new Response('لا يوجد اتصال بالشبكة', {
       status: 503,
       statusText: 'Service Unavailable',
       headers: { 'Content-Type': 'text/plain; charset=utf-8' },

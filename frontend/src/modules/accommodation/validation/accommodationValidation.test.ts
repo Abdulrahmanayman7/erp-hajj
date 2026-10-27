@@ -217,9 +217,8 @@ describe('accommodationValidation', () => {
   })
 
   it('validates facility and assignment forms', () => {
-    expect(validateFacilityForm({ kind: 'hotel', code: '', name: 'x', is_active: true })).toEqual({
-      code: 'required',
-    })
+    expect(validateFacilityForm({ kind: 'hotel', code: '', name: 'x', is_active: true })).toEqual({})
+    expect(validateFacilityForm({ kind: 'hotel', code: '', name: '', is_active: true })).toEqual({ name: 'required' })
     expect(
       validateAssignmentForm({
         season_pilgrim_id: 1,

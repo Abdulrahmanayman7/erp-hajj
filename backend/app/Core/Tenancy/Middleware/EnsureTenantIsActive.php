@@ -23,7 +23,7 @@ class EnsureTenantIsActive
     {
         if (! $this->context->has()) {
             return ApiResponse::error(
-                message: 'This resource requires an organization account.',
+                message: 'يتطلب هذا المورد حسابًا مرتبطًا بشركة.',
                 code: 'TENANT_CONTEXT_MISSING',
                 status: 403,
             );

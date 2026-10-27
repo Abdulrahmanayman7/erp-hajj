@@ -1,3 +1,4 @@
+import { sessionGeneration } from '@/shared/api/sessionLifetime'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 
@@ -29,7 +30,13 @@ export const useAccommodationSeasonStore = defineStore('accommodationSeason', ()
   /** Sprint 3 ops APIs also require Active season (`assertActive`). */
   const canOps = computed(() => isActive.value)
 
+  const contextGeneration = ref(0)
+
   function setSelectedSeasonId(id: number | null): void {
+    if (id !== selectedSeasonId.value) {
+      contextGeneration.value++
+      clearSeasonDetails()
+    }
     selectedSeasonId.value = id
     if (typeof sessionStorage === 'undefined') return
     if (id == null) {
@@ -43,13 +50,13 @@ export const useAccommodationSeasonStore = defineStore('accommodationSeason', ()
     season: AccommodationSeason
     selection: 'explicit' | 'default_active'
     is_writable: boolean
-  }): void {
+  }, expectedContext = contextGeneration.value, expectedSession = sessionGeneration.value): void {
+    if (expectedContext !== contextGeneration.value || expectedSession !== sessionGeneration.value) return
+    // Select before applying details: changing selection invalidates the previous context.
+    if (payload.selection === 'explicit') setSelectedSeasonId(payload.season.id)
     season.value = payload.season
     isWritable.value = payload.is_writable
     selectionMode.value = payload.selection
-    if (payload.selection === 'explicit') {
-      setSelectedSeasonId(payload.season.id)
-    }
   }
 
   function clearSeasonDetails(): void {
@@ -64,7 +71,15 @@ export const useAccommodationSeasonStore = defineStore('accommodationSeason', ()
     return { 'X-Season-Id': String(selectedSeasonId.value) }
   }
 
+  function resetSession(): void {
+    contextGeneration.value++
+    setSelectedSeasonId(null)
+    clearSeasonDetails()
+  }
+
   return {
+    contextGeneration,
+    resetSession,
     selectedSeasonId,
     season,
     isWritable,

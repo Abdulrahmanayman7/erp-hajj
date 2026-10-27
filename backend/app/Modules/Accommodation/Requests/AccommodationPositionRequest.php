@@ -16,10 +16,8 @@ class AccommodationPositionRequest extends FormRequest
      */
     public function rules(): array
     {
-        $required = $this->isMethod('POST') ? 'required' : 'sometimes';
-
         return [
-            'code' => [$required, 'string', 'max:40'],
+            'code' => ['sometimes', 'string', 'max:40'],
             'tenant_id' => ['prohibited'],
             'season_id' => ['prohibited'],
             'unit_id' => ['prohibited'],

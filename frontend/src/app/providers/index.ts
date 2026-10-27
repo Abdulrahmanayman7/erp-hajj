@@ -1,3 +1,4 @@
+import { installSessionIsolation } from '@/modules/auth/sessionIsolation'
 import { VueQueryPlugin } from '@tanstack/vue-query'
 import { createPinia } from 'pinia'
 import type { App } from 'vue'
@@ -27,6 +28,7 @@ export const i18n = createI18n({
 
 export function installProviders(app: App): void {
   app.use(createPinia())
+  installSessionIsolation(queryClient)
   app.use(router)
   app.use(VueQueryPlugin, { queryClient })
   app.use(i18n)

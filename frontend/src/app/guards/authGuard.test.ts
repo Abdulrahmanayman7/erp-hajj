@@ -1,3 +1,4 @@
+import { clearSession } from '@/modules/auth/sessionIsolation'
 import { QueryClient } from '@tanstack/vue-query'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -207,4 +208,32 @@ describe('createAuthGuard', () => {
 
     expect(result).toMatchObject({ name: 'app-home' })
   })
+})
+
+it('does not let a cancelled old navigation clear the newly signed-in user', async () => {
+  const client = new QueryClient()
+  vi.mocked(fetchCurrentUser).mockImplementation(() => new Promise(() => {}))
+  const navigation = createAuthGuard(client)(route({ requiresAuth: true }), {} as never, (() => undefined) as never)
+  await Promise.resolve()
+  await clearSession(client)
+  const newUser = { id: 77, tenant: { id: 20 }, permissions: ['view'] }
+  client.setQueryData(currentUserQueryKey, newUser)
+  expect(await navigation).toBe(false)
+  expect(client.getQueryData(currentUserQueryKey)).toEqual(newUser)
+  client.clear()
+})
+
+it('evicts private module data when session revalidation returns 401', async () => {
+  const client = new QueryClient()
+  client.setQueryData(['users'], ['previous private users'])
+  client.setQueryData(['accommodation', 'assignments', 4], ['previous private stays'])
+  vi.mocked(fetchCurrentUser).mockRejectedValue(new ApiError(401, {
+    success: false, message: 'Session expired', code: 'AUTH_UNAUTHENTICATED',
+  }))
+  const result = await createAuthGuard(client)(route({ requiresAuth: true }), {} as never, (() => undefined) as never)
+  expect(result).toMatchObject({ name: 'login' })
+  expect(client.getQueryData(['auth', 'me'])).toBeNull()
+  expect(client.getQueryData(['users'])).toBeUndefined()
+  expect(client.getQueryData(['accommodation', 'assignments', 4])).toBeUndefined()
+  client.clear()
 })

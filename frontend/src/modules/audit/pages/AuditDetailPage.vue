@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatIsoTimestampAr } from '@/shared/utils/gregorianDate'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
@@ -40,15 +41,7 @@ const changeKeys = computed(() => {
 const metadataEntries = computed(() => Object.entries(data.value?.metadata ?? {}))
 
 function formatTime(iso: string): string {
-  try {
-    return new Intl.DateTimeFormat('ar-SA', {
-      dateStyle: 'full',
-      timeStyle: 'medium',
-      timeZone: tenantTimezone.value,
-    }).format(new Date(iso))
-  } catch {
-    return iso
-  }
+  return formatIsoTimestampAr(iso, tenantTimezone.value, '—')
 }
 </script>
 
@@ -86,7 +79,7 @@ function formatTime(iso: string): string {
     <template v-else-if="data">
       <AppPageHeader
         :title="auditEventLabel(data.event_type)"
-        :subtitle="data.event_type"
+
       />
 
       <section class="rounded-2xl border border-brand-border bg-brand-surface p-5 shadow-[0_1px_2px_rgba(23,32,29,0.03)]">
@@ -102,11 +95,11 @@ function formatTime(iso: string): string {
           </div>
           <div>
             <dt class="text-brand-text-muted">{{ t('audit.details.source') }}</dt>
-            <dd>{{ data.source }}</dd>
+            <dd>{{ formatAuditValue(data.source, 'source') }}</dd>
           </div>
           <div>
             <dt class="text-brand-text-muted">{{ t('audit.details.contextType') }}</dt>
-            <dd>{{ data.context_type }}</dd>
+            <dd>{{ formatAuditValue(data.context_type, 'context_type') }}</dd>
           </div>
         </dl>
       </section>
@@ -141,9 +134,9 @@ function formatTime(iso: string): string {
           <li v-for="key in changeKeys" :key="key" class="rounded-xl bg-brand-bg px-3 py-2">
             <div class="font-medium text-brand-text">{{ auditFieldLabel(key) }}</div>
             <div class="mt-1 text-brand-text-secondary">
-              {{ formatAuditValue(data.before_values?.[key]) }}
+              {{ formatAuditValue(data.before_values?.[key], key, tenantTimezone) }}
               <span class="mx-2 text-brand-text-muted">→</span>
-              {{ formatAuditValue(data.after_values?.[key]) }}
+              {{ formatAuditValue(data.after_values?.[key], key, tenantTimezone) }}
             </div>
           </li>
         </ul>
@@ -161,7 +154,7 @@ function formatTime(iso: string): string {
             class="grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-3"
           >
             <dt class="text-brand-text-muted">{{ auditFieldLabel(key) }}</dt>
-            <dd class="break-words text-brand-text">{{ formatAuditValue(value) }}</dd>
+            <dd class="break-words text-brand-text">{{ formatAuditValue(value, key, tenantTimezone) }}</dd>
           </div>
         </dl>
       </section>
@@ -170,11 +163,11 @@ function formatTime(iso: string): string {
         <h2 class="text-sm font-semibold text-brand-text">{{ t('audit.details.context') }}</h2>
         <dl class="mt-3 grid gap-3 text-sm sm:grid-cols-2">
           <div>
-            <dt class="text-brand-text-muted">IP</dt>
+            <dt class="text-brand-text-muted">{{ t('audit.ipAddress') }}</dt>
             <dd>{{ data.ip_address || '—' }}</dd>
           </div>
           <div>
-            <dt class="text-brand-text-muted">User-Agent</dt>
+            <dt class="text-brand-text-muted">{{ t('audit.userAgent') }}</dt>
             <dd class="break-all text-xs">{{ data.user_agent || '—' }}</dd>
           </div>
         </dl>

@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
+import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
+import { formatIsoTimestampAr } from '@/shared/utils/gregorianDate'
+import { useCurrentUserQuery } from '@/modules/auth/queries/useCurrentUserQuery'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
-import { useQueries } from '@tanstack/vue-query'
-import { apiGet } from '@/shared/api/http'
 import {
   ArrowLeftRight,
   CheckCircle2,
@@ -33,6 +34,7 @@ import AccommodationSeasonBar from '../components/AccommodationSeasonBar.vue'
 import AccommodationSubnav from '../components/AccommodationSubnav.vue'
 import { useAccommodationOptions } from '../queries/useAccommodationOptions'
 import { useAccommodationDialog } from '../composables/useAccommodationDialog'
+import AccommodationFormDrawer from '../components/AccommodationFormDrawer.vue'
 import AccommodationWorkspace from '../components/AccommodationWorkspace.vue'
 import BookingStatusBadge from '../components/BookingStatusBadge.vue'
 import OperationalStatusBadge from '../components/OperationalStatusBadge.vue'
@@ -75,7 +77,8 @@ import {
   validateAssignmentForm,
 } from '../validation/accommodationValidation'
 
-const { t, locale } = useI18n()
+const { t } = useI18n()
+const { data: currentUser } = useCurrentUserQuery()
 const { can, canAny } = usePermissions()
 const toast = useToast()
 const { confirm } = useConfirm()
@@ -103,26 +106,16 @@ const bookingFilter = ref('')
 const search = ref('')
 const selectedFacilityId = ref<number | ''>('')
 const page = ref(1)
-const { data, isLoading, isError, refetch } = useAssignmentsQuery(page, canRead)
+const committedSearch = useDebouncedRef(search)
+const pendingSearch = computed(() => search.value !== committedSearch.value)
+const assignmentFilters = computed(() => ({ search: committedSearch.value.trim(), booking_status: bookingFilter.value }))
+watch([committedSearch, bookingFilter], () => { page.value = 1 }, { flush: 'sync' })
+const { data, isLoading, isError, refetch } = useAssignmentsQuery(page, computed(() => canRead.value && !pendingSearch.value), assignmentFilters)
 const assignments = computed(() => data.value?.data ?? [])
-const pilgrimQueries = useQueries({
-  queries: computed(() => [...new Set(assignments.value.map(row => row.season_pilgrim_id))].map(id => ({
-    queryKey: ['accommodation', 'pilgrim-name', seasonStore.selectedSeasonId ?? 'default', id],
-    queryFn: async () => (await apiGet<SeasonPilgrimLookup>(`/api/v1/season-pilgrims/${id}`, { headers: seasonStore.seasonHeaders() })).data,
-    enabled: canPickPilgrim.value,
-    staleTime: 5 * 60 * 1000,
-    retry: false,
-  }))),
-})
 function pilgrimName(id: number): string {
-  const row = pilgrimQueries.value.find(query => query.data?.id === id)?.data
-  return row?.pilgrim?.full_name ?? row?.reference_number ?? `#${id}`
+  return assignments.value.find(row => row.season_pilgrim_id === id)?.pilgrim_label ?? '#' + id
 }
-const visibleAssignments = computed(() => assignments.value.filter(row => {
-  const query = search.value.trim().toLocaleLowerCase()
-  return (!bookingFilter.value || row.booking_status === bookingFilter.value) &&
-    (!query || [row.id, row.season_pilgrim_id, pilgrimName(row.season_pilgrim_id), row.season_unit_id, unitLabel(row.season_unit_id)].some(value => String(value).toLocaleLowerCase().includes(query)))
-}))
+const visibleAssignments = computed(() => pendingSearch.value ? [] : assignments.value)
 const bookingFilters = computed<AppSelectOption[]>(() => [
   { value: '', label: t('accommodation.experience.allBookings') },
   ...['draft', 'confirmed', 'completed', 'cancelled'].map(status => ({ value: status, label: t('accommodation.bookingStatus.' + status) })),
@@ -132,7 +125,7 @@ const facilityOptions = computed<AppSelectOption[]>(() => (catalog.facilities.da
   .map(row => ({ value: row.id, label: row.name })))
 const meta = computed(() => data.value?.meta)
 const listState = computed(() =>
-  resolveListState({ isLoading: isLoading.value, isError: isError.value, count: assignments.value.length }),
+  resolveListState({ isLoading: isLoading.value || pendingSearch.value, isError: isError.value, count: assignments.value.length }),
 )
 
 const seasonUnitsData = computed(() => ({ data: catalog.units.data.value ?? [] }))
@@ -249,8 +242,7 @@ watch(relocateDestUnitId, () => {
 })
 
 function formatDate(value: string): string {
-  const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? value : new Intl.DateTimeFormat(locale.value, { dateStyle: 'medium', timeStyle: 'short' }).format(date)
+  return formatIsoTimestampAr(value, currentUser.value?.tenant?.timezone || 'Asia/Riyadh')
 }
 function formatInterval(row: AccommodationAssignment): string {
   return formatDate(row.starts_at) + ' ← ' + formatDate(row.original_ends_at)
@@ -696,7 +688,7 @@ useAccommodationDialog(() => drawerOpen.value || familyPanelOpen.value || checko
     <div v-else-if="listState === 'empty'" class="rounded-xl border border-dashed px-4 py-10 text-center text-sm">
       {{ t('accommodation.drafts.empty') }}
     </div>
-    <div v-else class="overflow-x-auto rounded-xl border border-brand-border bg-brand-surface">
+    <div v-else class="accommodation-table-surface overflow-x-auto rounded-2xl border border-brand-border bg-brand-surface">
       <table class="accommodation-stays-table min-w-full text-sm">
         <thead class="bg-brand-bg text-brand-text-secondary">
           <tr>
@@ -846,82 +838,64 @@ useAccommodationDialog(() => drawerOpen.value || familyPanelOpen.value || checko
       </div>
     </div>
 
-    <Teleport to="body">
-      <div v-if="drawerOpen" class="fixed inset-0 z-50">
-        <div class="absolute inset-0 bg-black/30" @click="closeDrawer" />
-        <aside role="dialog" aria-modal="true" :aria-label="t('accommodation.experience.eyebrow')" class="accommodation-drawer app-drawer-panel absolute inset-y-0 start-0 flex w-full max-w-[480px] flex-col bg-brand-surface shadow-xl">
-          <header class="relative pe-14 border-b px-5 py-4">
-            <h3 class="text-lg font-bold">
-              {{ editingId ? t('accommodation.drafts.editTitle') : t('accommodation.drafts.createTitle') }}
-            </h3>
-          <button type="button" class="absolute end-3 top-3 flex h-9 w-9 items-center justify-center rounded-xl text-2xl text-brand-text-secondary hover:bg-brand-primary-soft" :aria-label="t('accommodation.cancel')" @click="closeDrawer"><span aria-hidden="true">×</span></button>
-          </header>
-          <form class="flex flex-1 flex-col" @submit.prevent="submit">
-            <div class="flex-1 space-y-4 overflow-y-auto px-5 py-5">
-              <p v-if="editingId" class="rounded-xl bg-brand-bg p-3 text-sm font-semibold">{{ pilgrimName(Number(form.season_pilgrim_id)) }}</p>
-              <div v-else class="accommodation-form-step"><span>1</span>{{ t('accommodation.experience.personStep') }}</div>
-              <label v-if="!editingId && canPickPilgrim" class="block text-sm">
-                <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.seasonPilgrim') }}</span>
-                <AppRemoteSelect
-                  :model-value="form.season_pilgrim_id === '' ? null : form.season_pilgrim_id"
-                  :query-key="['accommodation-season-pilgrims', seasonStore.selectedSeasonId]"
-                  :fetcher="listSeasonPilgrimsLookup"
-                  :map-option="pilgrimSelectOption"
-                  @update:model-value="form.season_pilgrim_id = toSelectId($event)"
-                />
-              </label>
-              <label v-else-if="!editingId" class="block text-sm">
-                <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.seasonPilgrimId') }}</span>
-                <input v-model.number="form.season_pilgrim_id" type="number" min="1" class="w-full rounded-lg border px-3 py-2">
-              </label>
-              <div class="accommodation-form-step"><span>2</span>{{ t('accommodation.experience.placeStep') }}</div>
-              <label class="block text-sm">
-                <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.facility') }}</span>
-                <AppSelect :model-value="selectedFacilityId" :options="facilityOptions" searchable clearable :placeholder="t('accommodation.experience.choosePlace')" @update:model-value="selectFacility" />
-              </label>
-              <label class="block text-sm">
-                <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.seasonUnit') }}</span>
-                <AppSelect
-                  searchable
-                  :model-value="form.season_unit_id === '' ? '' : form.season_unit_id"
-                  :options="createUnitOptions"
-                  :loading="catalog.units.isFetching.value"
-                  :disabled="selectedFacilityId === '' || catalog.isError.value"
-                  :placeholder="t('accommodation.experience.chooseUnit')"
-                  @update:model-value="selectUnit"
-                />
-              </label>
-              <p v-if="selectedUnit" class="rounded-xl bg-brand-primary-soft p-3 text-xs leading-6 text-brand-primary">{{ t('accommodation.audience.' + selectedUnit.audience) }} · {{ t('accommodation.allocationMode.' + selectedUnit.allocation_mode) }} · {{ t('accommodation.fields.capacity') }}: {{ selectedUnit.capacity ?? '—' }}<br>{{ t('accommodation.experience.capacityHint') }}</p>
-              <label v-if="selectedUnit?.allocation_mode === 'position'" class="block text-sm">
-                <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.seasonPosition') }}</span>
-                <AppSelect
-                  searchable
-                  :model-value="form.season_position_id === '' ? '' : form.season_position_id"
-                  :options="seasonPositionOptions"
-                  @update:model-value="form.season_position_id = toSelectId($event)"
-                />
-              </label>
-              <div class="accommodation-form-step"><span>3</span>{{ t('accommodation.experience.datesStep') }}</div>
-              <label class="block text-sm">
-                <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.startsAt') }}</span>
-                <input v-model="form.starts_at" type="datetime-local" class="w-full rounded-lg border px-3 py-2">
-              </label>
-              <label class="block text-sm">
-                <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.endsAt') }}</span>
-                <input v-model="form.original_ends_at" type="datetime-local" class="w-full rounded-lg border px-3 py-2">
-              </label>
-              <p v-if="formError" class="text-sm text-red-700">{{ formError }}</p>
-            </div>
-            <footer class="flex justify-end gap-2 border-t px-5 py-4">
-              <button type="button" class="rounded-lg px-3 py-2 text-sm" @click="closeDrawer">{{ t('accommodation.cancel') }}</button>
-              <button type="submit" class="rounded-lg bg-brand-primary px-3 py-2 text-sm font-semibold text-white disabled:opacity-50" :disabled="!canWrite || createMutation.isPending.value || updateMutation.isPending.value">
-                {{ t('accommodation.experience.saveDraft') }}
-              </button>
-            </footer>
-          </form>
-        </aside>
-      </div>
-    </Teleport>
+    <AccommodationFormDrawer :open="Boolean(drawerOpen)" :submitting="createMutation.isPending.value || updateMutation.isPending.value" :disabled="!canWrite" @close="closeDrawer" @submit="submit">
+      <template #title>{{ editingId ? t('accommodation.drafts.editTitle') : t('accommodation.drafts.createTitle') }}</template>
+
+      <p v-if="editingId" class="rounded-xl bg-brand-bg p-3 text-sm font-semibold">{{ pilgrimName(Number(form.season_pilgrim_id)) }}</p>
+      <div v-else class="accommodation-form-step"><span>1</span>{{ t('accommodation.experience.personStep') }}</div>
+      <label v-if="!editingId && canPickPilgrim" class="block text-sm">
+        <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.seasonPilgrim') }}</span>
+        <AppRemoteSelect
+          :model-value="form.season_pilgrim_id === '' ? null : form.season_pilgrim_id"
+          :query-key="['accommodation-season-pilgrims', seasonStore.selectedSeasonId]"
+          :fetcher="listSeasonPilgrimsLookup"
+          :map-option="pilgrimSelectOption"
+          @update:model-value="form.season_pilgrim_id = toSelectId($event)"
+        />
+      </label>
+      <label v-else-if="!editingId" class="block text-sm">
+        <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.seasonPilgrimId') }}</span>
+        <input v-model.number="form.season_pilgrim_id" type="number" min="1" class="w-full rounded-lg border px-3 py-2">
+      </label>
+      <div class="accommodation-form-step"><span>2</span>{{ t('accommodation.experience.placeStep') }}</div>
+      <label class="block text-sm">
+        <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.facility') }}</span>
+        <AppSelect :model-value="selectedFacilityId" :options="facilityOptions" searchable clearable :placeholder="t('accommodation.experience.choosePlace')" @update:model-value="selectFacility" />
+      </label>
+      <label class="block text-sm">
+        <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.seasonUnit') }}</span>
+        <AppSelect
+          searchable
+          :model-value="form.season_unit_id === '' ? '' : form.season_unit_id"
+          :options="createUnitOptions"
+          :loading="catalog.units.isFetching.value"
+          :disabled="selectedFacilityId === '' || catalog.isError.value"
+          :placeholder="t('accommodation.experience.chooseUnit')"
+          @update:model-value="selectUnit"
+        />
+      </label>
+      <p v-if="selectedUnit" class="rounded-xl bg-brand-primary-soft p-3 text-xs leading-6 text-brand-primary">{{ t('accommodation.audience.' + selectedUnit.audience) }} · {{ t('accommodation.allocationMode.' + selectedUnit.allocation_mode) }} · {{ t('accommodation.fields.capacity') }}: {{ selectedUnit.capacity ?? '—' }}<br>{{ t('accommodation.experience.capacityHint') }}</p>
+      <label v-if="selectedUnit?.allocation_mode === 'position'" class="block text-sm">
+        <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.seasonPosition') }}</span>
+        <AppSelect
+          searchable
+          :model-value="form.season_position_id === '' ? '' : form.season_position_id"
+          :options="seasonPositionOptions"
+          @update:model-value="form.season_position_id = toSelectId($event)"
+        />
+      </label>
+      <div class="accommodation-form-step"><span>3</span>{{ t('accommodation.experience.datesStep') }}</div>
+      <label class="block text-sm">
+        <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.startsAt') }}</span>
+        <input v-model="form.starts_at" type="datetime-local" class="w-full rounded-lg border px-3 py-2">
+      </label>
+      <label class="block text-sm">
+        <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.endsAt') }}</span>
+        <input v-model="form.original_ends_at" type="datetime-local" class="w-full rounded-lg border px-3 py-2">
+      </label>
+      <p v-if="formError" class="text-sm text-red-700">{{ formError }}</p>
+      <template #submit-label>{{ t('accommodation.experience.saveDraft') }}</template>
+    </AccommodationFormDrawer>
 
     <Teleport to="body">
       <div v-if="familyPanelOpen" class="fixed inset-0 z-50" role="dialog" aria-modal="true" :aria-label="t('accommodation.confirm.familyTitle')">

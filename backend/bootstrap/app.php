@@ -51,6 +51,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->statefulApi();
 
         $middleware->api(prepend: [
+            \App\Core\Shared\Middleware\UseArabicLocale::class,
             AssignCorrelationId::class,
             ResolveTenantContext::class,
         ]);
@@ -75,7 +76,7 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             return ApiResponse::error(
-                message: 'The requested resource was not found.',
+                message: 'السجل المطلوب غير موجود أو غير متاح.',
                 code: 'NOT_FOUND',
                 status: 404,
             );
@@ -157,16 +158,16 @@ return Application::configure(basePath: dirname(__DIR__))
                 }
             }
 
-            if (isset($errors['name']) && str_contains(implode(' ', $errors['name']), 'taken')) {
+            if (isset($errors['name']) && (str_contains(implode(' ', $errors['name']), 'taken') || str_contains(implode(' ', $errors['name']), 'مستخدم'))) {
                 $code = 'ROLE_NAME_TAKEN';
             }
 
-            if (isset($errors['code']) && str_contains(implode(' ', $errors['code']), 'taken')) {
+            if (isset($errors['code']) && (str_contains(implode(' ', $errors['code']), 'taken') || str_contains(implode(' ', $errors['code']), 'مستخدم'))) {
                 $code = 'ROLE_CODE_TAKEN';
             }
 
             return ApiResponse::error(
-                message: $e->getMessage(),
+                message: 'يرجى مراجعة الحقول المدخلة.',
                 code: $code,
                 errors: $errors,
                 status: 422,

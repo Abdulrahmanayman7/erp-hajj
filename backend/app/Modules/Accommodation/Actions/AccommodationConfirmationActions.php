@@ -7,7 +7,6 @@ use App\Models\User;
 use App\Modules\Accommodation\Exceptions\AccommodationDomainException;
 use App\Modules\Accommodation\Models\AccommodationAssignment;
 use App\Modules\Accommodation\Models\AccommodationSeasonFacility;
-use App\Modules\Accommodation\Models\AccommodationSeasonPosition;
 use App\Modules\Accommodation\Models\AccommodationSeasonUnit;
 use App\Modules\Accommodation\Support\AccommodationAccess;
 use App\Modules\Accommodation\Support\AccommodationAudit;
@@ -129,8 +128,23 @@ final class AccommodationConfirmationActions
             $this->locks->lockUnits($unitIds);
             $this->locks->ensureAndLockPilgrimAnchors($season->id, $pilgrimIds);
             $seasonUnits = $this->locks->lockSeasonUnits($seasonUnitIds);
-            $this->locks->lockSeasonPositions($positionIds);
+            $positions = $this->locks->lockSeasonPositions($positionIds);
             $lockedAssignments = $this->locks->lockAssignments($toConfirm->pluck('id')->all());
+
+            // Transaction-local references only: no authorization or occupancy cache
+            // survives commit/retry/request. Participation locks remain deterministic.
+            $pilgrims = SeasonPilgrim::query()->where('season_id', $season->id)
+                ->whereIn('id', $lockedAssignments->pluck('season_pilgrim_id')->unique()->all())
+                ->orderBy('id')->lockForUpdate()->get()->keyBy('id');
+            $pilgrims->load('pilgrim');
+            $families = SeasonFamilyGroup::query()->where('season_id', $season->id)
+                ->whereIn('id', $pilgrims->pluck('season_family_group_id')->filter()->unique()->all())
+                ->pluck('id')->mapWithKeys(fn ($id) => [(int) $id => true])->all();
+            $facilities = AccommodationSeasonFacility::query()->where('season_id', $season->id)
+                ->whereIn('id', $seasonUnits->pluck('season_facility_id')->unique()->all())->get()->keyBy('id');
+            $batchesByUnit = $lockedAssignments->groupBy('season_unit_id');
+            $checkedFacilities = [];
+            $checkedUnits = [];
 
             $excludeIds = $toConfirm->pluck('id')->map(fn ($id) => (int) $id)->all();
             /** @var list<array{season_position_id: int, starts_at: CarbonInterface, ends_at: CarbonInterface}> $pendingPositions */
@@ -150,13 +164,13 @@ final class AccommodationConfirmationActions
                     throw AccommodationDomainException::invalidReference();
                 }
 
-                $this->access->lockAndAssert($actor, (int) $seasonUnit->facility_id);
+                if (! isset($checkedFacilities[$seasonUnit->facility_id])) {
+                    $this->access->lockAndAssert($actor, (int) $seasonUnit->facility_id);
+                    $checkedFacilities[$seasonUnit->facility_id] = true;
+                }
 
-                $pilgrim = SeasonPilgrim::query()
-                    ->where('season_id', $season->id)
-                    ->whereKey($locked->season_pilgrim_id)
-                    ->lockForUpdate()
-                    ->firstOrFail();
+                $pilgrim = $pilgrims->get($locked->season_pilgrim_id)
+                    ?? throw AccommodationDomainException::invalidReference();
 
                 if ($requiredSeasonFamilyGroupId !== null
                     && (int) $pilgrim->season_family_group_id !== $requiredSeasonFamilyGroupId) {
@@ -166,8 +180,8 @@ final class AccommodationConfirmationActions
                 }
 
                 $this->assertEligiblePilgrim($pilgrim);
-                $familyGroupId = $this->resolveFamilyGroupId($seasonUnit, $pilgrim);
-                $this->assertAudience($seasonUnit, $pilgrim);
+                $familyGroupId = $this->resolveFamilyGroupId($seasonUnit, $pilgrim, $families);
+                $this->assertAudience($seasonUnit, $pilgrim, $facilities->get($seasonUnit->season_facility_id));
 
                 $startsAt = $locked->starts_at;
                 $endsAt = $locked->effective_ends_at;
@@ -177,7 +191,7 @@ final class AccommodationConfirmationActions
 
                 $this->assertModeAndPosition($seasonUnit, $locked);
 
-                foreach ($pendingPilgrims as $pending) {
+                foreach ($pendingPilgrims[$pilgrim->id] ?? [] as $pending) {
                     if ((int) $pending['season_pilgrim_id'] !== (int) $pilgrim->id) {
                         continue;
                     }
@@ -185,14 +199,14 @@ final class AccommodationConfirmationActions
                         throw AccommodationDomainException::pilgrimOverlap();
                     }
                 }
-                $pendingPilgrims[] = [
+                $pendingPilgrims[$pilgrim->id][] = [
                     'season_pilgrim_id' => (int) $pilgrim->id,
                     'starts_at' => $startsAt,
                     'ends_at' => $endsAt,
                 ];
 
                 if ($locked->season_position_id !== null) {
-                    foreach ($pendingPositions as $pending) {
+                    foreach ($pendingPositions[$locked->season_position_id] ?? [] as $pending) {
                         if ((int) $pending['season_position_id'] !== (int) $locked->season_position_id) {
                             continue;
                         }
@@ -200,7 +214,7 @@ final class AccommodationConfirmationActions
                             throw AccommodationDomainException::capacityConflict('الموضع محجوز بتسكين مؤكد متداخل.');
                         }
                     }
-                    $pendingPositions[] = [
+                    $pendingPositions[$locked->season_position_id][] = [
                         'season_position_id' => (int) $locked->season_position_id,
                         'starts_at' => $startsAt,
                         'ends_at' => $endsAt,
@@ -216,22 +230,6 @@ final class AccommodationConfirmationActions
                     ];
                 }
 
-                $batchMates = $toConfirm->filter(function (AccommodationAssignment $other) use ($locked, $startsAt, $endsAt): bool {
-                    if ((int) $other->id === (int) $locked->id) {
-                        return false;
-                    }
-                    if ((int) $other->season_unit_id !== (int) $locked->season_unit_id) {
-                        return false;
-                    }
-
-                    return $this->capacity->intervalsOverlap(
-                        $other->starts_at,
-                        $other->effective_ends_at,
-                        $startsAt,
-                        $endsAt,
-                    );
-                })->count();
-
                 $this->capacity->assertPilgrimNoOverlap((int) $pilgrim->id, $startsAt, $endsAt, $excludeIds);
                 $this->capacity->assertCrossSeasonUnitNoOverlap(
                     (int) $locked->unit_id,
@@ -240,19 +238,14 @@ final class AccommodationConfirmationActions
                     $endsAt,
                     $excludeIds,
                 );
-                $this->capacity->assertSeasonUnitPeak(
-                    $seasonUnit,
-                    $startsAt,
-                    $endsAt,
-                    $excludeIds,
-                    1 + $batchMates,
-                );
+                if (! isset($checkedUnits[$seasonUnit->id])) {
+                    $this->capacity->assertSeasonUnitBatchPeak($seasonUnit, $batchesByUnit->get($seasonUnit->id), $excludeIds);
+                    $checkedUnits[$seasonUnit->id] = true;
+                }
 
                 if ($locked->season_position_id !== null) {
-                    $position = AccommodationSeasonPosition::query()
-                        ->whereKey($locked->season_position_id)
-                        ->lockForUpdate()
-                        ->firstOrFail();
+                    $position = $positions->get($locked->season_position_id)
+                        ?? throw AccommodationDomainException::invalidReference();
                     if (! $position->is_active || (int) $position->season_unit_id !== (int) $seasonUnit->id) {
                         throw AccommodationDomainException::capacityConflict('الموضع غير مفعّل لهذا الموسم.');
                     }
@@ -308,7 +301,7 @@ final class AccommodationConfirmationActions
         }
     }
 
-    private function resolveFamilyGroupId(AccommodationSeasonUnit $seasonUnit, SeasonPilgrim $pilgrim): ?int
+    private function resolveFamilyGroupId(AccommodationSeasonUnit $seasonUnit, SeasonPilgrim $pilgrim, array $families): ?int
     {
         if ($seasonUnit->audience !== 'family') {
             return null;
@@ -321,10 +314,7 @@ final class AccommodationConfirmationActions
             );
         }
 
-        $exists = SeasonFamilyGroup::query()
-            ->where('season_id', $pilgrim->season_id)
-            ->whereKey($familyId)
-            ->exists();
+        $exists = isset($families[(int) $familyId]);
 
         if (! $exists) {
             throw AccommodationDomainException::familyExclusivity(
@@ -335,7 +325,7 @@ final class AccommodationConfirmationActions
         return (int) $familyId;
     }
 
-    private function assertAudience(AccommodationSeasonUnit $seasonUnit, SeasonPilgrim $pilgrim): void
+    private function assertAudience(AccommodationSeasonUnit $seasonUnit, SeasonPilgrim $pilgrim, ?AccommodationSeasonFacility $facility): void
     {
         $pilgrim->loadMissing('pilgrim');
         $gender = $pilgrim->pilgrim?->gender;
@@ -353,11 +343,6 @@ final class AccommodationConfirmationActions
         if ($unitAudience === 'female' && $genderValue !== 'female') {
             throw AccommodationDomainException::audienceMismatch();
         }
-
-        $facility = AccommodationSeasonFacility::query()
-            ->where('season_id', $seasonUnit->season_id)
-            ->whereKey($seasonUnit->season_facility_id)
-            ->first();
 
         if ($facility !== null && $facility->audience !== null && $facility->audience !== '') {
             if ($facility->audience === 'male' && $genderValue !== 'male') {
@@ -393,19 +378,15 @@ final class AccommodationConfirmationActions
      */
     private function assertPendingFamilyBatch(array $batch): void
     {
-        $n = count($batch);
-        for ($i = 0; $i < $n; $i++) {
-            for ($j = $i + 1; $j < $n; $j++) {
-                $a = $batch[$i];
-                $b = $batch[$j];
-                if (! $this->capacity->intervalsOverlap($a['starts_at'], $a['ends_at'], $b['starts_at'], $b['ends_at'])) {
-                    continue;
-                }
-                if ($a['family_group_id'] !== $b['family_group_id']) {
-                    throw AccommodationDomainException::familyExclusivity(
-                        'لا يمكن تداخل مجموعات عائلات مختلفة في نفس وحدة العائلات.',
-                    );
-                }
+        // Earlier prefix pairs were already checked on previous iterations.
+        $last = array_pop($batch);
+        if ($last === null) return;
+        foreach ($batch as $previous) {
+            if ($previous['family_group_id'] !== $last['family_group_id']
+                && $this->capacity->intervalsOverlap($previous['starts_at'], $previous['ends_at'], $last['starts_at'], $last['ends_at'])) {
+                throw AccommodationDomainException::familyExclusivity(
+                    'لا يمكن تداخل مجموعات عائلات مختلفة في نفس وحدة العائلات.',
+                );
             }
         }
     }

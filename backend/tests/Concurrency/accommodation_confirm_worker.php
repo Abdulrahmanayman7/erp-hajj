@@ -76,6 +76,9 @@ $outcome = app(TenantContext::class)->runAsTenant(
                         AccommodationAssignment::query()->findOrFail((int) $job['assignment_id']),
                         $request,
                     ),
+                    'confirm_batch' => app(AccommodationConfirmationActions::class)->confirmMany(
+                        $actor, array_map('intval', $job['assignment_ids']), $request,
+                    ),
                     'decrease_capacity' => app(AccommodationSeasonUnitActions::class)->update(
                         $actor,
                         AccommodationSeasonUnit::query()->findOrFail((int) $job['season_unit_id']),

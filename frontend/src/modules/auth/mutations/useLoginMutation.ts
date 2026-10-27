@@ -1,6 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/vue-query'
 import { useRouter } from 'vue-router'
 
+import { announceSessionBoundary, clearSession } from '../sessionIsolation'
+import { assertSession, sessionGeneration, sessionTransition } from '@/shared/api/sessionLifetime'
+
 import { login } from '../api/authApi'
 import { currentUserQueryKey } from '../queries/useCurrentUserQuery'
 import type { LoginPayload } from '../types/auth'
@@ -13,9 +16,21 @@ export function useLoginMutation() {
   const queryClient = useQueryClient()
   const router = useRouter()
 
+  let generation = sessionGeneration.value
+
   return useMutation({
-    mutationFn: (payload: LoginPayload) => login(payload),
+    mutationFn: async (payload: LoginPayload) => {
+      sessionTransition.value = true
+      await clearSession(queryClient, true)
+      generation = sessionGeneration.value
+      const user = await login(payload)
+      assertSession(generation)
+      return user
+    },
+    onSettled: () => { if (generation === sessionGeneration.value) sessionTransition.value = false },
     onSuccess: async (user) => {
+      assertSession(generation)
+      announceSessionBoundary()
       queryClient.setQueryData(currentUserQueryKey, user)
       const defaultHome = defaultHomeForUser(user.is_platform_user)
       const redirect =

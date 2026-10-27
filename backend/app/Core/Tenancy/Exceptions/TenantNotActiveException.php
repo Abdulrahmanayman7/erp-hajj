@@ -23,7 +23,7 @@ class TenantNotActiveException extends RuntimeException
     public function render(): JsonResponse
     {
         return ApiResponse::error(
-            message: 'Your organization account is not currently active.',
+            message: 'حساب شركتك غير نشط حاليًا.',
             code: $this->status->blockingCode(),
             status: 403,
         );

@@ -15,6 +15,7 @@ import { useToast } from '@/shared/composables/useToast'
 import AccommodationSeasonBar from '../components/AccommodationSeasonBar.vue'
 import AccommodationSubnav from '../components/AccommodationSubnav.vue'
 import { useAccommodationDialog } from '../composables/useAccommodationDialog'
+import AccommodationFormDrawer from '../components/AccommodationFormDrawer.vue'
 import AccommodationWorkspace from '../components/AccommodationWorkspace.vue'
 import { useAccommodationErrors } from '../composables/useAccommodationErrors'
 import {
@@ -161,6 +162,8 @@ const unitStructureOptions = computed<AppSelectOption[]>(() => [
   { value: '', label: t('accommodation.facilityDetails.noStructure') },
   ...structures.value.map((row) => ({ value: row.id, label: row.name })),
 ])
+
+const formSubmitting = computed(() => updateFacilityMutation.isPending.value || createStructureMutation.isPending.value || updateStructureMutation.isPending.value || createUnitMutation.isPending.value || updateUnitMutation.isPending.value || createPositionMutation.isPending.value || updatePositionMutation.isPending.value)
 
 function closeDrawer(): void {
   drawerKind.value = null
@@ -324,7 +327,7 @@ async function submitUnit(): Promise<void> {
   }
   const payload = {
     unit_kind: unitForm.unit_kind,
-    code: unitForm.code.trim(),
+    ...(editingUnitId.value ? { code: unitForm.code.trim() } : {}),
     structure_id: unitForm.structure_id === '' ? null : unitForm.structure_id,
   }
   try {
@@ -366,7 +369,7 @@ async function submitPosition(): Promise<void> {
     formError.value = t('accommodation.errors.validation')
     return
   }
-  const payload = { code: positionForm.code.trim() }
+  const payload = editingPositionId.value ? { code: positionForm.code.trim() } : {}
   try {
     if (editingPositionId.value) {
       await updatePositionMutation.mutateAsync({ id: editingPositionId.value, payload })
@@ -401,7 +404,7 @@ async function deletePosition(row: AccommodationPosition): Promise<void> {
 watch(facilityId, () => {
   expandedUnitId.value = null
 })
-useAccommodationDialog(() => drawerKind.value !== null, closeDrawer)
+useAccommodationDialog(() => drawerKind.value !== null, () => { if (!formSubmitting.value) closeDrawer() })
 </script>
 
 <template>
@@ -495,7 +498,7 @@ useAccommodationDialog(() => drawerKind.value !== null, closeDrawer)
         <div v-if="structures.length === 0" class="rounded-xl border border-dashed border-brand-border px-4 py-8 text-center text-sm text-brand-text-secondary">
           {{ t('accommodation.facilityDetails.structuresEmpty') }}
         </div>
-        <div v-else class="overflow-x-auto rounded-xl border border-brand-border">
+        <div v-else class="accommodation-table-surface overflow-x-auto rounded-2xl border border-brand-border">
           <table class="min-w-full text-sm">
             <thead class="bg-brand-bg text-brand-text-secondary">
               <tr>
@@ -617,7 +620,7 @@ useAccommodationDialog(() => drawerKind.value !== null, closeDrawer)
             </button>
           </PermissionGuard>
         </div>
-        <div class="overflow-x-auto rounded-xl border border-brand-border">
+        <div class="accommodation-table-surface overflow-x-auto rounded-2xl border border-brand-border">
           <table class="min-w-full text-sm">
             <tbody>
               <tr v-for="unit in orphanUnits" :key="unit.id" class="border-t border-brand-border first:border-t-0">
@@ -646,120 +649,99 @@ useAccommodationDialog(() => drawerKind.value !== null, closeDrawer)
       </section>
     </template>
 
-    <Teleport to="body">
-      <div v-if="drawerKind" class="fixed inset-0 z-50" role="presentation">
-        <div class="absolute inset-0 bg-black/30" @click="closeDrawer" />
-        <aside role="dialog" aria-modal="true" :aria-label="t('accommodation.experience.eyebrow')" class="accommodation-drawer app-drawer-panel absolute inset-y-0 start-0 flex w-full max-w-[480px] flex-col bg-brand-surface shadow-xl">
-          <header class="relative pe-14 border-b border-brand-border px-5 py-4">
-            <h3 class="text-lg font-bold">
-              {{
-                drawerKind === 'facility'
-                  ? t('accommodation.facilityDetails.editFacility')
-                  : drawerKind === 'structure'
-                    ? editingStructureId
-                      ? t('accommodation.structures.editTitle')
-                      : t('accommodation.structures.createTitle')
-                    : drawerKind === 'unit'
-                      ? editingUnitId
-                        ? t('accommodation.units.editTitle')
-                        : t('accommodation.units.createTitle')
-                      : editingPositionId
-                        ? t('accommodation.positions.editTitle')
-                        : t('accommodation.positions.createTitle')
-              }}
-            </h3>
-          <button type="button" class="absolute end-3 top-3 flex h-9 w-9 items-center justify-center rounded-xl text-2xl text-brand-text-secondary hover:bg-brand-primary-soft" :aria-label="t('accommodation.cancel')" @click="closeDrawer"><span aria-hidden="true">×</span></button>
-          </header>
-          <form class="flex flex-1 flex-col" @submit.prevent="
-            drawerKind === 'facility' ? submitFacility()
-            : drawerKind === 'structure' ? submitStructure()
-            : drawerKind === 'unit' ? submitUnit()
-            : submitPosition()
-          ">
-            <div class="flex-1 space-y-4 overflow-y-auto px-5 py-5">
-              <template v-if="drawerKind === 'facility'">
-                <label class="block text-sm">
-                  <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.code') }}</span>
-                  <input v-model="facilityForm.code" class="w-full rounded-lg border border-brand-border px-3 py-2">
-                </label>
-                <label class="block text-sm">
-                  <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.name') }}</span>
-                  <input v-model="facilityForm.name" class="w-full rounded-lg border border-brand-border px-3 py-2">
-                </label>
-                <label class="inline-flex items-center gap-2 text-sm">
-                  <input v-model="facilityForm.is_active" type="checkbox" class="rounded border-brand-border">
-                  {{ t('accommodation.fields.active') }}
-                </label>
-              </template>
-              <template v-else-if="drawerKind === 'structure'">
-                <label class="block text-sm">
-                  <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.kind') }}</span>
-                  <AppSelect
-                  searchable
-                    :model-value="structureForm.kind"
-                    :options="[
-                      { value: 'building', label: t('accommodation.structureKind.building') },
-                      { value: 'floor', label: t('accommodation.structureKind.floor') },
-                    ]"
-                    @update:model-value="structureForm.kind = $event as StructureKind"
-                  />
-                </label>
-                <label class="block text-sm">
-                  <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.name') }}</span>
-                  <input v-model="structureForm.name" class="w-full rounded-lg border border-brand-border px-3 py-2">
-                </label>
-                <label class="block text-sm">
-                  <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.facilityDetails.parentStructure') }}</span>
-                  <AppSelect
-                  searchable
-                    :model-value="structureForm.parent_id === '' ? '' : structureForm.parent_id"
-                    :options="parentStructureOptions"
-                    @update:model-value="structureForm.parent_id = $event === '' ? '' : Number($event)"
-                  />
-                </label>
-              </template>
-              <template v-else-if="drawerKind === 'unit'">
-                <label class="block text-sm">
-                  <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.kind') }}</span>
-                  <AppSelect
-                  searchable
-                    :model-value="unitForm.unit_kind"
-                    :options="[
-                      { value: 'room', label: t('accommodation.unitKind.room') },
-                      { value: 'tent', label: t('accommodation.unitKind.tent') },
-                    ]"
-                    @update:model-value="unitForm.unit_kind = $event as UnitKind"
-                  />
-                </label>
-                <label class="block text-sm">
-                  <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.code') }}</span>
-                  <input v-model="unitForm.code" class="w-full rounded-lg border border-brand-border px-3 py-2">
-                </label>
-                <label class="block text-sm">
-                  <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.facilityDetails.structure') }}</span>
-                  <AppSelect
-                  searchable
-                    :model-value="unitForm.structure_id === '' ? '' : unitForm.structure_id"
-                    :options="unitStructureOptions"
-                    @update:model-value="unitForm.structure_id = $event === '' ? '' : Number($event)"
-                  />
-                </label>
-              </template>
-              <template v-else>
-                <label class="block text-sm">
-                  <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.code') }}</span>
-                  <input v-model="positionForm.code" class="w-full rounded-lg border border-brand-border px-3 py-2">
-                </label>
-              </template>
-              <p v-if="formError" class="text-sm text-red-700">{{ formError }}</p>
-            </div>
-            <footer class="flex justify-end gap-2 border-t border-brand-border px-5 py-4">
-              <button type="button" class="rounded-lg px-3 py-2 text-sm" @click="closeDrawer">{{ t('accommodation.cancel') }}</button>
-              <button type="submit" class="rounded-lg bg-brand-primary px-3 py-2 text-sm font-semibold text-white">{{ t('accommodation.save') }}</button>
-            </footer>
-          </form>
-        </aside>
-      </div>
-    </Teleport>
+    <AccommodationFormDrawer :open="Boolean(drawerKind)" :submitting="formSubmitting" :disabled="!canWrite" @close="closeDrawer" @submit="drawerKind === 'facility' ? submitFacility() : drawerKind === 'structure' ? submitStructure() : drawerKind === 'unit' ? submitUnit() : submitPosition()">
+      <template #title>{{
+        drawerKind === 'facility'
+          ? t('accommodation.facilityDetails.editFacility')
+          : drawerKind === 'structure'
+            ? editingStructureId
+              ? t('accommodation.structures.editTitle')
+              : t('accommodation.structures.createTitle')
+            : drawerKind === 'unit'
+              ? editingUnitId
+                ? t('accommodation.units.editTitle')
+                : t('accommodation.units.createTitle')
+              : editingPositionId
+                ? t('accommodation.positions.editTitle')
+                : t('accommodation.positions.createTitle')
+      }}</template>
+
+      <template v-if="drawerKind === 'facility'">
+        <label class="block text-sm">
+          <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.code') }}</span>
+          <input readonly :value="facilityForm.code" class="w-full rounded-lg border border-brand-border px-3 py-2">
+        </label>
+        <label class="block text-sm">
+          <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.name') }}</span>
+          <input v-model="facilityForm.name" class="w-full rounded-lg border border-brand-border px-3 py-2">
+        </label>
+        <label class="inline-flex items-center gap-2 text-sm">
+          <input v-model="facilityForm.is_active" type="checkbox" class="rounded border-brand-border">
+          {{ t('accommodation.fields.active') }}
+        </label>
+      </template>
+      <template v-else-if="drawerKind === 'structure'">
+        <label class="block text-sm">
+          <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.kind') }}</span>
+          <AppSelect
+          searchable
+            :model-value="structureForm.kind"
+            :options="[
+              { value: 'building', label: t('accommodation.structureKind.building') },
+              { value: 'floor', label: t('accommodation.structureKind.floor') },
+            ]"
+            @update:model-value="structureForm.kind = $event as StructureKind"
+          />
+        </label>
+        <label class="block text-sm">
+          <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.name') }}</span>
+          <input v-model="structureForm.name" class="w-full rounded-lg border border-brand-border px-3 py-2">
+        </label>
+        <label class="block text-sm">
+          <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.facilityDetails.parentStructure') }}</span>
+          <AppSelect
+          searchable
+            :model-value="structureForm.parent_id === '' ? '' : structureForm.parent_id"
+            :options="parentStructureOptions"
+            @update:model-value="structureForm.parent_id = $event === '' ? '' : Number($event)"
+          />
+        </label>
+      </template>
+      <template v-else-if="drawerKind === 'unit'">
+        <label class="block text-sm">
+          <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.kind') }}</span>
+          <AppSelect
+          searchable
+            :model-value="unitForm.unit_kind"
+            :options="[
+              { value: 'room', label: t('accommodation.unitKind.room') },
+              { value: 'tent', label: t('accommodation.unitKind.tent') },
+            ]"
+            @update:model-value="unitForm.unit_kind = $event as UnitKind"
+          />
+        </label>
+        <label class="block text-sm">
+          <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.code') }}</span>
+          <input readonly :value="editingUnitId ? unitForm.code : t('accommodation.autoCode')" class="w-full rounded-lg border border-brand-border px-3 py-2">
+        </label>
+        <label class="block text-sm">
+          <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.facilityDetails.structure') }}</span>
+          <AppSelect
+          searchable
+            :model-value="unitForm.structure_id === '' ? '' : unitForm.structure_id"
+            :options="unitStructureOptions"
+            @update:model-value="unitForm.structure_id = $event === '' ? '' : Number($event)"
+          />
+        </label>
+      </template>
+      <template v-else>
+        <label class="block text-sm">
+          <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.code') }}</span>
+          <input readonly :value="editingPositionId ? positionForm.code : t('accommodation.autoCode')" class="w-full rounded-lg border border-brand-border px-3 py-2">
+        </label>
+      </template>
+      <p v-if="formError" class="text-sm text-red-700">{{ formError }}</p>
+      <template #submit-label>{{ t('accommodation.save') }}</template>
+    </AccommodationFormDrawer>
   </div>
 </template>

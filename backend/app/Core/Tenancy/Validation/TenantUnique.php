@@ -45,7 +45,7 @@ final class TenantUnique implements ValidationRule
         }
 
         if ($query->exists()) {
-            $fail('validation.unique')->translate(['attribute' => $attribute]);
+            $fail('validation.unique')->translate(['attribute' => \Illuminate\Support\Facades\Lang::has('validation.attributes.'.$attribute) ? __('validation.attributes.'.$attribute) : 'البيان المطلوب']);
         }
     }
 }

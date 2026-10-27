@@ -1,3 +1,4 @@
+import { sessionGeneration } from '@/shared/api/sessionLifetime'
 import { readonly, ref } from 'vue'
 
 export type ToastVariant = 'success' | 'error' | 'info'
@@ -33,11 +34,20 @@ function push(message: string, variant: ToastVariant = 'success', durationMs = 4
 }
 
 export function useToast() {
+  const generation = sessionGeneration.value
+  const scopedPush = (message: string, variant: ToastVariant, durationMs?: number) => {
+    if (generation === sessionGeneration.value) push(message, variant, durationMs)
+  }
   return {
     toasts: readonly(toasts),
-    success: (message: string, durationMs?: number) => push(message, 'success', durationMs),
-    error: (message: string, durationMs?: number) => push(message, 'error', durationMs),
-    info: (message: string, durationMs?: number) => push(message, 'info', durationMs),
+    success: (message: string, durationMs?: number) => scopedPush(message, 'success', durationMs),
+    error: (message: string, durationMs?: number) => scopedPush(message, 'error', durationMs),
+    info: (message: string, durationMs?: number) => scopedPush(message, 'info', durationMs),
     dismiss,
   }
+}
+
+export function clearToasts(): void {
+  for (const id of timers.keys()) dismiss(id)
+  toasts.value = []
 }

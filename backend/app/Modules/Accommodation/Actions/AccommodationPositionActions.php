@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Modules\Accommodation\Models\AccommodationPosition;
 use App\Modules\Accommodation\Models\AccommodationUnit;
 use App\Modules\Accommodation\Support\AccommodationAudit;
+use App\Modules\Accommodation\Support\AccommodationCodeGenerator;
 use App\Modules\Accommodation\Support\AccommodationPersistence;
 use App\Modules\SeasonPilgrims\Context\SeasonContext;
 use App\Modules\SeasonPilgrims\Support\SeasonGuard;
@@ -27,7 +28,9 @@ final class AccommodationPositionActions
 
             $position = AccommodationPersistence::save(fn () => AccommodationPosition::query()->create([
                 'unit_id' => $unit->id,
-                'code' => trim((string) $data['code']),
+                'code' => isset($data['code']) && trim((string) $data['code']) !== ''
+                    ? trim((string) $data['code'])
+                    : app(AccommodationCodeGenerator::class)->next('position'),
                 'created_by' => $actor->id,
             ]));
 

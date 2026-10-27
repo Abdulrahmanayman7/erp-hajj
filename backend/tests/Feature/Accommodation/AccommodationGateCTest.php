@@ -356,3 +356,33 @@ it('rejects ineligible SeasonPilgrim statuses at confirmation', function (): voi
         ->assertUnprocessable()
         ->assertJsonPath('code', 'ACCOMMODATION_INVALID_REFERENCE');
 });
+
+
+it('confirms a batch using real peak intervals and rolls back an over-capacity batch', function (): void {
+    [$actor, $season] = accGateCActor();
+    $world = accGateCWorld($actor, $season, audience: 'family', capacity: 2);
+    $family = withTenant($actor->tenant, fn () => SeasonFamilyGroup::query()->create([
+        'season_id' => $season->id, 'name' => 'Peak regression family',
+    ]));
+    $ids = [];
+    foreach ([['01:00', '10:00'], ['01:00', '03:00'], ['07:00', '09:00']] as [$start, $end]) {
+        $pilgrim = accGateCPilgrim($actor, $season, familyGroupId: $family->id);
+        $ids[] = accGateCDraft($world, $pilgrim, '2027-06-01T'.$start.':00Z', '2027-06-01T'.$end.':00Z')['id'];
+    }
+    spaPostJson('/api/v1/accommodation/assignments/confirm-family', [
+        'season_family_group_id' => $family->id, 'assignment_ids' => $ids,
+    ], $world['header'])->assertOk();
+
+    $extra = [];
+    foreach ([['04:00', '06:00'], ['05:00', '07:00']] as [$start, $end]) {
+        $pilgrim = accGateCPilgrim($actor, $season, familyGroupId: $family->id);
+        $extra[] = accGateCDraft($world, $pilgrim, '2027-06-01T'.$start.':00Z', '2027-06-01T'.$end.':00Z')['id'];
+    }
+    spaPostJson('/api/v1/accommodation/assignments/confirm-family', [
+        'season_family_group_id' => $family->id, 'assignment_ids' => $extra,
+    ], $world['header'])->assertUnprocessable()->assertJsonPath('code', 'ACCOMMODATION_CAPACITY_CONFLICT');
+    withTenant($actor->tenant, function () use ($ids, $extra): void {
+        expect(AccommodationAssignment::query()->whereIn('id', $ids)->where('booking_status', 'confirmed')->count())->toBe(3);
+        expect(AccommodationAssignment::query()->whereIn('id', $extra)->where('booking_status', 'draft')->count())->toBe(2);
+    });
+});

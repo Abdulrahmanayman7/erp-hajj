@@ -16,7 +16,7 @@ class HealthController
                 'status' => 'ok',
                 'timestamp' => now()->toIso8601String(),
             ],
-            message: 'ERP Hajj API is running',
+            message: 'خدمة النظام تعمل',
         );
     }
 }

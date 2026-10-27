@@ -21,7 +21,7 @@ class AccommodationUnitRequest extends FormRequest
 
         return [
             'unit_kind' => [$required, 'string', Rule::in(['room', 'tent'])],
-            'code' => [$required, 'string', 'max:40'],
+            'code' => ['sometimes', 'string', 'max:40'],
             'structure_id' => ['sometimes', 'nullable', 'integer'],
             'tenant_id' => ['prohibited'],
             'season_id' => ['prohibited'],

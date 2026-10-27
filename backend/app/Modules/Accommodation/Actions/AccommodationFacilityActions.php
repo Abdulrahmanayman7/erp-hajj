@@ -6,6 +6,7 @@ use App\Core\Authorization\Events\AuthorizationSecurityEvent;
 use App\Models\User;
 use App\Modules\Accommodation\Models\AccommodationFacility;
 use App\Modules\Accommodation\Support\AccommodationAudit;
+use App\Modules\Accommodation\Support\AccommodationCodeGenerator;
 use App\Modules\Accommodation\Support\AccommodationPersistence;
 use App\Modules\SeasonPilgrims\Context\SeasonContext;
 use App\Modules\SeasonPilgrims\Support\SeasonGuard;
@@ -28,7 +29,9 @@ final class AccommodationFacilityActions
 
             $facility = AccommodationPersistence::save(fn () => AccommodationFacility::query()->create([
                 'kind' => $data['kind'],
-                'code' => trim((string) $data['code']),
+                'code' => isset($data['code']) && trim((string) $data['code']) !== ''
+                    ? trim((string) $data['code'])
+                    : app(AccommodationCodeGenerator::class)->next($data['kind']),
                 'name' => trim((string) $data['name']),
                 'is_active' => true,
                 'created_by' => $actor->id,

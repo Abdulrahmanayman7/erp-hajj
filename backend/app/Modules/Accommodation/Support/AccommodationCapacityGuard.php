@@ -80,6 +80,7 @@ final class AccommodationCapacityGuard
         CarbonInterface $endsAt,
         array $excludeAssignmentIds = [],
         int $additionalOccupants = 1,
+        ?Collection $batch = null,
     ): void {
         $cap = $this->effectiveCapacity($seasonUnit);
         if ($cap === null) {
@@ -90,7 +91,7 @@ final class AccommodationCapacityGuard
             ->where('season_unit_id', $seasonUnit->id)
             ->get(['starts_at', 'effective_ends_at']);
 
-        $peak = $this->peakConcurrent($existing, $startsAt, $endsAt, $additionalOccupants);
+        $peak = $this->peakWithinWindow($existing->concat($batch ?? collect()), $startsAt, $endsAt, $additionalOccupants);
         if ($peak > $cap) {
             throw AccommodationDomainException::capacityConflict('تجاوز السعة القصوى المتزامنة لوحدة الموسم.');
         }
@@ -112,6 +113,43 @@ final class AccommodationCapacityGuard
 
         if ($exists) {
             throw AccommodationDomainException::capacityConflict('الموضع محجوز بتسكين مؤكد متداخل.');
+        }
+    }
+
+    /**
+     * One locking read / capacity calculation per unit. Preserve the union of
+     * candidate windows: an unrelated historical peak in a gap must not reject
+     * an otherwise valid batch. Each stay retains its own half-open endpoints.
+     *
+     * @param Collection<int, AccommodationAssignment> $batch
+     * @param list<int> $excludeAssignmentIds
+     */
+    public function assertSeasonUnitBatchPeak(AccommodationSeasonUnit $seasonUnit, Collection $batch, array $excludeAssignmentIds): void
+    {
+        $capacity = $this->effectiveCapacity($seasonUnit);
+        if ($capacity === null) {
+            throw AccommodationDomainException::capacityConflict('سعة وحدة الموسم غير معرّفة.');
+        }
+        $windows = [];
+        foreach ($batch->sortBy(fn ($row) => $row->starts_at->getTimestamp()) as $row) {
+            $last = count($windows) - 1;
+            if ($last >= 0 && $row->starts_at->lte($windows[$last][1])) {
+                if ($row->effective_ends_at->gt($windows[$last][1])) {
+                    $windows[$last][1] = $row->effective_ends_at;
+                }
+            } else {
+                $windows[] = [$row->starts_at, $row->effective_ends_at];
+            }
+        }
+        if ($windows === []) return;
+        $existing = $this->confirmedOverlappingQuery($windows[0][0], $windows[count($windows) - 1][1], $excludeAssignmentIds)
+            ->where('season_unit_id', $seasonUnit->id)
+            ->get(['starts_at', 'effective_ends_at']);
+        $all = $existing->concat($batch);
+        foreach ($windows as [$start, $end]) {
+            if ($this->peakWithinWindow($all, $start, $end) > $capacity) {
+                throw AccommodationDomainException::capacityConflict('تجاوز السعة القصوى المتزامنة لوحدة الموسم.');
+            }
         }
     }
 
@@ -147,6 +185,23 @@ final class AccommodationCapacityGuard
                 'لا يمكن تداخل مجموعات عائلات مختلفة في نفس وحدة العائلات.',
             );
         }
+    }
+
+    /** Actual occupancy within a candidate window, using each reservation's own endpoints. */
+    public function peakWithinWindow(
+        Collection $rows,
+        CarbonInterface $startsAt,
+        CarbonInterface $endsAt,
+        int $additionalOccupants = 0,
+    ): int {
+        $intervals = $rows->filter(
+            fn ($row): bool => $this->intervalsOverlap($row->starts_at, $row->effective_ends_at, $startsAt, $endsAt),
+        )->map(fn ($row): object => (object) [
+            'starts_at' => $row->starts_at->max($startsAt),
+            'effective_ends_at' => $row->effective_ends_at->min($endsAt),
+        ]);
+
+        return $this->peakConcurrent($intervals, $startsAt, $endsAt, $additionalOccupants);
     }
 
     public function effectiveCapacity(AccommodationSeasonUnit $seasonUnit): ?int
@@ -238,11 +293,10 @@ final class AccommodationCapacityGuard
             throw AccommodationDomainException::capacityConflict('سعة وحدة الموسم غير معرّفة.');
         }
 
-        $peak = 0;
-        foreach ($reserving as $row) {
-            $local = $this->peakConcurrent($reserving, $row->starts_at, $row->effective_ends_at, 0);
-            $peak = max($peak, $local);
-        }
+        // With zero additional occupants the candidate endpoints are unused.
+        // The old loop sorted the identical complete history once per row.
+        $first = $reserving->first();
+        $peak = $this->peakConcurrent($reserving, $first->starts_at, $first->effective_ends_at, 0);
 
         if ($peak > $effective) {
             throw AccommodationDomainException::capacityConflict(
@@ -270,11 +324,8 @@ final class AccommodationCapacityGuard
         $ceiling = $seasonUnit->capacity;
         $effective = $ceiling === null ? $enabled : min($enabled, max(0, (int) $ceiling));
 
-        $peak = 0;
-        foreach ($reserving as $row) {
-            $local = $this->peakConcurrent($reserving, $row->starts_at, $row->effective_ends_at, 0);
-            $peak = max($peak, $local);
-        }
+        $first = $reserving->first();
+        $peak = $this->peakConcurrent($reserving, $first->starts_at, $first->effective_ends_at, 0);
 
         if ($peak > $effective) {
             throw AccommodationDomainException::capacityConflict(

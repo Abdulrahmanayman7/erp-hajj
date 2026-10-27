@@ -35,7 +35,7 @@ class ResolveTenantContext
             return $next($request);
         } catch (InvalidTenantContextException) {
             return ApiResponse::error(
-                message: 'Your account has an invalid organization relationship. Please contact support.',
+                message: 'تعذر تحديد الشركة المرتبطة بحسابك. يرجى التواصل مع الدعم.',
                 code: 'TENANT_CONTEXT_INVALID',
                 status: 403,
             );

@@ -1,3 +1,5 @@
+import { createPinia, setActivePinia } from 'pinia'
+import { useAccommodationSeasonStore } from '../stores/seasonContextStore'
 import { describe, expect, it, vi } from 'vitest'
 import { collectAccommodationPages } from './useAccommodationOptions'
 
@@ -17,4 +19,16 @@ describe('accommodation options', () => {
       return { data: [1], meta: { current_page: 1, per_page: 1, total: 2, last_page: 2 } }
     })).rejects.toThrow('load failed')
   })
+})
+
+it('stops collecting pages when the season changes during an in-flight page', async () => {
+  setActivePinia(createPinia())
+  const store = useAccommodationSeasonStore()
+  store.setSelectedSeasonId(1)
+  const fetchPage = vi.fn(async () => {
+    store.setSelectedSeasonId(2)
+    return { data: [1], meta: { current_page: 1, per_page: 100, total: 200, last_page: 2 } }
+  })
+  await expect(collectAccommodationPages(fetchPage)).rejects.toMatchObject({ name: 'AbortError' })
+  expect(fetchPage).toHaveBeenCalledOnce()
 })

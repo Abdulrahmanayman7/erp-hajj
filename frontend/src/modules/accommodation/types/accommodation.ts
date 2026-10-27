@@ -110,6 +110,7 @@ export type BookingStatus = 'draft' | 'confirmed' | 'cancelled' | 'completed'
 export type OperationalStatus = 'assigned' | 'arrived' | 'checked_in' | 'checked_out'
 
 export interface AccommodationAssignment {
+  pilgrim_label?: string | null
   id: number
   season_id: number
   season_pilgrim_id: number

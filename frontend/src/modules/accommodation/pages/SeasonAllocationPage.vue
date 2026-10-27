@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
+import { listPositions } from '../api/accommodationApi'
+import { useRemoteSelectOptions } from '@/shared/composables/useRemoteSelectOptions'
+import { positionLookupState } from '../queries/positionLookupState'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import { ChevronLeft, ChevronRight, Pencil, Plus, Trash2 } from 'lucide-vue-next'
@@ -15,6 +18,7 @@ import { toSelectId } from '@/shared/lookups/selectOptions'
 import AccommodationSeasonBar from '../components/AccommodationSeasonBar.vue'
 import AccommodationSubnav from '../components/AccommodationSubnav.vue'
 import { useAccommodationDialog } from '../composables/useAccommodationDialog'
+import AccommodationFormDrawer from '../components/AccommodationFormDrawer.vue'
 import AccommodationWorkspace from '../components/AccommodationWorkspace.vue'
 import { useAccommodationErrors } from '../composables/useAccommodationErrors'
 import {
@@ -29,7 +33,6 @@ import {
   useUpdateSeasonUnitMutation,
 } from '../mutations/useAccommodationMutations'
 import {
-  usePositionsQuery,
   useSeasonFacilitiesQuery,
   useSeasonPositionsQuery,
   useSeasonUnitsQuery,
@@ -70,7 +73,7 @@ const canRead = computed(() => canAny([...ACCOMMODATION_READ_PERMISSIONS]))
 const canManage = computed(() => can('accommodation.manage_season_allocation'))
 
 const activeSection = ref<Section>('facility')
-const catalog = useAccommodationOptions(canRead)
+const catalog = useAccommodationOptions(canRead, { positions: false })
 const { facilityName, unitLabel } = catalog
 const sfPage = ref(1)
 const suPage = ref(1)
@@ -181,10 +184,14 @@ const spFormUnitId = computed(() => {
   return row?.unit_id ?? null
 })
 
-const { data: positionsForUnit } = usePositionsQuery(spFormUnitId)
-const positionOptions = computed<AppSelectOption[]>(() =>
-  (positionsForUnit.value?.data ?? []).map((row) => ({ value: row.id, label: row.code })),
-)
+const positionLookup = useRemoteSelectOptions({
+  queryKey: computed(() => ['accommodation', 'position-picker', seasonStore.selectedSeasonId, seasonStore.contextGeneration, spFormUnitId.value]),
+  enabled: computed(() => canRead.value && drawerSection.value === 'position' && !!spFormUnitId.value),
+  fetcher: ({ page, per_page, search, signal }) => listPositions(spFormUnitId.value!, page, per_page, search, signal),
+  mapOption: row => ({ value: row.id, label: row.code }),
+})
+const positionOptions = positionLookup.options
+const positionState = computed(() => positionLookupState({ canRead: canRead.value, unitId: spFormUnitId.value, loading: positionLookup.isLoading.value, error: positionLookup.error.value, count: positionOptions.value.length, search: positionLookup.committedSearch.value }))
 
 const createSfMutation = useCreateSeasonFacilityMutation()
 const updateSfMutation = useUpdateSeasonFacilityMutation()
@@ -399,6 +406,7 @@ useAccommodationDialog(() => drawerSection.value !== null, () => { if (!saving.v
     <AccommodationSubnav />
     <AccommodationSeasonBar />
     <AccommodationWorkspace />
+    <p v-if="canManage && !canRead" role="alert" class="rounded-lg bg-amber-50 p-3 text-sm">{{ t('accommodation.lookup.forbidden') }}</p>
     <div v-if="catalog.isError.value" role="alert" class="flex items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
       <span>{{ t('accommodation.errors.load') }}</span><button type="button" class="shrink-0 font-semibold underline" @click="catalog.retry()">{{ t('accommodation.retry') }}</button>
     </div>
@@ -443,7 +451,7 @@ useAccommodationDialog(() => drawerSection.value !== null, () => { if (!saving.v
         <div v-else-if="sfListState === 'empty'" class="rounded-xl border border-dashed px-4 py-8 text-center text-sm text-brand-text-secondary">
           {{ t('accommodation.allocation.emptySeasonFacilities') }}
         </div>
-        <div v-else class="overflow-x-auto rounded-xl border border-brand-border">
+        <div v-else class="accommodation-table-surface overflow-x-auto rounded-2xl border border-brand-border">
           <table class="min-w-full text-sm">
             <thead class="bg-brand-bg text-brand-text-secondary">
               <tr>
@@ -499,7 +507,7 @@ useAccommodationDialog(() => drawerSection.value !== null, () => { if (!saving.v
           <button type="button" class="underline" @click="() => refetchSu()">{{ t('accommodation.retry') }}</button>
         </div>
         <div v-else-if="suListState === 'empty'" class="rounded-xl border border-dashed px-4 py-8 text-center text-sm">{{ t('accommodation.allocation.emptySeasonUnits') }}</div>
-        <div v-else class="overflow-x-auto rounded-xl border">
+        <div v-else class="accommodation-table-surface overflow-x-auto rounded-2xl border">
           <table class="min-w-full text-sm">
             <thead class="bg-brand-bg text-brand-text-secondary">
               <tr>
@@ -555,7 +563,7 @@ useAccommodationDialog(() => drawerSection.value !== null, () => { if (!saving.v
           <button type="button" class="underline" @click="() => refetchSp()">{{ t('accommodation.retry') }}</button>
         </div>
         <div v-else-if="spListState === 'empty'" class="rounded-xl border border-dashed px-4 py-8 text-center text-sm">{{ t('accommodation.allocation.emptySeasonPositions') }}</div>
-        <div v-else class="overflow-x-auto rounded-xl border">
+        <div v-else class="accommodation-table-surface overflow-x-auto rounded-2xl border">
           <table class="min-w-full text-sm">
             <thead class="bg-brand-bg">
               <tr>
@@ -592,138 +600,121 @@ useAccommodationDialog(() => drawerSection.value !== null, () => { if (!saving.v
       </section>
     </template>
 
-    <Teleport to="body">
-      <div v-if="drawerSection" class="fixed inset-0 z-50">
-        <div class="absolute inset-0 bg-black/30" @click="closeDrawer" />
-        <aside role="dialog" aria-modal="true" :aria-label="t('accommodation.experience.eyebrow')" class="accommodation-drawer app-drawer-panel absolute inset-y-0 start-0 flex w-full max-w-[480px] flex-col bg-brand-surface shadow-xl">
-          <header class="relative pe-14 border-b px-5 py-4">
-            <h3 class="text-lg font-bold">{{ t('accommodation.experience.' + ({ facility: 'facilityStep', unit: 'unitStep', position: 'positionStep' }[drawerSection])) }}</h3>
-          <button type="button" class="absolute end-3 top-3 flex h-9 w-9 items-center justify-center rounded-xl text-2xl text-brand-text-secondary hover:bg-brand-primary-soft" :aria-label="t('accommodation.cancel')" @click="closeDrawer"><span aria-hidden="true">×</span></button>
-          </header>
-          <form
-            class="flex flex-1 flex-col"
-            @submit.prevent="
-              drawerSection === 'facility' ? submitSf() : drawerSection === 'unit' ? submitSu() : submitSp()
-            "
-          >
-            <div class="flex-1 space-y-4 overflow-y-auto px-5 py-5">
-              <template v-if="drawerSection === 'facility'">
-                <label v-if="canRead && !editingId" class="block text-sm">
-                  <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.facility') }}</span>
-                  <AppSelect
-                  searchable
-                    :model-value="sfForm.facility_id === '' ? '' : sfForm.facility_id"
-                    :options="facilityOptions"
-                    @update:model-value="sfForm.facility_id = toSelectId($event)"
-                  />
-                </label>
-                <label v-else-if="!editingId" class="block text-sm">
-                  <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.facilityId') }}</span>
-                  <input v-model.number="sfForm.facility_id" type="number" min="1" class="w-full rounded-lg border px-3 py-2">
-                </label>
-                <label class="block text-sm">
-                  <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.audience') }}</span>
-                  <AppSelect
-                  searchable
-                    :model-value="sfForm.audience"
-                    :options="audienceOptions"
-                    @update:model-value="sfForm.audience = $event as Audience | ''"
-                  />
-                </label>
-                <label class="inline-flex items-center gap-2 text-sm">
-                  <input v-model="sfForm.is_active" type="checkbox" class="rounded">
-                  {{ t('accommodation.fields.active') }}
-                </label>
-              </template>
-              <template v-else-if="drawerSection === 'unit'">
-                <label v-if="!editingId" class="block text-sm">
-                  <span class="mb-1 block">{{ t('accommodation.allocation.seasonFacility') }}</span>
-                  <AppSelect
-                  searchable
-                    :model-value="suForm.season_facility_id === '' ? '' : suForm.season_facility_id"
-                    :options="seasonFacilityOptions"
-                    @update:model-value="suForm.season_facility_id = toSelectId($event)"
-                  />
-                </label>
-                <label v-if="!editingId && canRead" class="block text-sm">
-                  <span class="mb-1 block">{{ t('accommodation.fields.unit') }}</span>
-                  <AppSelect
-                  searchable
-                    :model-value="suForm.unit_id === '' ? '' : suForm.unit_id"
-                    :options="unitOptions"
-                    :disabled="!suFormFacilityId"
-                    @update:model-value="suForm.unit_id = toSelectId($event)"
-                  />
-                </label>
-                <label v-else-if="!editingId" class="block text-sm">
-                  <span class="mb-1 block">{{ t('accommodation.fields.unitId') }}</span>
-                  <input v-model.number="suForm.unit_id" type="number" min="1" class="w-full rounded-lg border px-3 py-2">
-                </label>
-                <label class="block text-sm">
-                  <span class="mb-1 block">{{ t('accommodation.allocation.modeLabel') }}</span>
-                  <AppSelect
-                  searchable
-                    :model-value="suForm.allocation_mode"
-                    :options="modeOptions"
-                    @update:model-value="suForm.allocation_mode = $event as AllocationMode"
-                  />
-                </label>
-                <label class="block text-sm">
-                  <span class="mb-1 block">{{ t('accommodation.fields.capacity') }}</span>
-                  <input v-model.number="suForm.capacity" type="number" min="0" class="w-full rounded-lg border px-3 py-2" :placeholder="t('accommodation.allocation.capacityHint')">
-                </label>
-                <label class="block text-sm">
-                  <span class="mb-1 block">{{ t('accommodation.fields.audience') }}</span>
-                  <AppSelect
-                  searchable
-                    :model-value="suForm.audience"
-                    :options="audienceRequiredOptions"
-                    @update:model-value="suForm.audience = $event as Audience"
-                  />
-                </label>
-                <label class="inline-flex items-center gap-2 text-sm">
-                  <input v-model="suForm.is_active" type="checkbox" class="rounded">
-                  {{ t('accommodation.fields.active') }}
-                </label>
-              </template>
-              <template v-else>
-                <label v-if="!editingId" class="block text-sm">
-                  <span class="mb-1 block">{{ t('accommodation.allocation.seasonUnit') }}</span>
-                  <AppSelect
-                  searchable
-                    :model-value="spForm.season_unit_id === '' ? '' : spForm.season_unit_id"
-                    :options="seasonUnitOptions"
-                    @update:model-value="spForm.season_unit_id = toSelectId($event)"
-                  />
-                </label>
-                <label v-if="!editingId && canRead" class="block text-sm">
-                  <span class="mb-1 block">{{ t('accommodation.fields.position') }}</span>
-                  <AppSelect
-                  searchable
-                    :model-value="spForm.position_id === '' ? '' : spForm.position_id"
-                    :options="positionOptions"
-                    :disabled="!spFormUnitId"
-                    @update:model-value="spForm.position_id = toSelectId($event)"
-                  />
-                </label>
-                <label v-else-if="!editingId" class="block text-sm">
-                  <span class="mb-1 block">{{ t('accommodation.fields.positionId') }}</span>
-                  <input v-model.number="spForm.position_id" type="number" min="1" class="w-full rounded-lg border px-3 py-2">
-                </label>
-                <label class="inline-flex items-center gap-2 text-sm">
-                  <input v-model="spForm.is_active" type="checkbox" class="rounded">
-                  {{ t('accommodation.fields.active') }}
-                </label>
-              </template>
-              <p v-if="formError" class="text-sm text-red-700">{{ formError }}</p>
-            </div>
-            <footer class="flex justify-end gap-2 border-t px-5 py-4">
-              <button type="button" class="rounded-lg px-3 py-2 text-sm" @click="closeDrawer">{{ t('accommodation.cancel') }}</button>
-              <button type="submit" :disabled="saving || !canWrite" class="rounded-lg bg-brand-primary px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">{{ t('accommodation.save') }}</button>
-            </footer>
-          </form>
-        </aside>
-      </div>
-    </Teleport>
+    <AccommodationFormDrawer :open="Boolean(drawerSection)" :submitting="saving" :disabled="!canWrite" @close="closeDrawer" @submit="drawerSection === 'facility' ? submitSf() : drawerSection === 'unit' ? submitSu() : submitSp()">
+      <template #title>{{ t('accommodation.experience.' + ({ facility: 'facilityStep', unit: 'unitStep', position: 'positionStep' }[drawerSection ?? 'facility'])) }}</template>
+
+      <template v-if="drawerSection === 'facility'">
+        <label v-if="canRead && !editingId" class="block text-sm">
+          <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.facility') }}</span>
+          <AppSelect
+          searchable
+            :model-value="sfForm.facility_id === '' ? '' : sfForm.facility_id"
+            :options="facilityOptions"
+            @update:model-value="sfForm.facility_id = toSelectId($event)"
+          />
+        </label>
+        <label v-else-if="!editingId" class="block text-sm">
+          <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.facilityId') }}</span>
+          <input v-model.number="sfForm.facility_id" type="number" min="1" class="w-full rounded-lg border px-3 py-2">
+        </label>
+        <label class="block text-sm">
+          <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.audience') }}</span>
+          <AppSelect
+          searchable
+            :model-value="sfForm.audience"
+            :options="audienceOptions"
+            @update:model-value="sfForm.audience = $event as Audience | ''"
+          />
+        </label>
+        <label class="inline-flex items-center gap-2 text-sm">
+          <input v-model="sfForm.is_active" type="checkbox" class="rounded">
+          {{ t('accommodation.fields.active') }}
+        </label>
+      </template>
+      <template v-else-if="drawerSection === 'unit'">
+        <label v-if="!editingId" class="block text-sm">
+          <span class="mb-1 block">{{ t('accommodation.allocation.seasonFacility') }}</span>
+          <AppSelect
+          searchable
+            :model-value="suForm.season_facility_id === '' ? '' : suForm.season_facility_id"
+            :options="seasonFacilityOptions"
+            @update:model-value="suForm.season_facility_id = toSelectId($event)"
+          />
+        </label>
+        <label v-if="!editingId && canRead" class="block text-sm">
+          <span class="mb-1 block">{{ t('accommodation.fields.unit') }}</span>
+          <AppSelect
+          searchable
+            :model-value="suForm.unit_id === '' ? '' : suForm.unit_id"
+            :options="unitOptions"
+            :disabled="!suFormFacilityId"
+            @update:model-value="suForm.unit_id = toSelectId($event)"
+          />
+        </label>
+        <p v-else-if="!editingId" role="alert" class="text-sm text-red-700">{{ t('accommodation.lookup.forbidden') }}</p>
+        <label class="block text-sm">
+          <span class="mb-1 block">{{ t('accommodation.allocation.modeLabel') }}</span>
+          <AppSelect
+          searchable
+            :model-value="suForm.allocation_mode"
+            :options="modeOptions"
+            @update:model-value="suForm.allocation_mode = $event as AllocationMode"
+          />
+        </label>
+        <label class="block text-sm">
+          <span class="mb-1 block">{{ t('accommodation.fields.capacity') }}</span>
+          <input v-model.number="suForm.capacity" type="number" min="0" class="w-full rounded-lg border px-3 py-2" :placeholder="t('accommodation.allocation.capacityHint')">
+        </label>
+        <label class="block text-sm">
+          <span class="mb-1 block">{{ t('accommodation.fields.audience') }}</span>
+          <AppSelect
+          searchable
+            :model-value="suForm.audience"
+            :options="audienceRequiredOptions"
+            @update:model-value="suForm.audience = $event as Audience"
+          />
+        </label>
+        <label class="inline-flex items-center gap-2 text-sm">
+          <input v-model="suForm.is_active" type="checkbox" class="rounded">
+          {{ t('accommodation.fields.active') }}
+        </label>
+      </template>
+      <template v-else>
+        <label v-if="!editingId" class="block text-sm">
+          <span class="mb-1 block">{{ t('accommodation.allocation.seasonUnit') }}</span>
+          <AppSelect
+          searchable
+            :model-value="spForm.season_unit_id === '' ? '' : spForm.season_unit_id"
+            :options="seasonUnitOptions"
+            @update:model-value="spForm.season_unit_id = toSelectId($event)"
+          />
+        </label>
+        <label v-if="!editingId" class="block text-sm">
+          <span class="mb-1 block">{{ t('accommodation.fields.position') }}</span>
+          <AppSelect
+          searchable
+            :model-value="spForm.position_id === '' ? '' : spForm.position_id"
+            :options="positionOptions"
+            remote
+            :loading="positionLookup.isLoading.value && !!spFormUnitId"
+            :error="positionLookup.isError.value"
+            :has-more="positionLookup.hasMore.value"
+            :disabled="!spFormUnitId || !canRead"
+            @search="positionLookup.search.value = $event"
+            @load-more="positionLookup.loadMore()"
+            @retry="positionLookup.retry()"
+            @update:model-value="spForm.position_id = toSelectId($event)"
+          />
+        </label>
+        <p v-if="!editingId" role="status" aria-live="polite" class="text-sm" :class="positionState === 'error' || positionState === 'forbidden' ? 'text-red-700' : 'text-brand-text-secondary'">{{ t('accommodation.lookup.' + positionState) }}</p>
+        <p v-if="!editingId && canRead && seasonUnitOptions.length === 0 && !catalog.isLoading.value" class="text-sm text-brand-text-secondary">{{ t('accommodation.lookup.noSeasonUnits') }}</p>
+        <label class="inline-flex items-center gap-2 text-sm">
+          <input v-model="spForm.is_active" type="checkbox" class="rounded">
+          {{ t('accommodation.fields.active') }}
+        </label>
+      </template>
+      <p v-if="formError" class="text-sm text-red-700">{{ formError }}</p>
+      <template #submit-label>{{ t('accommodation.save') }}</template>
+    </AccommodationFormDrawer>
   </div>
 </template>
