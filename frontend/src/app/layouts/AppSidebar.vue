@@ -30,7 +30,13 @@ const sidebarToggleLabel = computed(() =>
 const openGroups = ref<Record<string, boolean>>({
   home: true,
   system: true,
-  organization: true,
+  hr: true,
+  'seasons-pilgrims': true,
+  governance: true,
+  inventory: true,
+  transport: true,
+  assets: true,
+  accommodation: true,
 })
 
 const displayName = computed(() => user.value?.name ?? t('auth.userFallback'))
