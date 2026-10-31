@@ -156,3 +156,22 @@ it('stores passenger rows only as season-owned tenant data', function (): void {
     $row = TransportRunPassenger::query()->withoutGlobalScopes()->findOrFail($passengerId);
     expect($row->owningSeasonId())->toBe($season['id'])->and($row->toArray())->not->toHaveKey('occupying_flag');
 });
+
+it('uses entitlement snapshot columns without the legacy required_* names or assigned season-vehicle FK', function (): void {
+    expect(Schema::hasColumn('transport_run_passengers', 'entitlement_vehicle_class'))->toBeTrue()
+        ->and(Schema::hasColumn('transport_run_passengers', 'entitlement_service_level'))->toBeTrue()
+        ->and(Schema::hasColumn('transport_run_passengers', 'overridden_by_at_assignment'))->toBeTrue()
+        ->and(Schema::hasColumn('transport_run_passengers', 'required_vehicle_class_at_assignment'))->toBeFalse()
+        ->and(Schema::hasColumn('transport_run_passengers', 'required_service_level_at_assignment'))->toBeFalse();
+
+    $seasonVehicle = collect(Schema::getColumns('transport_run_passengers'))
+        ->firstWhere('name', 'season_vehicle_id_at_assignment');
+    expect($seasonVehicle)->not->toBeNull()
+        ->and($seasonVehicle['nullable'])->toBeTrue();
+
+    $fkNames = collect(Schema::getForeignKeys('transport_run_passengers'))->pluck('name')->all();
+    expect($fkNames)->not->toContain('tr_passengers_assigned_sv_fk');
+    if (in_array(DB::connection()->getDriverName(), ['mysql', 'mariadb'], true)) {
+        expect($fkNames)->toContain('tr_passengers_overridden_at_asn_fk');
+    }
+});
