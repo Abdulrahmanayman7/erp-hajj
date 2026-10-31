@@ -1,12 +1,13 @@
 # Module: Suppliers and Procurement (الموردون والمشتريات) — S04 slice
 
-> **Status:** Designed (G1 documentation) — **NOT IMPLEMENTED**  
+> **Status:** Overall S04 **IN PROGRESS**. **G2 Phase I: COMPLETE — OWNER ACCEPTED** (2026-10-31) — geographic foundation + supplier registry. **Phase II–V: NOT_STARTED** (banking, document eligibility, evaluations, purchase requests, approval engine).  
 > **Last updated:** 2026-10-31  
+> **Phase I acceptance record:** [S04_PHASE_I_ACCEPTANCE_STATUS.md](../../00-project/S04_PHASE_I_ACCEPTANCE_STATUS.md)  
 > **Functional ADR:** [ADR-0022](../../10-decisions/ADR-0022-S04-SUPPLIERS-AND-PURCHASE-REQUESTS-FUNCTIONAL-DECISIONS.md) (`APPROVED — FUNCTIONAL DECISIONS`)  
 > **Engineering ADR:** [ADR-0023](../../10-decisions/ADR-0023-S04-ENGINEERING-DESIGN.md) (`APPROVED — ENGINEERING DESIGN`, Owner 2026-10-31)  
-> **Change Request:** [CHANGE_REQUEST_S04_SUPPLIERS_AND_PROCUREMENT.md](../../00-project/CHANGE_REQUEST_S04_SUPPLIERS_AND_PROCUREMENT.md) (`APPROVED — DESIGN AND SCOPE ONLY; IMPLEMENTATION NOT AUTHORIZED`)  
+> **Change Request:** [CHANGE_REQUEST_S04_SUPPLIERS_AND_PROCUREMENT.md](../../00-project/CHANGE_REQUEST_S04_SUPPLIERS_AND_PROCUREMENT.md) (design/scope approved; **Phase I implementation accepted**; Phase II–V still unauthorized)  
 > **Product scope parent:** [ADR-0020](../../10-decisions/ADR-0020-FULL-PHASE2-OPERATIONAL-SCOPE.md) §S04 / §S05  
-> **G1 Owner design decisions D1–D5:** Approved 2026-10-31 (geo, mandatory financial review, approved-PR cancel, sensitive permission seeding, **financial reviewer ≠ final approver hard SoD**). Design approval ≠ G2 implementation authorization.
+> **G1 Owner design decisions D1–D5:** Approved 2026-10-31 (geo, mandatory financial review, approved-PR cancel, sensitive permission seeding, **financial reviewer ≠ final approver hard SoD**).
 
 ## Purpose
 
@@ -75,11 +76,10 @@ Provide a **tenant-isolated** supplier master, supplier evaluation, purchase-req
 
 ## Implementation authorization
 
-This documentation package is **not** permission to code. ADR-0023 and the Engineering CR are approved for **design/scope only**. Implementation still requires:
-
 1. ~~Owner approval of ADR-0023~~ **Done** (2026-10-31).  
 2. ~~Owner approval of Engineering CR design/scope~~ **Done** (2026-10-31).  
-3. A **separate** explicit Owner authorization to start application work (**G2+**) — **NOT GRANTED**.
+3. ~~G2 Phase I implementation authorization~~ **Granted** (2026-10-31) and **Owner-accepted** (2026-10-31) — see [S04_PHASE_I_ACCEPTANCE_STATUS.md](../../00-project/S04_PHASE_I_ACCEPTANCE_STATUS.md).  
+4. **Phase II–V** and **S05** remain **NOT AUTHORIZED** until separate Owner acts.
 
 ## References
 

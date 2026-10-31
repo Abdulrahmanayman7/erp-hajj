@@ -3,6 +3,7 @@
 use App\Core\Tenancy\TenancyServiceProvider;
 use App\Modules\Accommodation\AccommodationServiceProvider;
 use App\Modules\SeasonPilgrims\SeasonPilgrimsServiceProvider;
+use App\Modules\SuppliersAndProcurement\SuppliersAndProcurementServiceProvider;
 use App\Modules\Transportation\TransportationServiceProvider;
 use App\Providers\AppServiceProvider;
 
@@ -12,4 +13,5 @@ return [
     SeasonPilgrimsServiceProvider::class,
     TransportationServiceProvider::class,
     AccommodationServiceProvider::class,
+    SuppliersAndProcurementServiceProvider::class,
 ];

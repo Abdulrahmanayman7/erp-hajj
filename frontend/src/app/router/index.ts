@@ -177,6 +177,18 @@ export const router = createRouter({
       meta: { requiresAuth: true, layout: 'app', permission: 'contracts.view' },
     },
     {
+      path: '/app/suppliers',
+      name: 'suppliers',
+      component: () => import('@/modules/suppliers/pages/SuppliersPage.vue'),
+      meta: { requiresAuth: true, layout: 'app', permission: 'suppliers.view' },
+    },
+    {
+      path: '/app/suppliers/:id',
+      name: 'supplier-details',
+      component: () => import('@/modules/suppliers/pages/SupplierDetailsPage.vue'),
+      meta: { requiresAuth: true, layout: 'app', permission: 'suppliers.view' },
+    },
+    {
       path: '/app/meetings',
       name: 'meetings',
       component: () => import('@/modules/meetings/pages/MeetingsPage.vue'),

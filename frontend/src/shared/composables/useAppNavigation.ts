@@ -4,6 +4,7 @@ import {
   Archive,
   Boxes,
   CalendarDays,
+  Building2,
   FileText,
   Gavel,
   Home,
@@ -234,6 +235,16 @@ export function buildTenantNavGroups(can: (permission: string) => boolean): AppN
       to: '/app/contracts',
       icon: FileText,
       permission: 'contracts.view',
+      match: 'prefix',
+    })
+  }
+  if (can('suppliers.view')) {
+    governanceItems.push({
+      key: 'suppliers',
+      labelKey: 'nav.suppliers',
+      to: '/app/suppliers',
+      icon: Building2,
+      permission: 'suppliers.view',
       match: 'prefix',
     })
   }

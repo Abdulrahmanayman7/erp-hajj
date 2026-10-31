@@ -15,5 +15,9 @@ class DatabaseSeeder extends Seeder
             TenantSeeder::class,
             RbacSeeder::class,
         ]);
+
+        if (app()->environment(['local', 'testing'])) {
+            $this->call(GeoPlacesSeeder::class);
+        }
     }
 }

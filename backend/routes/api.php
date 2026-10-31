@@ -45,6 +45,11 @@ use App\Modules\SeasonPilgrims\Controllers\SeasonPilgrimController;
 use App\Modules\SeasonPilgrims\Controllers\SeasonPilgrimGroupController;
 use App\Modules\SeasonPilgrims\Controllers\SeasonProgramController;
 use App\Modules\Settings\Controllers\TenantSettingsController;
+use App\Modules\SuppliersAndProcurement\Controllers\GeoPlaceController;
+use App\Modules\SuppliersAndProcurement\Controllers\SupplierCategoryController;
+use App\Modules\SuppliersAndProcurement\Controllers\SupplierContactController;
+use App\Modules\SuppliersAndProcurement\Controllers\SupplierController;
+use App\Modules\SuppliersAndProcurement\Controllers\SupplierCoverageController;
 use App\Modules\Tasks\Controllers\TaskController;
 use App\Modules\Transportation\Controllers\TransportEntitlementController;
 use App\Modules\Transportation\Controllers\TransportExternalDriverController;
@@ -169,6 +174,32 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::post('/contract-categories/{contract_category}/activate', [ContractCategoryController::class, 'activate'])->name('contract-categories.activate');
         Route::post('/contract-categories/{contract_category}/deactivate', [ContractCategoryController::class, 'deactivate'])->name('contract-categories.deactivate');
         Route::delete('/contract-categories/{contract_category}', [ContractCategoryController::class, 'destroy'])->name('contract-categories.destroy');
+
+        Route::get('/geo-places', [GeoPlaceController::class, 'index'])->name('geo-places.index');
+        Route::get('/geo-places/{geo_place}', [GeoPlaceController::class, 'show'])->name('geo-places.show');
+
+        Route::get('/supplier-categories', [SupplierCategoryController::class, 'index'])->name('supplier-categories.index');
+        Route::post('/supplier-categories', [SupplierCategoryController::class, 'store'])->name('supplier-categories.store');
+        Route::get('/supplier-categories/{supplier_category}', [SupplierCategoryController::class, 'show'])->name('supplier-categories.show');
+        Route::patch('/supplier-categories/{supplier_category}', [SupplierCategoryController::class, 'update'])->name('supplier-categories.update');
+        Route::post('/supplier-categories/{supplier_category}/deactivate', [SupplierCategoryController::class, 'deactivate'])->name('supplier-categories.deactivate');
+        Route::delete('/supplier-categories/{supplier_category}', [SupplierCategoryController::class, 'destroy'])->name('supplier-categories.destroy');
+
+        Route::get('/suppliers', [SupplierController::class, 'index'])->name('suppliers.index');
+        Route::post('/suppliers', [SupplierController::class, 'store'])->name('suppliers.store');
+        Route::get('/suppliers/{supplier}', [SupplierController::class, 'show'])->name('suppliers.show');
+        Route::patch('/suppliers/{supplier}', [SupplierController::class, 'update'])->name('suppliers.update');
+        Route::delete('/suppliers/{supplier}', [SupplierController::class, 'destroy'])->name('suppliers.destroy');
+        Route::post('/suppliers/{supplier}/transition', [SupplierController::class, 'transition'])->name('suppliers.transition');
+
+        Route::get('/suppliers/{supplier}/contacts', [SupplierContactController::class, 'index'])->name('suppliers.contacts.index');
+        Route::post('/suppliers/{supplier}/contacts', [SupplierContactController::class, 'store'])->name('suppliers.contacts.store');
+        Route::patch('/suppliers/{supplier}/contacts/{supplier_contact}', [SupplierContactController::class, 'update'])->name('suppliers.contacts.update');
+        Route::delete('/suppliers/{supplier}/contacts/{supplier_contact}', [SupplierContactController::class, 'destroy'])->name('suppliers.contacts.destroy');
+
+        Route::get('/suppliers/{supplier}/coverages', [SupplierCoverageController::class, 'index'])->name('suppliers.coverages.index');
+        Route::post('/suppliers/{supplier}/coverages', [SupplierCoverageController::class, 'store'])->name('suppliers.coverages.store');
+        Route::delete('/suppliers/{supplier}/coverages/{supplier_coverage}', [SupplierCoverageController::class, 'destroy'])->name('suppliers.coverages.destroy');
 
         Route::get('/meetings', [MeetingController::class, 'index'])->name('meetings.index');
         Route::post('/meetings', [MeetingController::class, 'store'])->name('meetings.store');

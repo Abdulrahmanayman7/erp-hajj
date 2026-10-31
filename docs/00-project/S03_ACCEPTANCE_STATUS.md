@@ -30,4 +30,4 @@ Evidence pack: [s03-accommodation-browser-uat/REPORT.md](../audits/s03-accommoda
 
 ## Next delivery sprint
 
-`S04 — Suppliers & Purchase Requests` — functional decisions filed in [ADR-0022](../10-decisions/ADR-0022-S04-SUPPLIERS-AND-PURCHASE-REQUESTS-FUNCTIONAL-DECISIONS.md). Implementation remains **NOT_STARTED** and is **not** authorized by S03 acceptance or by ADR-0022 alone (G1 module docs + later explicit Owner implementation authorization required).
+`S04 — Suppliers & Purchase Requests` — see [S04_PHASE_I_ACCEPTANCE_STATUS.md](S04_PHASE_I_ACCEPTANCE_STATUS.md). **G2 Phase I** (geo + supplier registry) is Owner-accepted (2026-10-31); overall S04 remains **IN PROGRESS**; Phase II–V **NOT_STARTED**.

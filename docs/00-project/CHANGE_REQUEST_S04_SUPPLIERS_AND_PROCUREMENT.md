@@ -124,18 +124,21 @@ Per [ACCEPTANCE_CRITERIA.md](../09-modules/19-suppliers-and-procurement/ACCEPTAN
 - [x] Approve **ADR-0023** as `APPROVED — ENGINEERING DESIGN` (2026-10-31)  
 - [x] Approve **D5** financial-reviewer ≠ final-approver hard SoD (2026-10-31)  
 - [x] Flip this CR to **APPROVED — DESIGN AND SCOPE ONLY; IMPLEMENTATION NOT AUTHORIZED** (2026-10-31)  
-- [ ] Issue **explicit G2 implementation authorization** (separate Owner act)  
-- [ ] At implementation seed PR: apply **D4** templates (non-sensitive only) + explicit sensitive grants process  
+- [x] Issue **explicit G2 Phase I implementation authorization** (Owner 2026-10-31)  
+- [x] Owner-accept **G2 Phase I** delivery (2026-10-31) — [S04_PHASE_I_ACCEPTANCE_STATUS.md](S04_PHASE_I_ACCEPTANCE_STATUS.md)  
+- [ ] Authorize **Phase II–V** implementation (separate Owner act)  
+- [ ] At later phases seed PR: continue **D4** templates (non-sensitive only) + explicit sensitive grants process  
 
 ## Decision
 
-- [x] Approved — **design and scope only**  
+- [x] Approved — **design and scope**  
+- [x] **G2 Phase I implementation authorized and Owner-accepted** (2026-10-31)  
 - [ ] Rejected  
 - [ ] Deferred  
 
 **Decided by:** Project Owner — **Date:** 2026-10-31  
 
-**Implementation authorization:** **NOT GRANTED** (pending separate Owner authorization).
+**Implementation authorization:** **Phase I GRANTED + ACCEPTED** (2026-10-31). **Phase II–V NOT GRANTED.**
 
 ---
 
@@ -143,5 +146,5 @@ Per [ACCEPTANCE_CRITERIA.md](../09-modules/19-suppliers-and-procurement/ACCEPTAN
 
 - G0 COMPLETE (ADR-0022 + S03 acceptance 2026-10-31).  
 - G1 design APPROVED (ADR-0023 + this CR design/scope).  
-- S04 implementation status remains **NOT_STARTED**.  
-- Approving this CR’s design/scope must **not** be treated as permission to open implementation PRs or run migrations.
+- S04 overall implementation status: **IN PROGRESS** (Phase I complete; Phase II–V **NOT_STARTED**).  
+- Phase II–V coding remains forbidden until a separate Owner authorization.

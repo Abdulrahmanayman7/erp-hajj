@@ -5,7 +5,8 @@
 > **Binding product decision:** [ADR-0020](../10-decisions/ADR-0020-FULL-PHASE2-OPERATIONAL-SCOPE.md) — Full Phase 2 Operational Scope Adoption
 > **Product clarifications:** [ADR-0021](../10-decisions/ADR-0021-PHASE2-PRODUCT-DECISIONS-AND-DELIVERY-BOUNDARIES.md) — GPS, Pilgrim UI, breakdowns, 11/8 planning interpretation
 > **S04 functional decisions:** [ADR-0022](../10-decisions/ADR-0022-S04-SUPPLIERS-AND-PURCHASE-REQUESTS-FUNCTIONAL-DECISIONS.md) — decisions 101–130 (`APPROVED — FUNCTIONAL DECISIONS`; not implementation authorization)  
-> **S04 engineering design:** [ADR-0023](../10-decisions/ADR-0023-S04-ENGINEERING-DESIGN.md) (`APPROVED — ENGINEERING DESIGN`, 2026-10-31) + [CHANGE_REQUEST_S04_SUPPLIERS_AND_PROCUREMENT.md](CHANGE_REQUEST_S04_SUPPLIERS_AND_PROCUREMENT.md) (design/scope approved; implementation **not** authorized)
+> **S04 engineering design:** [ADR-0023](../10-decisions/ADR-0023-S04-ENGINEERING-DESIGN.md) (`APPROVED — ENGINEERING DESIGN`, 2026-10-31) + [CHANGE_REQUEST_S04_SUPPLIERS_AND_PROCUREMENT.md](CHANGE_REQUEST_S04_SUPPLIERS_AND_PROCUREMENT.md)  
+> **S04 G2 Phase I:** [S04_PHASE_I_ACCEPTANCE_STATUS.md](S04_PHASE_I_ACCEPTANCE_STATUS.md) (`COMPLETE — OWNER ACCEPTED`, 2026-10-31); Phase II–V **not** authorized
 > **Audit snapshot (not a scope authority):** [PHASE2_IMPLEMENTATION_AUDIT.md](../audits/PHASE2_IMPLEMENTATION_AUDIT.md)
 
 ## Purpose
@@ -32,8 +33,9 @@ Record conflicts between older in-repo Phase 2 wording and the **approved full o
 | [ADR-0018](../10-decisions/ADR-0018-TRANSPORTATION-MOVEMENTS-RUNS-AND-FLEET.md) | GPS remains out of Transportation ADR text | GPS not specified in ADR-0018 | GPS **product-in-scope** (ADR-0021) without auto-amending ADR-0018; breakdowns in S02 need design + ADR-0018 review | Engineering ADR/CR if conflict | **No body rewrite** (local Transport doc edits left untouched) | Provider; breakdown model; possible ADR-0018 addendum |
 | [ADR-0019](../10-decisions/ADR-0019-ACCOMMODATION-CAMPS-DRAFT.md) | PROPOSED / NOT ACCEPTED | Draft engineering | S03 in product scope; ADR-0019 **must stay PROPOSED** until separate acceptance | Must not flip status | **No** — status unchanged (S03 Owner acceptance 2026-10-31 does **not** accept ADR-0019) | Accept/revise ADR-0019 |
 | [ADR-0022](../10-decisions/ADR-0022-S04-SUPPLIERS-AND-PURCHASE-REQUESTS-FUNCTIONAL-DECISIONS.md) | (new) | S04 functional depth open | Decisions 101–130 approved; G0 engineering directions for geo (106) and manual financial review (120) | Documentation (G0); G1 MODULE_TEMPLATE + engineering CR before code | **Yes** — filed 2026-10-31 | Implementation authorization still open |
-| [ADR-0023](../10-decisions/ADR-0023-S04-ENGINEERING-DESIGN.md) | PROPOSED | Engineering design open | Engineering design **APPROVED** 2026-10-31 (D1–D5 incl. hard SoD reviewer≠final approver); does **not** authorize code | Documentation | **Yes** — approved 2026-10-31 | G2 implementation authorization still open |
-| [CHANGE_REQUEST_S04_SUPPLIERS_AND_PROCUREMENT.md](CHANGE_REQUEST_S04_SUPPLIERS_AND_PROCUREMENT.md) | DRAFT | Scope/design CR open | **APPROVED — DESIGN AND SCOPE ONLY; IMPLEMENTATION NOT AUTHORIZED** (2026-10-31) | Documentation | **Yes** — 2026-10-31 | Separate G2 coding authorization |
+| [ADR-0023](../10-decisions/ADR-0023-S04-ENGINEERING-DESIGN.md) | PROPOSED | Engineering design open | Engineering design **APPROVED** 2026-10-31 (D1–D5); design status unchanged | Documentation | **Yes** — approved 2026-10-31 | Phase II–V coding still open |
+| [CHANGE_REQUEST_S04_SUPPLIERS_AND_PROCUREMENT.md](CHANGE_REQUEST_S04_SUPPLIERS_AND_PROCUREMENT.md) | DRAFT | Scope/design CR open | Design/scope APPROVED; **G2 Phase I accepted** 2026-10-31; Phase II–V unauthorized | Documentation + Phase I code | **Yes** — 2026-10-31 | Separate Phase II+ authorization |
+| [S04_PHASE_I_ACCEPTANCE_STATUS.md](S04_PHASE_I_ACCEPTANCE_STATUS.md) | (new) | Phase I delivery open | Phase I **COMPLETE — OWNER ACCEPTED** 2026-10-31 | Implementation record | **Yes** — 2026-10-31 | Phase II readiness assessment |
 | [S03_ACCEPTANCE_STATUS.md](S03_ACCEPTANCE_STATUS.md) | ACCEPTANCE PENDING | S03 not Owner-closed | Owner **COMPLETE — ACCEPTED** 2026-10-31 on existing evidence only | Documentation | **Yes** — 2026-10-31 | None for S03 delivery close; ADR-0019 still open |
 | [MVP_SCOPE.md](MVP_SCOPE.md) | 21 MVP modules | Unchanged | Still unchanged — Phase 2 is not MVP rewrite | None | **No** | None |
 | Module docs 16–18 | Living module specs | Foundation trio | Remain authoritative for their domains; not bulk-rewritten | Future stream docs for S04+ | **No bulk rewrite** (local Accommodation/Transport doc edits preserved) | New module folder for S04 in **G1** |
@@ -49,7 +51,8 @@ Record conflicts between older in-repo Phase 2 wording and the **approved full o
 - Whether audit statuses become COMPLETE → **No** (Owner acceptance is separate from the historical audit file).
 - Whether S03 delivery is Owner-accepted → **Yes** (2026-10-31; [S03_ACCEPTANCE_STATUS.md](S03_ACCEPTANCE_STATUS.md)); ADR-0019 still PROPOSED.
 - Whether S04 functional requirements 101–130 are frozen → **Yes** (ADR-0022); implementation still **not** authorized.  
-- Whether S04 engineering design is Owner-approved → **Yes** (ADR-0023 + CR design/scope, 2026-10-31); G2 coding still **not** authorized.  
+- Whether S04 engineering design is Owner-approved → **Yes** (ADR-0023 + CR design/scope, 2026-10-31).  
+- Whether S04 G2 Phase I is Owner-accepted → **Yes** (2026-10-31); Phase II–V still **not** authorized.  
 - Whether financial reviewer may also final-approve → **No** (D5 hard SoD).
 
 ### Resolved Product Decisions (2026-10-29 — ADR-0021)
@@ -85,7 +88,8 @@ Record conflicts between older in-repo Phase 2 wording and the **approved full o
 9. ADR-0019 acceptance path for Accommodation **engineering ADR** close (S03 delivery accepted; ADR-0019 still PROPOSED).  
 10. Transport staff UI completion (S01–S02 product close) beyond GPS/breakdowns.  
 11. Phase 2 UAT script ownership (S12).  
-12. S04 **G2** explicit Owner implementation authorization (migrations/code).
+12. ~~S04 **G2 Phase I** Owner implementation authorization~~ **Done** (accepted 2026-10-31).  
+13. S04 **Phase II–V** explicit Owner implementation authorization (when ready).
 
 ## Sprint 0 / recovery note
 
