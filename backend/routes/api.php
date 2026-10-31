@@ -52,6 +52,7 @@ use App\Modules\Transportation\Controllers\TransportMovementController;
 use App\Modules\Transportation\Controllers\TransportPassengerController;
 use App\Modules\Transportation\Controllers\TransportPointController;
 use App\Modules\Transportation\Controllers\TransportReviewItemController;
+use App\Modules\Transportation\Controllers\TransportBreakdownController;
 use App\Modules\Transportation\Controllers\TransportRunController;
 use App\Modules\Transportation\Controllers\TransportSeasonVehicleController;
 use App\Modules\Transportation\Controllers\TransportTimelineController;
@@ -419,6 +420,14 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
                 Route::post('/transport-timeline-events/{timeline_event}/correct', [TransportTimelineController::class, 'correct'])->name('transport-timeline-events.correct');
                 Route::get('/transport-review-items', [TransportReviewItemController::class, 'index'])->name('transport-review-items.index');
                 Route::post('/transport-review-items/{review_item}/resolve', [TransportReviewItemController::class, 'resolve'])->name('transport-review-items.resolve');
+
+                Route::get('/transport-breakdowns', [TransportBreakdownController::class, 'index'])->name('transport-breakdowns.index');
+                Route::post('/transport-runs/{run}/breakdowns', [TransportBreakdownController::class, 'store'])->name('transport-breakdowns.store');
+                Route::get('/transport-breakdowns/{breakdown}', [TransportBreakdownController::class, 'show'])->name('transport-breakdowns.show');
+                Route::post('/transport-breakdowns/{breakdown}/close', [TransportBreakdownController::class, 'close'])->name('transport-breakdowns.close');
+                Route::post('/transport-breakdowns/{breakdown}/cancel', [TransportBreakdownController::class, 'cancel'])->name('transport-breakdowns.cancel');
+                Route::get('/transport-breakdowns/{breakdown}/preview-replacement', [TransportBreakdownController::class, 'preview'])->name('transport-breakdowns.preview-replacement');
+                Route::post('/transport-breakdowns/{breakdown}/replace', [TransportBreakdownController::class, 'replace'])->name('transport-breakdowns.replace');
 
                 Route::get('/accommodation/facilities', [AccommodationMasterDataController::class, 'facilities'])->name('accommodation.facilities.index');
                 Route::post('/accommodation/facilities', [AccommodationMasterDataController::class, 'storeFacility'])->name('accommodation.facilities.store');

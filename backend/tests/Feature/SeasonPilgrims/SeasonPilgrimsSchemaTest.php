@@ -89,13 +89,20 @@ it('has no current room, bed or accommodation fields', function (): void {
     }
 });
 
-it('creates no accommodation columns on foundation tables', function (): void {
-    $tables = collect(Schema::getTables(Schema::getCurrentSchemaName()))->pluck('name');
+it('keeps foundation season/pilgrim tables free of accommodation or transport columns', function (): void {
+    $foundation = [
+        'seasons', 'pilgrims', 'pilgrim_identity_documents', 'season_programs',
+        'season_pilgrim_groups', 'season_family_groups', 'season_pilgrims',
+        'season_pilgrim_reference_sequences', 'season_pilgrim_identity_snapshots',
+        'season_pilgrim_program_changes', 'season_pilgrim_group_supervisors',
+    ];
+    $forbidden = '/(accommodation|camp|room|bed|hotel|tent|transport|vehicle|fleet|gps|qr_)/i';
 
-    $forbidden = $tables->filter(fn (string $name): bool => ! str_starts_with($name, 'accommodation_')
-        && (bool) preg_match('/(accommodation|camp|room|bed|hotel|tent)/i', $name));
-
-    expect($forbidden->values()->all())->toBe([]);
+    foreach ($foundation as $table) {
+        foreach (Schema::getColumnListing($table) as $column) {
+            expect(preg_match($forbidden, $column))->toBe(0, "{$table}.{$column}");
+        }
+    }
 });
 
 /**

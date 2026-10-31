@@ -13,13 +13,9 @@ use Illuminate\Support\Facades\Schema;
  * - `occupying_flag` (1 for assigned/boarded/arrived) + UNIQUE
  *   (vehicle_run_id, season_pilgrim_id, occupying_flag) → no duplicate
  *   occupying passenger; cancelled/no-show rows stay as history.
- * - Source group and program columns are snapshots with no FK (T10).
- * - `*_at_assignment` columns are the immutable T9 assignment decision:
- *   program, evaluated entitlement and its requirements, the SeasonVehicle
- *   and its classification, the result, and any override used (authorized
- *   by `assigned_by`). The model rejects updates to them. The
- *   `entitlement_override*` columns are the effective override (at
- *   assignment or later) used by live status.
+ * - Source group and Program / entitlement / vehicle classification columns
+ *   are immutable assignment-time snapshots with no FK (T9 / T10). Live
+ *   entitlement_override* may change later without rewriting the snapshot.
  *
  * @see docs/09-modules/17-transportation-and-fleet/DATA_MODEL.md
  */
@@ -43,14 +39,15 @@ return new class extends Migration
             $table->unsignedBigInteger('program_id_at_assignment')->nullable();
             $table->string('program_code_at_assignment', 40)->nullable();
             $table->unsignedBigInteger('entitlement_id_at_assignment')->nullable();
-            $table->string('required_vehicle_class_at_assignment', 32)->nullable();
-            $table->string('required_service_level_at_assignment', 32)->nullable();
-            $table->unsignedBigInteger('season_vehicle_id_at_assignment');
+            $table->string('entitlement_vehicle_class', 32)->nullable();
+            $table->string('entitlement_service_level', 32)->nullable();
+            $table->unsignedBigInteger('season_vehicle_id_at_assignment')->nullable();
             $table->string('vehicle_class_at_assignment', 32)->nullable();
             $table->string('service_level_at_assignment', 32)->nullable();
             $table->string('entitlement_status_at_assignment', 32);
             $table->boolean('override_at_assignment')->default(false);
             $table->string('override_reason_at_assignment', 1000)->nullable();
+            $table->foreignId('overridden_by_at_assignment')->nullable()->constrained('users', indexName: 'tr_passengers_overridden_at_asn_fk')->restrictOnDelete();
             $table->boolean('entitlement_override')->default(false);
             $table->string('entitlement_override_reason', 1000)->nullable();
             $table->foreignId('entitlement_overridden_by')->nullable()->constrained('users', indexName: 'tr_passengers_overridden_by_fk')->restrictOnDelete();
@@ -72,10 +69,6 @@ return new class extends Migration
             $table->foreign(['season_id', 'vehicle_run_id'], 'tr_passengers_run_fk')
                 ->references(['season_id', 'id'])
                 ->on('transport_vehicle_runs')
-                ->restrictOnDelete();
-            $table->foreign(['season_id', 'season_vehicle_id_at_assignment'], 'tr_passengers_assigned_sv_fk')
-                ->references(['season_id', 'id'])
-                ->on('transport_season_vehicles')
                 ->restrictOnDelete();
             $table->foreign(['tenant_id', 'season_id', 'season_pilgrim_id'], 'tr_passengers_season_pilgrim_fk')
                 ->references(['tenant_id', 'season_id', 'id'])

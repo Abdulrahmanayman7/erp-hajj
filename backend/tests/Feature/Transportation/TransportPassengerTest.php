@@ -71,7 +71,7 @@ it('enforces capacity without overbooking', function (): void {
     spaGetJson("/api/v1/transport-runs/{$run['id']}", $h)->assertJsonPath('data.occupied_count', 2);
 });
 
-it('resolves a pilgrim group into passenger rows with the source snapshot', function (): void {
+it('assigns an all-active pilgrim group atomically and preserves the source snapshot', function (): void {
     actingAsTenantOwner();
     ['run' => $run, 'season' => $season, 'header' => $h] = trScenario();
     $group = spCreateGroup($season['id'], 'BUSG');
@@ -83,17 +83,16 @@ it('resolves a pilgrim group into passenger rows with the source snapshot', func
         ->assertJsonPath('meta.added', 2)
         ->assertJsonMissingPath('meta.skipped');
 
-    $rows = collect(spaGetJson("/api/v1/transport-runs/{$run['id']}/passengers", $h)->json('data'));
-    expect($rows->pluck('season_pilgrim_id')->sort()->values()->all())->toBe([$a['id'], $b['id']]);
-    foreach ($rows as $row) {
-        expect($row['assignment_source'])->toBe('pilgrim_group')
-            ->and($row['source_group_id'])->toBe($group['id'])
-            ->and($row['source_group_label'])->toBe($group['name']);
-    }
+    $rows = collect(spaGetJson("/api/v1/transport-runs/{$run['id']}/passengers", $h)->json('data'))->keyBy('season_pilgrim_id');
+    expect($rows[$a['id']]['assignment_source'])->toBe('pilgrim_group')
+        ->and($rows[$a['id']]['source_group_id'])->toBe($group['id'])
+        ->and($rows[$a['id']]['source_group_label'])->toBe($group['name'])
+        ->and($rows[$b['id']]['source_group_label'])->toBe($group['name']);
 
-    $empty = spCreateGroup($season['id'], 'EMPTY');
-    spaPostJson("/api/v1/transport-runs/{$run['id']}/passengers", ['source' => 'pilgrim_group', 'source_id' => $empty['id']], $h)
-        ->assertStatus(422)->assertJsonPath('code', 'TRANSPORT_PASSENGERS_NONE_ELIGIBLE');
+    spaPostJson("/api/v1/transport-runs/{$run['id']}/passengers", ['source' => 'pilgrim_group', 'source_id' => $group['id']], $h)
+        ->assertStatus(422)
+        ->assertJsonPath('code', 'TRANSPORT_PASSENGER_DUPLICATE')
+        ->assertJsonPath('errors.season_pilgrim_ids', [$a['id'], $b['id']]);
 });
 
 it('resolves a family group and rejects sources from another season', function (): void {
@@ -154,18 +153,12 @@ it('rejects an entitlement mismatch unless overridden with permission and a reas
     ], $h)->assertCreated()->assertJsonPath('meta.added', 2);
 
     $rows = collect(spaGetJson("/api/v1/transport-runs/{$run['id']}/passengers", $h)->json('data'))->keyBy('season_pilgrim_id');
-    $vipContext = $rows[$vipSp['id']]['assignment_context'];
     expect($rows[$vipSp['id']]['entitlement_status'])->toBe('overridden')
-        ->and($vipContext['entitlement_status'])->toBe('mismatch')
-        ->and($vipContext['override_used'])->toBeTrue()
-        ->and($vipContext['override_reason'])->toBe('لا تتوفر حافلة مميزة')
-        ->and($vipContext['assigned_by'])->toBe(auth()->id())
-        ->and($vipContext['season_program_code'])->toBe('VIP')
-        ->and($vipContext['required_service_level'])->toBe('premium')
-        ->and($vipContext['service_level'])->toBe('standard')
+        ->and($rows[$vipSp['id']]['entitlement_status_at_assignment'])->toBe('overridden')
         ->and($rows[$vipSp['id']]['entitlement_override_reason'])->toBe('لا تتوفر حافلة مميزة')
+        ->and($rows[$vipSp['id']]['program_code_at_assignment'])->toBe('VIP')
+        ->and($rows[$vipSp['id']]['entitlement_service_level'])->toBe('premium')
         ->and($rows[$basicSp['id']]['entitlement_status'])->toBe('compatible')
-        ->and($rows[$basicSp['id']]['assignment_context']['override_used'])->toBeFalse()
         ->and($rows[$basicSp['id']]['entitlement_override'])->toBeFalse();
 
     expect(AuditLog::query()->where('event_type', AuthorizationSecurityEvent::TRANSPORT_PASSENGER_ENTITLEMENT_OVERRIDDEN)->exists())->toBeTrue();
@@ -186,8 +179,7 @@ it('shows a live mismatch after a vehicle change and allows overriding it on the
 
     $row = spaGetJson("/api/v1/transport-runs/{$run['id']}/passengers", $h)->json('data.0');
     expect($row['entitlement_status'])->toBe('mismatch')
-        ->and($row['assignment_context']['entitlement_status'])->toBe('compatible')
-        ->and($row['assignment_context']['service_level'])->toBe('premium')
+        ->and($row['entitlement_status_at_assignment'])->toBe('compatible')
         ->and($row['status'])->toBe('assigned');
 
     actingAsSameTenantUserWith(transportPermissionsExcept(['transportation.override_entitlement']));
@@ -196,11 +188,7 @@ it('shows a live mismatch after a vehicle change and allows overriding it on the
     actingAsSameTenantUserWith(transportPermissionsExcept());
     spaPostJson("/api/v1/transport-run-passengers/{$passengerId}/entitlement-override", [], $h)->assertStatus(422)->assertJsonValidationErrors(['reason']);
     spaPostJson("/api/v1/transport-run-passengers/{$passengerId}/entitlement-override", ['reason' => 'استبدال اضطراري'], $h)
-        ->assertOk()
-        ->assertJsonPath('data.entitlement_status', 'overridden')
-        ->assertJsonPath('data.assignment_context.entitlement_status', 'compatible')
-        ->assertJsonPath('data.assignment_context.override_used', false)
-        ->assertJsonPath('data.entitlement_override', true);
+        ->assertOk()->assertJsonPath('data.entitlement_status', 'overridden')->assertJsonPath('data.entitlement_status_at_assignment', 'compatible');
 });
 
 it('rejects outcomes outside the allowed passenger and run states', function (): void {

@@ -1,8 +1,8 @@
 # Module: Accommodation and Camps (الإسكان والمخيمات)
 
-> **Status:** Sprint 1 **ACCEPTED**. Sprint 2 **ACCEPTED**. Sprint 3 **ACCEPTED** ([acceptance](../../reviews/ACCOMMODATION_SPRINT3_ACCEPTANCE.md)) — Gates A–E complete. ADR-0019 remains **PROPOSED / NOT ACCEPTED**.
-> **Last updated:** 2026-10-19
-> Binding: [ADR-0017](../../10-decisions/ADR-0017-SEASON-PILGRIM-AND-PHASE2-BOUNDED-CONTEXTS.md). ADR-0019 is not accepted; Sprint 2 and Sprint 3 are **narrow scoped approvals**, not full ADR acceptance.
+> **Status:** Specified (Phase 2). **Not implemented.** Offline and QR are later slices.
+> **Last updated:** 2026-10-04
+> Binding: [ADR-0017](../../10-decisions/ADR-0017-SEASON-PILGRIM-AND-PHASE2-BOUNDED-CONTEXTS.md)
 
 ## Purpose
 
@@ -10,43 +10,51 @@ Accommodation is an independent bounded context and the **source of truth** for 
 
 Other modules, including Transportation, do not write this state. They use explicit contracts or the **Current Accommodation Read Model**.
 
-## Sprint 1 (accepted)
+## Scope (approved concepts)
 
-Stable facilities, optional structures, units, and positions; season allocations; non-reserving drafts; facility and supervisor scope; Phase 3 preparation UI. See [Sprint 1 acceptance](../../reviews/ACCOMMODATION_SPRINT1_ACCEPTANCE.md).
+Documented in [BUSINESS_RULES.md](BUSINESS_RULES.md):
 
-## Sprint 2 (scoped-approved)
+- Time-based occupancy (sequential stays, non-overlapping use of a place).
+- Capacity-based and position-based places.
+- Audience: Male, Female, Family (Family Group is consumed, not owned).
+- Stages/phases, demand, allocation, queue, draft and confirmed assignments, availability, capacity planning.
+- Auto allocation, incremental allocation, family-aware allocation, reserved family capacity, reuse of a previous allocation as preference.
+- Relocation, bulk relocation, extension, cancellation before check-in.
+- Facility arrival, check-in, check-out as distinct from mere assignment.
+- `occurred_at` / `recorded_at` on operational events.
+- Operational timeline separate from the audit trail.
+- Current Accommodation read model (planned vs confirmed).
+- Notification **configuration** (business rules only). Delivery stays the existing in-app channel.
+- Later: offline field queue and QR. Not this implementation sprint.
 
-Confirmation of eligible drafts, peak/position capacity, family exclusivity, atomic family confirm, cross-season detection-only fail-closed, capacity-decrease safety, `accommodation.confirm`, and D7 error codes. See [BUSINESS_RULES.md](BUSINESS_RULES.md) and [scoped approval](../../reviews/ACCOMMODATION_SPRINT2_SCOPED_APPROVAL.md).
+Exact tables and fields for those concepts are **TBD** where the prompt does not list columns.
 
-**Not** in Sprint 2: check-in/out, arrival, relocation, cancellation listeners, staff cancel of confirmed, `physical_capacity` formula, role-template grants.
+## Out of scope
 
-## Sprint 3 (ACCEPTED)
+- `pilgrims.current_room_id`, `current_bed_id`, `current_accommodation_id` (and the same idea on SeasonPilgrim as a mutable “current place” shortcut).
+- Owning Family Group, Pilgrim, or Season.
+- Mutating Transportation.
+- Automatic check-in when transport arrives.
+- Intentional overbooking.
+- New notification channels (email, SMS, WhatsApp, push).
+- Full platform offline mode. Selected accommodation field operations are a **later slice** only.
+- Finance, government integrations, pilgrim mobile app.
+- Full event sourcing.
 
-Final acceptance: [ACCOMMODATION_SPRINT3_ACCEPTANCE.md](../../reviews/ACCOMMODATION_SPRINT3_ACCEPTANCE.md).  
-Gate A: [scoped approval](../../reviews/ACCOMMODATION_SPRINT3_SCOPED_APPROVAL.md).  
-Gate B–D: [B](../../reviews/ACCOMMODATION_SPRINT3_GATE_B_VERIFICATION.md) · [C](../../reviews/ACCOMMODATION_SPRINT3_GATE_C_VERIFICATION.md) · [D](../../reviews/ACCOMMODATION_SPRINT3_GATE_D_VERIFICATION.md) — all **PASS**.
-
-**Not** in Sprint 3: `SeasonPilgrimCancelled` listener, automatic draft cancel, extension, historical correction, post-Closed writes, role-template grants, ADR acceptance.
-
-## Out of scope (platform)
-
-- `pilgrims.current_room_id` / equivalent on SeasonPilgrim.
-- Owning Family Group, Pilgrim, or Season; mutating Transportation.
-- Automatic check-in when transport arrives; intentional overbooking.
-- New notification channels; full platform offline mode; finance; pilgrim mobile app.
+Contract category `hotel` remains a Contracts legal category, not room inventory.
 
 ## Personas
 
-Existing templates only. Sprint 1, Sprint 2, and Sprint 3 verbs are granted to **no** role template unless a separate approval adds grants.
+Existing templates only. Which roles allocate, check in, or resolve sync conflicts is **TBD**.
 
-## Module docs
+## Module placement (not created now)
 
-| Doc | Role |
+| Layer | Path |
 |---|---|
-| [BUSINESS_RULES.md](BUSINESS_RULES.md) | Sprint 1 + Sprint 2 + Sprint 3 (Gate A) product rules |
-| [DATA_MODEL.md](DATA_MODEL.md) | Tables and CHECKs |
-| [API.md](API.md) | Routes and error codes |
-| [PERMISSIONS.md](PERMISSIONS.md) | Verbs |
-| [UI.md](UI.md) | Screens |
-| [TEST_PLAN.md](TEST_PLAN.md) | Cases |
-| [ACCEPTANCE_CRITERIA.md](ACCEPTANCE_CRITERIA.md) | Checklist |
+| Backend | `backend/app/Modules/Accommodation/` |
+| Frontend | `frontend/src/modules/accommodation/` |
+| Docs | `docs/09-modules/18-accommodation-and-camps/` |
+
+## Documents
+
+[BUSINESS_RULES.md](BUSINESS_RULES.md) · [DATA_MODEL.md](DATA_MODEL.md) · [API.md](API.md) · [PERMISSIONS.md](PERMISSIONS.md) · [UI.md](UI.md) · [TEST_PLAN.md](TEST_PLAN.md) · [ACCEPTANCE_CRITERIA.md](ACCEPTANCE_CRITERIA.md)

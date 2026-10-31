@@ -18,15 +18,16 @@ use App\Modules\Transportation\Support\ResourceOverlapGuard;
 use App\Modules\Transportation\Support\SeasonVehicleResolver;
 use App\Modules\Transportation\Support\TimelineRecorder;
 use App\Modules\Transportation\Support\TransportAudit;
-use App\Modules\Transportation\Support\TransportTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 /**
- * ADR-0018 T1 / T4 / I5: a Run is created with a SeasonVehicle; the
- * SeasonVehicle's default driver / supervisor become the Run's actual
- * assignments and are validated like explicit assignments (active,
- * same tenant, no driver overlap).
+ * ADR-0018 T1 / T4 / T7 / I5: a Run is created with a SeasonVehicle; the
+ * SeasonVehicle's default driver / supervisor become the Run's first
+ * current assignment-history rows (validated like explicit assignments:
+ * active, same tenant, no driver overlap). run_created summarizes them;
+ * it does not replace history.
  */
 final class CreateRun
 {
@@ -42,7 +43,7 @@ final class CreateRun
      */
     public function execute(User $actor, TransportMovement $movement, array $data, Request $request): TransportVehicleRun
     {
-        return TransportTransaction::run(function () use ($actor, $movement, $data, $request): TransportVehicleRun {
+        return DB::transaction(function () use ($actor, $movement, $data, $request): TransportVehicleRun {
             /** @var TransportMovement $locked */
             $locked = TransportMovement::query()->whereKey($movement->id)->lockForUpdate()->firstOrFail();
             SeasonGuard::assertWritable($locked->season()->firstOrFail());
@@ -137,6 +138,6 @@ final class CreateRun
             ], $request);
 
             return RunLoader::load($run);
-        });
+        }, 5);
     }
 }

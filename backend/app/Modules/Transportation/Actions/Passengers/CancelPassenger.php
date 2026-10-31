@@ -12,8 +12,8 @@ use App\Modules\Transportation\Models\TransportRunPassenger;
 use App\Modules\Transportation\Support\PassengerCancellation;
 use App\Modules\Transportation\Support\RunLocks;
 use App\Modules\Transportation\Support\TransportAudit;
-use App\Modules\Transportation\Support\TransportTransaction;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Assigned → Cancelled while the Run is Planned / Boarding (T8). Releases
@@ -28,7 +28,7 @@ final class CancelPassenger
 
     public function execute(User $actor, TransportRunPassenger $passenger, string $reason, Request $request): TransportRunPassenger
     {
-        return TransportTransaction::run(function () use ($actor, $passenger, $reason, $request): TransportRunPassenger {
+        return DB::transaction(function () use ($actor, $passenger, $reason, $request): TransportRunPassenger {
             [$movement, $run] = RunLocks::lock($passenger->vehicle_run_id);
             SeasonGuard::assertWritable($movement->season()->firstOrFail());
 

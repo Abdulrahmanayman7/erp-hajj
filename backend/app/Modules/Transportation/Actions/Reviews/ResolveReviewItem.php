@@ -12,9 +12,9 @@ use App\Modules\Transportation\Models\TransportReviewItem;
 use App\Modules\Transportation\Models\TransportVehicleRun;
 use App\Modules\Transportation\Support\TimelineRecorder;
 use App\Modules\Transportation\Support\TransportAudit;
-use App\Modules\Transportation\Support\TransportTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Closes a review item with a note. Passenger history is never changed.
@@ -28,7 +28,7 @@ final class ResolveReviewItem
 
     public function execute(User $actor, TransportReviewItem $item, string $note, Request $request): TransportReviewItem
     {
-        return TransportTransaction::run(function () use ($actor, $item, $note, $request): TransportReviewItem {
+        return DB::transaction(function () use ($actor, $item, $note, $request): TransportReviewItem {
             /** @var TransportReviewItem $locked */
             $locked = TransportReviewItem::query()->whereKey($item->id)->lockForUpdate()->firstOrFail();
             $run = TransportVehicleRun::query()->findOrFail($locked->vehicle_run_id);

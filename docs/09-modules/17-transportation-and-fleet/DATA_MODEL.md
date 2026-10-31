@@ -140,22 +140,21 @@ Resource columns:
 | `assignment_source` | string(32) | `individual`, `pilgrim_group`, `family_group` |
 | `source_group_id` | bigint null | **no FK** (snapshot) |
 | `source_group_label` | string(255) null | snapshot |
-| `program_id_at_assignment` | bigint null | **no FK** (snapshot) |
-| `program_code_at_assignment` | string(40) null | snapshot |
-| `entitlement_id_at_assignment` | bigint null | **no FK** (snapshot; the entitlement may later be edited or deleted) |
-| `required_vehicle_class_at_assignment`, `required_service_level_at_assignment` | string(32) null | entitlement requirements evaluated |
-| `season_vehicle_id_at_assignment` | bigint | FK `(season_id, season_vehicle_id_at_assignment) → transport_season_vehicles(season_id, id)` restrict |
-| `vehicle_class_at_assignment`, `service_level_at_assignment` | string(32) null | vehicle classification evaluated |
-| `entitlement_status_at_assignment` | string(32) | `none`, `compatible`, `mismatch` |
-| `override_at_assignment` | bool | override used at assignment (authorized by `assigned_by`) |
-| `override_reason_at_assignment` | string(1000) null | |
-| `entitlement_override` | bool | effective override (at assignment or later) used by live status |
-| `entitlement_override_reason` | string(1000) null | |
-| `entitlement_overridden_by`, `entitlement_overridden_at` | null | |
-| `assigned_at`, `assigned_by` | | |
+| `program_id_at_assignment` | bigint null | **no FK**; immutable Program at assignment |
+| `program_code_at_assignment` | string(40) null | immutable |
+| `entitlement_id_at_assignment` | bigint null | **no FK**; which entitlement was evaluated |
+| `entitlement_vehicle_class`, `entitlement_service_level` | string(32) null | required classification from that entitlement |
+| `season_vehicle_id_at_assignment` | bigint null | **no FK**; SeasonVehicle compared at assignment |
+| `vehicle_class_at_assignment`, `service_level_at_assignment` | string(32) null | vehicle classification compared at assignment |
+| `entitlement_status_at_assignment` | string(32) | `none`, `compatible`, `overridden` (immutable) |
+| `override_at_assignment` | bool | immutable; true when override authorized the assignment |
+| `override_reason_at_assignment` | string(1000) null | immutable |
+| `overridden_by_at_assignment` | FK users null | immutable |
+| `entitlement_override` | bool | **live** override flag (may be set later) |
+| `entitlement_override_reason` | string(1000) null | live |
+| `entitlement_overridden_by`, `entitlement_overridden_at` | null | live |
+| `assigned_at`, `assigned_by` | | `assigned_by` is part of the immutable assignment context |
 | `boarded_at`, `arrived_at`, `no_show_at`, `cancelled_at`, `cancelled_by`, `cancellation_reason` | null | |
-
-The assignment decision (`season_pilgrim_id`, `vehicle_run_id`, source columns, every `*_at_assignment` column, `assigned_at`, `assigned_by`) is written once; the model rejects updates to it. Status, outcome timestamps, cancellation, and the effective override are the only mutable columns.
 
 Program deletion is blocked while a snapshot references it (deletion checker, not FK).
 
@@ -177,7 +176,7 @@ Program deletion is blocked while a snapshot references it (deletion checker, no
 
 No `updated_at`. The model rejects update and delete.
 
-Event types: `movement_created`, `movement_planned`, `movement_started`, `movement_completed`, `movement_cancelled`, `run_created`, `run_boarding_started`, `run_departed`, `run_arrived`, `run_completed`, `run_cancelled`, `vehicle_assigned`, `driver_assigned`, `supervisor_assigned`, `passenger_assigned`, `passenger_boarded`, `passenger_arrived`, `passenger_no_show`, `passenger_cancelled`, `passenger_entitlement_overridden`, `review_raised`, `review_resolved`, `event_corrected`.
+Event types: `movement_created`, `movement_planned`, `movement_started`, `movement_completed`, `movement_cancelled`, `run_created`, `run_boarding_started`, `run_departed`, `run_arrived`, `run_completed`, `run_cancelled`, `vehicle_assigned`, `vehicle_replaced`, `driver_assigned`, `supervisor_assigned`, `passenger_assigned`, `passenger_boarded`, `passenger_arrived`, `passenger_no_show`, `passenger_cancelled`, `passenger_entitlement_overridden`, `review_raised`, `review_resolved`, `event_corrected`.
 
 Correctable types (I8): `movement_started`, `movement_completed`, `run_boarding_started`, `run_departed`, `run_arrived`, `run_completed`, `passenger_boarded`, `passenger_arrived`, `passenger_no_show`, and `event_corrected`.
 
@@ -195,8 +194,52 @@ Correctable types (I8): `movement_started`, `movement_completed`, `run_boarding_
 | `details` | json null |
 | `raised_at`, `resolved_at`, `resolved_by`, `resolution_note` | |
 
+### `transport_vehicle_breakdowns` (S02 / ADR-0021 D03)
+
+| Column | Notes |
+|---|---|
+| `id`, `tenant_id`, `season_id` | |
+| `vehicle_run_id` | FK `(season_id, vehicle_run_id) → transport_vehicle_runs` |
+| `transport_season_vehicle_id` | Affected SeasonVehicle at record time |
+| `status` | `open`, `replaced`, `closed`, `cancelled` |
+| `occurred_at` | Breakdown time |
+| `reason`, `notes` | |
+| `reported_by` | FK users |
+| `replacement_id` | null until replace; FK to replacements |
+| `closed_at`, `closed_by`, `closure_reason` | Set on close/cancel/replace |
+| `created_at`, `updated_at` | |
+
+### `transport_vehicle_replacements`
+
+| Column | Notes |
+|---|---|
+| `id`, `tenant_id`, `season_id` | |
+| `breakdown_id` | **unique** (one replacement per breakdown) |
+| `vehicle_run_id` | Source run |
+| `from_season_vehicle_id`, `to_season_vehicle_id` | |
+| `status` | `completed` (MVP) |
+| `reason` | |
+| `passengers_retained`, `passengers_reassigned` | Counts after atomic execute |
+| `idempotency_key` | null; unique per `(tenant_id, idempotency_key)` |
+| `executed_at`, `executed_by` | |
+
+Replacement updates the run via **T7 history append** (end current vehicle assignment + create new row). It does not invent a parallel vehicle-current field.
+
+### `transport_replacement_passenger_moves`
+
+| Column | Notes |
+|---|---|
+| `id`, `tenant_id`, `season_id` | |
+| `replacement_id` | FK |
+| `from_run_id`, `to_run_id` | |
+| `season_pilgrim_id` | |
+| `source_passenger_id`, `target_passenger_id` | Cancelled source row + new assigned row on target |
+| unique | `(replacement_id, source_passenger_id)` |
+
+Timeline adds `vehicle_replaced` (and continues to emit `vehicle_assigned` for the T7 append). Audit: `TRANSPORT_BREAKDOWN_RECORDED` / `_CLOSED` / `_CANCELLED`, `TRANSPORT_VEHICLE_REPLACEMENT_EXECUTED`.
+
 ## Delete behavior
 
 - Points, Vehicles, ExternalDrivers, SeasonVehicles: hard delete only while unreferenced (action check + restrict FKs); otherwise deactivate.
 - Entitlements: hard delete allowed (passenger snapshots keep the values).
-- Movements, Runs, passengers, assignments, timeline, reviews: never deleted through the API.
+- Movements, Runs, passengers, assignments, timeline, reviews, breakdowns, replacements: never deleted through the API.

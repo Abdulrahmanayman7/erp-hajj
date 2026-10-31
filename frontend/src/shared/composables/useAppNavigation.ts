@@ -17,6 +17,17 @@ import {
   Users,
   Warehouse,
   Tent,
+  CalendarRange,
+  UserRound,
+  Layers3,
+  Shapes,
+  HeartHandshake,
+  Bus,
+  UserCog,
+  Truck,
+  MapPinned,
+  Route,
+  TriangleAlert,
   type LucideIcon,
 } from 'lucide-vue-next'
 
@@ -160,6 +171,56 @@ export function useAppNavigation(): {
         match: 'prefix',
       })
     }
+    if (can('seasons.view')) {
+      organizationItems.push({
+        key: 'seasons',
+        labelKey: 'nav.seasons',
+        to: '/app/seasons',
+        icon: CalendarRange,
+        permission: 'seasons.view',
+        match: 'prefix',
+      })
+    }
+    if (can('pilgrims.view')) {
+      organizationItems.push({
+        key: 'pilgrims',
+        labelKey: 'nav.pilgrims',
+        to: '/app/pilgrims',
+        icon: UserRound,
+        permission: 'pilgrims.view',
+        match: 'prefix',
+      })
+    }
+    if (can('season_pilgrim_groups.view')) {
+      organizationItems.push({
+        key: 'season-groups',
+        labelKey: 'nav.seasonGroups',
+        to: '/app/season-groups',
+        icon: Layers3,
+        permission: 'season_pilgrim_groups.view',
+        match: 'prefix',
+      })
+    }
+    if (can('season_programs.view')) {
+      organizationItems.push({
+        key: 'season-programs',
+        labelKey: 'nav.seasonPrograms',
+        to: '/app/season-programs',
+        icon: Shapes,
+        permission: 'season_programs.view',
+        match: 'prefix',
+      })
+    }
+    if (can('season_family_groups.view')) {
+      organizationItems.push({
+        key: 'season-families',
+        labelKey: 'nav.seasonFamilies',
+        to: '/app/season-families',
+        icon: HeartHandshake,
+        permission: 'season_family_groups.view',
+        match: 'prefix',
+      })
+    }
     if (can('contracts.view')) {
       organizationItems.push({
         key: 'contracts',
@@ -227,6 +288,56 @@ export function useAppNavigation(): {
         to: '/app/inventory',
         icon: Package,
         permission: 'inventory.view',
+        match: 'prefix',
+      })
+    }
+    if (can('transportation.view')) {
+      organizationItems.push({
+        key: 'transport-vehicles',
+        labelKey: 'nav.transportVehicles',
+        to: '/app/transport-vehicles',
+        icon: Bus,
+        permission: 'transportation.view',
+        match: 'prefix',
+      })
+      organizationItems.push({
+        key: 'transport-drivers',
+        labelKey: 'nav.transportDrivers',
+        to: '/app/transport-drivers',
+        icon: UserCog,
+        permission: 'transportation.view',
+        match: 'prefix',
+      })
+      organizationItems.push({
+        key: 'transport-season-fleet',
+        labelKey: 'nav.transportSeasonFleet',
+        to: '/app/transport-season-fleet',
+        icon: Truck,
+        permission: 'transportation.view',
+        match: 'prefix',
+      })
+      organizationItems.push({
+        key: 'transport-points',
+        labelKey: 'nav.transportPoints',
+        to: '/app/transport-points',
+        icon: MapPinned,
+        permission: 'transportation.view',
+        match: 'prefix',
+      })
+      organizationItems.push({
+        key: 'transport-movements',
+        labelKey: 'nav.transportMovements',
+        to: '/app/transport-movements',
+        icon: Route,
+        permission: 'transportation.view',
+        match: 'prefix',
+      })
+      organizationItems.push({
+        key: 'transport-breakdowns',
+        labelKey: 'nav.transportBreakdowns',
+        to: '/app/transport-breakdowns',
+        icon: TriangleAlert,
+        permission: 'transportation.view',
         match: 'prefix',
       })
     }

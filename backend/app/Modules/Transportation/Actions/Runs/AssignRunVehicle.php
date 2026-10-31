@@ -14,9 +14,9 @@ use App\Modules\Transportation\Support\RunLocks;
 use App\Modules\Transportation\Support\SeasonVehicleResolver;
 use App\Modules\Transportation\Support\TimelineRecorder;
 use App\Modules\Transportation\Support\TransportAudit;
-use App\Modules\Transportation\Support\TransportTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 /**
  * ADR-0018 T7: vehicle substitution appends history; after execution began
@@ -33,7 +33,7 @@ final class AssignRunVehicle
 
     public function execute(User $actor, TransportVehicleRun $run, int $seasonVehicleId, ?string $reason, Request $request): TransportVehicleRun
     {
-        return TransportTransaction::run(function () use ($actor, $run, $seasonVehicleId, $reason, $request): TransportVehicleRun {
+        return DB::transaction(function () use ($actor, $run, $seasonVehicleId, $reason, $request): TransportVehicleRun {
             [$movement, $locked] = RunLocks::lock($run->id);
             SeasonGuard::assertWritable($movement->season()->firstOrFail());
             $reason = RunSubstitution::assertAllowed($locked, $reason);
@@ -92,6 +92,6 @@ final class AssignRunVehicle
             ], $request);
 
             return RunLoader::load($locked);
-        });
+        }, 5);
     }
 }

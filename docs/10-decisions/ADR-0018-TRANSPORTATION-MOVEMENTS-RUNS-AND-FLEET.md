@@ -93,15 +93,6 @@ Taken to build T1–T10 without adding business scope. Each is the narrowest rea
 | I13 | Transportation's deletion checker blocks hard delete of a **Season** holding any Transportation data and of a **Program** referenced by an entitlement or a passenger's assignment snapshot. Group/family source metadata (id + label snapshot, no FK) does not block group/family deletion. | T10 deletion extension; no brittle FK for source metadata. |
 | I14 | Transport Points: Transportation-owned only. Future domain linking is an additive, typed link (one nullable FK column or link table per linked domain, added when that domain exists). No link columns or tables exist yet. | T2: no dependency on, and no reference to, nonexistent Accommodation tables. |
 
-## Hardening decisions (post-sprint 1)
-
-| # | Decision | Why |
-|---|---|---|
-| H1 | Each passenger row stores the immutable assignment decision as typed columns: Program, entitlement evaluated, required class / service level, SeasonVehicle and its class / service level, status (`none` / `compatible` / `mismatch`), whether an override was used and its reason, plus who assigned and when. The model rejects updates to these columns. Later Program changes, entitlement edits, and SeasonVehicle / Vehicle reclassification never rewrite them. The effective override and the live status are separate. | T9: auditability of the decision as taken; no key/value snapshot. |
-| H2 | The initial vehicle / driver / supervisor of a Run are written as current assignment rows at creation. Substitution ends the current row and appends a new one, so there is at most one current row per type. | T7 single history model, no implicit "initial" state. |
-| H3 | Passenger assignment (individual, group, family) is all-or-nothing. Any non-eligible, duplicate, unoverridden-mismatch, or over-capacity member rejects the whole request with the failing `season_pilgrim_ids`. Nothing is skipped silently. An authorized override (permission + reason) makes mismatched members eligible. | T5/T9: no partial manifests. |
-| H4 | Capacity, overlap, and duplicate checks use locking reads, because a plain read in an InnoDB REPEATABLE READ transaction can miss rows committed after the snapshot. Resources are locked before the Run's assignment-history locking read, to avoid gap-lock deadlocks. Transactions retry up to 3 times on deadlock (`TransportTransaction`). | Verified by MySQL multi-process race tests. |
-
 ## Consequences
 
 - New module `backend/app/Modules/Transportation/` with 15 tenant-owned tables (`transport_*`), `transportation.*` permissions, audit events, and an operational timeline.

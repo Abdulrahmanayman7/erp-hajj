@@ -15,8 +15,8 @@ use App\Modules\Transportation\Support\OccurredAtResolver;
 use App\Modules\Transportation\Support\RunLocks;
 use App\Modules\Transportation\Support\TimelineRecorder;
 use App\Modules\Transportation\Support\TransportAudit;
-use App\Modules\Transportation\Support\TransportTransaction;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 /**
  * ADR-0018 T8 (Active season only), all-or-nothing per request:
@@ -43,7 +43,7 @@ final class RecordPassengerOutcome
      */
     public function execute(User $actor, TransportVehicleRun $run, string $outcome, array $passengerIds, ?string $occurredAt, ?string $reason, Request $request): TransportVehicleRun
     {
-        return TransportTransaction::run(function () use ($actor, $run, $outcome, $passengerIds, $occurredAt, $reason, $request): TransportVehicleRun {
+        return DB::transaction(function () use ($actor, $run, $outcome, $passengerIds, $occurredAt, $reason, $request): TransportVehicleRun {
             [$movement, $locked] = RunLocks::lock($run->id);
             SeasonGuard::assertActive($movement->season()->firstOrFail());
 

@@ -14,8 +14,8 @@ use App\Modules\Transportation\Support\OccurredAt;
 use App\Modules\Transportation\Support\OccurredAtResolver;
 use App\Modules\Transportation\Support\TimelineRecorder;
 use App\Modules\Transportation\Support\TransportAudit;
-use App\Modules\Transportation\Support\TransportTransaction;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 /**
  * ADR-0018 T6 / I2 / I3:
@@ -39,7 +39,7 @@ final class TransitionMovement
 
     public function execute(User $actor, TransportMovement $movement, string $transition, ?string $occurredAt, ?string $reason, Request $request): TransportMovement
     {
-        return TransportTransaction::run(function () use ($actor, $movement, $transition, $occurredAt, $reason, $request): TransportMovement {
+        return DB::transaction(function () use ($actor, $movement, $transition, $occurredAt, $reason, $request): TransportMovement {
             /** @var TransportMovement $locked */
             $locked = TransportMovement::query()->whereKey($movement->id)->lockForUpdate()->firstOrFail();
             $season = $locked->season()->firstOrFail();

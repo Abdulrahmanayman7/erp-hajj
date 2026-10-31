@@ -9,7 +9,6 @@ use App\Core\Tenancy\TenantContext;
 use App\Models\User;
 use App\Modules\Authorization\Models\Role;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
-use Illuminate\Foundation\Testing\DatabaseTruncation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\TestResponse;
 use Laravel\Sanctum\Sanctum;
@@ -19,10 +18,7 @@ pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
     ->in('Feature');
 
-// Concurrency workers run in separate processes and must see committed rows,
-// so these tests truncate instead of wrapping each test in a transaction.
-pest()->extend(TestCase::class)
-    ->use(DatabaseTruncation::class)
+pest()->extend(Tests\ConcurrencyTestCase::class)
     ->in('Concurrency');
 
 require_once __DIR__.'/Feature/SeasonPilgrims/Helpers.php';

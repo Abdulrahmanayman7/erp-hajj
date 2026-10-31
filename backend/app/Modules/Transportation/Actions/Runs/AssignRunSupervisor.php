@@ -12,9 +12,9 @@ use App\Modules\Transportation\Support\CrewResolver;
 use App\Modules\Transportation\Support\RunLocks;
 use App\Modules\Transportation\Support\TimelineRecorder;
 use App\Modules\Transportation\Support\TransportAudit;
-use App\Modules\Transportation\Support\TransportTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 /**
  * ADR-0018 T4 / T7: Transport Supervisor (an Employee). Overlap with other
@@ -30,20 +30,19 @@ final class AssignRunSupervisor
 
     public function execute(User $actor, TransportVehicleRun $run, ?int $employeeId, ?string $reason, Request $request): TransportVehicleRun
     {
-        return TransportTransaction::run(function () use ($actor, $run, $employeeId, $reason, $request): TransportVehicleRun {
+        return DB::transaction(function () use ($actor, $run, $employeeId, $reason, $request): TransportVehicleRun {
             [$movement, $locked] = RunLocks::lock($run->id);
             SeasonGuard::assertWritable($movement->season()->firstOrFail());
             $reason = RunSubstitution::assertAllowed($locked, $reason);
-
-            // Employee row before the history read (see AssignRunDriver).
-            if ($employeeId !== null) {
-                $this->crew->activeEmployee($employeeId, 'supervisor_employee_id');
-            }
 
             /** @var TransportRunSupervisorAssignment|null $current */
             $current = $locked->currentSupervisorAssignment()->lockForUpdate()->first();
             if ($current?->supervisor_employee_id === $employeeId) {
                 return RunLoader::load($locked);
+            }
+
+            if ($employeeId !== null) {
+                $this->crew->activeEmployee($employeeId, 'supervisor_employee_id');
             }
 
             $now = Carbon::now();
@@ -85,6 +84,6 @@ final class AssignRunSupervisor
             );
 
             return RunLoader::load($locked);
-        });
+        }, 5);
     }
 }

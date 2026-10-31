@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { formatIsoTimestampAr } from '@/shared/utils/gregorianDate'
 import { computed, reactive, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
@@ -89,7 +88,15 @@ function openRow(id: number): void {
 }
 
 function formatTime(iso: string): string {
-  return formatIsoTimestampAr(iso, tenantTimezone.value, '—')
+  try {
+    return new Intl.DateTimeFormat('ar-SA', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+      timeZone: tenantTimezone.value,
+    }).format(new Date(iso))
+  } catch {
+    return iso
+  }
 }
 </script>
 

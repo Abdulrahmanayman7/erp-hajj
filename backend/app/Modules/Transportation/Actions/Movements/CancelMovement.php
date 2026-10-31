@@ -13,8 +13,8 @@ use App\Modules\Transportation\Models\TransportVehicleRun;
 use App\Modules\Transportation\Support\RunCancellation;
 use App\Modules\Transportation\Support\TimelineRecorder;
 use App\Modules\Transportation\Support\TransportAudit;
-use App\Modules\Transportation\Support\TransportTransaction;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Draft | Planned → Cancelled (T6, I4). Its Runs (all still Planned) are
@@ -30,7 +30,7 @@ final class CancelMovement
 
     public function execute(User $actor, TransportMovement $movement, string $reason, Request $request): TransportMovement
     {
-        return TransportTransaction::run(function () use ($actor, $movement, $reason, $request): TransportMovement {
+        return DB::transaction(function () use ($actor, $movement, $reason, $request): TransportMovement {
             /** @var TransportMovement $locked */
             $locked = TransportMovement::query()->whereKey($movement->id)->lockForUpdate()->firstOrFail();
             SeasonGuard::assertWritable($locked->season()->firstOrFail());

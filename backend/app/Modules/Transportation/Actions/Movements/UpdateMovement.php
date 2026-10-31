@@ -15,10 +15,10 @@ use App\Modules\Transportation\Models\TransportVehicleRun;
 use App\Modules\Transportation\Support\CrewResolver;
 use App\Modules\Transportation\Support\ResourceOverlapGuard;
 use App\Modules\Transportation\Support\TransportAudit;
-use App\Modules\Transportation\Support\TransportTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Draft / Planned only. A new planned window re-checks resource overlap for
@@ -38,7 +38,7 @@ final class UpdateMovement
      */
     public function execute(User $actor, TransportMovement $movement, array $data, Request $request): TransportMovement
     {
-        return TransportTransaction::run(function () use ($actor, $movement, $data, $request): TransportMovement {
+        return DB::transaction(function () use ($actor, $movement, $data, $request): TransportMovement {
             /** @var TransportMovement $locked */
             $locked = TransportMovement::query()->whereKey($movement->id)->lockForUpdate()->firstOrFail();
             SeasonGuard::assertWritable($locked->season()->firstOrFail());

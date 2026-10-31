@@ -5,7 +5,6 @@ use App\Core\Auth\Middleware\EnsureUserIsActive;
 use App\Core\Authorization\Exceptions\AuthorizationDomainException;
 use App\Core\Shared\ApiResponse;
 use App\Core\Shared\Middleware\AssignCorrelationId;
-use App\Core\Shared\Middleware\UseArabicLocale;
 use App\Core\Tenancy\Middleware\EnsurePlatformUser;
 use App\Core\Tenancy\Middleware\EnsureTenantIsActive;
 use App\Core\Tenancy\Middleware\EnterPlatformContext;
@@ -20,8 +19,10 @@ use App\Modules\Notifications\Exceptions\NotificationDomainException;
 use App\Modules\OrganizationStructure\Exceptions\OrganizationDomainException;
 use App\Modules\Platform\Exceptions\PlatformDomainException;
 use App\Modules\SeasonPilgrims\Context\ResolveSeasonContext;
+use App\Modules\SeasonPilgrims\Exceptions\SeasonPilgrimDomainException;
 use App\Modules\Settings\Exceptions\SettingsDomainException;
 use App\Modules\Tasks\Exceptions\TaskDomainException;
+use App\Modules\Transportation\Exceptions\TransportationDomainException;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -52,7 +53,6 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->statefulApi();
 
         $middleware->api(prepend: [
-            UseArabicLocale::class,
             AssignCorrelationId::class,
             ResolveTenantContext::class,
         ]);
@@ -101,6 +101,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(fn (AuthException $e): JsonResponse => $e->render());
         $exceptions->render(fn (AuthorizationDomainException $e): JsonResponse => $e->render());
         $exceptions->render(fn (AccommodationDomainException $e): JsonResponse => $e->render());
+        $exceptions->render(fn (SeasonPilgrimDomainException $e): JsonResponse => $e->render());
+        $exceptions->render(fn (TransportationDomainException $e): JsonResponse => $e->render());
         $exceptions->render(fn (OrganizationDomainException $e): JsonResponse => $e->render());
         $exceptions->render(fn (EmployeeDomainException $e): JsonResponse => $e->render());
         $exceptions->render(fn (ContractDomainException $e): JsonResponse => $e->render());
@@ -159,11 +161,11 @@ return Application::configure(basePath: dirname(__DIR__))
                 }
             }
 
-            if (isset($errors['name']) && (str_contains(implode(' ', $errors['name']), 'taken') || str_contains(implode(' ', $errors['name']), 'مستخدم'))) {
+            if (isset($errors['name']) && str_contains(implode(' ', $errors['name']), 'taken')) {
                 $code = 'ROLE_NAME_TAKEN';
             }
 
-            if (isset($errors['code']) && (str_contains(implode(' ', $errors['code']), 'taken') || str_contains(implode(' ', $errors['code']), 'مستخدم'))) {
+            if (isset($errors['code']) && str_contains(implode(' ', $errors['code']), 'taken')) {
                 $code = 'ROLE_CODE_TAKEN';
             }
 

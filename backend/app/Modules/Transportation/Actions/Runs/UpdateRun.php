@@ -11,9 +11,9 @@ use App\Modules\Transportation\Models\TransportSeasonVehicle;
 use App\Modules\Transportation\Models\TransportVehicleRun;
 use App\Modules\Transportation\Support\RunLocks;
 use App\Modules\Transportation\Support\TransportAudit;
-use App\Modules\Transportation\Support\TransportTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Planned / Boarding only. The capacity override must stay within the
@@ -29,7 +29,7 @@ final class UpdateRun
      */
     public function execute(User $actor, TransportVehicleRun $run, array $data, Request $request): TransportVehicleRun
     {
-        return TransportTransaction::run(function () use ($actor, $run, $data, $request): TransportVehicleRun {
+        return DB::transaction(function () use ($actor, $run, $data, $request): TransportVehicleRun {
             [$movement, $locked] = RunLocks::lock($run->id);
             SeasonGuard::assertWritable($movement->season()->firstOrFail());
 

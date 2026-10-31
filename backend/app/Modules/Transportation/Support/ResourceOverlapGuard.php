@@ -14,9 +14,7 @@ use Illuminate\Support\Carbon;
  * ADR-0018 T7 / I1: a SeasonVehicle, an internal driver, or an
  * ExternalDriver may not be current on two Runs in planned / boarding /
  * departed / arrived whose Movement windows intersect. Callers lock the
- * resource row first so concurrent assignments serialize; the overlap
- * query is a locking read so it sees assignments committed while the
- * caller waited for that lock (REPEATABLE READ snapshot).
+ * resource row first so concurrent assignments serialize.
  */
 final class ResourceOverlapGuard
 {
@@ -54,6 +52,10 @@ final class ResourceOverlapGuard
     }
 
     /**
+     * Locking read: under MySQL REPEATABLE READ a plain EXISTS after waiting
+     * on another resource can still see a stale snapshot and miss the winner's
+     * committed assignment. FOR UPDATE forces the latest committed rows.
+     *
      * @param  Builder<TransportRunVehicleAssignment>|Builder<TransportRunDriverAssignment>  $query
      */
     private function overlaps(Builder $query, Carbon $from, Carbon $to, ?int $excludeRunId): bool
@@ -68,7 +70,8 @@ final class ResourceOverlapGuard
                 ->whereHas('movement', fn (Builder $movement) => $movement
                     ->where('planned_departure_at', '<', $to)
                     ->where('planned_arrival_at', '>', $from)))
-            ->sharedLock()
-            ->first() !== null;
+            ->orderBy('id')
+            ->lockForUpdate()
+            ->exists();
     }
 }

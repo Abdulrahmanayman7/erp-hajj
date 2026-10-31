@@ -12,9 +12,9 @@ use App\Modules\Transportation\Models\TransportRunPassenger;
 use App\Modules\Transportation\Models\TransportSeasonVehicle;
 use App\Modules\Transportation\Models\TransportVehicleRun;
 use App\Modules\Transportation\Support\TransportAudit;
-use App\Modules\Transportation\Support\TransportTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Capacity cannot drop below the occupied count or capacity override of
@@ -31,7 +31,7 @@ final class UpdateSeasonVehicle
      */
     public function execute(User $actor, TransportSeasonVehicle $seasonVehicle, array $data, Request $request): TransportSeasonVehicle
     {
-        return TransportTransaction::run(function () use ($actor, $seasonVehicle, $data, $request): TransportSeasonVehicle {
+        return DB::transaction(function () use ($actor, $seasonVehicle, $data, $request): TransportSeasonVehicle {
             /** @var TransportSeasonVehicle $locked */
             $locked = TransportSeasonVehicle::query()->whereKey($seasonVehicle->id)->lockForUpdate()->firstOrFail();
             SeasonGuard::assertWritable($locked->season()->firstOrFail());
@@ -68,7 +68,6 @@ final class UpdateSeasonVehicle
             $occupied = TransportRunPassenger::query()
                 ->where('vehicle_run_id', $run->id)
                 ->whereIn('status', PassengerStatus::occupyingValues())
-                ->sharedLock()
                 ->count();
 
             if ($occupied > $capacity || ($run->capacity_override !== null && $run->capacity_override > $capacity)) {

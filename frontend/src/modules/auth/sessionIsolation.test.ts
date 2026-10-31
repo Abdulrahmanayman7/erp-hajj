@@ -75,6 +75,16 @@ describe('session isolation', () => {
     expect(await result).toMatchObject({ name: 'AbortError' })
   })
 
+  it('can clear anonymous caches without advancing the session generation', async () => {
+    const client = new QueryClient()
+    client.setQueryData(['scratch'], true)
+    const before = sessionGeneration.value
+    await clearSession(client, false, { advance: false })
+    expect(sessionGeneration.value).toBe(before)
+    expect(client.getQueryData(['scratch'])).toBeUndefined()
+    client.clear()
+  })
+
   it('clears data when another tab changes the shared authenticated session', async () => {
     const client = new QueryClient()
     client.setQueryData(['users'], ['private'])
@@ -90,11 +100,52 @@ describe('session isolation', () => {
     } finally { dispose(); client.clear() }
   })
 
-  it('discards a restored browser page before it can show an earlier session', async () => {
+  it('keeps a restored bfcache page when /me still authenticates', async () => {
     const client = new QueryClient()
     client.setQueryData(['private'], ['old session'])
     const navigate = vi.fn()
     const dispose = installSessionIsolation(client, navigate)
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        new Response(
+          JSON.stringify({
+            success: true,
+            message: '',
+            data: { id: 1, email: 'a@b.c', permissions: [] },
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        ),
+      ),
+    )
+    try {
+      const event = new Event('pageshow')
+      Object.defineProperty(event, 'persisted', { value: true })
+      window.dispatchEvent(event)
+      await vi.waitFor(() => expect(client.getQueryData(['auth', 'me'])).toMatchObject({ id: 1 }))
+      expect(navigate).not.toHaveBeenCalled()
+      expect(client.getQueryData(['private'])).toEqual(['old session'])
+      expect(sessionTransition.value).toBe(false)
+    } finally {
+      dispose()
+      client.clear()
+    }
+  })
+
+  it('logs out a restored bfcache page only when /me is unauthenticated', async () => {
+    const client = new QueryClient()
+    client.setQueryData(['private'], ['old session'])
+    const navigate = vi.fn()
+    const dispose = installSessionIsolation(client, navigate)
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        new Response(
+          JSON.stringify({ success: false, message: 'unauthenticated', code: 'AUTH_UNAUTHENTICATED' }),
+          { status: 401, headers: { 'Content-Type': 'application/json' } },
+        ),
+      ),
+    )
     try {
       const event = new Event('pageshow')
       Object.defineProperty(event, 'persisted', { value: true })
@@ -102,7 +153,10 @@ describe('session isolation', () => {
       await vi.waitFor(() => expect(navigate).toHaveBeenCalledOnce())
       expect(client.getQueryData(['private'])).toBeUndefined()
       expect(sessionTransition.value).toBe(true)
-    } finally { dispose(); client.clear() }
+    } finally {
+      dispose()
+      client.clear()
+    }
   })
 
   it('does not apply a late context after switching seasons, including A to B to A', () => {

@@ -12,12 +12,14 @@
 use App\Core\Tenancy\Models\Tenant;
 use App\Core\Tenancy\TenantContext;
 use App\Models\User;
+use App\Modules\Transportation\Actions\Breakdowns\ExecuteReplacement;
 use App\Modules\Transportation\Actions\Passengers\AddPassengers;
 use App\Modules\Transportation\Actions\Runs\AssignRunDriver;
 use App\Modules\Transportation\Actions\Runs\AssignRunSupervisor;
 use App\Modules\Transportation\Actions\Runs\AssignRunVehicle;
 use App\Modules\Transportation\Enums\AssignmentSource;
 use App\Modules\Transportation\Exceptions\TransportationDomainException;
+use App\Modules\Transportation\Models\TransportVehicleBreakdown;
 use App\Modules\Transportation\Models\TransportVehicleRun;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Database\Events\QueryExecuted;
@@ -54,30 +56,47 @@ while (microtime(true) < $job['start_at']) {
 }
 $released = microtime(true);
 
-$outcome = app(TenantContext::class)->runAsTenant(Tenant::query()->findOrFail($job['tenant_id']), function () use ($job): array {
-    $actor = User::query()->findOrFail($job['actor_id']);
-    $run = TransportVehicleRun::query()->findOrFail($job['run_id']);
-    $request = Request::create('/concurrency-worker', 'POST');
+try {
+    $outcome = app(TenantContext::class)->runAsTenant(Tenant::query()->findOrFail($job['tenant_id']), function () use ($job): array {
+        $actor = User::query()->findOrFail($job['actor_id']);
+        $run = TransportVehicleRun::query()->findOrFail($job['run_id']);
+        $request = Request::create('/concurrency-worker', 'POST');
 
-    try {
-        match ($job['action']) {
-            'add_passengers' => app(AddPassengers::class)->execute($actor, $run, AssignmentSource::Individual, $job['season_pilgrim_ids'], null, false, null, $request),
-            'assign_vehicle' => app(AssignRunVehicle::class)->execute($actor, $run, $job['season_vehicle_id'], null, $request),
-            'assign_driver' => app(AssignRunDriver::class)->execute($actor, $run, $job['employee_id'] ?? null, $job['external_driver_id'] ?? null, null, $request),
-            'assign_supervisor' => app(AssignRunSupervisor::class)->execute($actor, $run, $job['employee_id'], null, $request),
-        };
+        try {
+            match ($job['action']) {
+                'add_passengers' => app(AddPassengers::class)->execute($actor, $run, AssignmentSource::Individual, $job['season_pilgrim_ids'], null, false, null, $request),
+                'assign_vehicle' => app(AssignRunVehicle::class)->execute($actor, $run, $job['season_vehicle_id'], null, $request),
+                'assign_driver' => app(AssignRunDriver::class)->execute($actor, $run, $job['employee_id'] ?? null, $job['external_driver_id'] ?? null, null, $request),
+                'assign_supervisor' => app(AssignRunSupervisor::class)->execute($actor, $run, $job['employee_id'], null, $request),
+                'execute_replacement' => app(ExecuteReplacement::class)->execute(
+                    $actor,
+                    TransportVehicleBreakdown::query()->findOrFail($job['breakdown_id']),
+                    [
+                        'replacement_season_vehicle_id' => (int) $job['season_vehicle_id'],
+                        'reason' => (string) ($job['reason'] ?? 'استبدال متزامن'),
+                        'idempotency_key' => $job['idempotency_key'] ?? null,
+                        'reassignments' => $job['reassignments'] ?? [],
+                    ],
+                    $request,
+                ),
+            };
 
-        return ['ok' => true];
-    } catch (TransportationDomainException $e) {
-        return ['ok' => false, 'code' => $e->errorCode(), 'errors' => $e->errors()];
-    } catch (Throwable $e) {
-        return ['ok' => false, 'code' => 'UNEXPECTED', 'class' => $e::class, 'message' => $e->getMessage()];
-    }
-});
+            return ['ok' => true];
+        } catch (TransportationDomainException $e) {
+            return ['ok' => false, 'code' => $e->errorCode(), 'errors' => $e->errors()];
+        } catch (Throwable $e) {
+            return ['ok' => false, 'code' => 'UNEXPECTED', 'class' => $e::class, 'message' => $e->getMessage()];
+        }
+    });
+} catch (Throwable $e) {
+    $outcome = ['ok' => false, 'code' => 'UNEXPECTED', 'class' => $e::class, 'message' => $e->getMessage()];
+}
 
 echo json_encode([
     ...$outcome,
     'attempts' => $attempts,
+    'db' => (string) DB::connection()->getDatabaseName(),
+    'driver' => (string) DB::connection()->getDriverName(),
     'late_ms' => (int) round(($released - $job['start_at']) * 1000),
     'elapsed_ms' => (int) round((microtime(true) - $released) * 1000),
 ], JSON_THROW_ON_ERROR);

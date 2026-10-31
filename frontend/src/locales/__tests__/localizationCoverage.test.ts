@@ -3,8 +3,18 @@ import { readFileSync, readdirSync } from 'node:fs'
 import { resolve, join } from 'node:path'
 import { ar } from '../ar'
 import { accommodationAr } from '../accommodationAr'
+import { seasonPilgrimsAr } from '../seasonPilgrimsAr'
+import { transportationAr } from '../transportationAr'
 import { auditEventLabel, auditEntityDisplay, formatAuditValue } from '@/modules/audit/utils/auditDisplay'
-const messages = { ...ar, nav: { ...ar.nav, ...accommodationAr.nav }, accommodation: accommodationAr.accommodation }
+const messages = {
+  ...ar,
+  nav: { ...ar.nav, ...accommodationAr.nav, ...seasonPilgrimsAr.nav, ...transportationAr.nav },
+  accommodation: accommodationAr.accommodation,
+  pilgrims: seasonPilgrimsAr.pilgrims,
+  seasons: seasonPilgrimsAr.seasons,
+  seasonOps: seasonPilgrimsAr.seasonOps,
+  transportation: transportationAr.transportation,
+}
 function files(directory: string): string[] { return readdirSync(directory, { withFileTypes: true }).flatMap(entry => entry.isDirectory() ? files(join(directory, entry.name)) : [join(directory, entry.name)]) }
 const lookup = (key: string) => key.split('.').reduce<unknown>((value, part) => (value as Record<string, unknown> | undefined)?.[part], messages)
 describe('Arabic display coverage', () => {

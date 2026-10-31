@@ -120,16 +120,11 @@ class TransportVehicleRun extends Model implements SeasonOwned, TenantOwned
         return $this->hasMany(TransportRunPassenger::class, 'vehicle_run_id')->orderBy('id');
     }
 
-    /**
-     * Locking read: under REPEATABLE READ a plain count would use the
-     * transaction snapshot taken before the caller acquired the run lock.
-     */
     public function occupiedCount(): int
     {
         return TransportRunPassenger::query()
             ->where('vehicle_run_id', $this->id)
             ->whereIn('status', PassengerStatus::occupyingValues())
-            ->sharedLock()
             ->count();
     }
 

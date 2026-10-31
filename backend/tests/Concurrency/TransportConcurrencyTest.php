@@ -1,9 +1,12 @@
 <?php
 
+use App\Modules\Transportation\Enums\BreakdownStatus;
 use App\Modules\Transportation\Models\TransportRunDriverAssignment;
 use App\Modules\Transportation\Models\TransportRunPassenger;
 use App\Modules\Transportation\Models\TransportRunSupervisorAssignment;
 use App\Modules\Transportation\Models\TransportRunVehicleAssignment;
+use App\Modules\Transportation\Models\TransportVehicleBreakdown;
+use App\Modules\Transportation\Models\TransportVehicleReplacement;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\Process\Process;
 
@@ -34,11 +37,17 @@ function trWorkerEnv(): array
     $name = config('database.default');
     $connection = config("database.connections.{$name}");
 
+    // Keep the env minimal and explicit. Merging full $_SERVER previously
+    // risked leaking a developer DB name; Windows still needs PATH/SystemRoot.
     return [
+        'PATH' => (string) (getenv('PATH') ?: ($_SERVER['PATH'] ?? '')),
+        'SystemRoot' => (string) (getenv('SystemRoot') ?: ($_SERVER['SystemRoot'] ?? '')),
         'APP_ENV' => 'testing',
+        'APP_KEY' => (string) (config('app.key') ?: env('APP_KEY')),
+        'APP_URL' => (string) config('app.url'),
         'DB_CONNECTION' => (string) $name,
         'DB_HOST' => (string) $connection['host'],
-        'DB_PORT' => (string) $connection['port'],
+        'DB_PORT' => (string) (string) $connection['port'],
         'DB_DATABASE' => (string) $connection['database'],
         'DB_USERNAME' => (string) $connection['username'],
         'DB_PASSWORD' => (string) $connection['password'],
@@ -71,9 +80,19 @@ function trRace(array $base, array $jobA, array $jobB): array
 
     $outcomes = array_map(function (Process $process): array {
         $process->wait();
-        expect($process->isSuccessful())->toBeTrue($process->getErrorOutput().$process->getOutput());
+        $raw = trim($process->getErrorOutput()."\n".$process->getOutput());
+        expect($process->isSuccessful())->toBeTrue($raw);
 
-        $outcome = json_decode($process->getOutput(), true, 512, JSON_THROW_ON_ERROR);
+        $jsonLine = null;
+        foreach (array_reverse(preg_split("/\r\n|\n|\r/", $process->getOutput()) ?: []) as $line) {
+            $line = trim($line);
+            if ($line !== '' && str_starts_with($line, '{')) {
+                $jsonLine = $line;
+                break;
+            }
+        }
+        expect($jsonLine)->not->toBeNull($raw);
+        $outcome = json_decode((string) $jsonLine, true, 512, JSON_THROW_ON_ERROR);
         expect($outcome['late_ms'])->toBeLessThan(TR_RACE_HOLD_MS, 'worker reached the barrier too late to contend');
 
         return $outcome;
@@ -217,4 +236,32 @@ it('keeps a single passenger row when the same participation is added twice conc
 
     expect($race['loser']['errors']['season_pilgrim_ids'])->toBe([$sp['id']])
         ->and(TransportRunPassenger::query()->withoutGlobalScopes()->where('vehicle_run_id', $run['id'])->where('season_pilgrim_id', $sp['id'])->count())->toBe(1);
+});
+
+it('lets exactly one concurrent breakdown replacement win for the same open breakdown', function (): void {
+    actingAsTenantOwner();
+    $scenario = trScenario(capacity: 5);
+    ['run' => $run, 'season' => $season, 'header' => $h] = $scenario;
+    $altA = trSeasonVehicle($season['id'], trVehicle('RPL A '.random_int(1000, 9999))['id'], 8);
+    $altB = trSeasonVehicle($season['id'], trVehicle('RPL B '.random_int(1000, 9999))['id'], 8);
+
+    $bd = spaPostJson("/api/v1/transport-runs/{$run['id']}/breakdowns", [
+        'reason' => 'عطل متزامن للاستبدال',
+    ], $h)->assertCreated()->json('data');
+
+    trSplitRace(trRace(
+        [
+            ...trRaceBase(),
+            'action' => 'execute_replacement',
+            'run_id' => $run['id'],
+            'breakdown_id' => $bd['id'],
+            'reason' => 'استبدال متزامن',
+        ],
+        ['season_vehicle_id' => $altA['id'], 'idempotency_key' => 'race-repl-a'],
+        ['season_vehicle_id' => $altB['id'], 'idempotency_key' => 'race-repl-b'],
+    ), 'TRANSPORT_BREAKDOWN_NOT_OPEN');
+
+    expect(TransportVehicleReplacement::query()->withoutGlobalScopes()->where('breakdown_id', $bd['id'])->count())->toBe(1)
+        ->and(TransportVehicleBreakdown::query()->withoutGlobalScopes()->whereKey($bd['id'])->first()->status)->toBe(BreakdownStatus::Replaced)
+        ->and(TransportRunVehicleAssignment::query()->withoutGlobalScopes()->where('vehicle_run_id', $run['id'])->whereNull('ended_at')->count())->toBe(1);
 });

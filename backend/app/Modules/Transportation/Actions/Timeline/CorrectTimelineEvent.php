@@ -13,10 +13,10 @@ use App\Modules\Transportation\Models\TransportTimelineEvent;
 use App\Modules\Transportation\Models\TransportVehicleRun;
 use App\Modules\Transportation\Support\TimelineRecorder;
 use App\Modules\Transportation\Support\TransportAudit;
-use App\Modules\Transportation\Support\TransportTransaction;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 /**
  * ADR-0018 T6 / I8: appends an `event_corrected` entry superseding one
@@ -33,7 +33,7 @@ final class CorrectTimelineEvent
 
     public function execute(User $actor, TransportTimelineEvent $event, string $occurredAt, string $reason, Request $request): TransportTimelineEvent
     {
-        return TransportTransaction::run(function () use ($actor, $event, $occurredAt, $reason, $request): TransportTimelineEvent {
+        return DB::transaction(function () use ($actor, $event, $occurredAt, $reason, $request): TransportTimelineEvent {
             /** @var TransportMovement $movement */
             $movement = TransportMovement::query()->whereKey($event->transport_movement_id)->lockForUpdate()->firstOrFail();
             SeasonGuard::assertWritable($movement->season()->firstOrFail());

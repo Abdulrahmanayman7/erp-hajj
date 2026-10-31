@@ -1,0 +1,8 @@
+{
+  "name": "s01-fleet-browser-uat",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "playwright-core": "^1.56.0"
+  }
+}

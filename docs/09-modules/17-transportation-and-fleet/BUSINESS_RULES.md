@@ -50,7 +50,8 @@
 ## 7. Vehicle Runs (T1, T6, T7, I1, I3–I5)
 
 - A Run belongs to one Movement, has a sequential `run_number`, and is created with a SeasonVehicle. Driver and supervisor default from the SeasonVehicle at creation and are stored as actual assignments. Copied defaults are validated like explicit assignments (active Employee / ExternalDriver, no driver overlap), so creation can fail with `TRANSPORT_EMPLOYEE_INVALID`, `TRANSPORT_EXTERNAL_DRIVER_INACTIVE`, `TRANSPORT_VEHICLE_OVERLAP`, or `TRANSPORT_DRIVER_OVERLAP`.
-- The initial vehicle and copied crew are written as current assignment-history rows (§8) and summarized in the `run_created` timeline event; `vehicle_assigned` / `driver_assigned` / `supervisor_assigned` events are appended for later assignments and substitutions.
+- The initial SeasonVehicle and any copied default driver / supervisor are written as the **first current rows** of the Run's assignment-history tables (T7). The `run_created` timeline event may summarize them; it does not replace history. Later substitutions end the current row and append a new one; `vehicle_assigned` / `driver_assigned` / `supervisor_assigned` timeline events are recorded for those substitutions.
+
 - Runs can be added while the Movement is `draft`, `planned`, or `in_progress`.
 - Lifecycle: `planned → boarding → departed → arrived → completed`; `planned | boarding → cancelled` (reason required).
   - `start-boarding` requires the Movement `in_progress` and an Active season.
@@ -61,23 +62,18 @@
 
 ## 8. Resource assignments (T7, I1)
 
-- Each Run keeps history rows for vehicle, driver, and supervisor (`assigned_at` / `ended_at`). At most one current of each (database-enforced).
-- The initial assignments are the first history rows: Run creation writes a current vehicle row, and a current driver / supervisor row for each default copied from the SeasonVehicle. A Run without a default driver or supervisor has no row of that type until one is assigned. Selecting a different driver or supervisor after creation is a substitution through the assignment endpoints.
+- Each Run keeps history rows for vehicle, driver, and supervisor (`assigned_at` / `ended_at`), including the **initial** assignments created with the Run. At most one current of each (database-enforced).
 - Substitution ends the current row and appends a new one; history is never overwritten. After execution has begun (`boarding`, `departed`, `arrived`) a reason is required. Substitution is not allowed on Completed or Cancelled Runs, which keep their assignments.
 - A vehicle substitution must fit the occupied count and the override.
 - Overlap is rejected for the same SeasonVehicle (`TRANSPORT_VEHICLE_OVERLAP`), the same internal driver Employee, or the same ExternalDriver (`TRANSPORT_DRIVER_OVERLAP`), considering Runs in `planned / boarding / departed / arrived` with intersecting Movement windows. Checked server-side inside a transaction with row locks. Supervisor overlap is allowed.
-- Concurrency: the resource row (SeasonVehicle, Employee, ExternalDriver) is locked before the Run's assignment history is read, and the overlap, duplicate, and occupancy checks are locking reads (they see rows committed while the transaction waited). If InnoDB still picks a deadlock victim, the operation is retried (3 attempts) and returns the normal domain result. Verified against MySQL 8 with concurrent processes (TEST_PLAN).
+- **Operational breakdowns (ADR-0021 D03)** are a separate domain (`transport_vehicle_breakdowns`). Recording a breakdown does not by itself change the current vehicle. **Vehicle replacement** against an open breakdown is atomic: it re-validates season writability, run non-terminal, affected vehicle still current, replacement active in season, overlap-free, and capacity. It then appends T7 history (end current + new assignment) and may move passengers only via an **explicit reassignment plan**. Changing `vehicle_id` / appending T7 alone is not passenger reassignment. Boarded/arrived that exceed replacement capacity block the replace (`TRANSPORT_REPLACEMENT_BOARDED_EXCEED_CAPACITY`). Insufficient capacity without a complete plan → `TRANSPORT_REPLACEMENT_CAPACITY_PLAN_REQUIRED`. One replacement per breakdown; idempotency key supported. Statuses: `open` → `replaced` | `closed` | `cancelled`.
 
 ## 9. Passenger manifest and capacity (T5, I6)
 
 - One row per SeasonPilgrim per Run. Only **Active** SeasonPilgrims of the same season are eligible.
 - Bulk add accepts a list of SeasonPilgrims, a PilgrimGroup, or a FamilyGroup, resolved at assignment time into rows with `assignment_source` (`individual` / `pilgrim_group` / `family_group`) and a source snapshot (`source_group_id`, `source_group_label`). No FK to the group/family. Later membership changes do not alter rows.
-- **All-or-nothing for every source.** The membership snapshot is resolved first, then every resolved SeasonPilgrim is validated before any row is written. One failing member rejects the whole command; no partial manifest is ever written. Checks and error codes, in this order, each listing the failing ids in `errors.season_pilgrim_ids`:
-  1. not an Active SeasonPilgrim of the Run's season (also covers another season or tenant) → `TRANSPORT_PASSENGER_NOT_ELIGIBLE`;
-  2. already occupying the Run → `TRANSPORT_PASSENGER_DUPLICATE`;
-  3. entitlement incompatible and no authorized override → `TRANSPORT_ENTITLEMENT_MISMATCH` (an override with `transportation.override_entitlement` and a reason makes those members eligible);
-  4. the whole set does not fit the remaining capacity → `TRANSPORT_CAPACITY_EXCEEDED` (with `capacity`, `occupied`, `requested`).
-- A group / family with no members → `TRANSPORT_PASSENGERS_NONE_ELIGIBLE`; a group / family not in the season → `TRANSPORT_SOURCE_INVALID`.
+- **All sources are all-or-nothing.** Membership is resolved first; every resolved SeasonPilgrim is validated before any passenger row is inserted. If any member fails (not Active, already on the Run, capacity, entitlement mismatch without override, tenant/season mismatch), the command fails atomically with a stable code and the failing `season_pilgrim_ids` in `errors`. An empty group/family → `TRANSPORT_PASSENGERS_NONE_ELIGIBLE`. There is no silent skipping and no partial manifest.
+- An explicit entitlement override (permission + reason) may make entitlement-incompatible members eligible for that assignment.
 - Passengers can be added while the Run is `planned` or `boarding` and the Movement is not Completed/Cancelled.
 - Capacity is a count: effective capacity = `capacity_override` or the current SeasonVehicle capacity; occupied = passengers `assigned`, `boarded`, `arrived`. **No overbooking** (`TRANSPORT_CAPACITY_EXCEEDED`).
 - Duplicate occupying passenger in one Run is rejected (database-enforced).
@@ -95,8 +91,7 @@
 - One Transportation entitlement per SeasonProgram per season, with `vehicle_class` and/or `service_level` (at least one). An empty field means "any".
 - Normal assignment requires the passenger's current Program entitlement (if any) to match the Run's current vehicle class and SeasonVehicle service level (`TRANSPORT_ENTITLEMENT_MISMATCH`).
 - Override: `entitlement_override` + `override_reason` + permission `transportation.override_entitlement`, audited. An existing passenger whose current entitlement no longer matches can be overridden the same way.
-- **Assignment decision (immutable).** Each passenger row records, at assignment: the SeasonProgram (id, code), the evaluated entitlement (id, required vehicle class, required service level), the SeasonVehicle and its vehicle class / service level, the result (`none`, `compatible`, `mismatch`), whether an override was used and its reason, and who assigned (= who authorized the override) and when. These columns are written once; later Program changes, entitlement edits or deletions, SeasonVehicle / Vehicle reclassification, and vehicle substitutions never change them (enforced in the model).
-- **Live status.** The manifest exposes the live `entitlement_status`: the passenger's current Program and its current entitlement against the Run's current vehicle (`none`, `compatible`, `mismatch`); a mismatch covered by an effective override is `overridden`. A live mismatch without override appears in closing readiness (`TRANSPORT_ENTITLEMENT_MISMATCHES`) and can be overridden on the passenger, which sets the effective override (`entitlement_override*`, with who and when) without touching the assignment decision. Passengers are never moved automatically.
+- Each passenger row stores an **immutable assignment context** (normalized columns, not a key/value blob): Program id/code, evaluated entitlement id and required vehicle_class/service_level, SeasonVehicle id and its vehicle_class/service_level at assignment, entitlement status at assignment, whether an override was used (who/why), and `assigned_by`. Later Program changes, entitlement edits, or SeasonVehicle / Vehicle classification changes **never** rewrite it. The manifest separately exposes the **live** `entitlement_status` (`none`, `compatible`, `mismatch`, `overridden`); a live mismatch is a Needs Review / readiness WARNING and never auto-moves the passenger. A later privileged override updates only the live override fields.
 
 ## 12. Operational timeline (T6, I7, I8)
 

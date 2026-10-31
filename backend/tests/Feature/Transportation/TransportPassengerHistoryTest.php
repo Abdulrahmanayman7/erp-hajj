@@ -108,7 +108,7 @@ it('keeps the assignment decision when the entitlement is edited later', functio
             'entitlement_id' => $vipEntitlement['id'],
             'required_service_level' => 'premium',
             'service_level' => 'standard',
-            'entitlement_status' => 'mismatch',
+            'entitlement_status' => 'overridden',
             'override_used' => true,
             'override_reason' => 'لا تتوفر حافلة مميزة',
         ])

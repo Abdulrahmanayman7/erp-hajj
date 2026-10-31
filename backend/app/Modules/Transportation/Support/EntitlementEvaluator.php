@@ -53,17 +53,20 @@ final class EntitlementEvaluator
     }
 
     /**
-     * Live status shown on the manifest: the passenger's current Program and
-     * its current entitlement against the Run's current vehicle; a mismatch
-     * covered by an effective override is reported as overridden. Never
-     * reads or changes the assignment snapshot.
+     * Live status shown on the manifest: current Program vs. the Run's
+     * current vehicle. A live override surfaces as `overridden` only while
+     * the evaluation is still a mismatch; if Program / entitlement / vehicle
+     * later become compatible, live status becomes `compatible` without
+     * rewriting the immutable assignment context.
      */
     public function liveStatus(TransportRunPassenger $passenger, ?int $currentProgramId, ?TransportSeasonVehicle $seasonVehicle): EntitlementStatus
     {
-        $status = $this->evaluate($currentProgramId, $seasonVehicle);
+        $evaluated = $this->evaluate($currentProgramId, $seasonVehicle);
 
-        return $status === EntitlementStatus::Mismatch && $passenger->entitlement_override
-            ? EntitlementStatus::Overridden
-            : $status;
+        if ($passenger->entitlement_override && $evaluated === EntitlementStatus::Mismatch) {
+            return EntitlementStatus::Overridden;
+        }
+
+        return $evaluated;
     }
 }

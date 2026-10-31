@@ -235,7 +235,7 @@ class TransportationDomainException extends RuntimeException
 
     public static function passengersNoneEligible(): self
     {
-        return new self('لا يوجد أعضاء في المجموعة المحددة.', 'TRANSPORT_PASSENGERS_NONE_ELIGIBLE');
+        return new self('لا يوجد أعضاء مؤهلون للتعيين في المجموعة المحددة.', 'TRANSPORT_PASSENGERS_NONE_ELIGIBLE');
     }
 
     /**
@@ -243,12 +243,16 @@ class TransportationDomainException extends RuntimeException
      */
     public static function capacityExceeded(int $capacity, int $occupied, int $requested, array $seasonPilgrimIds = []): self
     {
-        return new self('تتجاوز الإضافة سعة الرحلة.', 'TRANSPORT_CAPACITY_EXCEEDED', 422, [
+        $errors = [
             'capacity' => $capacity,
             'occupied' => $occupied,
             'requested' => $requested,
-            'season_pilgrim_ids' => $seasonPilgrimIds,
-        ]);
+        ];
+        if ($seasonPilgrimIds !== []) {
+            $errors['season_pilgrim_ids'] = $seasonPilgrimIds;
+        }
+
+        return new self('تتجاوز الإضافة سعة الرحلة.', 'TRANSPORT_CAPACITY_EXCEEDED', 422, $errors);
     }
 
     /**
@@ -327,5 +331,60 @@ class TransportationDomainException extends RuntimeException
     public static function reviewAlreadyResolved(): self
     {
         return new self('بند المراجعة مغلق مسبقًا.', 'TRANSPORT_REVIEW_ALREADY_RESOLVED');
+    }
+
+    // ─── Breakdown / replacement (ADR-0021 D03; aligns with T7) ─────────────
+
+    public static function breakdownNotOpen(): self
+    {
+        return new self('العطل ليس مفتوحًا ولا يقبل هذه العملية.', 'TRANSPORT_BREAKDOWN_NOT_OPEN');
+    }
+
+    public static function breakdownVehicleMismatch(): self
+    {
+        return new self('مركبة العطل لم تعد المركبة الحالية للرحلة.', 'TRANSPORT_BREAKDOWN_VEHICLE_MISMATCH');
+    }
+
+    public static function breakdownRunTerminal(): self
+    {
+        return new self('لا يمكن تسجيل عطل أو استبدال على رحلة منتهية.', 'TRANSPORT_BREAKDOWN_RUN_TERMINAL');
+    }
+
+    public static function replacementCapacityPlanRequired(int $gap): self
+    {
+        return new self(
+            'سعة البديل أقل من الركاب؛ يلزم خطة إعادة توزيع صريحة.',
+            'TRANSPORT_REPLACEMENT_CAPACITY_PLAN_REQUIRED',
+            422,
+            ['capacity_gap' => $gap],
+        );
+    }
+
+    /**
+     * @param  list<int>  $passengerIds
+     */
+    public static function replacementPlanInvalid(array $passengerIds = []): self
+    {
+        return new self('خطة إعادة توزيع الركاب غير صالحة.', 'TRANSPORT_REPLACEMENT_PLAN_INVALID', 422, $passengerIds === [] ? [] : [
+            'run_passenger_ids' => $passengerIds,
+        ]);
+    }
+
+    public static function replacementBoardedExceedCapacity(): self
+    {
+        return new self(
+            'عدد الركاب الذين صعدوا يتجاوز سعة البديل ولا يمكن نقلهم في هذه العملية.',
+            'TRANSPORT_REPLACEMENT_BOARDED_EXCEED_CAPACITY',
+        );
+    }
+
+    public static function replacementTargetRunInvalid(): self
+    {
+        return new self('الرحلة المستهدفة لإعادة التوزيع غير مؤهلة.', 'TRANSPORT_REPLACEMENT_TARGET_RUN_INVALID');
+    }
+
+    public static function replacementSameVehicle(): self
+    {
+        return new self('المركبة البديلة يجب أن تختلف عن المركبة المتضررة.', 'TRANSPORT_REPLACEMENT_SAME_VEHICLE');
     }
 }

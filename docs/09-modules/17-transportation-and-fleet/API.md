@@ -105,7 +105,7 @@ Bodies:
 - PATCH run: `capacity_override?` (null clears), `notes?`.
 - Lifecycle: `occurred_at?`, `reason?`; cancel requires `reason`.
 - Vehicle: `transport_season_vehicle_id`, `reason?`. Driver: `driver_employee_id` | `external_driver_id`, `reason?`. Supervisor: `supervisor_employee_id` (null ends the current supervisor), `reason?`.
-- Add passengers: `source` (`individual` | `pilgrim_group` | `family_group`), `season_pilgrim_ids[]` (individual) or `source_id` (group/family), `entitlement_override?`, `override_reason?`. All-or-nothing: on success every resolved member was added (response `meta.added`); on any failure nothing is written and the error lists the failing ids in `errors.season_pilgrim_ids` (precedence: `TRANSPORT_PASSENGER_NOT_ELIGIBLE`, `TRANSPORT_PASSENGER_DUPLICATE`, `TRANSPORT_ENTITLEMENT_MISMATCH`, `TRANSPORT_CAPACITY_EXCEEDED`).
+- Add passengers: `source` (`individual` | `pilgrim_group` | `family_group`), `season_pilgrim_ids[]` (individual) or `source_id` (group/family), `entitlement_override?`, `override_reason?`. **All-or-nothing** for every source: any failing resolved member rejects the whole command with no partial insert; failing ids are listed in `errors.season_pilgrim_ids`. Response `meta`: `added` only.
 - Outcomes: `passenger_ids[]`, `occurred_at?`, `reason?`. All-or-nothing: an invalid transition returns `TRANSPORT_PASSENGER_INVALID_TRANSITION` with the offending ids in `errors.passenger_ids`.
 
 ### Passengers, timeline, reviews
@@ -120,11 +120,32 @@ Bodies:
 
 Bodies: cancel `reason`; override `reason`; correct `occurred_at`, `reason`; resolve `resolution_note`. Review list filters: `status`, `severity`.
 
+### Breakdowns & vehicle replacement (S02 / ADR-0021 D03)
+
+Dedicated operational breakdown domain. Replacement appends a T7 vehicle assignment (does not overwrite history). Passenger moves require an explicit plan when replacement capacity is insufficient — no silent drops.
+
+| Method | Path | Permission |
+|---|---|---|
+| GET | `/transport-breakdowns` | `transportation.view` |
+| POST | `/transport-runs/{run}/breakdowns` | `transportation.operate_runs` |
+| GET | `/transport-breakdowns/{breakdown}` | `transportation.view` |
+| POST | `/transport-breakdowns/{breakdown}/close` | `transportation.operate_runs` |
+| POST | `/transport-breakdowns/{breakdown}/cancel` | `transportation.operate_runs` |
+| GET | `/transport-breakdowns/{breakdown}/preview-replacement` | `transportation.view` |
+| POST | `/transport-breakdowns/{breakdown}/replace` | `transportation.operate_runs` |
+
+Bodies / query:
+
+- Record: `reason` (required), `notes?`, `occurred_at?`.
+- Close / cancel: `reason` (required). Statuses: `open` → `closed` | `cancelled` | `replaced`.
+- Preview query: `replacement_season_vehicle_id`. Response includes `occupied_count`, `capacity_gap`, `plan_required`, replacement capacity/overlap flags, and candidate passengers.
+- Replace: `replacement_season_vehicle_id`, `reason?` (required after boarding per T7), `idempotency_key?`, `reassignments?` as `[{ run_passenger_id, target_run_id }]`. Atomic: locks breakdown → movement/runs → season vehicles → pilgrims → passengers; re-checks capacity/overlap inside the transaction; idempotent replay by key or existing `replacement_id`.
+
 ## Resources
 
 - The passenger resource exposes no pilgrim identity numbers (passport / national ID); it carries the SeasonPilgrim reference, the pilgrim name, and the assignment snapshot only. Identity data stays in the foundation resources under `season_pilgrims.view_sensitive`.
-- Passenger resource exposes `assignment_context` (immutable decision: `season_program_id`, `season_program_code`, `entitlement_id`, `required_vehicle_class`, `required_service_level`, `transport_season_vehicle_id`, `vehicle_class`, `service_level`, `entitlement_status` = `none` | `compatible` | `mismatch`, `override_used`, `override_reason`, `assigned_by`, `assigned_at`), the live `entitlement_status` (`none`, `compatible`, `mismatch`, `overridden`), and the effective override (`entitlement_override`, `entitlement_override_reason`, `entitlement_overridden_by`, `entitlement_overridden_at`).
-- Run resource exposes `effective_capacity`, `occupied_count`, current vehicle / driver / supervisor, and assignment history.
+- Passenger resource exposes `assignment_context` (immutable T9 decision: program, entitlement id/requirements, vehicle classification at assignment, status, override who/why, assigned_by), live `entitlement_status` (`none`, `compatible`, `mismatch`, `overridden`), and live override fields.
+- Run resource exposes `effective_capacity`, `occupied_count`, current vehicle / driver / supervisor, and full assignment history (including the initial rows created with the Run).
 
 ## Error codes
 
@@ -177,6 +198,14 @@ Bodies: cancel `reason`; override `reason`; correct `occurred_at`, `reason`; res
 | `TRANSPORT_TIMELINE_EVENT_NOT_CORRECTABLE` | 422 | |
 | `TRANSPORT_TIMELINE_EVENT_ALREADY_CORRECTED` | 422 | |
 | `TRANSPORT_REVIEW_ALREADY_RESOLVED` | 422 | |
+| `TRANSPORT_BREAKDOWN_NOT_OPEN` | 422 | Breakdown not open for replace/close/cancel |
+| `TRANSPORT_BREAKDOWN_RUN_TERMINAL` | 422 | Run completed/cancelled |
+| `TRANSPORT_BREAKDOWN_VEHICLE_MISMATCH` | 422 | Breakdown vehicle is no longer current on the run |
+| `TRANSPORT_REPLACEMENT_SAME_VEHICLE` | 422 | Replacement equals affected vehicle |
+| `TRANSPORT_REPLACEMENT_CAPACITY_PLAN_REQUIRED` | 422 | Explicit reassignment plan required for capacity gap |
+| `TRANSPORT_REPLACEMENT_PLAN_INVALID` | 422 | Plan rows invalid / incomplete |
+| `TRANSPORT_REPLACEMENT_BOARDED_EXCEED_CAPACITY` | 422 | Boarded/arrived exceed replacement capacity |
+| `TRANSPORT_REPLACEMENT_TARGET_RUN_INVALID` | 422 | Target run not eligible for reassignment |
 | `SEASON_RESOURCE_REFERENCED` | 422 | Foundation: hard delete blocked by external references |
 
 No GPS, QR, offline, seat, or Accommodation endpoints.

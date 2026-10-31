@@ -16,9 +16,9 @@ use App\Modules\Transportation\Support\EntitlementEvaluator;
 use App\Modules\Transportation\Support\RunLocks;
 use App\Modules\Transportation\Support\TimelineRecorder;
 use App\Modules\Transportation\Support\TransportAudit;
-use App\Modules\Transportation\Support\TransportTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 /**
  * ADR-0018 T9 / I10: acknowledges a live entitlement mismatch on an
@@ -35,7 +35,7 @@ final class OverridePassengerEntitlement
 
     public function execute(User $actor, TransportRunPassenger $passenger, string $reason, Request $request): TransportRunPassenger
     {
-        return TransportTransaction::run(function () use ($actor, $passenger, $reason, $request): TransportRunPassenger {
+        return DB::transaction(function () use ($actor, $passenger, $reason, $request): TransportRunPassenger {
             [$movement, $run] = RunLocks::lock($passenger->vehicle_run_id);
             SeasonGuard::assertWritable($movement->season()->firstOrFail());
 

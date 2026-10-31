@@ -19,8 +19,10 @@ use App\Modules\Transportation\Models\TransportRunPassenger;
 use App\Modules\Transportation\Models\TransportSeasonVehicle;
 use App\Modules\Transportation\Models\TransportTimelineEvent;
 use App\Modules\Transportation\Models\TransportVehicle;
+use App\Modules\Transportation\Models\TransportVehicleBreakdown;
 use App\Modules\Transportation\Models\TransportVehicleRun;
 use App\Modules\Transportation\Policies\TransportEntitlementPolicy;
+use App\Modules\Transportation\Policies\TransportVehicleBreakdownPolicy;
 use App\Modules\Transportation\Policies\TransportExternalDriverPolicy;
 use App\Modules\Transportation\Policies\TransportMovementPolicy;
 use App\Modules\Transportation\Policies\TransportPointPolicy;
@@ -62,5 +64,6 @@ class TransportationServiceProvider extends ServiceProvider
         Gate::policy(TransportRunPassenger::class, TransportRunPassengerPolicy::class);
         Gate::policy(TransportTimelineEvent::class, TransportTimelineEventPolicy::class);
         Gate::policy(TransportReviewItem::class, TransportReviewItemPolicy::class);
+        Gate::policy(TransportVehicleBreakdown::class, TransportVehicleBreakdownPolicy::class);
     }
 }

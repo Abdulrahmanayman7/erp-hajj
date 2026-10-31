@@ -79,7 +79,9 @@ export function createAuthGuard(queryClient: QueryClient): NavigationGuard {
       } catch (error) {
         if (generation !== sessionGeneration.value) return false
         const setupStatus = queryClient.getQueryData(platformSetupStatusQueryKey)
-        await clearSession(queryClient)
+        // First anonymous `/me` 401: clear caches without advancing sessionGeneration
+        // (avoids remounting AppLayout while the login navigation is still settling).
+        await clearSession(queryClient, false, { advance: generation > 0 })
         // Public bootstrap availability is not account data.
         if (setupStatus !== undefined) queryClient.setQueryData(platformSetupStatusQueryKey, setupStatus)
         queryClient.setQueryData(currentUserQueryKey, null)

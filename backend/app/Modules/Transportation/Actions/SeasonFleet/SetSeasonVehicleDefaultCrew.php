@@ -9,8 +9,8 @@ use App\Modules\Transportation\Exceptions\TransportationDomainException;
 use App\Modules\Transportation\Models\TransportSeasonVehicle;
 use App\Modules\Transportation\Support\CrewResolver;
 use App\Modules\Transportation\Support\TransportAudit;
-use App\Modules\Transportation\Support\TransportTransaction;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 /**
  * ADR-0018 T4: planning defaults only. Existing Runs keep their actual
@@ -35,7 +35,7 @@ final class SetSeasonVehicleDefaultCrew
             throw TransportationDomainException::driverInvalid();
         }
 
-        return TransportTransaction::run(function () use ($actor, $seasonVehicle, $driverEmployeeId, $externalDriverId, $supervisorEmployeeId, $request): TransportSeasonVehicle {
+        return DB::transaction(function () use ($actor, $seasonVehicle, $driverEmployeeId, $externalDriverId, $supervisorEmployeeId, $request): TransportSeasonVehicle {
             /** @var TransportSeasonVehicle $locked */
             $locked = TransportSeasonVehicle::query()->whereKey($seasonVehicle->id)->lockForUpdate()->firstOrFail();
             SeasonGuard::assertWritable($locked->season()->firstOrFail());

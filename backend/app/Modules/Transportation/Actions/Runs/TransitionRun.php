@@ -16,8 +16,8 @@ use App\Modules\Transportation\Support\OccurredAtResolver;
 use App\Modules\Transportation\Support\RunLocks;
 use App\Modules\Transportation\Support\TimelineRecorder;
 use App\Modules\Transportation\Support\TransportAudit;
-use App\Modules\Transportation\Support\TransportTransaction;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 /**
  * ADR-0018 T6 / I2 / I3 / I5 (Active season only):
@@ -44,7 +44,7 @@ final class TransitionRun
 
     public function execute(User $actor, TransportVehicleRun $run, string $transition, ?string $occurredAt, ?string $reason, Request $request): TransportVehicleRun
     {
-        return TransportTransaction::run(function () use ($actor, $run, $transition, $occurredAt, $reason, $request): TransportVehicleRun {
+        return DB::transaction(function () use ($actor, $run, $transition, $occurredAt, $reason, $request): TransportVehicleRun {
             [$movement, $locked] = RunLocks::lock($run->id);
             SeasonGuard::assertActive($movement->season()->firstOrFail());
 

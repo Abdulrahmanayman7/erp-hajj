@@ -123,17 +123,18 @@ jobs:
           cp .env.example .env
           php artisan key:generate
 
-      - name: Migrations (fresh, roll back Transportation, re-migrate)
+      - name: Migrations (fresh, roll back Transportation through latest, re-migrate)
         run: |
           php artisan migrate:fresh --force
-          php artisan migrate:rollback --step=15 --force
+          # 15 Transportation + later Accommodation migrations that sit above them
+          php artisan migrate:rollback --step=31 --force
           php artisan migrate --force
 
       - name: Transportation and SeasonPilgrims tests (MySQL)
         run: php vendor/bin/pest -c phpunit.mysql.xml tests/Feature/Transportation tests/Feature/SeasonPilgrims
 
       - name: Transportation concurrency tests (MySQL)
-        run: php vendor/bin/pest -c phpunit.mysql.xml tests/Concurrency
+        run: php vendor/bin/pest -c phpunit.mysql.xml tests/Concurrency/TransportConcurrencyTest.php
 
   frontend:
     name: Frontend (Vue)

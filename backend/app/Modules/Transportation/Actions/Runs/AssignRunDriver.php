@@ -14,9 +14,9 @@ use App\Modules\Transportation\Support\ResourceOverlapGuard;
 use App\Modules\Transportation\Support\RunLocks;
 use App\Modules\Transportation\Support\TimelineRecorder;
 use App\Modules\Transportation\Support\TransportAudit;
-use App\Modules\Transportation\Support\TransportTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 /**
  * ADR-0018 T4 / T7: the driver is an active internal Employee or an active
@@ -38,18 +38,10 @@ final class AssignRunDriver
             throw TransportationDomainException::driverInvalid();
         }
 
-        return TransportTransaction::run(function () use ($actor, $run, $employeeId, $externalDriverId, $reason, $request): TransportVehicleRun {
+        return DB::transaction(function () use ($actor, $run, $employeeId, $externalDriverId, $reason, $request): TransportVehicleRun {
             [$movement, $locked] = RunLocks::lock($run->id);
             SeasonGuard::assertWritable($movement->season()->firstOrFail());
             $reason = RunSubstitution::assertAllowed($locked, $reason);
-
-            // Driver row before the history read: the history read may take a
-            // gap lock, which must not be held while waiting for the driver.
-            if ($employeeId !== null) {
-                $this->crew->activeEmployee($employeeId, 'driver_employee_id');
-            } else {
-                $this->crew->activeExternalDriver((int) $externalDriverId);
-            }
 
             /** @var TransportRunDriverAssignment|null $current */
             $current = $locked->currentDriverAssignment()->lockForUpdate()->first();
@@ -58,8 +50,10 @@ final class AssignRunDriver
             }
 
             if ($employeeId !== null) {
+                $this->crew->activeEmployee($employeeId, 'driver_employee_id');
                 $this->overlap->assertEmployeeDriverFree($employeeId, $movement, $locked->id);
             } else {
+                $this->crew->activeExternalDriver((int) $externalDriverId);
                 $this->overlap->assertExternalDriverFree((int) $externalDriverId, $movement, $locked->id);
             }
 
@@ -98,6 +92,6 @@ final class AssignRunDriver
             ], $request);
 
             return RunLoader::load($locked);
-        });
+        }, 5);
     }
 }

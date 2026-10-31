@@ -27,6 +27,8 @@ enum TimelineEventType: string
     case ReviewRaised = 'review_raised';
     case ReviewResolved = 'review_resolved';
     case EventCorrected = 'event_corrected';
+    case BreakdownRecorded = 'breakdown_recorded';
+    case VehicleReplaced = 'vehicle_replaced';
 
     /**
      * Entity timestamp updated when an event of this type is corrected (I8).

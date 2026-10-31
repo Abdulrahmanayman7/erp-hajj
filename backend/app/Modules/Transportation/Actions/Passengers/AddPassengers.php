@@ -23,26 +23,21 @@ use App\Modules\Transportation\Support\EntitlementEvaluator;
 use App\Modules\Transportation\Support\RunLocks;
 use App\Modules\Transportation\Support\TimelineRecorder;
 use App\Modules\Transportation\Support\TransportAudit;
-use App\Modules\Transportation\Support\TransportTransaction;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 /**
  * ADR-0018 T5 / T9 / I6: materializes one passenger row per Active
- * SeasonPilgrim. Group / family sources are resolved now and snapshotted
- * (id + label, no FK). Capacity is count-based with no overbooking.
+ * SeasonPilgrim. Every source (individual / group / family) is
+ * all-or-nothing: membership is resolved, every member is validated, then
+ * rows are inserted inside one transaction. Group / family source id +
+ * label are snapshotted with no FK. Capacity is count-based with no
+ * overbooking. Assignment-time Program / entitlement / vehicle context is
+ * written once and never rewritten.
  *
- * All-or-nothing for every source: every resolved member is validated
- * (eligibility, duplicates, entitlement, capacity) before any row is
- * written; one failure rejects the whole command with the failing
- * SeasonPilgrim ids.
- *
- * Lock order: movement → run → season vehicle → season pilgrims (by id),
- * so capacity, duplicates and eligibility are checked against committed
- * state and serialize with concurrent adds and cancellations. Duplicate
- * and occupancy checks are locking reads so they see rows committed while
- * this transaction waited for its locks.
+ * Lock order: movement → run → season vehicle → season pilgrims (by id).
  */
 final class AddPassengers
 {
@@ -70,7 +65,7 @@ final class AddPassengers
             throw TransportationDomainException::entitlementOverrideForbidden();
         }
 
-        return TransportTransaction::run(function () use ($actor, $run, $source, $seasonPilgrimIds, $sourceId, $override, $overrideReason, $request): array {
+        return DB::transaction(function () use ($actor, $run, $source, $seasonPilgrimIds, $sourceId, $override, $overrideReason, $request): array {
             [$movement, $locked] = RunLocks::lock($run->id);
             SeasonGuard::assertWritable($movement->season()->firstOrFail());
 
@@ -78,11 +73,13 @@ final class AddPassengers
                 throw TransportationDomainException::manifestLocked();
             }
 
-            $seasonVehicleId = (int) $locked->currentVehicleAssignment()->value('transport_season_vehicle_id');
+            $seasonVehicleId = (int) $locked->currentVehicleAssignment()->lockForUpdate()->value('transport_season_vehicle_id');
             /** @var TransportSeasonVehicle $seasonVehicle */
             $seasonVehicle = TransportSeasonVehicle::query()->whereKey($seasonVehicleId)->lockForUpdate()->firstOrFail();
             $seasonVehicle->load('vehicle');
             $capacity = $locked->capacity_override ?? $seasonVehicle->operational_capacity;
+            $vehicleClass = $seasonVehicle->vehicle?->vehicle_class?->value;
+            $serviceLevel = $seasonVehicle->service_level?->value;
 
             [$candidateIds, $sourceLabel] = $this->resolveSource($locked->season_id, $source, $seasonPilgrimIds, $sourceId);
 
@@ -94,6 +91,22 @@ final class AddPassengers
                 ->get()
                 ->keyBy('id');
 
+            // Locking occupancy read: after waiting on run locks under REPEATABLE
+            // READ, a plain COUNT can still see the pre-wait snapshot and allow
+            // overbooking. FOR UPDATE forces the winner's committed rows.
+            $occupying = TransportRunPassenger::query()
+                ->where('vehicle_run_id', $locked->id)
+                ->whereIn('status', PassengerStatus::occupyingValues())
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get(['id', 'season_pilgrim_id']);
+
+            $alreadyOnRun = $occupying
+                ->whereIn('season_pilgrim_id', $candidateIds)
+                ->pluck('season_pilgrim_id')
+                ->map(fn ($id): int => (int) $id)
+                ->all();
+
             $notEligible = array_values(array_filter(
                 $candidateIds,
                 fn (int $id): bool => ! $seasonPilgrims->has($id) || $seasonPilgrims->get($id)->status !== SeasonPilgrimStatus::Active,
@@ -102,15 +115,7 @@ final class AddPassengers
                 throw TransportationDomainException::passengerNotEligible($notEligible);
             }
 
-            $duplicates = TransportRunPassenger::query()
-                ->where('vehicle_run_id', $locked->id)
-                ->whereIn('status', PassengerStatus::occupyingValues())
-                ->whereIn('season_pilgrim_id', $candidateIds)
-                ->orderBy('season_pilgrim_id')
-                ->sharedLock()
-                ->pluck('season_pilgrim_id')
-                ->map(fn ($id): int => (int) $id)
-                ->all();
+            $duplicates = array_values(array_intersect($candidateIds, $alreadyOnRun));
             if ($duplicates !== []) {
                 throw TransportationDomainException::passengerDuplicate($duplicates);
             }
@@ -125,7 +130,7 @@ final class AddPassengers
                 throw TransportationDomainException::entitlementMismatch($mismatched);
             }
 
-            $occupied = $locked->occupiedCount();
+            $occupied = $occupying->count();
             if ($occupied + count($candidateIds) > $capacity) {
                 throw TransportationDomainException::capacityExceeded($capacity, $occupied, count($candidateIds), $candidateIds);
             }
@@ -134,14 +139,15 @@ final class AddPassengers
                 ->whereKey($seasonPilgrims->pluck('season_program_id')->filter()->unique()->all())
                 ->pluck('code', 'id');
 
-            $vehicleClass = $seasonVehicle->vehicle?->vehicle_class?->value;
-            $serviceLevel = $seasonVehicle->service_level?->value;
             $now = Carbon::now();
+            $added = [];
 
             foreach ($candidateIds as $id) {
-                $programId = $seasonPilgrims->get($id)->season_program_id;
+                $seasonPilgrim = $seasonPilgrims->get($id);
+                $programId = $seasonPilgrim->season_program_id;
                 $entitlement = $this->entitlements->entitlementFor($programId);
                 $isOverride = $statuses[$id] === EntitlementStatus::Mismatch;
+                $statusAtAssignment = $isOverride ? EntitlementStatus::Overridden : $statuses[$id];
 
                 try {
                     $passenger = TransportRunPassenger::query()->create([
@@ -155,14 +161,15 @@ final class AddPassengers
                         'program_id_at_assignment' => $programId,
                         'program_code_at_assignment' => $programId !== null ? $programCodes->get($programId) : null,
                         'entitlement_id_at_assignment' => $entitlement?->id,
-                        'required_vehicle_class_at_assignment' => $entitlement?->vehicle_class?->value,
-                        'required_service_level_at_assignment' => $entitlement?->service_level?->value,
+                        'entitlement_vehicle_class' => $entitlement?->vehicle_class?->value,
+                        'entitlement_service_level' => $entitlement?->service_level?->value,
                         'season_vehicle_id_at_assignment' => $seasonVehicle->id,
                         'vehicle_class_at_assignment' => $vehicleClass,
                         'service_level_at_assignment' => $serviceLevel,
-                        'entitlement_status_at_assignment' => $statuses[$id],
+                        'entitlement_status_at_assignment' => $statusAtAssignment,
                         'override_at_assignment' => $isOverride,
                         'override_reason_at_assignment' => $isOverride ? $overrideReason : null,
+                        'overridden_by_at_assignment' => $isOverride ? $actor->id : null,
                         'entitlement_override' => $isOverride,
                         'entitlement_override_reason' => $isOverride ? $overrideReason : null,
                         'entitlement_overridden_by' => $isOverride ? $actor->id : null,
@@ -183,17 +190,16 @@ final class AddPassengers
                     runId: $locked->id,
                     passengerId: $passenger->id,
                     reason: $isOverride ? $overrideReason : null,
-                    context: array_filter([
+                    context: [
                         'season_pilgrim_id' => $id,
                         'assignment_source' => $source->value,
                         'source_group_id' => $source === AssignmentSource::Individual ? null : $sourceId,
-                        'season_program_id' => $programId,
-                        'entitlement_id' => $entitlement?->id,
-                        'transport_season_vehicle_id' => $seasonVehicle->id,
-                        'entitlement_status' => $statuses[$id]->value,
-                        'override' => $isOverride,
-                    ], fn ($v) => $v !== null),
+                        'entitlement_status' => $passenger->entitlement_status_at_assignment->value,
+                        'entitlement_id' => $passenger->entitlement_id_at_assignment,
+                    ],
                 );
+
+                $added[] = $passenger;
             }
 
             $runLabel = $movement->movement_number.'/'.$locked->run_number;
@@ -203,7 +209,6 @@ final class AddPassengers
                     'assignment_source' => $source->value,
                     'source_group_id' => $source === AssignmentSource::Individual ? null : $sourceId,
                     'season_pilgrim_ids' => $candidateIds,
-                    'transport_season_vehicle_id' => $seasonVehicle->id,
                 ],
             ], $request);
 
@@ -214,8 +219,8 @@ final class AddPassengers
                 ], $request);
             }
 
-            return ['run' => $locked, 'added' => count($candidateIds)];
-        });
+            return ['run' => $locked, 'added' => count($added)];
+        }, 5);
     }
 
     /**

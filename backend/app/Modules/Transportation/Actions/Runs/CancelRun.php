@@ -10,8 +10,8 @@ use App\Modules\Transportation\Models\TransportVehicleRun;
 use App\Modules\Transportation\Support\RunCancellation;
 use App\Modules\Transportation\Support\RunLocks;
 use App\Modules\Transportation\Support\TransportAudit;
-use App\Modules\Transportation\Support\TransportTransaction;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 final class CancelRun
 {
@@ -22,7 +22,7 @@ final class CancelRun
 
     public function execute(User $actor, TransportVehicleRun $run, string $reason, Request $request): TransportVehicleRun
     {
-        return TransportTransaction::run(function () use ($actor, $run, $reason, $request): TransportVehicleRun {
+        return DB::transaction(function () use ($actor, $run, $reason, $request): TransportVehicleRun {
             [$movement, $locked] = RunLocks::lock($run->id);
             SeasonGuard::assertWritable($movement->season()->firstOrFail());
 

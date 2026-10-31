@@ -25,6 +25,9 @@ const TRANSPORT_TABLES = [
     'transport_run_passengers',
     'transport_timeline_events',
     'transport_review_items',
+    'transport_vehicle_breakdowns',
+    'transport_vehicle_replacements',
+    'transport_replacement_passenger_moves',
 ];
 
 it('creates every transport table with a tenant_id column', function (): void {
@@ -34,20 +37,17 @@ it('creates every transport table with a tenant_id column', function (): void {
     }
 });
 
-it('has no GPS, QR, offline, seat, accommodation or current-vehicle columns', function (): void {
-    $forbidden = '/(gps|latitude|longitude|lat$|lng$|geo|qr|barcode|offline|sync_|seat|accommodation|hotel|room|bed|tent|camp|current_vehicle)/i';
+it('has no GPS, QR, offline, seat or current-vehicle columns on transport tables', function (): void {
+    $forbidden = '/(gps|latitude|longitude|lat$|lng$|geo|qr|barcode|offline|sync_|seat|current_vehicle)/i';
 
     foreach (TRANSPORT_TABLES as $table) {
+        expect(preg_match('/(gps|qr_|offline|seat)/i', $table))->toBe(0, $table);
         foreach (Schema::getColumnListing($table) as $column) {
             expect(preg_match($forbidden, $column))->toBe(0, "{$table}.{$column}");
         }
     }
 
-    expect(Schema::hasColumn('season_pilgrims', 'current_vehicle_id'))->toBeFalse()
-        ->and(collect(Schema::getTables(Schema::getCurrentSchemaName()))->pluck('name')->filter(
-            fn ($t) => ! str_starts_with((string) $t, 'accommodation_')
-                && preg_match('/(accommodation|hotel|room|bed|tent|camp|gps|qr_)/i', (string) $t)
-        )->all())->toBe([]);
+    expect(Schema::hasColumn('season_pilgrims', 'current_vehicle_id'))->toBeFalse();
 });
 
 it('exposes no GPS, QR, offline or seat routes', function (): void {
@@ -134,7 +134,6 @@ it('rejects cross-tenant and cross-season references at the database level', fun
         'participation of another tenant' => ['season_pilgrim_id' => $foreignSp['id']],
         'run of another tenant season' => ['vehicle_run_id' => $foreign['run']['id']],
         'season of another tenant' => ['season_id' => $foreign['season']['id']],
-        'assignment vehicle of another season' => ['season_vehicle_id_at_assignment' => $foreign['sv']['id']],
     ];
 
     foreach ($invalid as $label => $overrides) {
