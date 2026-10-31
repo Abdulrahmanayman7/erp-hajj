@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import { AlertTriangle, CalendarRange } from 'lucide-vue-next'
@@ -42,12 +42,6 @@ const selectedValue = computed({
   },
 })
 
-watch(
-  () => selectedSeasonId.value,
-  () => {
-    store.clearSeasonDetails()
-  },
-)
 
 const statusLabel = computed(() =>
   season.value ? t(`accommodation.season.status.${season.value.status}`) : t('accommodation.season.unknown'),
