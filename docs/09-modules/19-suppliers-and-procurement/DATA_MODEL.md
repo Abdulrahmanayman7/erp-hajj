@@ -128,21 +128,81 @@ name, role_title, email, phone, is_primary_contact, soft operational flags.
 
 ### Document eligibility
 
+> **II-A (2026-10-31):** **DESIGN APPROVED**; **ENGINEERING PRE-IMPLEMENTATION GATE** — see [PHASE_II_A_ELIGIBILITY_DESIGN.md](PHASE_II_A_ELIGIBILITY_DESIGN.md), [API.md §12](API.md), [S04-PHASE-II-A-ENGINEERING-GATE-2026-10-31.md](../../10-decisions/S04-PHASE-II-A-ENGINEERING-GATE-2026-10-31.md). **Not implemented** — do not author migrations until coding authorization.
+
+#### `supplier_eligibility_requirement_sets` (tenant-owned)
+
+| Column | Type / notes |
+|---|---|
+| `id` | BIGINT PK |
+| `tenant_id` | FK tenants; indexed |
+| `config_key` | VARCHAR(64) — family slug across versions |
+| `name` | VARCHAR |
+| `status` | `draft` \| `approved` |
+| `version_no` | UNSIGNED INT |
+| `authored_by` | FK users (creator / tracked for SoD) |
+| `last_edited_by` | FK users NULL |
+| `approved_by` | FK users NULL |
+| `approved_at` | TIMESTAMP NULL |
+| timestamps | |
+
+**Uniques:** `UNIQUE (tenant_id, config_key, version_no)`.  
+**Draft rule (app + supporting unique strategy):** at most one `status=draft` per `(tenant_id, config_key)` — enforce in Action under `lockForUpdate` on the set family; optional generated helper column `draft_slot` = `IF(status='draft', 1, version_no)` with unique `(tenant_id, config_key, draft_slot)` **or** application-only if MySQL partial indexes unavailable.  
+**Immutability (C1):** application rejects PATCH when `status=approved`; no DB UPDATE of def rows belonging to approved sets (defs are insert-on-draft only).
+
 #### `supplier_document_requirement_defs` (tenant-owned)
-
-Defines required doc keys by `supplier_type`, optional `country_code`, optional `supplier_category_id`.
-
-#### `supplier_document_records`
 
 | Column | Notes |
 |---|---|
-| Links `supplier_id`, `requirement_def_id` | |
-| `document_id` | FK → documents (tenant) |
-| `expires_at` | DATE NULL |
-| `supersedes_id` | Self FK nullable |
-| `status` | `valid` \| `expired` \| `superseded` |
+| `tenant_id`, `requirement_set_id` | FK set; cascade with set |
+| `requirement_key` | VARCHAR |
+| `label_ar`, description | |
+| `supplier_type` | VARCHAR — required |
+| `country_code` | CHAR(2) NULL = wildcard |
+| `supplier_category_id` | BIGINT NULL = wildcard (FK categories when not null) |
+| `country_code_norm` | **STORED generated:** `IFNULL(country_code, '')` |
+| `supplier_category_id_norm` | **STORED generated:** `IFNULL(supplier_category_id, 0)` |
+| `is_mandatory` | BOOLEAN |
+| `default_validity_days` | INT NULL — guidance only |
+| timestamps | |
 
-Aligns with ADR-0010: Document row immutable; eligibility row carries validity.
+**UNIQUE** `(tenant_id, requirement_set_id, requirement_key, supplier_type, country_code_norm, supplier_category_id_norm)` — MySQL NULL-safe uniqueness via generated columns (**C2**).  
+**No implicit exemptions** in query logic: missing applicable rows ⇒ fail closed for that supplier.
+
+#### `supplier_document_records` (tenant-owned)
+
+| Column | Notes |
+|---|---|
+| `tenant_id`, `supplier_id`, `requirement_def_id` | FKs; supplier & def same tenant |
+| `document_id` | FK `documents.id` (tenant-aligned in app) |
+| `verification_status` | `pending_verification` \| `valid` \| `rejected` \| `expired` \| `superseded` |
+| `expires_at` | DATE NULL |
+| `uploaded_by`, `verified_by`, `verified_at`, `rejection_reason` | SoD: verifier ≠ uploader (**C3**) |
+| `supersedes_id` | Self FK NULL; prior row |
+| timestamps | |
+
+**Indexes:** `(tenant_id, supplier_id, verification_status)`, `(tenant_id, document_id)`, `(tenant_id, expires_at)`, `(supersedes_id)`.  
+**Supersession:** app ensures new row `supplier_id` matches prior; prior → `superseded`; Document bytes never updated.  
+**Host-delete:** Documents / supplier delete guards treat linked `document_id` / supplier as in-use (parity Contracts/Inventory).
+
+#### II-A MySQL migration order (when authorized — do not create now)
+
+1. `supplier_eligibility_requirement_sets`  
+2. `supplier_document_requirement_defs` (generated columns + unique)  
+3. `supplier_document_records`  
+4. Morph alias registration for `supplier` (code + tests; not a table)
+
+Additive, reversible downs in reverse order. No Contracts/Inventory schema changes.
+
+#### Transaction boundaries
+
+| Operation | Boundary |
+|---|---|
+| Approve config | Lock draft set `FOR UPDATE`; assert draft + SoD; set approved fields; commit |
+| Supersede document | Lock prior record + supplier; insert new; mark prior superseded |
+| Activate | Lock supplier `FOR UPDATE`; assert `under_review→active`; live eligibility recheck; set `active` + `activated_at`; transition + audit; commit |
+
+Aligns with ADR-0010: Document row immutable; eligibility row carries validity. Expiry does **not** auto-change supplier lifecycle (**II-D3**). Banking is **not** part of activation eligibility (**II-D2**).
 
 ### Sequences
 

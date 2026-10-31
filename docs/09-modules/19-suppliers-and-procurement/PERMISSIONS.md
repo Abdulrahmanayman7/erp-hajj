@@ -3,7 +3,8 @@
 > **Status:** **ENGINEERING PROPOSAL** — not seeded until implementation authorization  
 > **Last updated:** 2026-10-31  
 > Rules: [PERMISSION_MODEL.md](../../06-security/PERMISSION_MODEL.md) — `module.action`, deny-by-default, no Owner bypass, no direct user↔permission grants.  
-> Owner **D4** (2026-10-31): sensitive permissions are **not** auto-granted via default role templates.
+> Owner **D4** (2026-10-31): sensitive permissions are **not** auto-granted via default role templates.  
+> II-A design (**C6**, 2026-10-31): `suppliers.approve_eligibility_config` is **sensitive** — explicit assignment only; never default templates.
 
 **Seed rule:** Seed permission **catalog** rows when code exists. **Role ↔ permission** template grants follow §3; sensitive set in §3.1 starts **ungranted** on all templates including Tenant Owner.
 
@@ -20,6 +21,8 @@
 | `suppliers.update` | Update non-terminal fields; manage categories | No |
 | `suppliers.transition` | Lifecycle transitions | No |
 | `suppliers.manage_documents` | Link eligibility docs / mark superseded | No |
+| `suppliers.manage_eligibility_config` | Draft/edit eligibility requirement set versions | No |
+| `suppliers.approve_eligibility_config` | Approve eligibility config version (**C6**) | **Yes** |
 | `suppliers.view_banking` | Reveal unmasked bank details | **Yes** |
 | `suppliers.manage_banking` | Create/update bank accounts; submit verification | **Yes** |
 | `suppliers.verify_banking` | Approve/reject bank verification | **Yes** |
@@ -76,6 +79,8 @@
 | Delegation cannot complete final approve if acting user is financial reviewer | **Hard block (D5)** |
 | No eligible independent final approver | Block + escalate to authorized admin; **never** auto-approve (**D5**) |
 | Banking verify ≠ submitter of same change | Policy (**110**) |
+| Document uploader ≠ verifier on same eligibility record | Policy (**II-A C3**) |
+| Eligibility config author/editor ≠ approver of same version | Policy (**II-A C3**) |
 | Delegation cannot raise ceiling above delegator | Action (**127**) |
 | `cancel_approved` blocked when `procurement_engaged_at` set | Action (**D3**) |
 
@@ -89,10 +94,10 @@ Templates below are **documentation targets** for a future seed PR. They must **
 
 | Template | Proposed non-sensitive grants |
 |---|---|
-| Tenant Owner | `suppliers.view/create/update/transition/manage_documents/delete`; `supplier_evaluations.*` (view/prepare/approve/criteria/appeal); `purchase_requests.view/create/update/submit/cancel/verify_priority/consolidate_planning/view_control_reports`; `geo_places.view` |
-| General Manager | Same operational non-sensitive set as Owner for day-to-day ops visibility + supplier transition + eval approve |
+| Tenant Owner | `suppliers.view/create/update/transition/manage_documents/manage_eligibility_config/delete`; `supplier_evaluations.*` (view/prepare/approve/criteria/appeal); `purchase_requests.view/create/update/submit/cancel/verify_priority/consolidate_planning/view_control_reports`; `geo_places.view` — **not** `approve_eligibility_config` |
+| General Manager | Same operational non-sensitive set as Owner for day-to-day ops visibility + supplier transition + eval approve — **not** `approve_eligibility_config` |
 | Department Manager | `suppliers.view`; `purchase_requests.view/create/update/submit/cancel`; `supplier_evaluations.view` |
-| Procurement officer | `suppliers.view/create/update/transition/manage_documents`; `supplier_evaluations.view/prepare`; `purchase_requests.view/consolidate_planning/verify_priority` |
+| Procurement officer | `suppliers.view/create/update/transition/manage_documents/manage_eligibility_config`; `supplier_evaluations.view/prepare`; `purchase_requests.view/consolidate_planning/verify_priority` — **not** `approve_eligibility_config` |
 | Requester (dept) | `purchase_requests.view/create/update/submit/cancel`; `suppliers.view` |
 | Auditor | `suppliers.view`; `supplier_evaluations.view`; `purchase_requests.view`; `purchase_requests.view_control_reports` — **no** banking |
 
@@ -100,6 +105,7 @@ Templates below are **documentation targets** for a future seed PR. They must **
 
 Never included in default template seeds (including Tenant Owner template for S04):
 
+- `suppliers.approve_eligibility_config` (**II-A C6**)  
 - `suppliers.view_banking`  
 - `suppliers.manage_banking`  
 - `suppliers.verify_banking`  

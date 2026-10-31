@@ -38,6 +38,10 @@ Reuse ISO alpha-2 country codes consistent with pilgrim nationality fields.
 **Chosen:** eligibility metadata table referencing immutable `documents` rows; supersede by new upload + new eligibility row.  
 **Rejected:** adding Document version_number column (conflicts ADR-0010).
 
+**Phase II Owner clarifications (2026-10-31 — II-D1–II-D4):** tenant-managed eligibility requirements with explicit config approval and fail-closed activation; banking **not** required for activation; **no** automatic lifecycle suspension on expiry/low score; tenant-managed evaluation criteria with **no** platform default pack/threshold. Clarifications: [S04-PHASE-II-OWNER-CLARIFICATIONS-2026-10-31.md](S04-PHASE-II-OWNER-CLARIFICATIONS-2026-10-31.md).
+
+**II-A design approval (2026-10-31):** Eligibility & Documents design **APPROVED** including binding controls **C1–C6** (immutable approved versions; applicability combine/dedupe/no exemptions; SoD uploader≠verifier and author≠approver; activation + use-time recheck with scheduled checks supplementary; exact API contracts before coding; `approve_eligibility_config` sensitive / never template-seeded). Records: [S04-PHASE-II-A-DESIGN-APPROVAL-2026-10-31.md](S04-PHASE-II-A-DESIGN-APPROVAL-2026-10-31.md); [PHASE_II_A_ELIGIBILITY_DESIGN.md](../09-modules/19-suppliers-and-procurement/PHASE_II_A_ELIGIBILITY_DESIGN.md). Status: **II-A DESIGN APPROVED — IMPLEMENTATION NOT AUTHORIZED**.
+
 ### 2.5 Bank accounts (**110**)
 
 **Chosen:** encrypt IBAN/account with application key; store last4; permissions `view_banking` / `manage_banking` / `verify_banking`; verification workflow.  
@@ -140,7 +144,10 @@ Deny-by-default; SoD (including **D5** hard enforcement); banking least privileg
 | Contracts.supplier_id migration timing | **DEFERRED** (separate CR) |
 | Module PHP namespace final name | **ENGINEERING PROPOSAL** |
 | Org-unit row-level PR scoping | **DEFERRED** (tenant-wide + permission in S04) |
-| Explicit G2 implementation authorization | **OWNER** — separate from this ADR |
+| Explicit G2 Phase I implementation authorization | **DONE** (accepted 2026-10-31) |
+| II-A Eligibility & Documents design (C1–C6) | **APPROVED** (2026-10-31) — implementation **NOT** authorized |
+| II-A engineering pre-implementation gate | **COMPLETE** (2026-10-31) — coding **NOT** authorized |
+| Explicit Phase II / II-A implementation authorization | **OWNER** — separate; design/eng gate ≠ coding auth |
 
 ## 7. References
 

@@ -154,7 +154,9 @@ These directions were Owner-approved on **2026-10-31** for G0 documentation. The
 | [ADR-0015](ADR-0015-SEMANTIC-AUDIT-TRAIL-AND-IMMUTABLE-HISTORY.md) | Binding audit semantics. |
 | [ADR-0019](ADR-0019-ACCOMMODATION-CAMPS-DRAFT.md) | Unrelated; remains **PROPOSED / NOT ACCEPTED**. |
 
-## 7. Gate status (as of G0 filing 2026-10-31)
+## 7. Gate status
+
+### 7.1 As of G0 filing (2026-10-31) — historical snapshot
 
 | Item | Status |
 |---|---|
@@ -164,6 +166,23 @@ These directions were Owner-approved on **2026-10-31** for G0 documentation. The
 | S04 MODULE_TEMPLATE pack (`docs/09-modules/…`) | **PENDING** (G1) |
 | Engineering ADR / implementation CR | **PENDING** |
 | Authorization to start application implementation | **NOT GRANTED** |
+
+### 7.2 Status clarification (dated 2026-10-31 — non-destructive)
+
+The §7.1 rows above remain the **G0 filing snapshot**. Subsequent Owner-approved gates (without reopening 101–130):
+
+| Item | Status (2026-10-31+) |
+|---|---|
+| S04 MODULE_TEMPLATE pack (`docs/09-modules/19-suppliers-and-procurement/`) | **COMPLETE** (G1) |
+| Engineering ADR / design CR | **APPROVED** — [ADR-0023](ADR-0023-S04-ENGINEERING-DESIGN.md) + [CHANGE_REQUEST_S04_SUPPLIERS_AND_PROCUREMENT.md](../00-project/CHANGE_REQUEST_S04_SUPPLIERS_AND_PROCUREMENT.md) |
+| G2 Phase I (geo + supplier registry) | **COMPLETE — OWNER ACCEPTED** — [S04_PHASE_I_ACCEPTANCE_STATUS.md](../00-project/S04_PHASE_I_ACCEPTANCE_STATUS.md); accepted commit `58e5b49` |
+| Phase II Owner clarifications II-D1–II-D4 | **APPROVED** (documentation) — [S04-PHASE-II-OWNER-CLARIFICATIONS-2026-10-31.md](S04-PHASE-II-OWNER-CLARIFICATIONS-2026-10-31.md); **does not** authorize coding |
+| II-A Eligibility & Documents design (C1–C6) | **APPROVED** — [S04-PHASE-II-A-DESIGN-APPROVAL-2026-10-31.md](S04-PHASE-II-A-DESIGN-APPROVAL-2026-10-31.md); **implementation NOT AUTHORIZED** |
+| II-A engineering pre-implementation gate | **COMPLETE** — [S04-PHASE-II-A-ENGINEERING-GATE-2026-10-31.md](S04-PHASE-II-A-ENGINEERING-GATE-2026-10-31.md); coding **NOT GRANTED** |
+| Phase II–V / II-A application implementation | **NOT GRANTED** |
+| Overall S04 | **IN PROGRESS** |
+| S05 | **NOT_STARTED** |
+| ADR-0019 | **PROPOSED / NOT ACCEPTED** (unchanged) |
 
 ## 8. References
 

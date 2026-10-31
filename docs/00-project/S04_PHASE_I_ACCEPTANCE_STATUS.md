@@ -41,4 +41,9 @@ Project Owner formally accepted **S04 G2 Phase I** on **2026-10-31** as `COMPLET
 
 ## Next
 
-Phase II readiness assessment only after Owner authorization. Do **not** treat this acceptance as permission to start Phase II–V or S05.
+- Phase I acceptance **unchanged** by Phase II documentation work.  
+- Phase II Owner clarifications **II-D1–II-D4** recorded: [S04-PHASE-II-OWNER-CLARIFICATIONS-2026-10-31.md](../10-decisions/S04-PHASE-II-OWNER-CLARIFICATIONS-2026-10-31.md).  
+- II-A design **APPROVED** (controls C1–C6): [S04-PHASE-II-A-DESIGN-APPROVAL-2026-10-31.md](../10-decisions/S04-PHASE-II-A-DESIGN-APPROVAL-2026-10-31.md).  
+- II-A engineering pre-implementation gate **COMPLETE**: [S04-PHASE-II-A-ENGINEERING-GATE-2026-10-31.md](../10-decisions/S04-PHASE-II-A-ENGINEERING-GATE-2026-10-31.md).  
+- Phase II implementation status: **NOT_STARTED**. II-A coding **NOT GRANTED.**  
+- Do **not** treat Phase I acceptance, II-D1–II-D4, II-A design approval, or the engineering gate as permission to start Phase II–V or S05 application work.

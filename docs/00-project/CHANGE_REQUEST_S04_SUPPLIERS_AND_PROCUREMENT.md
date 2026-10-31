@@ -126,19 +126,26 @@ Per [ACCEPTANCE_CRITERIA.md](../09-modules/19-suppliers-and-procurement/ACCEPTAN
 - [x] Flip this CR to **APPROVED — DESIGN AND SCOPE ONLY; IMPLEMENTATION NOT AUTHORIZED** (2026-10-31)  
 - [x] Issue **explicit G2 Phase I implementation authorization** (Owner 2026-10-31)  
 - [x] Owner-accept **G2 Phase I** delivery (2026-10-31) — [S04_PHASE_I_ACCEPTANCE_STATUS.md](S04_PHASE_I_ACCEPTANCE_STATUS.md)  
-- [ ] Authorize **Phase II–V** implementation (separate Owner act)  
-- [ ] At later phases seed PR: continue **D4** templates (non-sensitive only) + explicit sensitive grants process  
+- [x] Record Phase II Owner clarifications **II-D1–II-D4** (2026-10-31) — [S04-PHASE-II-OWNER-CLARIFICATIONS-2026-10-31.md](../10-decisions/S04-PHASE-II-OWNER-CLARIFICATIONS-2026-10-31.md) (**documentation only**)  
+- [x] Owner-approve **II-A Eligibility & Documents design** including controls **C1–C6** (2026-10-31) — [S04-PHASE-II-A-DESIGN-APPROVAL-2026-10-31.md](../10-decisions/S04-PHASE-II-A-DESIGN-APPROVAL-2026-10-31.md); [PHASE_II_A_ELIGIBILITY_DESIGN.md](../09-modules/19-suppliers-and-procurement/PHASE_II_A_ELIGIBILITY_DESIGN.md)  
+- [x] Complete **II-A engineering pre-implementation gate** (2026-10-31) — [S04-PHASE-II-A-ENGINEERING-GATE-2026-10-31.md](../10-decisions/S04-PHASE-II-A-ENGINEERING-GATE-2026-10-31.md); API.md §12; DATA_MODEL constraints (**coding still NOT GRANTED**)  
+- [ ] Authorize **Phase II / II-A** implementation (separate Owner act)  
+- [ ] Authorize **Phase II-B–V** implementation (separate Owner acts)  
+- [ ] At later phases seed PR: continue **D4** templates (non-sensitive only) + explicit sensitive grants process; **never** template-seed `approve_eligibility_config` (**C6**)  
 
 ## Decision
 
 - [x] Approved — **design and scope**  
 - [x] **G2 Phase I implementation authorized and Owner-accepted** (2026-10-31)  
+- [x] **Phase II clarifications II-D1–II-D4 approved** (2026-10-31) — not coding authorization  
+- [x] **II-A DESIGN APPROVED — IMPLEMENTATION NOT AUTHORIZED** (2026-10-31)  
+- [x] **II-A ENGINEERING PRE-IMPLEMENTATION GATE — COMPLETE** (2026-10-31)  
 - [ ] Rejected  
 - [ ] Deferred  
 
 **Decided by:** Project Owner — **Date:** 2026-10-31  
 
-**Implementation authorization:** **Phase I GRANTED + ACCEPTED** (2026-10-31). **Phase II–V NOT GRANTED.**
+**Implementation authorization:** **Phase I GRANTED + ACCEPTED** (2026-10-31). **Phase II–V NOT GRANTED.** II-A: design **APPROVED**; engineering gate **COMPLETE**; coding **NOT AUTHORIZED**.
 
 ---
 
@@ -146,5 +153,5 @@ Per [ACCEPTANCE_CRITERIA.md](../09-modules/19-suppliers-and-procurement/ACCEPTAN
 
 - G0 COMPLETE (ADR-0022 + S03 acceptance 2026-10-31).  
 - G1 design APPROVED (ADR-0023 + this CR design/scope).  
-- S04 overall implementation status: **IN PROGRESS** (Phase I complete; Phase II–V **NOT_STARTED**).  
+- S04 overall implementation status: **IN PROGRESS** (Phase I complete; Phase II implementation **NOT_STARTED**; II-A design **APPROVED**; II-A engineering gate **COMPLETE**).  
 - Phase II–V coding remains forbidden until a separate Owner authorization.
