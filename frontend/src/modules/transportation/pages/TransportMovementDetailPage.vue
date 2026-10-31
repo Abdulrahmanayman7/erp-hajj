@@ -344,7 +344,7 @@ const mapFleet = (row: TransportSeasonVehicle): AppSelectOption => ({
             <button
               type="button"
               class="h-11 flex-1 rounded-xl bg-brand-primary-dark text-sm font-semibold text-white disabled:opacity-50"
-              :disabled="createRunMutation.isPending"
+              :disabled="createRunMutation.isPending.value"
               @click="submitRun"
             >
               {{ t('transportation.movements.save') }}

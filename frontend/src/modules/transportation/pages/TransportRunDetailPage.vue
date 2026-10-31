@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
@@ -639,7 +639,7 @@ async function onRecordBreakdown(): Promise<void> {
             <button
               type="button"
               class="h-11 flex-1 rounded-xl bg-brand-primary-dark text-sm font-semibold text-white disabled:opacity-50"
-              :disabled="!selectedPilgrimIds.length || addPassengersMutation.isPending"
+              :disabled="!selectedPilgrimIds.length || addPassengersMutation.isPending.value"
               @click="submitPassengers"
             >
               {{ t('transportation.movements.save') }}
