@@ -64,7 +64,7 @@ Approved 2026-10-04 by [CHANGE_REQUEST_PHASE2_FOUNDATION.md](CHANGE_REQUEST_PHAS
 
 ### Full Approved Phase 2 Product Scope (2026-10-29)
 
-Adopted by Project Owner via [ADR-0020](../10-decisions/ADR-0020-FULL-PHASE2-OPERATIONAL-SCOPE.md). Product clarifications (GPS gated-in-scope, staff Pilgrim UI, S02 breakdowns, “11 units”/“8 weeks” interpretation): [ADR-0021](../10-decisions/ADR-0021-PHASE2-PRODUCT-DECISIONS-AND-DELIVERY-BOUNDARIES.md). Workflow framing: **Foundation** (prerequisite, not S01) + **S01–S12**. Detailed requirements and audit statuses: [PHASE2_SCOPE_MATRIX.md](PHASE2_SCOPE_MATRIX.md).
+Adopted by Project Owner via [ADR-0020](../10-decisions/ADR-0020-FULL-PHASE2-OPERATIONAL-SCOPE.md). Product clarifications (GPS gated-in-scope, staff Pilgrim UI, S02 breakdowns, “11 units”/“8 weeks” interpretation): [ADR-0021](../10-decisions/ADR-0021-PHASE2-PRODUCT-DECISIONS-AND-DELIVERY-BOUNDARIES.md). S04 functional decisions (101–130): [ADR-0022](../10-decisions/ADR-0022-S04-SUPPLIERS-AND-PURCHASE-REQUESTS-FUNCTIONAL-DECISIONS.md). S04 engineering design: [ADR-0023](../10-decisions/ADR-0023-S04-ENGINEERING-DESIGN.md) (`APPROVED — ENGINEERING DESIGN`, 2026-10-31) + [CHANGE_REQUEST_S04_SUPPLIERS_AND_PROCUREMENT.md](CHANGE_REQUEST_S04_SUPPLIERS_AND_PROCUREMENT.md) (design/scope approved; **implementation not authorized**). Workflow framing: **Foundation** (prerequisite, not S01) + **S01–S12**. Detailed requirements and audit statuses: [PHASE2_SCOPE_MATRIX.md](PHASE2_SCOPE_MATRIX.md).
 
 **Planning horizon:** Executive-plan “8 weeks” for Phase 02 is an **initial planning target** (ADR-0021 Decision 04), not a new contractual delivery date invented here. Actual schedule follows approved estimation. “11 operational units” ≠ 11 sprints.
 
@@ -74,8 +74,8 @@ Adopted by Project Owner via [ADR-0020](../10-decisions/ADR-0020-FULL-PHASE2-OPE
 | Transport registry/fleet | S01 | In scope; **COMPLETE — ACCEPTED** (Owner 2026-10-30). Evidence: Pest 24, Vitest fleetValidation 19, browser UAT 14/14 on `erp_hajj_s01_uat` — `docs/audits/s01-fleet-browser-uat/REPORT.md`. GPS live integration remains an **open Phase 2 obligation** (not accepted as part of S01) |
 | Movements & convoy ops | S02 | In scope; **COMPLETE — ACCEPTED** (Owner 2026-10-30). Evidence: Breakdown Pest 8, MySQL concurrency 7, browser UAT 16/16 on `erp_hajj_s02_uat` — `docs/audits/s02-transport-browser-uat/REPORT.md` / `S02_ACCEPTANCE_STATUS.md`. GPS live remains open Phase 2 obligation |
 
-| Accommodation & camps | S03 | In scope; **IMPLEMENTED — ACCEPTANCE PENDING** (2026-10-30). Ops journey UAT 16/16 PASS on `erp_hajj_s03_uat`; Pest Feature/Unit 63 PASS (+2 MySQL-skip); MySQL concurrency 14 PASS; Vitest 46 PASS. ADR-0019 still **PROPOSED**. Evidence: `docs/audits/s03-accommodation-browser-uat/REPORT.md`. Awaiting Owner acceptance — not COMPLETE |
-| Suppliers & purchase requests | S04 | **In Phase 2 product scope; NOT_STARTED** — needs design + engineering CR before code |
+| Accommodation & camps | S03 | In scope; **COMPLETE — ACCEPTED** (Owner **2026-10-31**). Evidence (unchanged from 2026-10-30 pack): UAT on `erp_hajj_s03_uat`; Pest Feature/Unit 63 PASS; MySQL concurrency 14 PASS; Vitest 46 PASS — `docs/audits/s03-accommodation-browser-uat/REPORT.md` / `S03_ACCEPTANCE_STATUS.md`. ADR-0019 still **PROPOSED / NOT ACCEPTED** |
+| Suppliers & purchase requests | S04 | **In Phase 2 product scope;** functional decisions APPROVED ([ADR-0022](../10-decisions/ADR-0022-S04-SUPPLIERS-AND-PURCHASE-REQUESTS-FUNCTIONAL-DECISIONS.md)); engineering design APPROVED ([ADR-0023](../10-decisions/ADR-0023-S04-ENGINEERING-DESIGN.md), 2026-10-31); CR design/scope APPROVED — **implementation NOT_STARTED / G2 NOT GRANTED** |
 | Procurement cycle (RFQ/PO/receive) | S05 | **In Phase 2; NOT_STARTED** |
 | Seasonal projects & tasks | S06 | **In Phase 2; NOT_STARTED** (MVP Tasks ≠ Phase 2 projects) |
 | Risks & complaints | S07 | **In Phase 2; NOT_STARTED** |
@@ -106,3 +106,5 @@ Authentication-related future items (not Sprint 005): MFA, SSO, email verificati
 - Moving an item into the MVP “Now” list requires an approved Change Request and an update to [MVP_SCOPE.md](MVP_SCOPE.md).
 - Phase 2 does not expand the 21-module MVP.
 - Product-scope approval (ADR-0020) is not implementation authorization for S04–S10 code without stream design and engineering change control.
+- S04 functional-decision approval (ADR-0022) is not implementation authorization.  
+- S04 engineering design approval (ADR-0023) and CR design/scope approval are **not** implementation authorization; explicit Owner **G2** coding authorization is still required.
