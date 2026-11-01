@@ -11,7 +11,7 @@ import type {
 const groupsBase = '/api/v1/purchase-demand-groups'
 const reportsBase = '/api/v1/purchase-control-reports'
 
-function toQuery(filters: Record<string, unknown>): string {
+function toQuery(filters: DemandGroupListFilters | ControlReportFilters): string {
   const params = new URLSearchParams()
   Object.entries(filters).forEach(([key, value]) => {
     if (value === undefined || value === null || value === '') return
