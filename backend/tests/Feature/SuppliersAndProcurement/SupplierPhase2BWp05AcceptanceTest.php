@@ -21,6 +21,10 @@ use Laravel\Sanctum\Sanctum;
 const WP05_IBAN_A = 'SA0380000000608010167519';
 const WP05_IBAN_B = 'SA4420000001234567891234';
 
+beforeEach(function (): void {
+    requireSuppliersMysqlTestingDatabase();
+});
+
 test('WP05-A1 end-to-end banking lifecycle preserves historical primary and II-D2 independence', function (): void {
     $tenant = Tenant::factory()->create();
     $creator = createSupplierUserWith(['suppliers.view', 'suppliers.manage_banking'], $tenant);

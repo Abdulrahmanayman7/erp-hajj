@@ -30,6 +30,13 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Testing\TestResponse;
 use Laravel\Sanctum\Sanctum;
 
+beforeEach(function (): void {
+    // Keep the documented SQLite-only M3 dual-strategy test executable under phpunit.xml.
+    requireSuppliersMysqlTestingDatabase(
+        'M3 on SQLite the model keeps the physical norm columns in sync'
+    );
+});
+
 afterEach(function (): void {
     Carbon::setTestNow();
 });

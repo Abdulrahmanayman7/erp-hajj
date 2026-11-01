@@ -9,6 +9,10 @@ use Laravel\Sanctum\Sanctum;
 
 require_once __DIR__.'/Helpers.php';
 
+beforeEach(function (): void {
+    requireSuppliersMysqlTestingDatabase();
+});
+
 const WP03_IBAN = 'SA0380000000608010167519';
 const WP03_IBAN_B = 'SA4420000001234567891234';
 

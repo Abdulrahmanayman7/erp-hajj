@@ -17,7 +17,52 @@ use App\Modules\SuppliersAndProcurement\Models\SupplierEligibilityRequirementSet
 use Database\Factories\SupplierEligibilityRequirementSetFactory;
 use Database\Seeders\GeoPlacesSeeder;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\Sanctum;
+
+/**
+ * Gate S04 Feature tests that depend on MySQL dialect (number upserts, generated
+ * columns, locking). Wrong database name fails hard (expect) under MySQL/MariaDB.
+ *
+ * When $allowSqliteTestNameContains is set and the current test name matches while
+ * the driver is sqlite, the MySQL gate is bypassed (Phase II-A M3 dual strategy).
+ * Matching normalizes Pest's __pest_evaluable_* underscore form against a human
+ * description needle so beforeEach does not skip the SQLite-only M3 test.
+ */
+function requireSuppliersMysqlTestingDatabase(?string $allowSqliteTestNameContains = null): void
+{
+    $driver = DB::connection()->getDriverName();
+
+    if ($allowSqliteTestNameContains !== null
+        && $driver === 'sqlite'
+        && suppliersTestNameContains(test()->name(), $allowSqliteTestNameContains)) {
+        return;
+    }
+
+    if (! in_array($driver, ['mysql', 'mariadb'], true)) {
+        test()->markTestSkipped(
+            'S04 suppliers MySQL dialect tests require MySQL/MariaDB erp_hajj_testing (-c phpunit.mysql.xml).'
+        );
+    }
+
+    $database = (string) DB::selectOne('select database() as db')->db;
+    expect($database)->toBe('erp_hajj_testing');
+}
+
+/**
+ * Pest's test()->name() returns the PHPUnit evaluable method
+ * (__pest_evaluable_…_with_underscores). Compare against human descriptions too.
+ */
+function suppliersTestNameContains(string $testName, string $needle): bool
+{
+    if (str_contains($testName, $needle)) {
+        return true;
+    }
+
+    $normalize = static fn (string $value): string => strtolower((string) preg_replace('/[^A-Za-z0-9]+/', '_', $value));
+
+    return str_contains($normalize($testName), $normalize($needle));
+}
 
 /**
  * @param  list<string>  $permissionNames
