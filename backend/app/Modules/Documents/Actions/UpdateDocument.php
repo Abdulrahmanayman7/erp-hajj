@@ -77,6 +77,11 @@ final class UpdateDocument
                     : $locked->linkable_id;
 
                 [$linkableType, $linkableId] = $this->references->resolveLink($type, $id);
+                $this->references->assertActorMayUseLink(
+                    $actor,
+                    $linkableType,
+                    $linkableId !== null ? (int) $linkableId : null,
+                );
                 $locked->linkable_type = $linkableType;
                 $locked->linkable_id = $linkableId;
             }

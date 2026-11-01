@@ -1,10 +1,10 @@
 # Documents — API
 
-> **Status:** Implemented (Sprint 013)  
-> **Last updated:** 2026-08-10  
+> **Status:** Implemented (Sprint 013)
+> **Last updated:** 2026-08-10
 > Base: `/api/v1` · Auth: Sanctum SPA · Envelope: [API_STANDARDS.md](../../04-api/API_STANDARDS.md)
 
-All routes: authenticated + tenant-active. Authorization via Policies. Cross-tenant → **404**.  
+All routes: authenticated + tenant-active. Authorization via Policies. Cross-tenant → **404**.
 **Never** return `storage_path`, `storage_disk`, or filesystem absolute paths.
 
 ---
@@ -22,7 +22,7 @@ All routes: authenticated + tenant-active. Authorization via Policies. Cross-ten
 | POST | `/documents/{document}/restore` | `documents.archive` | → active |
 | DELETE | `/documents/{document}` | `documents.delete` | Hard delete |
 
-**No** generic `PATCH …/status`.  
+**No** generic `PATCH …/status`.
 **No** nested write APIs under contracts/meetings/… required (filter `linkable_type` + `linkable_id`).
 
 ---
@@ -72,7 +72,7 @@ Cannot change file bytes. Invalid link → `DOCUMENT_LINK_INVALID`.
 ## Download — `GET /documents/{document}/download`
 
 - Resolve Document under tenant scope + Policy `download`.
-- Stream from private disk; `Content-Type` = stored mime;  
+- Stream from private disk; `Content-Type` = stored mime;
   `Content-Disposition: attachment; filename="{original_filename}"` (RFC-compliant encoding).
 - **Audit:** `DOCUMENT_DOWNLOADED` (all MVP downloads treated as sensitive).
 - Missing blob → `DOCUMENT_FILE_MISSING`.
@@ -113,7 +113,7 @@ Hard delete row + blob. Audit `DOCUMENT_DELETED` (ids/number/size/mime only).
 
 ### Sorting
 
-Default: `created_at` DESC, then `id` DESC.  
+Default: `created_at` DESC, then `id` DESC.
 Alternate: `sort=document_number|title|size_bytes` + `direction`.
 
 ---
@@ -163,6 +163,7 @@ Alternate: `sort=document_number|title|size_bytes` + `direction`.
 | `DOCUMENT_CATEGORY_IN_USE` | Delete category while referenced |
 | `DOCUMENT_CATEGORY_INVALID` | Inactive/foreign category on assign |
 | `DOCUMENT_IMMUTABLE` | Attempt to patch storage fields |
+| `DOCUMENT_USED_AS_EVIDENCE` | Delete blocked while document is linked as supplier eligibility evidence (S04 Phase II-A; host delete / document delete guard) |
 
 ---
 

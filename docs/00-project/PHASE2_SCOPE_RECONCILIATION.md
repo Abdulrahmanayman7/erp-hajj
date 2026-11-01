@@ -1,9 +1,15 @@
 # Phase 2 Scope Reconciliation Log
 
 > **Status:** Governance log
-> **Last updated:** 2026-10-29
+> **Last updated:** 2026-11-01
 > **Binding product decision:** [ADR-0020](../10-decisions/ADR-0020-FULL-PHASE2-OPERATIONAL-SCOPE.md) — Full Phase 2 Operational Scope Adoption
 > **Product clarifications:** [ADR-0021](../10-decisions/ADR-0021-PHASE2-PRODUCT-DECISIONS-AND-DELIVERY-BOUNDARIES.md) — GPS, Pilgrim UI, breakdowns, 11/8 planning interpretation
+> **S04 functional decisions:** [ADR-0022](../10-decisions/ADR-0022-S04-SUPPLIERS-AND-PURCHASE-REQUESTS-FUNCTIONAL-DECISIONS.md) — decisions 101–130 (`APPROVED — FUNCTIONAL DECISIONS`; not blanket coding auth)
+> **S04 engineering design:** [ADR-0023](../10-decisions/ADR-0023-S04-ENGINEERING-DESIGN.md) (`APPROVED — ENGINEERING DESIGN`, 2026-10-31) + [CHANGE_REQUEST_S04_SUPPLIERS_AND_PROCUREMENT.md](CHANGE_REQUEST_S04_SUPPLIERS_AND_PROCUREMENT.md)
+> **S04 G2 Phase I:** [S04_PHASE_I_ACCEPTANCE_STATUS.md](S04_PHASE_I_ACCEPTANCE_STATUS.md) (`COMPLETE — OWNER ACCEPTED`, 2026-10-31)
+> **S04 Phase II-A:** [S04_PHASE_II_A_ACCEPTANCE_STATUS.md](S04_PHASE_II_A_ACCEPTANCE_STATUS.md) (`COMPLETE — OWNER ACCEPTED`, 2026-11-01)  
+> **S04 Phase II-B:** [S04_PHASE_II_B_ACCEPTANCE_STATUS.md](S04_PHASE_II_B_ACCEPTANCE_STATUS.md) · [S04-PHASE-II-B-FUNCTIONAL-CLOSURE-2026-11-01.md](../10-decisions/S04-PHASE-II-B-FUNCTIONAL-CLOSURE-2026-11-01.md) — **COMPLETE — FUNCTIONALLY CLOSED — OWNER ACCEPTED** (2026-11-01; WP-01–WP-05); commit/push/merge/deploy **NOT AUTHORIZED**  
+> **S04 Phase III:** [S04-PHASE-III-OWNER-DECISIONS-2026-11-01.md](../10-decisions/S04-PHASE-III-OWNER-DECISIONS-2026-11-01.md) (**III-D1–D8 APPROVED** — 8/8) · [PHASE_III_PURCHASE_REQUESTS_DESIGN.md](../09-modules/19-suppliers-and-procurement/PHASE_III_PURCHASE_REQUESTS_DESIGN.md) — **DRAFT — PENDING OWNER DESIGN ACCEPTANCE**; coding **NOT AUTHORIZED**; Phase IV–V **NOT_STARTED**; S05 **NOT_STARTED**
 > **Audit snapshot (not a scope authority):** [PHASE2_IMPLEMENTATION_AUDIT.md](../audits/PHASE2_IMPLEMENTATION_AUDIT.md)
 
 ## Purpose
@@ -15,7 +21,7 @@ Record conflicts between older in-repo Phase 2 wording and the **approved full o
 | Reference | Status in this pass |
 |---|---|
 | الخطة التنفيذية للمشروع | Read in Sprint 0 verification (Cursor attachments); **not filed under `docs/`**. Phase 02 (~p.4) and mockups (~p.8–10) informed ADR-0021. |
-| فكرة منصتي | Read as Cursor attachment; **not filed under `docs/`**. Functional depth for S04–S10 still TBD at design time. |
+| فكرة منصتي | Read as Cursor attachment; **not filed under `docs/`**. S04 functional depth now frozen in ADR-0022; S05–S10 still TBD at design time. |
 | `ERP_Hajj_Phase_2_Workflow_Reviewed.pdf` | External / attachments; sprint taxonomy S01–S12. Not copied into `docs/`. |
 | PHASE2_IMPLEMENTATION_AUDIT.md | Available; **status snapshot only** — intentionally **not edited**. |
 
@@ -28,9 +34,26 @@ Record conflicts between older in-repo Phase 2 wording and the **approved full o
 | [ROADMAP.md](ROADMAP.md) | Phase 2 = three areas only; “Later” lists procurement/GPS/etc. as not approved | Narrow Phase 2 | Full Phase 2 workstreams S01–S12 + Foundation; Later = Phase 3 | Documentation | **Yes** | Sequencing/capacity |
 | [ADR-0017](../10-decisions/ADR-0017-SEASON-PILGRIM-AND-PHASE2-BOUNDED-CONTEXTS.md) | Phase 2 bounded contexts Foundation/Transport/Accommodation; does not approve procurement etc. | Technical BC ADR for foundation trio | Still valid for BC rules; **product membership** widened by ADR-0020 without rewriting ADR-0017 body | No ADR-0017 rewrite in this pass | **No body rewrite** — relationship documented in ADR-0020 | None for BC rules |
 | [ADR-0018](../10-decisions/ADR-0018-TRANSPORTATION-MOVEMENTS-RUNS-AND-FLEET.md) | GPS remains out of Transportation ADR text | GPS not specified in ADR-0018 | GPS **product-in-scope** (ADR-0021) without auto-amending ADR-0018; breakdowns in S02 need design + ADR-0018 review | Engineering ADR/CR if conflict | **No body rewrite** (local Transport doc edits left untouched) | Provider; breakdown model; possible ADR-0018 addendum |
-| [ADR-0019](../10-decisions/ADR-0019-ACCOMMODATION-CAMPS-DRAFT.md) | PROPOSED / NOT ACCEPTED | Draft engineering | S03 in product scope; ADR-0019 **must stay PROPOSED** until separate acceptance | Must not flip status in this pass | **No** — status unchanged | Accept/revise ADR-0019 |
+| [ADR-0019](../10-decisions/ADR-0019-ACCOMMODATION-CAMPS-DRAFT.md) | PROPOSED / NOT ACCEPTED | Draft engineering | S03 in product scope; ADR-0019 **must stay PROPOSED** until separate acceptance | Must not flip status | **No** — status unchanged (S03 Owner acceptance 2026-10-31 does **not** accept ADR-0019) | Accept/revise ADR-0019 |
+| [ADR-0022](../10-decisions/ADR-0022-S04-SUPPLIERS-AND-PURCHASE-REQUESTS-FUNCTIONAL-DECISIONS.md) | (new) | S04 functional depth open | Decisions 101–130 approved; G0 engineering directions for geo (106) and manual financial review (120) | Documentation (G0); G1 MODULE_TEMPLATE + engineering CR before code | **Yes** — filed 2026-10-31 | Implementation authorization still open |
+| [ADR-0023](../10-decisions/ADR-0023-S04-ENGINEERING-DESIGN.md) | PROPOSED | Engineering design open | Engineering design **APPROVED** 2026-10-31 (D1–D5); design status unchanged | Documentation | **Yes** — approved 2026-10-31 | Phase II–V coding still open |
+| [CHANGE_REQUEST_S04_SUPPLIERS_AND_PROCUREMENT.md](CHANGE_REQUEST_S04_SUPPLIERS_AND_PROCUREMENT.md) | DRAFT | Scope/design CR open | Design/scope APPROVED; Phase I + II-A + II-B functionally Owner-accepted; II-C–V unauthorized; release unauthorized | Documentation + Phase I/II-A/II-B code (uncommitted II-B) | **Yes** — 2026-10-31 / 2026-11-01 | Release / II-C auth |
+| [S04_PHASE_I_ACCEPTANCE_STATUS.md](S04_PHASE_I_ACCEPTANCE_STATUS.md) | (new) | Phase I delivery open | Phase I **COMPLETE — OWNER ACCEPTED** 2026-10-31 | Implementation record | **Yes** — 2026-10-31 | Unchanged |
+| [S04_PHASE_II_A_ACCEPTANCE_STATUS.md](S04_PHASE_II_A_ACCEPTANCE_STATUS.md) | (new) | II-A delivery open | Phase II-A **COMPLETE — OWNER ACCEPTED** 2026-11-01; re-audit **ACCEPTABLE** | Implementation record | **Yes** — 2026-11-01 | Preserved |
+| [S04_PHASE_II_B_ACCEPTANCE_STATUS.md](S04_PHASE_II_B_ACCEPTANCE_STATUS.md) | (new) | II-B acceptance open | **COMPLETE — FUNCTIONALLY CLOSED — OWNER ACCEPTED** 2026-11-01 | Implementation record | **Yes** — 2026-11-01 | Release auth separate |
+| [S04-PHASE-II-B-FUNCTIONAL-CLOSURE-2026-11-01.md](../10-decisions/S04-PHASE-II-B-FUNCTIONAL-CLOSURE-2026-11-01.md) | (new) | II-B closure open | **OWNER ACCEPTED** WP-01–WP-05 | Documentation | **Yes** — 2026-11-01 | Release auth separate |
+| [PHASE_II_B_WP05_ACCEPTANCE_EVIDENCE.md](../09-modules/19-suppliers-and-procurement/PHASE_II_B_WP05_ACCEPTANCE_EVIDENCE.md) | (new) | WP-05 evidence open | **OWNER ACCEPTED** with Phase II-B closure | Documentation | **Yes** — 2026-11-01 | Ops follow-ups retained |
+| [S04-PHASE-II-B-OWNER-DECISIONS-2026-11-01.md](../10-decisions/S04-PHASE-II-B-OWNER-DECISIONS-2026-11-01.md) | (new) | II-B decisions open | **IIB-D1–IIB-D12 APPROVED** (docs) | Documentation | **Yes** — 2026-11-01 | Binding design decisions |
+| [S04-PHASE-II-B-DESIGN-APPROVAL-2026-11-01.md](../10-decisions/S04-PHASE-II-B-DESIGN-APPROVAL-2026-11-01.md) | (new) | II-B design approval open | **DESIGN — OWNER APPROVED**; later functionally closed | Documentation | **Yes** — 2026-11-01 | Historical design approval |
+| [S04-PHASE-II-B-DOC-CLOSURE-M1-M3-2026-11-01.md](../10-decisions/S04-PHASE-II-B-DOC-CLOSURE-M1-M3-2026-11-01.md) | (new) | Re-gate M1–M3 open | **FINAL DOCUMENTATION CLOSURE — VERIFIED** (PASS 2026-11-01) | Documentation | **Yes** — 2026-11-01 | Historical doc-closure |
+| [PHASE_II_B_SUPPLIER_BANKING_DESIGN.md](../09-modules/19-suppliers-and-procurement/PHASE_II_B_SUPPLIER_BANKING_DESIGN.md) | (new) | II-B design open | **DESIGN OWNER APPROVED**; implementation **FUNCTIONALLY CLOSED — OWNER ACCEPTED** (2026-11-01) | Documentation | **Yes** — 2026-11-01 | Functional closure recorded |
+| [S04-PHASE-II-OWNER-CLARIFICATIONS-2026-10-31.md](../10-decisions/S04-PHASE-II-OWNER-CLARIFICATIONS-2026-10-31.md) | (new) | Phase II eligibility/banking/suspension/eval criteria open | II-D1–II-D4 **APPROVED** (docs); historical record preserved | Documentation | **Yes** — 2026-10-31 | II-C / later auth |
+| [S04-PHASE-II-A-DESIGN-APPROVAL-2026-10-31.md](../10-decisions/S04-PHASE-II-A-DESIGN-APPROVAL-2026-10-31.md) | (new) | II-A design approval open | Historical: **II-A DESIGN APPROVED** (C1–C6); not rewritten | Documentation | **Yes** — 2026-10-31 | Preserved |
+| [S04-PHASE-II-A-ENGINEERING-GATE-2026-10-31.md](../10-decisions/S04-PHASE-II-A-ENGINEERING-GATE-2026-10-31.md) | (new) | Engineering pre-impl open | Historical: **GATE COMPLETE**; not rewritten | Documentation | **Yes** — 2026-10-31 | Preserved |
+| [PHASE_II_A_ELIGIBILITY_DESIGN.md](../09-modules/19-suppliers-and-procurement/PHASE_II_A_ELIGIBILITY_DESIGN.md) | (new) | II-A design open | Current header: **COMPLETE — OWNER ACCEPTED** (2026-11-01) | Documentation | **Yes** — 2026-11-01 | II-C not authorized |
+| [S03_ACCEPTANCE_STATUS.md](S03_ACCEPTANCE_STATUS.md) | ACCEPTANCE PENDING | S03 not Owner-closed | Owner **COMPLETE — ACCEPTED** 2026-10-31 on existing evidence only | Documentation | **Yes** — 2026-10-31 | None for S03 delivery close; ADR-0019 still open |
 | [MVP_SCOPE.md](MVP_SCOPE.md) | 21 MVP modules | Unchanged | Still unchanged — Phase 2 is not MVP rewrite | None | **No** | None |
-| Module docs 16–18 | Living module specs | Foundation trio | Remain authoritative for their domains; not bulk-rewritten | Future stream docs for S04+ | **No bulk rewrite** (local Accommodation/Transport doc edits preserved) | New module folders for S04+ when designed |
+| Module docs 16–18 | Living module specs | Foundation trio | Remain authoritative for their domains; not bulk-rewritten | Future stream docs for S04+ | **No bulk rewrite** (local Accommodation/Transport doc edits preserved) | New module folder for S04 in **G1** |
 | Audit §1 / §5 | Records Workflow vs OUT_OF_SCOPE conflict | Conflict open | Conflict **resolved at product level** by ADR-0020 | Audit file is historical — do not edit | **Audit left unchanged** | Re-audit after major deliveries |
 
 ## Resolved vs open
@@ -40,7 +63,17 @@ Record conflicts between older in-repo Phase 2 wording and the **approved full o
 - Whether S04–S10 belong in Phase 2 **product** scope → **Yes** (ADR-0020).
 - Whether Foundation is Workflow S01 → **No**; Foundation is prerequisite.
 - Whether ADR-0019 is accepted by scope expansion → **No**.
-- Whether audit statuses become COMPLETE → **No**.
+- Whether audit statuses become COMPLETE → **No** (Owner acceptance is separate from the historical audit file).
+- Whether S03 delivery is Owner-accepted → **Yes** (2026-10-31; [S03_ACCEPTANCE_STATUS.md](S03_ACCEPTANCE_STATUS.md)); ADR-0019 still PROPOSED.
+- Whether S04 functional requirements 101–130 are frozen → **Yes** (ADR-0022); implementation still **not** authorized.
+- Whether S04 engineering design is Owner-approved → **Yes** (ADR-0023 + CR design/scope, 2026-10-31).
+- Whether S04 G2 Phase I is Owner-accepted → **Yes** (2026-10-31).
+- Whether Phase II Owner clarifications II-D1–II-D4 are recorded → **Yes** (2026-10-31); they are **not** blanket coding authorization for later phases.
+- Whether II-A Eligibility & Documents design (C1–C6) is Owner-approved → **Yes** (2026-10-31).
+- Whether II-A engineering pre-implementation gate is complete → **Yes** (2026-10-31).
+- Whether Phase II-A is Owner-accepted → **Yes** (2026-11-01); remediation re-audit **ACCEPTABLE**.
+- Whether Phase II-B is functionally Owner-accepted → **Yes** (2026-11-01; WP-01–WP-05); commit/push/merge/deploy and II-C / Phase III / S05 still **not** authorized.
+- Whether financial reviewer may also final-approve → **No** (D5 hard SoD).
 
 ### Resolved Product Decisions (2026-10-29 — ADR-0021)
 
@@ -51,20 +84,35 @@ Record conflicts between older in-repo Phase 2 wording and the **approved full o
 | D03 | Transport breakdowns & replacement | **S02** operational scope; not Phase 3 crisis suite. Design + ADR-0018 review still required. |
 | D04 | “11 units” / “8 weeks” | Classification + **planning horizon**; not 11 sprints; not fixed contractual date from this decision. |
 
-### Open Engineering Decisions (not closed by ADR-0021)
+### Resolved S04 functional decisions (2026-10-31 — ADR-0022)
 
-1. GPS **provider** / data source selection and location update contract.  
-2. Location integration architecture (ingest, storage, retention, privacy).  
-3. Breakdown/replacement **domain model** and workflow detail.  
-4. Formal **ADR-0018** alignment / possible engineering addendum for GPS and breakdowns.  
-5. Pilgrim UI **exact field set** and sensitive document display rules vs approved schema.  
-6. **Actual delivery schedule** after estimation (8 weeks remains a horizon only).  
-7. File الخطة التنفيذية / فكرة منصتي under `docs/` for long-term traceability.  
-8. Per-stream MODULE_TEMPLATE packs + engineering CRs for **S04–S10**.  
-9. ADR-0019 acceptance path for Accommodation governance close.  
-10. Transport staff UI completion (S01–S02 product close) beyond GPS/breakdowns.  
+| ID range | Topic | Resolution |
+|---|---|---|
+| 101–111 | Supplier registry | Approved (unified multi-category supplier, tenant isolation, lifecycle, documents, contacts/banks, gradual contract link). |
+| 112–116 | Supplier evaluation | Approved (weighted scores, timing, segregation, low-score handling, objections). |
+| 117–123 | Purchase requests | Approved (decentralized PR, seasonal/admin, lines, estimates, lifecycle, priority, consolidation-for-planning). |
+| 124–130 | Approvals & controls | Approved (dynamic paths, authority matrix, SoD, delegation, reject/return, SLA framework without fixed durations, audit/reports). |
+| G0 · 106 | Geographic reference | Minimal standardized catalog; reuse platform references; **not** a full geo subsystem; schema deferred to G1. |
+| G0 · 120 | Financial review | Manual review permission + recorded outcome; **no** accounting/reservations/payments; detail deferred to G1. |
+
+### Open Engineering Decisions (not closed by ADR-0021 / ADR-0022)
+
+1. GPS **provider** / data source selection and location update contract.
+2. Location integration architecture (ingest, storage, retention, privacy).
+3. Breakdown/replacement **domain model** and workflow detail.
+4. Formal **ADR-0018** alignment / possible engineering addendum for GPS and breakdowns.
+5. Pilgrim UI **exact field set** and sensitive document display rules vs approved schema.
+6. **Actual delivery schedule** after estimation (8 weeks remains a horizon only).
+7. File الخطة التنفيذية / فكرة منصتي under `docs/` for long-term traceability.
+8. Per-stream MODULE_TEMPLATE packs + engineering CRs for **S05–S10** (S04 G1 design approved; implementation still open).
+9. ADR-0019 acceptance path for Accommodation **engineering ADR** close (S03 delivery accepted; ADR-0019 still PROPOSED).
+10. Transport staff UI completion (S01–S02 product close) beyond GPS/breakdowns.
 11. Phase 2 UAT script ownership (S12).
+12. ~~S04 **G2 Phase I** Owner implementation authorization~~ **Done** (accepted 2026-10-31).
+13. ~~S04 **Phase II-A** Owner acceptance~~ **Done** (2026-11-01).
+14. ~~S04 **Phase II-B** functional closure~~ **Done** (2026-11-01; WP-01–WP-05 OWNER ACCEPTED).  
+15. S04 **Phase III** decisions **III-D1–D8** approved (8/8); detailed design **DRAFT** awaiting **final Owner design acceptance**; then coding auth. Remaining: Phase IV–V; S05; separate Owner **commit/push/merge/deploy**.
 
 ## Sprint 0 / recovery note
 
-Sprint 0 documentation alignment, Accommodation wiring recovery, and ADR-0021 product decisions are **governance hygiene**, not sprint closure for S03 and not Phase 2 UAT. Sprint 0 remains **open**.
+Sprint 0 documentation alignment, Accommodation wiring recovery, and ADR-0021/ADR-0022 product/functional filings are **governance hygiene**. S03 delivery is Owner-accepted (2026-10-31). Sprint 0 remains **open** as a governance track; Phase 2 UAT (S12) is separate.

@@ -6,8 +6,10 @@ use App\Core\Authorization\Events\AuthorizationSecurityEvent;
 use App\Core\Authorization\Support\AuthorizationSecurity;
 use App\Core\Tenancy\TenantContext;
 use App\Models\User;
+use App\Modules\Documents\Exceptions\DocumentDomainException;
 use App\Modules\Documents\Models\Document;
 use App\Modules\Documents\Support\DocumentFileStore;
+use App\Modules\SuppliersAndProcurement\Models\SupplierDocumentRecord;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -27,6 +29,11 @@ final class DeleteDocument
 
         DB::transaction(function () use ($actor, $document, $request, $tenant, &$blob): void {
             $locked = Document::query()->whereKey($document->id)->lockForUpdate()->firstOrFail();
+
+            // Controlled domain response instead of a raw FK violation (S04 II-A evidence rows).
+            if (SupplierDocumentRecord::query()->where('document_id', $locked->id)->exists()) {
+                throw DocumentDomainException::usedAsEvidence();
+            }
 
             $blob = [
                 'disk' => $locked->storage_disk,

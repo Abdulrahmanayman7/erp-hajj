@@ -52,6 +52,7 @@ const EXPECTED_LINK_KEYS = [
   'season-programs',
   'season-families',
   'contracts',
+  'suppliers',
   'meetings',
   'decisions',
   'tasks',
@@ -134,11 +135,11 @@ describe('buildTenantNavGroups', () => {
     expect(groups.map((group) => group.key)).toEqual([...EXPECTED_GROUP_ORDER])
   })
 
-  it('exposes exactly 28 sidebar links without duplication', () => {
+  it('exposes exactly 29 sidebar links without duplication', () => {
     const groups = buildTenantNavGroups(allowAll)
     const keys = groups.flatMap((group) => group.items.map((item) => item.key))
     expect(keys).toEqual([...EXPECTED_LINK_KEYS])
-    expect(new Set(keys).size).toBe(28)
+    expect(new Set(keys).size).toBe(29)
   })
 
   it('preserves routes for every link', () => {
@@ -160,6 +161,7 @@ describe('buildTenantNavGroups', () => {
     expect(byKey['season-programs']).toBe('/app/season-programs')
     expect(byKey['season-families']).toBe('/app/season-families')
     expect(byKey.contracts).toBe('/app/contracts')
+    expect(byKey.suppliers).toBe('/app/suppliers')
     expect(byKey.meetings).toBe('/app/meetings')
     expect(byKey.decisions).toBe('/app/decisions')
     expect(byKey.tasks).toBe('/app/tasks')

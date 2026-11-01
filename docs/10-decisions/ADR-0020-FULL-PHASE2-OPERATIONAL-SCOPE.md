@@ -50,6 +50,7 @@ Foundation is a **prerequisite**, not an independent Workflow sprint number.
 ### S04 — Suppliers and purchase requests
 
 - Supplier registry and classifications; supplier evaluation; purchase requests; approval levels.
+- Functional decisions **101–130** are frozen in [ADR-0022](ADR-0022-S04-SUPPLIERS-AND-PURCHASE-REQUESTS-FUNCTIONAL-DECISIONS.md) (`APPROVED — FUNCTIONAL DECISIONS`, 2026-10-31). Engineering design is frozen in [ADR-0023](ADR-0023-S04-ENGINEERING-DESIGN.md) (`APPROVED — ENGINEERING DESIGN`, 2026-10-31). Neither authorizes implementation without separate Owner G2 authorization.
 
 ### S05 — Procurement cycle
 
@@ -128,7 +129,9 @@ Owner-approved clarifications are recorded in [ADR-0021](ADR-0021-PHASE2-PRODUCT
 | [ADR-0017](ADR-0017-SEASON-PILGRIM-AND-PHASE2-BOUNDED-CONTEXTS.md) | Remains the **bounded-context** foundation. This ADR **widens product phase membership** beyond Foundation+Transport+Accommodation; it does not replace ADR-0017’s isolation rules. |
 | [ADR-0018](ADR-0018-TRANSPORTATION-MOVEMENTS-RUNS-AND-FLEET.md) | Remains accepted Transportation rules for S01–S02. GPS product-in-scope (ADR-0021) does **not** by itself amend ADR-0018; engineering follow-up may be required. |
 | [ADR-0021](ADR-0021-PHASE2-PRODUCT-DECISIONS-AND-DELIVERY-BOUNDARIES.md) | Product decisions (GPS, Pilgrim UI, breakdowns, 11/8 planning interpretation) narrowing ADR-0020 open gaps. |
-| [ADR-0019](ADR-0019-ACCOMMODATION-CAMPS-DRAFT.md) | Status stays **PROPOSED / NOT ACCEPTED**. Product inclusion of S03 does not auto-accept ADR-0019. |
+| [ADR-0022](ADR-0022-S04-SUPPLIERS-AND-PURCHASE-REQUESTS-FUNCTIONAL-DECISIONS.md) | S04 functional decisions 101–130 (`APPROVED — FUNCTIONAL DECISIONS`). Narrows S04 requirements; **does not** authorize code/migrations or start S05. |
+| [ADR-0023](ADR-0023-S04-ENGINEERING-DESIGN.md) | S04 engineering design (`APPROVED — ENGINEERING DESIGN`, 2026-10-31). Design approval **does not** authorize implementation. |
+| [ADR-0019](ADR-0019-ACCOMMODATION-CAMPS-DRAFT.md) | Status stays **PROPOSED / NOT ACCEPTED**. Product inclusion of S03 does not auto-accept ADR-0019. Owner acceptance of S03 delivery (2026-10-31) also does **not** flip ADR-0019. |
 | [CHANGE_REQUEST_PHASE2_FOUNDATION.md](../00-project/CHANGE_REQUEST_PHASE2_FOUNDATION.md) | Historical **Original Foundation Delivery Scope** (2026-10-04). Superseded **for product breadth** by this ADR; preserved as delivery history. |
 
 Document conflict resolution log: [PHASE2_SCOPE_RECONCILIATION.md](../00-project/PHASE2_SCOPE_RECONCILIATION.md).
@@ -141,6 +144,7 @@ Document conflict resolution log: [PHASE2_SCOPE_RECONCILIATION.md](../00-project
 - Audit + correlation ID for critical actions.
 - Per-stream module docs under `docs/09-modules/` before implementation (per MODULE_TEMPLATE).
 - S04–S10: business rule freeze + engineering design ADR/CR as needed before migrations.
+- S04 functional freeze: [ADR-0022](ADR-0022-S04-SUPPLIERS-AND-PURCHASE-REQUESTS-FUNCTIONAL-DECISIONS.md); engineering design freeze: [ADR-0023](ADR-0023-S04-ENGINEERING-DESIGN.md); explicit Owner **G2** authorization still required before migrations/code.
 - GPS/live maps: provider/source + gates in ADR-0021 before claiming Live/complete (S01/S02 data; S10 display).
 
 ## 7. Risks
@@ -199,3 +203,5 @@ A sprint is not closed unless:
 - [MVP_SCOPE.md](../00-project/MVP_SCOPE.md) — unchanged 21-module MVP.
 - Modules 16–18 under `docs/09-modules/` (living docs; not bulk-rewritten by this ADR).
 - [ADR-0021](ADR-0021-PHASE2-PRODUCT-DECISIONS-AND-DELIVERY-BOUNDARIES.md) — product decisions 2026-10-29.
+- [ADR-0022](ADR-0022-S04-SUPPLIERS-AND-PURCHASE-REQUESTS-FUNCTIONAL-DECISIONS.md) — S04 functional decisions 101–130 (2026-10-31); not implementation authorization.
+- [ADR-0023](ADR-0023-S04-ENGINEERING-DESIGN.md) — S04 engineering design (2026-10-31); not implementation authorization.

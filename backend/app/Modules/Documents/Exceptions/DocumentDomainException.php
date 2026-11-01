@@ -65,6 +65,11 @@ class DocumentDomainException extends RuntimeException
         return new self('السجل المرتبط غير صالح أو غير موجود ضمن المنشأة.', 'DOCUMENT_LINK_INVALID', 422);
     }
 
+    public static function linkForbidden(): self
+    {
+        return new self('لا تملك صلاحية ربط أو عرض مستندات لهذا السجل.', 'DOCUMENT_LINK_FORBIDDEN', 403);
+    }
+
     public static function categoryInvalid(): self
     {
         return new self('تصنيف المستند غير صالح أو غير نشط.', 'DOCUMENT_CATEGORY_INVALID', 422);
@@ -88,6 +93,11 @@ class DocumentDomainException extends RuntimeException
     public static function storageFailed(): self
     {
         return new self('تعذر حفظ الملف في التخزين الخاص.', 'DOCUMENT_STORAGE_FAILED', 422);
+    }
+
+    public static function usedAsEvidence(): self
+    {
+        return new self('لا يمكن حذف المستند لأنه مستخدم كإثبات في سجل تأهيل مورد؛ يمكن أرشفته بدلاً من ذلك.', 'DOCUMENT_USED_AS_EVIDENCE', 422);
     }
 
     public static function entityInUse(): self

@@ -17,12 +17,15 @@ export interface ApiErrorBody {
   message: string
   errors?: Record<string, string[]>
   code?: string
+  /** Structured machine reasons (e.g. supplier eligibility failures). */
+  reasons?: Array<Record<string, unknown>>
 }
 
 export class ApiError extends Error {
   readonly status: number
   readonly code: string | undefined
   readonly errors: Record<string, string[]> | undefined
+  readonly reasons: Array<Record<string, unknown>> | undefined
 
   constructor(status: number, body: ApiErrorBody | undefined) {
     super(body?.message ?? (status === 0 ? 'تعذر الاتصال بالخادم. تحقق من الاتصال وحاول مجددًا.' : 'تعذر إكمال الطلب. حاول مجددًا.'))
@@ -30,6 +33,7 @@ export class ApiError extends Error {
     this.status = status
     this.code = body?.code
     this.errors = body?.errors
+    this.reasons = Array.isArray(body?.reasons) ? body.reasons : undefined
   }
 }
 

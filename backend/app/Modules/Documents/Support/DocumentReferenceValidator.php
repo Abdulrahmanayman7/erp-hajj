@@ -2,6 +2,7 @@
 
 namespace App\Modules\Documents\Support;
 
+use App\Models\User;
 use App\Modules\Assets\Models\Asset;
 use App\Modules\Assets\Models\AssetCustody;
 use App\Modules\Contracts\Models\Contract;
@@ -15,8 +16,11 @@ use App\Modules\Inventory\Models\InventoryItem;
 use App\Modules\Inventory\Models\Warehouse;
 use App\Modules\Meetings\Models\Meeting;
 use App\Modules\OrganizationStructure\Models\OrganizationUnit;
+use App\Modules\SuppliersAndProcurement\Models\PurchaseRequest;
+use App\Modules\SuppliersAndProcurement\Models\Supplier;
 use App\Modules\Tasks\Models\Task;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Gate;
 
 final class DocumentReferenceValidator
 {
@@ -48,6 +52,50 @@ final class DocumentReferenceValidator
         }
 
         return [$alias->value, (int) $model->getKey()];
+    }
+
+    /**
+     * Phase III (API §15.6): purchase_request links require Documents perms (caller)
+     * plus purchase_requests.view on the target PR. Fail closed without existence leak.
+     */
+    public function assertActorMayUseLink(User $actor, ?string $type, ?int $id): void
+    {
+        if ($type === null || $type === '' || $id === null) {
+            return;
+        }
+
+        $alias = DocumentLinkableType::tryFromAlias($type);
+        if ($alias !== DocumentLinkableType::PurchaseRequest) {
+            return;
+        }
+
+        $pr = PurchaseRequest::query()->whereKey($id)->first();
+        if ($pr === null) {
+            // Cross-tenant / missing → same code as invalid link (no existence leak).
+            throw DocumentDomainException::linkInvalid();
+        }
+
+        if (! Gate::forUser($actor)->allows('view', $pr)) {
+            throw DocumentDomainException::linkForbidden();
+        }
+    }
+
+    public function actorMayAccessDocumentLinkable(User $actor, Document $document): bool
+    {
+        if ($document->linkable_type !== DocumentLinkableType::PurchaseRequest->value) {
+            return true;
+        }
+
+        if ($document->linkable_id === null) {
+            return false;
+        }
+
+        $pr = PurchaseRequest::query()->whereKey((int) $document->linkable_id)->first();
+        if ($pr === null) {
+            return false;
+        }
+
+        return Gate::forUser($actor)->allows('view', $pr);
     }
 
     public function resolveCategory(?int $categoryId, ?int $currentCategoryId = null): ?DocumentCategory
@@ -108,6 +156,8 @@ final class DocumentReferenceValidator
             DocumentLinkableType::InventoryItem => sprintf('%s — %s', $model->getAttribute('item_number'), $model->getAttribute('name')),
             DocumentLinkableType::Asset => sprintf('%s — %s', $model->getAttribute('asset_number'), $model->getAttribute('name')),
             DocumentLinkableType::Custody => (string) $model->getAttribute('custody_number'),
+            DocumentLinkableType::Supplier => sprintf('%s — %s', $model->getAttribute('supplier_number'), $model->getAttribute('display_name')),
+            DocumentLinkableType::PurchaseRequest => sprintf('%s — %s', $model->getAttribute('pr_number'), $model->getAttribute('title')),
         };
     }
 
@@ -124,6 +174,8 @@ final class DocumentReferenceValidator
             DocumentLinkableType::InventoryItem => InventoryItem::query(),
             DocumentLinkableType::Asset => Asset::query(),
             DocumentLinkableType::Custody => AssetCustody::query(),
+            DocumentLinkableType::Supplier => Supplier::query(),
+            DocumentLinkableType::PurchaseRequest => PurchaseRequest::query(),
         };
 
         return $query->whereKey($id)->first();

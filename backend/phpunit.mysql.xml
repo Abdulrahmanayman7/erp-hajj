@@ -40,7 +40,7 @@
         <env name="DB_USERNAME" value="root"/>
         <env name="DB_PASSWORD" value=""/>
         <env name="MAIL_MAILER" value="array"/>
-        <env name="QUEUE_CONNECTION" value="sync"/>
+        <env name="QUEUE_CONNECTION" value="sync" force="true"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="FRONTEND_URL" value="http://localhost:5173"/>
         <env name="CORS_ALLOWED_ORIGINS" value="http://localhost:5173,http://127.0.0.1:5173"/>
@@ -48,5 +48,6 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <env name="BANKING_IBAN_PEPPER" value="test-banking-iban-pepper-not-for-production"/>
     </php>
 </phpunit>

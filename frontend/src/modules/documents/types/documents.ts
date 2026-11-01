@@ -11,6 +11,8 @@ export type DocumentLinkableType =
   | 'inventory_item'
   | 'asset'
   | 'custody'
+  | 'supplier'
+  | 'purchase_request'
 
 export const DOCUMENT_LINKABLE_TYPES: DocumentLinkableType[] = [
   'contract',
@@ -23,6 +25,8 @@ export const DOCUMENT_LINKABLE_TYPES: DocumentLinkableType[] = [
   'inventory_item',
   'asset',
   'custody',
+  'supplier',
+  'purchase_request',
 ]
 
 export interface DocumentCategorySummary {

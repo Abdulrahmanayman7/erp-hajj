@@ -109,6 +109,7 @@ If metadata exists but the blob is missing: download returns `DOCUMENT_FILE_MISS
 ## 12. Linked entity deletion
 
 1. Application delete guards on host modules: **block hard-delete of an entity while Documents still link to it** (`DOCUMENT_ENTITY_IN_USE` / host `*_IN_USE` pattern), **or** require unlink first.
+   **S04 Phase II-A:** deleting a Document (or host path that would orphan evidence) while it is referenced as supplier eligibility evidence returns **`DOCUMENT_USED_AS_EVIDENCE`** (conflict / blocked delete).
 2. Preferred implementation: host `Delete*` actions check `Document::query()->where morph…->exists()` → domain in-use exception (mirror OrganizationUnit referenced-by-Tasks).
 3. Archiving a Document does **not** modify the business entity.
 4. Cancelling/closing Contracts/Meetings/Decisions/Tasks does **not** auto-delete Documents.

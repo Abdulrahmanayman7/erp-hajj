@@ -38,12 +38,14 @@ final class ApiResponse
 
     /**
      * @param  array<string, array<int, string>>  $errors
+     * @param  list<array<string, mixed>>  $reasons  Structured machine reasons (e.g. eligibility failures).
      */
     public static function error(
         string $message,
         string $code,
         array $errors = [],
         int $status = 400,
+        array $reasons = [],
     ): JsonResponse {
         $payload = [
             'success' => false,
@@ -53,6 +55,10 @@ final class ApiResponse
 
         if ($errors !== []) {
             $payload['errors'] = $errors;
+        }
+
+        if ($reasons !== []) {
+            $payload['reasons'] = $reasons;
         }
 
         return response()->json($payload, $status);

@@ -238,6 +238,7 @@ export function mapDocumentErrorCode(code: string | undefined): string {
     case 'DOCUMENT_IMMUTABLE':
     case 'DOCUMENT_NUMBER_TAKEN':
     case 'DOCUMENT_NOT_FOUND':
+    case 'DOCUMENT_USED_AS_EVIDENCE':
       return code
     default:
       return 'generic'

@@ -177,6 +177,106 @@ export const router = createRouter({
       meta: { requiresAuth: true, layout: 'app', permission: 'contracts.view' },
     },
     {
+      path: '/app/suppliers',
+      name: 'suppliers',
+      component: () => import('@/modules/suppliers/pages/SuppliersPage.vue'),
+      meta: { requiresAuth: true, layout: 'app', permission: 'suppliers.view' },
+    },
+    {
+      path: '/app/suppliers/:id',
+      name: 'supplier-details',
+      component: () => import('@/modules/suppliers/pages/SupplierDetailsPage.vue'),
+      meta: { requiresAuth: true, layout: 'app', permission: 'suppliers.view' },
+    },
+    {
+      path: '/app/supplier-evaluations',
+      name: 'supplier-evaluations',
+      component: () => import('@/modules/suppliers/pages/SupplierEvaluationsPage.vue'),
+      meta: { requiresAuth: true, layout: 'app', permission: 'supplier_evaluations.view' },
+    },
+    {
+      path: '/app/supplier-evaluations/:id',
+      name: 'supplier-evaluation-details',
+      component: () => import('@/modules/suppliers/pages/SupplierEvaluationDetailsPage.vue'),
+      meta: { requiresAuth: true, layout: 'app', permission: 'supplier_evaluations.view' },
+    },
+    {
+      path: '/app/purchase-requests',
+      name: 'purchase-requests',
+      component: () => import('@/modules/purchase-requests/pages/PurchaseRequestsPage.vue'),
+      meta: { requiresAuth: true, layout: 'app', permission: 'purchase_requests.view' },
+    },
+    {
+      path: '/app/purchase-requests/approval-inbox',
+      name: 'purchase-requests-approval-inbox',
+      component: () =>
+        import('@/modules/purchase-requests/pages/PurchaseRequestApprovalInboxPage.vue'),
+      meta: { requiresAuth: true, layout: 'app', permission: 'purchase_requests.approve' },
+    },
+    {
+      path: '/app/purchase-requests/create',
+      name: 'purchase-requests-create',
+      component: () => import('@/modules/purchase-requests/pages/PurchaseRequestCreatePage.vue'),
+      meta: { requiresAuth: true, layout: 'app', permission: 'purchase_requests.create' },
+    },
+    {
+      path: '/app/purchase-requests/:id',
+      name: 'purchase-request-details',
+      component: () => import('@/modules/purchase-requests/pages/PurchaseRequestDetailsPage.vue'),
+      meta: { requiresAuth: true, layout: 'app', permission: 'purchase_requests.view' },
+    },
+    {
+      path: '/app/purchase-demand-groups',
+      name: 'purchase-demand-groups',
+      component: () => import('@/modules/purchase-requests/pages/PurchaseDemandGroupsPage.vue'),
+      meta: {
+        requiresAuth: true,
+        layout: 'app',
+        permissionsAny: [
+          'purchase_requests.view',
+          'purchase_requests.consolidate_planning',
+        ],
+      },
+    },
+    {
+      path: '/app/purchase-demand-groups/:id',
+      name: 'purchase-demand-group-details',
+      component: () =>
+        import('@/modules/purchase-requests/pages/PurchaseDemandGroupDetailsPage.vue'),
+      meta: {
+        requiresAuth: true,
+        layout: 'app',
+        permissionsAny: [
+          'purchase_requests.view',
+          'purchase_requests.consolidate_planning',
+        ],
+      },
+    },
+    {
+      path: '/app/purchase-control-reports',
+      name: 'purchase-control-reports',
+      component: () => import('@/modules/purchase-requests/pages/PurchaseControlReportsPage.vue'),
+      meta: {
+        requiresAuth: true,
+        layout: 'app',
+        permission: 'purchase_requests.view_control_reports',
+      },
+    },
+    {
+      path: '/app/purchase-approval-settings',
+      name: 'purchase-approval-settings',
+      component: () =>
+        import('@/modules/purchase-requests/pages/PurchaseApprovalSettingsPage.vue'),
+      meta: {
+        requiresAuth: true,
+        layout: 'app',
+        permissionsAny: [
+          'purchase_requests.manage_approval_config',
+          'purchase_requests.manage_delegations',
+        ],
+      },
+    },
+    {
       path: '/app/meetings',
       name: 'meetings',
       component: () => import('@/modules/meetings/pages/MeetingsPage.vue'),

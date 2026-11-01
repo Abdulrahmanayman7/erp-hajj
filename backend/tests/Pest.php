@@ -24,6 +24,7 @@ pest()->extend(Tests\ConcurrencyTestCase::class)
 require_once __DIR__.'/Feature/SeasonPilgrims/Helpers.php';
 require_once __DIR__.'/Feature/Transportation/Helpers.php';
 require_once __DIR__.'/Feature/Accommodation/Helpers.php';
+require_once __DIR__.'/Feature/SuppliersAndProcurement/Helpers.php';
 
 function withTenant(Tenant $tenant, Closure $callback): mixed
 {

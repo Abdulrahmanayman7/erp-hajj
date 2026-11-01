@@ -3,25 +3,46 @@
 namespace App\Modules\Documents\Actions;
 
 use App\Core\Tenancy\TenantContext;
+use App\Models\User;
+use App\Modules\Documents\Enums\DocumentLinkableType;
 use App\Modules\Documents\Enums\DocumentStatus;
 use App\Modules\Documents\Models\Document;
+use App\Modules\Documents\Support\DocumentReferenceValidator;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 final class ListDocuments
 {
     public function __construct(
         private readonly TenantContext $tenantContext,
+        private readonly DocumentReferenceValidator $references,
     ) {}
 
     /**
      * @param  array<string, mixed>  $filters
      * @return LengthAwarePaginator<int, Document>
      */
-    public function execute(array $filters): LengthAwarePaginator
+    public function execute(User $actor, array $filters): LengthAwarePaginator
     {
         $this->tenantContext->require();
 
+        $linkableType = isset($filters['linkable_type']) ? (string) $filters['linkable_type'] : '';
+        $linkableId = isset($filters['linkable_id']) && $filters['linkable_id'] !== ''
+            ? (int) $filters['linkable_id']
+            : null;
+
+        if ($linkableType === DocumentLinkableType::PurchaseRequest->value && $linkableId !== null) {
+            $this->references->assertActorMayUseLink($actor, $linkableType, $linkableId);
+        }
+
         $query = Document::query()->with(['category', 'uploader', 'linkable']);
+
+        // Hide PR-linked documents from general listing unless the actor holds PR view.
+        if (! $actor->hasPermission('purchase_requests.view')) {
+            $query->where(function ($builder): void {
+                $builder->whereNull('linkable_type')
+                    ->orWhere('linkable_type', '!=', DocumentLinkableType::PurchaseRequest->value);
+            });
+        }
 
         $search = isset($filters['search']) ? trim((string) $filters['search']) : '';
         if ($search !== '') {

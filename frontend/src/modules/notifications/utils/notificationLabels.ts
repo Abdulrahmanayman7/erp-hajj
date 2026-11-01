@@ -22,6 +22,15 @@ const TYPE_LABELS_AR: Record<string, string> = {
   CUSTODY_EXPECTED_RETURN_SOON: 'عهدة يُتوقع إرجاعها قريباً',
   CUSTODY_OVERDUE: 'عهدة متأخرة',
   STOCK_BELOW_MINIMUM: 'مخزون دون الحد الأدنى',
+  SUPPLIER_EVALUATION_MONITORING_RECOMMENDED: 'توصية بمراقبة مورد',
+  PURCHASE_APPROVAL_SLA_ESCALATED: 'تصعيد اعتماد طلب شراء',
+  PURCHASE_APPROVAL_POOL_READY: 'طلب شراء بانتظار الاعتماد',
+  PURCHASE_APPROVAL_ROUTING_BLOCKED: 'تعذّر توجيه اعتماد طلب شراء',
+  PURCHASE_APPROVAL_NO_ELIGIBLE_FINAL: 'لا يوجد معتمد نهائي مؤهل',
+  PURCHASE_REQUEST_RETURNED: 'أُعيد طلب الشراء للتعديل',
+  PURCHASE_REQUEST_REJECTED: 'رُفض طلب الشراء',
+  PURCHASE_REQUEST_APPROVED: 'اعتمد طلب الشراء',
+  PURCHASE_REQUEST_CANCEL_APPROVED: 'أُلغي طلب شراء معتمد',
 }
 
 const SEVERITY_LABELS_AR: Record<NotificationSeverity, string> = {
