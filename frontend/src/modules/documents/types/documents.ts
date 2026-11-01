@@ -11,6 +11,7 @@ export type DocumentLinkableType =
   | 'inventory_item'
   | 'asset'
   | 'custody'
+  | 'supplier'
 
 export const DOCUMENT_LINKABLE_TYPES: DocumentLinkableType[] = [
   'contract',

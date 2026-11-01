@@ -1,8 +1,8 @@
 # Suppliers & Procurement (S04) — Data Model
 
-> **Status:** **ENGINEERING PROPOSAL** (G1) — **NOT IMPLEMENTED** · no migrations authored  
-> **Last updated:** 2026-10-31  
-> Functional binding: ADR-0022 · Engineering: ADR-0023 · Owner G1 decisions **D1–D4**  
+> **Status:** Phase I + Phase II-A tables **IMPLEMENTED — OWNER ACCEPTED** (II-A 2026-11-01); Phase II-B/II-C / Phase III–V schema **NOT IMPLEMENTED**
+> **Last updated:** 2026-11-01
+> Functional binding: ADR-0022 · Engineering: ADR-0023 · Owner G1 decisions **D1–D4**
 > All tenant business tables: `TenantOwned` + `UsesTenantScope` unless marked **platform reference**.
 
 Classification labels follow DATABASE_PRINCIPLES / tenancy docs.
@@ -11,15 +11,15 @@ Classification labels follow DATABASE_PRINCIPLES / tenancy docs.
 
 ## 1. Proposed migration order (conceptual — do not create files yet)
 
-1. Platform minimal geo catalog (if adopted as platform)  
-2. Sequences: `supplier_number_sequences`, `purchase_request_number_sequences`, `supplier_evaluation_number_sequences`  
-3. `supplier_categories`  
-4. `suppliers` + `supplier_category_supplier` (pivot) + coverage + contacts + bank accounts  
-5. Document requirement & eligibility tables  
-6. Evaluation criteria, evaluations, evaluation lines/scores, evaluation versions/appeals  
-7. Approval matrices / bands / steps / delegations / SLA policies  
-8. `purchase_requests` + lines + versions + financial reviews + approval instances/steps  
-9. Planning demand groups (optional)  
+1. Platform minimal geo catalog (if adopted as platform)
+2. Sequences: `supplier_number_sequences`, `purchase_request_number_sequences`, `supplier_evaluation_number_sequences`
+3. `supplier_categories`
+4. `suppliers` + `supplier_category_supplier` (pivot) + coverage + contacts + bank accounts
+5. Document requirement & eligibility tables
+6. Evaluation criteria, evaluations, evaluation lines/scores, evaluation versions/appeals
+7. Approval matrices / bands / steps / delegations / SLA policies
+8. `purchase_requests` + lines + versions + financial reviews + approval instances/steps
+9. Planning demand groups (optional)
 10. *(Future / separate CR)* nullable `contracts.supplier_id`
 
 ---
@@ -47,7 +47,7 @@ Classification labels follow DATABASE_PRINCIPLES / tenancy docs.
 | `is_active` | BOOLEAN | |
 | timestamps | | |
 
-**Uniques:** `(country_code, kind, code)` — prevents duplicate geographic records.  
+**Uniques:** `(country_code, kind, code)` — prevents duplicate geographic records.
 **Extensibility:** new places added later as additional rows; do not fork parallel location lists.
 
 ### Initial seed scope — Owner **D1** (places, not final DB ids)
@@ -146,9 +146,10 @@ name, role_title, email, phone, is_primary_contact, soft operational flags.
 | `approved_at` | TIMESTAMP NULL |
 | timestamps | |
 
-**Uniques:** `UNIQUE (tenant_id, config_key, version_no)`.  
-**Draft rule (app + supporting unique strategy):** at most one `status=draft` per `(tenant_id, config_key)` — enforce in Action under `lockForUpdate` on the set family; optional generated helper column `draft_slot` = `IF(status='draft', 1, version_no)` with unique `(tenant_id, config_key, draft_slot)` **or** application-only if MySQL partial indexes unavailable.  
-**Immutability (C1):** application rejects PATCH when `status=approved`; no DB UPDATE of def rows belonging to approved sets (defs are insert-on-draft only).
+**Uniques:** `UNIQUE (tenant_id, config_key, version_no)`; draft helper `draft_slot` (0 = draft, else `version_no`) with `UNIQUE (tenant_id, config_key, draft_slot)`.
+**Editors (M5):** `supplier_eligibility_set_editors` — additive history of every user who authored/edited the draft; approve SoD rejects any contributor.
+**Approve (Owner M1=A):** ≥1 `is_mandatory=true` def required.
+**Immutability (C1 / M4):** application + model hooks reject mutate/delete of approved versions; residual: raw SQL bypass (documented; no triggers without further Owner auth).
 
 #### `supplier_document_requirement_defs` (tenant-owned)
 
@@ -160,49 +161,50 @@ name, role_title, email, phone, is_primary_contact, soft operational flags.
 | `supplier_type` | VARCHAR — required |
 | `country_code` | CHAR(2) NULL = wildcard |
 | `supplier_category_id` | BIGINT NULL = wildcard (FK categories when not null) |
-| `country_code_norm` | **STORED generated:** `IFNULL(country_code, '')` |
-| `supplier_category_id_norm` | **STORED generated:** `IFNULL(supplier_category_id, 0)` |
-| `is_mandatory` | BOOLEAN |
+| `country_code_norm` | **MySQL STORED generated** `IFNULL(country_code,'')` (migration `190015`); **SQLite tests:** physical column maintained by model `saving` |
+| `supplier_category_id_norm` | **MySQL STORED generated** `IFNULL(supplier_category_id,0)`; SQLite as above |
+| `is_mandatory` | BOOLEAN — approve requires ≥1 true (**M1=A**) |
 | `default_validity_days` | INT NULL — guidance only |
 | timestamps | |
 
-**UNIQUE** `(tenant_id, requirement_set_id, requirement_key, supplier_type, country_code_norm, supplier_category_id_norm)` — MySQL NULL-safe uniqueness via generated columns (**C2**).  
-**No implicit exemptions** in query logic: missing applicable rows ⇒ fail closed for that supplier.
+**UNIQUE** `(tenant_id, requirement_set_id, requirement_key, supplier_type, country_code_norm, supplier_category_id_norm)`.
 
 #### `supplier_document_records` (tenant-owned)
 
 | Column | Notes |
 |---|---|
-| `tenant_id`, `supplier_id`, `requirement_def_id` | FKs; supplier & def same tenant |
-| `document_id` | FK `documents.id` (tenant-aligned in app) |
-| `verification_status` | `pending_verification` \| `valid` \| `rejected` \| `expired` \| `superseded` |
+| `tenant_id`, `supplier_id`, `requirement_def_id` | FKs |
+| `requirement_key` | Denormalized for current-slot uniqueness across def versions |
+| `document_id` | FK `documents.id` |
+| `verification_status` | pending_verification / valid / rejected / expired / superseded |
+| `current_slot` | **M2:** `0` = current row; superseded rows use `current_slot = id` |
 | `expires_at` | DATE NULL |
-| `uploaded_by`, `verified_by`, `verified_at`, `rejection_reason` | SoD: verifier ≠ uploader (**C3**) |
-| `supersedes_id` | Self FK NULL; prior row |
+| `uploaded_by`, `verified_by`, `verified_at`, `rejection_reason` | SoD uploader ≠ verifier |
+| `supersedes_id` | Self FK NULL |
 | timestamps | |
 
-**Indexes:** `(tenant_id, supplier_id, verification_status)`, `(tenant_id, document_id)`, `(tenant_id, expires_at)`, `(supersedes_id)`.  
-**Supersession:** app ensures new row `supplier_id` matches prior; prior → `superseded`; Document bytes never updated.  
-**Host-delete:** Documents / supplier delete guards treat linked `document_id` / supplier as in-use (parity Contracts/Inventory).
+**UNIQUE** `(tenant_id, supplier_id, requirement_key, current_slot)` — at most one current record per key.
+**H1:** Eligibility requires backing Document active + linked to same supplier/tenant.
+**Host-delete:** morph docs + eligibility records block supplier hard-delete.
 
-#### II-A MySQL migration order (when authorized — do not create now)
+#### II-A migration order (IMPLEMENTED — OWNER ACCEPTED 2026-11-01)
 
-1. `supplier_eligibility_requirement_sets`  
-2. `supplier_document_requirement_defs` (generated columns + unique)  
-3. `supplier_document_records`  
-4. Morph alias registration for `supplier` (code + tests; not a table)
-
-Additive, reversible downs in reverse order. No Contracts/Inventory schema changes.
+1. `190010` sets (+ draft_slot)
+2. `190011` defs
+3. `190012` document records
+4. `190013` current_slot + denormalized requirement_key
+5. `190014` set editors
+6. `190015` MySQL generated norms
 
 #### Transaction boundaries
 
 | Operation | Boundary |
 |---|---|
-| Approve config | Lock draft set `FOR UPDATE`; assert draft + SoD; set approved fields; commit |
-| Supersede document | Lock prior record + supplier; insert new; mark prior superseded |
-| Activate | Lock supplier `FOR UPDATE`; assert `under_review→active`; live eligibility recheck; set `active` + `activated_at`; transition + audit; commit |
+| Approve config | Lock draft; SoD contributors; ≥1 mandatory; approve |
+| Supersede document | Lock supplier + prior; set prior `current_slot=id`; insert current `current_slot=0` |
+| Activate | Lock supplier + evidence Documents `FOR UPDATE`; H1 recheck; `under_review→active` |
 
-Aligns with ADR-0010: Document row immutable; eligibility row carries validity. Expiry does **not** auto-change supplier lifecycle (**II-D3**). Banking is **not** part of activation eligibility (**II-D2**).
+Aligns with ADR-0010. Expiry does **not** auto-change lifecycle (**II-D3**). Banking **not** required (**II-D2**).
 
 ### Sequences
 
@@ -249,12 +251,12 @@ Links evaluation, reason, reviewer, outcome — **116**.
 
 ### `purchase_approval_matrix_rules`
 
-Match predicates: `min_amount`, `max_amount` (nullable open end), `request_kind` nullable, `organization_unit_id` nullable, `season_required` bool nullable.  
+Match predicates: `min_amount`, `max_amount` (nullable open end), `request_kind` nullable, `organization_unit_id` nullable, `season_required` bool nullable.
 **Amounts are tenant-configured — no platform defaults mandated.**
 
 ### `purchase_approval_matrix_levels`
 
-`matrix_id`, `level_order`, `name`.  
+`matrix_id`, `level_order`, `name`.
 **ENGINEERING PROPOSAL (binding preference):** resolve eligibility via `purchase_requests.approve` + `purchase_approver_authority` ceiling + matrix level order — **no role-name checks in Policies** (aligns with PERMISSION_MODEL).
 
 ### `purchase_approver_authority` (tenant-owned)
@@ -307,10 +309,10 @@ Snapshot JSON or mirrored header+lines at each resubmit for auditability. Prefer
 
 ### `purchase_request_financial_reviews` — Owner **D2**
 
-`purchase_request_id`, `version_no`, `reviewer_id`, `outcome`, `justification`, `reviewed_at`.  
+`purchase_request_id`, `version_no`, `reviewer_id`, `outcome`, `justification`, `reviewed_at`.
 
-**Gate (mandatory — D2):** **Every** PR version must have a financial review with outcome `cleared` or `cleared_with_conditions` before **final** approval completes — including fully unpriced PRs. Outcome `not_cleared` blocks final approval.  
-Does not post accounting, reserve budget, or authorize payment.  
+**Gate (mandatory — D2):** **Every** PR version must have a financial review with outcome `cleared` or `cleared_with_conditions` before **final** approval completes — including fully unpriced PRs. Outcome `not_cleared` blocks final approval.
+Does not post accounting, reserve budget, or authorize payment.
 
 **SoD gate (D5):** `reviewer_id` of the current version’s financial review **must not equal** the user completing final approval (including when acting via delegation). On conflict: reassign final step or block + escalate; persist reassignment/escalation audit fields on the approval step (**ENGINEERING PROPOSAL**: `conflict_reason`, `reassigned_from_user_id`, `escalated_to_admin_at`).
 
@@ -326,7 +328,7 @@ Planning-only grouping of **approved** PRs (**123**). No RFQ entity.
 
 ## 7. Documents morph aliases (ADR-0010 extension — implementation time)
 
-Add aliases: `supplier`, `purchase_request`, `supplier_evaluation` (names **ENGINEERING PROPOSAL**).  
+Add aliases: `supplier`, `purchase_request`, `supplier_evaluation` (names **ENGINEERING PROPOSAL**).
 No change to Document immutability.
 
 ---
@@ -343,6 +345,6 @@ No change to Document immutability.
 
 ## 9. Concurrency
 
-- Number sequences: `SELECT … FOR UPDATE` inside transaction.  
-- Approval step action: row lock on step + verify still `pending` (idempotent replay by action key **ENGINEERING PROPOSAL**).  
+- Number sequences: `SELECT … FOR UPDATE` inside transaction.
+- Approval step action: row lock on step + verify still `pending` (idempotent replay by action key **ENGINEERING PROPOSAL**).
 - Bank primary flag: transactional demote/promote.

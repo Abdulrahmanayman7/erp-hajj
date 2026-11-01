@@ -68,6 +68,7 @@ use App\Modules\SeasonPilgrims\Policies\SeasonProgramPolicy;
 use App\Modules\Settings\Mail\TenantMailChannel;
 use App\Modules\Settings\Policies\TenantSettingsPolicy;
 use App\Modules\Settings\Support\TenantMailSenderResolver;
+use App\Modules\SuppliersAndProcurement\Models\Supplier;
 use App\Modules\Tasks\Models\Task;
 use App\Modules\Tasks\Policies\TaskPolicy;
 use App\Modules\Users\Policies\UserPolicy;
@@ -185,6 +186,7 @@ class AppServiceProvider extends ServiceProvider
             'inventory_item' => InventoryItem::class,
             'asset' => Asset::class,
             'custody' => AssetCustody::class,
+            'supplier' => Supplier::class,
         ]);
 
         Route::bind('user', function (string $value): User {

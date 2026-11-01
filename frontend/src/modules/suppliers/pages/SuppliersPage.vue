@@ -2,10 +2,11 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRouter } from 'vue-router'
-import { Eye, FolderTree, Pencil, Plus, Search } from 'lucide-vue-next'
+import { Eye, FolderTree, Pencil, Plus, Search, ShieldCheck } from 'lucide-vue-next'
 
 import { listSupplierCategories } from '../api/categoriesApi'
 import CategoriesManagerDrawer from '../components/CategoriesManagerDrawer.vue'
+import EligibilityConfigDrawer from '../components/EligibilityConfigDrawer.vue'
 import SupplierFormDrawer from '../components/SupplierFormDrawer.vue'
 import {
   useCreateSupplierMutation,
@@ -78,6 +79,7 @@ const updateMutation = useUpdateSupplierMutation()
 
 const drawerOpen = ref(false)
 const categoriesOpen = ref(false)
+const eligibilityOpen = ref(false)
 const editing = ref<Supplier | null>(null)
 const formError = ref('')
 const fieldErrors = reactive<Record<string, string>>({})
@@ -235,6 +237,16 @@ async function submitForm(): Promise<void> {
   <div class="space-y-6">
     <AppPageHeader :title="t('suppliers.title')" :subtitle="t('suppliers.subtitle')">
       <template #actions>
+        <PermissionGuard :any="['suppliers.view', 'suppliers.manage_eligibility_config']">
+          <button
+            type="button"
+            class="inline-flex items-center gap-2 rounded-xl border border-brand-border bg-brand-surface px-3 py-2 text-sm font-semibold"
+            @click="eligibilityOpen = true"
+          >
+            <ShieldCheck class="h-4 w-4" />
+            {{ t('suppliers.eligibility.configLink') }}
+          </button>
+        </PermissionGuard>
         <PermissionGuard permission="suppliers.update">
           <button
             type="button"
@@ -397,5 +409,6 @@ async function submitForm(): Promise<void> {
     />
 
     <CategoriesManagerDrawer :open="categoriesOpen" @close="categoriesOpen = false" />
+    <EligibilityConfigDrawer :open="eligibilityOpen" @close="eligibilityOpen = false" />
   </div>
 </template>

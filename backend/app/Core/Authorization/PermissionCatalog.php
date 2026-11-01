@@ -208,6 +208,9 @@ final class PermissionCatalog
             ['name' => 'suppliers.update', 'display_name' => 'تحديث مورد', 'module' => 'suppliers', 'description' => 'تحديث الموردين وإدارة التصنيفات والتغطية وجهات الاتصال'],
             ['name' => 'suppliers.transition', 'display_name' => 'انتقال حالة المورد', 'module' => 'suppliers', 'description' => 'تغيير حالة دورة حياة المورد'],
             ['name' => 'suppliers.delete', 'display_name' => 'حذف مورد', 'module' => 'suppliers', 'description' => 'حذف نهائي لمسودات الموردين المؤهلة'],
+            ['name' => 'suppliers.manage_documents', 'display_name' => 'إدارة مستندات تأهيل المورد', 'module' => 'suppliers', 'description' => 'ربط مستندات التأهيل والتحقق منها ورفضها واستبدالها'],
+            ['name' => 'suppliers.manage_eligibility_config', 'display_name' => 'إدارة إعدادات التأهيل', 'module' => 'suppliers', 'description' => 'إنشاء وتعديل مسودات إصدارات متطلبات التأهيل'],
+            ['name' => 'suppliers.approve_eligibility_config', 'display_name' => 'اعتماد إعدادات التأهيل', 'module' => 'suppliers', 'description' => 'اعتماد إصدار متطلبات التأهيل (صلاحية حساسة — تُمنح صراحةً فقط)'],
 
             ['name' => 'geo_places.view', 'display_name' => 'عرض الأماكن الجغرافية', 'module' => 'geo_places', 'description' => 'قراءة دليل الأماكن الجغرافية الأساسي'],
 
@@ -287,9 +290,13 @@ final class PermissionCatalog
      */
     public static function roleTemplates(): array
     {
+        // Sensitive permissions are explicit-assignment only (never templated, incl. Tenant Owner).
+        $sensitiveExplicitOnly = self::sensitiveExplicitOnlyPermissions();
+
         $all = array_values(array_filter(
             self::allNames(),
-            static fn (string $name): bool => ! str_starts_with($name, 'accommodation.'),
+            static fn (string $name): bool => ! str_starts_with($name, 'accommodation.')
+                && ! in_array($name, $sensitiveExplicitOnly, true),
         ));
 
         return [
@@ -337,6 +344,8 @@ final class PermissionCatalog
                     'suppliers.update',
                     'suppliers.transition',
                     'suppliers.delete',
+                    'suppliers.manage_documents',
+                    'suppliers.manage_eligibility_config',
                     'geo_places.view',
                     'meetings.view',
                     'meetings.create',
@@ -499,6 +508,19 @@ final class PermissionCatalog
         ];
     }
 
+    /**
+     * Sensitive permissions that must never be seeded into default role templates
+     * (S04 II-A control C6). Granted only by explicit role assignment.
+     *
+     * @return list<string>
+     */
+    public static function sensitiveExplicitOnlyPermissions(): array
+    {
+        return [
+            'suppliers.approve_eligibility_config',
+        ];
+    }
+
     public static function isPlatformPermission(string $name): bool
     {
         return str_starts_with($name, 'platform_tenants.');
@@ -528,6 +550,7 @@ final class PermissionCatalog
             'season_programs.delete',
             'transportation.override_entitlement',
             'transportation.correct_history',
+            'suppliers.approve_eligibility_config',
         ];
     }
 }

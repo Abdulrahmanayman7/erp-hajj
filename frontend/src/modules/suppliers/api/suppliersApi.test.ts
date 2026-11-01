@@ -69,6 +69,27 @@ describe('suppliersApi', () => {
     })
   })
 
+  it('gets supplier eligibility status', async () => {
+    vi.mocked(apiGet).mockResolvedValue({
+      success: true,
+      message: '',
+      data: {
+        eligible: false,
+        supplier_status: 'under_review',
+        checked_at: '2026-10-31T21:00:00+00:00',
+        reasons: [{ code: 'SUPPLIER_DOCUMENT_MISSING', requirement_key: 'commercial_registration' }],
+        applicable_requirement_keys: ['commercial_registration'],
+        config: { id: 10, config_key: 'default', version_no: 2, status: 'approved' },
+      },
+    })
+
+    const result = await suppliersApi.getSupplierEligibility(5)
+
+    expect(apiGet).toHaveBeenCalledWith('/api/v1/suppliers/5/eligibility')
+    expect(result.eligible).toBe(false)
+    expect(result.reasons[0]?.code).toBe('SUPPLIER_DOCUMENT_MISSING')
+  })
+
   it('updates supplier via patch', async () => {
     vi.mocked(apiPatch).mockResolvedValue({
       success: true,

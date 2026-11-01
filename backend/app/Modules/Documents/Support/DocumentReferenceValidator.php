@@ -15,6 +15,7 @@ use App\Modules\Inventory\Models\InventoryItem;
 use App\Modules\Inventory\Models\Warehouse;
 use App\Modules\Meetings\Models\Meeting;
 use App\Modules\OrganizationStructure\Models\OrganizationUnit;
+use App\Modules\SuppliersAndProcurement\Models\Supplier;
 use App\Modules\Tasks\Models\Task;
 use Illuminate\Database\Eloquent\Model;
 
@@ -108,6 +109,7 @@ final class DocumentReferenceValidator
             DocumentLinkableType::InventoryItem => sprintf('%s — %s', $model->getAttribute('item_number'), $model->getAttribute('name')),
             DocumentLinkableType::Asset => sprintf('%s — %s', $model->getAttribute('asset_number'), $model->getAttribute('name')),
             DocumentLinkableType::Custody => (string) $model->getAttribute('custody_number'),
+            DocumentLinkableType::Supplier => sprintf('%s — %s', $model->getAttribute('supplier_number'), $model->getAttribute('display_name')),
         };
     }
 
@@ -124,6 +126,7 @@ final class DocumentReferenceValidator
             DocumentLinkableType::InventoryItem => InventoryItem::query(),
             DocumentLinkableType::Asset => Asset::query(),
             DocumentLinkableType::Custody => AssetCustody::query(),
+            DocumentLinkableType::Supplier => Supplier::query(),
         };
 
         return $query->whereKey($id)->first();

@@ -1,14 +1,16 @@
 # S04 G2 Phase II-A — Eligibility & Documents Design
 
-> **Status:** `II-A DESIGN APPROVED` · `ENGINEERING PRE-IMPLEMENTATION GATE — COMPLETE` · **IMPLEMENTATION NOT AUTHORIZED**  
-> **Owner design approval date:** 2026-10-31  
-> **Engineering gate:** [S04-PHASE-II-A-ENGINEERING-GATE-2026-10-31.md](../../10-decisions/S04-PHASE-II-A-ENGINEERING-GATE-2026-10-31.md)  
-> **Last updated:** 2026-10-31  
-> **Owner clarifications:** [II-D1–II-D4](../../10-decisions/S04-PHASE-II-OWNER-CLARIFICATIONS-2026-10-31.md)  
-> **API contracts:** [API.md §12](API.md) · **Schema/constraints:** [DATA_MODEL.md](DATA_MODEL.md)  
-> **Builds on:** ADR-0022 (**107**, **109**), ADR-0023 §2.4, ADR-0010, Phase I accepted commit `58e5b49`  
-> **Slice:** II-A only (eligibility rules + Documents integration). Excludes banking (II-B), evaluations (II-C), PR engine (later phases).  
-> **Coding:** **NOT GRANTED.**
+> **Status:** `COMPLETE — OWNER ACCEPTED` (2026-11-01) · design **APPROVED** · engineering gate **COMPLETE** · remediation re-audit **ACCEPTABLE**
+> **Owner design approval date:** 2026-10-31
+> **Owner acceptance:** [S04_PHASE_II_A_ACCEPTANCE_STATUS.md](../../00-project/S04_PHASE_II_A_ACCEPTANCE_STATUS.md)
+> **Owner remediation M1=A:** 2026-11-01 — [S04-PHASE-II-A-REMEDIATION-M1A-2026-11-01.md](../../10-decisions/S04-PHASE-II-A-REMEDIATION-M1A-2026-11-01.md)
+> **Engineering gate:** [S04-PHASE-II-A-ENGINEERING-GATE-2026-10-31.md](../../10-decisions/S04-PHASE-II-A-ENGINEERING-GATE-2026-10-31.md)
+> **Last updated:** 2026-11-01
+> **Owner clarifications:** [II-D1–II-D4](../../10-decisions/S04-PHASE-II-OWNER-CLARIFICATIONS-2026-10-31.md)
+> **API contracts:** [API.md §12](API.md) · **Schema/constraints:** [DATA_MODEL.md](DATA_MODEL.md)
+> **Builds on:** ADR-0022 (**107**, **109**), ADR-0023 §2.4, ADR-0010, Phase I accepted commit `58e5b49`
+> **Slice:** II-A only (eligibility rules + Documents integration). Excludes banking (II-B), evaluations (II-C), PR engine (later phases).
+> **II-B / II-C / Phase III–V / S05:** **NOT AUTHORIZED.**
 
 Legend: **(Owner)** = II-D* / ADR-0022 / II-A binding controls; **(Eng)** = remaining technical detail consistent with Owner decisions; **(Owner TBD)** = would need a new Owner decision — none introduced silently.
 
@@ -33,10 +35,10 @@ The Project Owner approved the II-A Eligibility & Documents engineering design *
 
 Replace Phase I’s **unconditional** activation hard-block with **real eligibility enforcement** without weakening fail-closed behavior:
 
-- Keep stable code **`SUPPLIER_NOT_ELIGIBLE`** when checks fail.  
-- Never activate because “no requirements configured.”  
-- Integrate immutable Documents (ADR-0010) via eligibility metadata rows.  
-- Banking remains **out of activation** (**II-D2**).  
+- Keep stable code **`SUPPLIER_NOT_ELIGIBLE`** when checks fail.
+- Never activate because “no requirements configured.”
+- Integrate immutable Documents (ADR-0010) via eligibility metadata rows.
+- Banking remains **out of activation** (**II-D2**).
 - No automatic lifecycle status change on expiry (**II-D3**).
 
 ---
@@ -53,18 +55,19 @@ Replace Phase I’s **unconditional** activation hard-block with **real eligibil
 | Approval state | Each configuration **set/version** is `draft` \| `approved`; only **approved** versions are used for activation/eligibility |
 | Immutability (**C1**) | Approved versions are **immutable**; edits = new draft + independent approval |
 | Empty / missing / draft pack | Supplier is **not** eligible → `SUPPLIER_NOT_ELIGIBLE` (+ reason code) |
-| Who publishes | `suppliers.approve_eligibility_config` (**C6** sensitive; SoD **C3**) |
+| Who publishes | `suppliers.approve_eligibility_config` (**C6** sensitive; SoD **C3** / **M5** editors table) |
+| Mandatory floor (**Owner M1=A**) | Approve requires ≥1 `is_mandatory=true` def; evaluation never silently eligible when mandatory keys empty |
 
 ### 2.2 Applicability resolution (**C2**)
 
 Given supplier `type`, `country_code`, and linked category ids:
 
-1. Collect all requirement rows from **approved immutable** versions whose applicability matches:  
-   - type equals supplier type;  
-   - country is null (wildcard) **or** equals supplier country;  
-   - category is null (applies to all categories of that type/country) **or** equals one of the supplier’s linked categories.  
-2. Union mandatory keys; **deduplicate** by `requirement_key` — one valid satisfaction covers overlapping wildcard and specific rows.  
-3. **No implicit exemptions** — absence of a matching row for a key does not waive another mandatory key; zero approved applicable rows → **ineligible** (fail closed).  
+1. Collect all requirement rows from **approved immutable** versions whose applicability matches:
+   - type equals supplier type;
+   - country is null (wildcard) **or** equals supplier country;
+   - category is null (applies to all categories of that type/country) **or** equals one of the supplier’s linked categories.
+2. Union mandatory keys; **deduplicate** by `requirement_key` — one valid satisfaction covers overlapping wildcard and specific rows.
+3. **No implicit exemptions** — absence of a matching row for a key does not waive another mandatory key; zero approved applicable rows → **ineligible** (fail closed).
 4. Operational implication of fail-closed: activation cannot succeed until an applicable approved version exists.
 
 ### 2.3 Document records & verification (**C3**, **C4**)
@@ -73,18 +76,18 @@ Given supplier `type`, `country_code`, and linked category ids:
 |---|---|
 | Link | `document_id` → immutable `documents` row (ADR-0010) |
 | Eligibility statuses (**Eng** names) | `pending_verification` \| `valid` \| `rejected` \| `expired` \| `superseded` |
-| Activation-quality docs | Only `valid` and not past `expires_at` count toward mandatory satisfaction |
+| Activation-quality docs | Only `valid` (or stale `expired` status) with live `expires_at` OK **and** intact backing Document (**H1**: active, same tenant, still linked to this supplier) |
 | Verification SoD (**C3**) | Verifier **must not** be the uploader of the same document record |
 | Replacement | New Document upload + new eligibility row; prior row → `superseded` via `supersedes_id` |
 | Expiry | See §2.3.1 — live timestamp evaluation; scheduled flip supplementary (**C4**); **no** lifecycle auto-change (**II-D3**) |
 
 ### 2.3.1 Expiration semantics (engineering gate — locked)
 
-1. Eligibility gates (activation and operational use-time) evaluate against **`expires_at`** and tenant-local **calendar today** (`tenants.timezone`, fallback `Asia/Riyadh`), not solely against stored `verification_status`.  
-2. Inclusive rule: document remains non-expired through end of calendar day `expires_at`; expired when tenant-local date **>** `expires_at`.  
-3. A stale stored `valid` **cannot** override an elapsed `expires_at`. A stale stored `expired` **cannot** override a still-valid `expires_at` (e.g. after clock/timezone correction) — recompute wins.  
-4. Scheduled job may set `verification_status=expired` for UX/reporting — **supplementary only** (**C4**).  
-5. Expiration **never** auto-transitions supplier lifecycle (**II-D3**).  
+1. Eligibility gates (activation and operational use-time) evaluate against **`expires_at`** and tenant-local **calendar today** (`tenants.timezone`, fallback `Asia/Riyadh`), not solely against stored `verification_status`.
+2. Inclusive rule: document remains non-expired through end of calendar day `expires_at`; expired when tenant-local date **>** `expires_at`.
+3. A stale stored `valid` **cannot** override an elapsed `expires_at`. A stale stored `expired` **cannot** override a still-valid `expires_at` (e.g. after clock/timezone correction) — recompute wins.
+4. Scheduled job may set `verification_status=expired` for UX/reporting — **supplementary only** (**C4**).
+5. Expiration **never** auto-transitions supplier lifecycle (**II-D3**).
 6. Activation/use-time failures preserve envelope code **`SUPPLIER_NOT_ELIGIBLE`** (with reason `SUPPLIER_DOCUMENT_EXPIRED` in `reasons[]` when applicable).
 
 ### 2.4 Activation (lifecycle) (**C4**) — locked for II-A
@@ -99,12 +102,12 @@ Phase I today: `SupplierLifecycle::assertAllowed` throws `SUPPLIER_NOT_ELIGIBLE`
 
 **Requirements before success:**
 
-1. Actor has `suppliers.transition`; Policy allow.  
-2. DB transaction + `lockForUpdate` on supplier.  
-3. Graph allows only the edge above (replace Phase I unconditional Active hard-block with eligibility-gated edge).  
-4. Approved applicable immutable config + complete verified currently-valid mandatory docs (**II-D1**, **C1–C4**); banking **not** required (**II-D2**).  
-5. Set `status=active`, `activated_at=now()` (UTC instant); transition history + audit.  
-6. Failure → `422 SUPPLIER_NOT_ELIGIBLE` + `reasons[]`.  
+1. Actor has `suppliers.transition`; Policy allow.
+2. DB transaction + `lockForUpdate` on supplier.
+3. Graph allows only the edge above (replace Phase I unconditional Active hard-block with eligibility-gated edge).
+4. Approved applicable immutable config + complete verified currently-valid mandatory docs (**II-D1**, **C1–C4**); banking **not** required (**II-D2**).
+5. Set `status=active`, `activated_at=now()` (UTC instant); transition history + audit.
+6. Failure → `422 SUPPLIER_NOT_ELIGIBLE` + `reasons[]`.
 7. **No** activation via PATCH/update/other endpoints.
 
 **Owner follow-up (not invented):** `temporarily_suspended → active` is **not** in Phase I graph and is **not** authorized for II-A without a new Owner decision. Current Phase I path from suspension is only → `blocked` / `archived`.
@@ -113,17 +116,17 @@ Phase I today: `SupplierLifecycle::assertAllowed` throws `SUPPLIER_NOT_ELIGIBLE`
 
 When a PR (or other future consumer) **references** a supplier (**II-D3** / **109**):
 
-- Supplier must be `active` **and** currently eligible under the same rules (valid mandatory docs + approved config) — **operational use-time recheck**.  
-- Failure → block linking/use with `SUPPLIER_NOT_ELIGIBLE` or `SUPPLIER_DOCUMENT_EXPIRED` as appropriate — **do not** auto-suspend.  
+- Supplier must be `active` **and** currently eligible under the same rules (valid mandatory docs + approved config) — **operational use-time recheck**.
+- Failure → block linking/use with `SUPPLIER_NOT_ELIGIBLE` or `SUPPLIER_DOCUMENT_EXPIRED` as appropriate — **do not** auto-suspend.
 - Scheduled expiry jobs may update document-record status and emit warnings; they **do not** replace this gate.
 
 Until PR module exists, implement the shared `EligibilityService` and call it from activation; document the PR hook as a mandatory consumer contract.
 
 ### 2.6 Explicit non-goals for II-A
 
-- Bank accounts / verify (**II-B**).  
-- Evaluations / criteria packs (**II-C**; **II-D4** recorded but not built in II-A).  
-- Purchase requests / approval engine.  
+- Bank accounts / verify (**II-B**).
+- Evaluations / criteria packs (**II-C**; **II-D4** recorded but not built in II-A).
+- Purchase requests / approval engine.
 - Automatic suspension jobs that mutate lifecycle status.
 
 ---
@@ -181,9 +184,9 @@ Until PR module exists, implement the shared `EligibilityService` and call it fr
 
 ### 4.4 Migration order (**Eng**)
 
-1. requirement_sets  
-2. requirement_defs  
-3. document_records  
+1. requirement_sets
+2. requirement_defs
+3. document_records
 4. (no change to Contracts/Inventory tables)
 
 Rollback: drop in reverse; non-destructive additive ups.
@@ -212,21 +215,21 @@ Exact contracts: **[API.md §12](API.md)** (paths, JSON shapes, HTTP status, rea
 
 ## 7. Audit events (**Eng**)
 
-`SUPPLIER_ELIGIBILITY_CONFIG_CREATED|UPDATED|APPROVED`  
-`SUPPLIER_DOCUMENT_RECORD_CREATED|SUPERSEDED|VERIFIED|REJECTED`  
-`SUPPLIER_TRANSITIONED` (existing) with eligibility snapshot ids (no file secrets)  
-`SUPPLIER_ELIGIBILITY_CHECK_FAILED` (blocked activation / use-time)  
+`SUPPLIER_ELIGIBILITY_CONFIG_CREATED|UPDATED|APPROVED`
+`SUPPLIER_DOCUMENT_RECORD_CREATED|SUPERSEDED|VERIFIED|REJECTED`
+`SUPPLIER_TRANSITIONED` (existing) with eligibility snapshot ids (no file secrets)
+`SUPPLIER_ELIGIBILITY_CHECK_FAILED` (blocked activation / use-time)
 `SUPPLIER_SOD_VIOLATION` (optional security audit)
 
 ---
 
 ## 8. Arabic RTL UI (II-A behavior — design only)
 
-- Eligibility status banner on supplier details (eligible / ineligible + reasons).  
-- Requirements checklist vs uploaded/verified docs.  
-- Upload via existing Documents patterns; verification actions permission-gated + SoD.  
-- Config screens for requirement sets (draft → approve by different user; approved versions read-only).  
-- Activation CTA: call transition; surface `SUPPLIER_NOT_ELIGIBLE` reasons (no fake success).  
+- Eligibility status banner on supplier details (eligible / ineligible + reasons).
+- Requirements checklist vs uploaded/verified docs.
+- Upload via existing Documents patterns; verification actions permission-gated + SoD.
+- Config screens for requirement sets (draft → approve by different user; approved versions read-only).
+- Activation CTA: call transition; surface `SUPPLIER_NOT_ELIGIBLE` reasons (no fake success).
 - Banking/eval tabs remain Phase II-B/C placeholders until those slices.
 
 ---
@@ -283,11 +286,11 @@ Exact contracts: **[API.md §12](API.md)** (paths, JSON shapes, HTTP status, rea
 
 Owner must separately authorize **II-A implementation only**, naming:
 
-- Branch from documentation commit that includes this gate (successor of Phase I `58e5b49`).  
-- Dev/test DB only.  
-- Implement per API.md §12 + DATA_MODEL constraints + C1–C6.  
-- No II-B/II-C, no S05, no push/merge without further authorization.  
-- Sensitive `approve_eligibility_config` never template-seeded (**C6**).  
+- Branch from documentation commit that includes this gate (successor of Phase I `58e5b49`).
+- Dev/test DB only.
+- Implement per API.md §12 + DATA_MODEL constraints + C1–C6.
+- No II-B/II-C, no S05, no push/merge without further authorization.
+- Sensitive `approve_eligibility_config` never template-seeded (**C6**).
 - Do not add `temporarily_suspended` → `active` without Owner decision.
 
 Until that act: **coding remains NOT GRANTED.**

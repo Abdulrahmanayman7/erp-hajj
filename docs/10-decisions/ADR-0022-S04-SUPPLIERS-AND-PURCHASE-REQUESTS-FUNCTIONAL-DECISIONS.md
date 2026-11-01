@@ -1,26 +1,26 @@
 # ADR-0022 — S04 Suppliers and Purchase Requests — Functional Decisions (101–130)
 
-> **Status:** `APPROVED — FUNCTIONAL DECISIONS`  
-> **Date:** 2026-10-31  
-> **Deciders:** Project Owner  
-> **Title slug:** `S04-SUPPLIERS-AND-PURCHASE-REQUESTS-FUNCTIONAL-DECISIONS`  
-> **Builds on:** [ADR-0020](ADR-0020-FULL-PHASE2-OPERATIONAL-SCOPE.md) §S04  
+> **Status:** `APPROVED — FUNCTIONAL DECISIONS`
+> **Date:** 2026-10-31
+> **Deciders:** Project Owner
+> **Title slug:** `S04-SUPPLIERS-AND-PURCHASE-REQUESTS-FUNCTIONAL-DECISIONS`
+> **Builds on:** [ADR-0020](ADR-0020-FULL-PHASE2-OPERATIONAL-SCOPE.md) §S04
 > **Does not:** authorize application code, migrations, database changes, deployment, or S05; accept [ADR-0019](ADR-0019-ACCOMMODATION-CAMPS-DRAFT.md); invent RFQ/PO/receiving schemas; replace Contracts or Inventory as a vendor/procurement substitute.
 
 ## 0. Authorization boundary
 
 This ADR records **Owner-approved functional decisions only** for Sprint **S04** (suppliers, supplier evaluation, purchase requests, multi-level PR approvals).
 
-- **Does not** authorize G1 module-pack completion as implementation.  
-- **Does not** authorize S04 application development or any S05 work.  
-- Engineering schema, API contracts, permission machine names, and migrations remain for **G1 design** and a later explicit Owner implementation authorization.  
+- **Does not** authorize G1 module-pack completion as implementation.
+- **Does not** authorize S04 application development or any S05 work.
+- Engineering schema, API contracts, permission machine names, and migrations remain for **G1 design** and a later explicit Owner implementation authorization.
 - G0 filing of this ADR (2026-10-31) closes documentation preparation for the decision register; it is **not** implementation readiness.
 
 ## 1. Scope and sprint separation
 
-- **S04:** Supplier registry and classifications; supplier evaluation; purchase requests (PR); multi-level PR approval paths.  
-- **S05 only:** RFQ; supplier offers and comparison; supplier selection; purchase orders (PO); receiving and procurement cycle close.  
-- No payments, executive accounting, or actual budget reservation in S04.  
+- **S04:** Supplier registry and classifications; supplier evaluation; purchase requests (PR); multi-level PR approval paths.
+- **S05 only:** RFQ; supplier offers and comparison; supplier selection; purchase orders (PO); receiving and procurement cycle close.
+- No payments, executive accounting, or actual budget reservation in S04.
 - No forced rewrite of historical Contracts records or of the current inventory receive path.
 
 **Product-scope alignment:** Matches [ADR-0020](ADR-0020-FULL-PHASE2-OPERATIONAL-SCOPE.md) §S04 / §S05. This ADR **narrows** S04 functional gaps; it does not widen Phase 2 product membership beyond ADR-0020.
@@ -41,7 +41,7 @@ Source: Owner sequential approvals consolidated 2026-10-31 (choice C for each de
 
 **105 — Supplier types.** Support companies, establishments, individuals, governmental/non-profit entities, and international suppliers; required identity fields differ by type and country.
 
-**106 — Geographic coverage.** Supplier coverage areas per service category use the platform’s approved geographic references — not conflicting ad-hoc location lists.  
+**106 — Geographic coverage.** Supplier coverage areas per service category use the platform’s approved geographic references — not conflicting ad-hoc location lists.
 *(G0 engineering direction for implementing this decision: see §3.1.)*
 
 **107 — Qualification before activation.** Allow an initial record with basic data; complete legal documents and verification before the supplier may be activated for use on new purchase requests.
@@ -74,7 +74,7 @@ Source: Owner sequential approvals consolidated 2026-10-31 (choice C for each de
 
 **119 — PR line items.** A PR supports multiple lines; each line has specifications, quantity, unit, need date, and optional attachments; may reference a catalog item or a free-text description.
 
-**120 — Financial estimate and budget.** Estimated prices per line where available; expected total, currency, and estimate source; a line may be submitted without price with a stated reason; financial review and budget-availability review before final approval per permissions. Partial totals must be clearly distinguished from complete totals. **No** actual budget reservation or financial commitment in S04; integration with unavailable finance systems must not be assumed ready.  
+**120 — Financial estimate and budget.** Estimated prices per line where available; expected total, currency, and estimate source; a line may be submitted without price with a stated reason; financial review and budget-availability review before final approval per permissions. Partial totals must be clearly distinguished from complete totals. **No** actual budget reservation or financial commitment in S04; integration with unavailable finance systems must not be assumed ready.
 *(G0 engineering direction for implementing this decision: see §3.2.)*
 
 **121 — PR lifecycle and versions.** Draft, Submitted, Under Review, Returned for Revision, Approved, Rejected, Cancelled; no direct edit while under review; return to owner for revision; keep versions; re-run affected approvals; cancellation subject to permissions, stage, and audit.
@@ -105,41 +105,41 @@ These directions were Owner-approved on **2026-10-31** for G0 documentation. The
 
 ### 3.1 Geographic reference — Decision 106
 
-- Use standardized country and geographic references.  
-- Reuse existing canonical platform references when available (e.g. ISO-style country codes already used elsewhere).  
-- Design a **minimal** reference catalog only for regions/cities required by S04 supplier coverage — **not** a comprehensive geographic subsystem.  
-- Preserve tenant isolation and per service-category coverage linkage.  
+- Use standardized country and geographic references.
+- Reuse existing canonical platform references when available (e.g. ISO-style country codes already used elsewhere).
+- Design a **minimal** reference catalog only for regions/cities required by S04 supplier coverage — **not** a comprehensive geographic subsystem.
+- Preserve tenant isolation and per service-category coverage linkage.
 - Database schema and API details are deferred to **G1**.
 
 ### 3.2 Manual financial review — Decision 120
 
-- Support a designated **financial reviewer** permission (exact `module.action` name deferred to G1).  
-- Record reviewer identity, review outcome, timestamp, and justification.  
-- Support estimated PR costs and explicitly identify unpriced line items.  
-- Do **not** assume a complete finance module exists.  
-- Do **not** create accounting entries, reserve budgets, or process payments.  
+- Support a designated **financial reviewer** permission (exact `module.action` name deferred to G1).
+- Record reviewer identity, review outcome, timestamp, and justification.
+- Support estimated PR costs and explicitly identify unpriced line items.
+- Do **not** assume a complete finance module exists.
+- Do **not** create accounting entries, reserve budgets, or process payments.
 - Detailed workflow, data model, and permission naming are deferred to **G1**.
 
 ## 4. Binding architectural and security constraints for design
 
-1. Tenant data isolation; cross-tenant access blocked in UI, API, and logs ([ADR-0003](ADR-0003-MULTI-TENANCY.md)).  
-2. Deny-by-default permissions and segregation of duties; audit sensitive events without exposing full bank secrets ([PERMISSION_MODEL.md](../06-security/PERMISSION_MODEL.md), [ADR-0015](ADR-0015-SEMANTIC-AUDIT-TRAIL-AND-IMMUTABLE-HISTORY.md)).  
-3. Preserve current Contracts and Inventory behavior; Contracts category code `supplier` is **not** a supplier master ([ADR-0006](ADR-0006-CONTRACT-CATEGORIES-CATALOG.md)).  
-4. Do not build RFQ, offers, PO, or receiving engines in S04 (those are S05 per ADR-0020).  
-5. Re-evaluate approvals when PR content changes; no automatic approval on SLA breach or via delegation alone.  
-6. Financial estimates are not commitments or payments.  
-7. Document file storage remains governed by [ADR-0010](ADR-0010-DOCUMENT-STORAGE-AND-ENTITY-LINKS.md) (immutable files; eligibility/version metadata for suppliers is a design concern for G1, not a silent rewrite of ADR-0010).  
+1. Tenant data isolation; cross-tenant access blocked in UI, API, and logs ([ADR-0003](ADR-0003-MULTI-TENANCY.md)).
+2. Deny-by-default permissions and segregation of duties; audit sensitive events without exposing full bank secrets ([PERMISSION_MODEL.md](../06-security/PERMISSION_MODEL.md), [ADR-0015](ADR-0015-SEMANTIC-AUDIT-TRAIL-AND-IMMUTABLE-HISTORY.md)).
+3. Preserve current Contracts and Inventory behavior; Contracts category code `supplier` is **not** a supplier master ([ADR-0006](ADR-0006-CONTRACT-CATEGORIES-CATALOG.md)).
+4. Do not build RFQ, offers, PO, or receiving engines in S04 (those are S05 per ADR-0020).
+5. Re-evaluate approvals when PR content changes; no automatic approval on SLA breach or via delegation alone.
+6. Financial estimates are not commitments or payments.
+7. Document file storage remains governed by [ADR-0010](ADR-0010-DOCUMENT-STORAGE-AND-ENTITY-LINKS.md) (immutable files; eligibility/version metadata for suppliers is a design concern for G1, not a silent rewrite of ADR-0010).
 8. Inventory receive remains Action-based ledger rules ([ADR-0011](ADR-0011-INVENTORY-LEDGER-BALANCE-AND-TRANSFER.md)); S04 must not introduce a parallel stock path.
 
 ## 5. Engineering detail explicitly deferred (not reopening 101–130)
 
-- Table/column names, keys, indexes, migrations.  
-- API shapes; exact permission names; role matrix grants.  
-- Definition of approval-impacting PR field changes and version-diff mechanics.  
-- Estimate aggregation when some lines lack prices; wiring of manual financial review into the approval path (within §3.2).  
-- Supplier eligibility checks when a PR has **no** supplier selected (S04 does **not** require selecting a supplier on the PR).  
-- Default financial bands and SLA values (not approved in decisions 125/129).  
-- Audit retention policy detail; isolation/concurrency/security test plans.  
+- Table/column names, keys, indexes, migrations.
+- API shapes; exact permission names; role matrix grants.
+- Definition of approval-impacting PR field changes and version-diff mechanics.
+- Estimate aggregation when some lines lack prices; wiring of manual financial review into the approval path (within §3.2).
+- Supplier eligibility checks when a PR has **no** supplier selected (S04 does **not** require selecting a supplier on the PR).
+- Default financial bands and SLA values (not approved in decisions 125/129).
+- Audit retention policy detail; isolation/concurrency/security test plans.
 - Module folder number under `docs/09-modules/` and any future **Engineering** ADR (proposed separately after G1 authorization).
 
 ## 6. Relationship to existing ADRs
@@ -177,20 +177,21 @@ The §7.1 rows above remain the **G0 filing snapshot**. Subsequent Owner-approve
 | Engineering ADR / design CR | **APPROVED** — [ADR-0023](ADR-0023-S04-ENGINEERING-DESIGN.md) + [CHANGE_REQUEST_S04_SUPPLIERS_AND_PROCUREMENT.md](../00-project/CHANGE_REQUEST_S04_SUPPLIERS_AND_PROCUREMENT.md) |
 | G2 Phase I (geo + supplier registry) | **COMPLETE — OWNER ACCEPTED** — [S04_PHASE_I_ACCEPTANCE_STATUS.md](../00-project/S04_PHASE_I_ACCEPTANCE_STATUS.md); accepted commit `58e5b49` |
 | Phase II Owner clarifications II-D1–II-D4 | **APPROVED** (documentation) — [S04-PHASE-II-OWNER-CLARIFICATIONS-2026-10-31.md](S04-PHASE-II-OWNER-CLARIFICATIONS-2026-10-31.md); **does not** authorize coding |
-| II-A Eligibility & Documents design (C1–C6) | **APPROVED** — [S04-PHASE-II-A-DESIGN-APPROVAL-2026-10-31.md](S04-PHASE-II-A-DESIGN-APPROVAL-2026-10-31.md); **implementation NOT AUTHORIZED** |
-| II-A engineering pre-implementation gate | **COMPLETE** — [S04-PHASE-II-A-ENGINEERING-GATE-2026-10-31.md](S04-PHASE-II-A-ENGINEERING-GATE-2026-10-31.md); coding **NOT GRANTED** |
-| Phase II–V / II-A application implementation | **NOT GRANTED** |
+| II-A Eligibility & Documents design (C1–C6) | **APPROVED** — [S04-PHASE-II-A-DESIGN-APPROVAL-2026-10-31.md](S04-PHASE-II-A-DESIGN-APPROVAL-2026-10-31.md) (historical design record unchanged) |
+| II-A engineering pre-implementation gate | **COMPLETE** — [S04-PHASE-II-A-ENGINEERING-GATE-2026-10-31.md](S04-PHASE-II-A-ENGINEERING-GATE-2026-10-31.md) (historical gate record unchanged) |
+| Phase II-A application implementation | **COMPLETE — OWNER ACCEPTED** (2026-11-01) — [S04_PHASE_II_A_ACCEPTANCE_STATUS.md](../00-project/S04_PHASE_II_A_ACCEPTANCE_STATUS.md); remediation re-audit **ACCEPTABLE**; **M1=A** |
+| Phase II-B / II-C / Phase III–V | **NOT_STARTED — NOT AUTHORIZED** |
 | Overall S04 | **IN PROGRESS** |
 | S05 | **NOT_STARTED** |
 | ADR-0019 | **PROPOSED / NOT ACCEPTED** (unchanged) |
 
 ## 8. References
 
-- Owner-approved functional register (conversation consolidation 2026-10-31).  
-- [ADR-0020](ADR-0020-FULL-PHASE2-OPERATIONAL-SCOPE.md)  
-- [PHASE2_SCOPE_MATRIX.md](../00-project/PHASE2_SCOPE_MATRIX.md)  
-- [PHASE2_SCOPE_RECONCILIATION.md](../00-project/PHASE2_SCOPE_RECONCILIATION.md)  
-- [DEFINITION_OF_DONE.md](../00-project/DEFINITION_OF_DONE.md)  
+- Owner-approved functional register (conversation consolidation 2026-10-31).
+- [ADR-0020](ADR-0020-FULL-PHASE2-OPERATIONAL-SCOPE.md)
+- [PHASE2_SCOPE_MATRIX.md](../00-project/PHASE2_SCOPE_MATRIX.md)
+- [PHASE2_SCOPE_RECONCILIATION.md](../00-project/PHASE2_SCOPE_RECONCILIATION.md)
+- [DEFINITION_OF_DONE.md](../00-project/DEFINITION_OF_DONE.md)
 - [MODULE_TEMPLATE.md](../02-architecture/MODULE_TEMPLATE.md)
 
 ---

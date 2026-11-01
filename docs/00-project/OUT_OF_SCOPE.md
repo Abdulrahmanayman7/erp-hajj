@@ -75,7 +75,7 @@ The following were historically listed as outside the **Foundation delivery** Ph
 
 | Theme | Workflow | Note |
 |---|---|---|
-| Suppliers & purchase requests | S04 | IN PROGRESS (G2 Phase I Owner-accepted; II-A DESIGN APPROVED; ENG GATE COMPLETE; coding NOT AUTHORIZED; Phase II implementation NOT_STARTED) |
+| Suppliers & purchase requests | S04 | IN PROGRESS (Phase I + II-A Owner-accepted; II-B / II-C / Phase III NOT_STARTED — NOT AUTHORIZED) |
 | Procurement cycle (RFQ / PO / receive) | S05 | NOT_STARTED |
 | Seasonal projects & advanced tasking | S06 | NOT_STARTED (MVP Tasks ≠ Phase 2 projects) |
 | Risks & complaints | S07 | NOT_STARTED |

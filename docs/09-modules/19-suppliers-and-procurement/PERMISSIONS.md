@@ -1,9 +1,9 @@
 # Suppliers & Procurement (S04) — Permissions
 
-> **Status:** **ENGINEERING PROPOSAL** — not seeded until implementation authorization  
-> **Last updated:** 2026-10-31  
-> Rules: [PERMISSION_MODEL.md](../../06-security/PERMISSION_MODEL.md) — `module.action`, deny-by-default, no Owner bypass, no direct user↔permission grants.  
-> Owner **D4** (2026-10-31): sensitive permissions are **not** auto-granted via default role templates.  
+> **Status:** Phase I + Phase II-A permissions **IMPLEMENTED — OWNER ACCEPTED** (II-A 2026-11-01; `approve_eligibility_config` sensitive / C6); Phase II-B/II-C / Phase III–V **NOT SEEDED**
+> **Last updated:** 2026-11-01
+> Rules: [PERMISSION_MODEL.md](../../06-security/PERMISSION_MODEL.md) — `module.action`, deny-by-default, no Owner bypass, no direct user↔permission grants.
+> Owner **D4** (2026-10-31): sensitive permissions are **not** auto-granted via default role templates.
 > II-A design (**C6**, 2026-10-31): `suppliers.approve_eligibility_config` is **sensitive** — explicit assignment only; never default templates.
 
 **Seed rule:** Seed permission **catalog** rows when code exists. **Role ↔ permission** template grants follow §3; sensitive set in §3.1 starts **ungranted** on all templates including Tenant Owner.
@@ -105,17 +105,17 @@ Templates below are **documentation targets** for a future seed PR. They must **
 
 Never included in default template seeds (including Tenant Owner template for S04):
 
-- `suppliers.approve_eligibility_config` (**II-A C6**)  
-- `suppliers.view_banking`  
-- `suppliers.manage_banking`  
-- `suppliers.verify_banking`  
-- `purchase_requests.approve`  
-- `purchase_requests.reject`  
-- `purchase_requests.return`  
-- `purchase_requests.financial_review`  
-- `purchase_requests.cancel_approved`  
-- `purchase_requests.manage_approval_config`  
-- `purchase_requests.manage_delegations`  
+- `suppliers.approve_eligibility_config` (**II-A C6**)
+- `suppliers.view_banking`
+- `suppliers.manage_banking`
+- `suppliers.verify_banking`
+- `purchase_requests.approve`
+- `purchase_requests.reject`
+- `purchase_requests.return`
+- `purchase_requests.financial_review`
+- `purchase_requests.cancel_approved`
+- `purchase_requests.manage_approval_config`
+- `purchase_requests.manage_delegations`
 - `geo_places.manage` (platform only)
 
 **Assignment:** an authorized tenant administrator uses existing `roles.assign_permissions` (or equivalent) to grant sensitive verbs **explicitly**, subject to SoD checks at action time. Catalog presence ≠ grant.
@@ -124,8 +124,8 @@ Never included in default template seeds (including Tenant Owner template for S0
 
 ## 4. Sensitive data
 
-- Full IBAN/account reveal requires `suppliers.view_banking`.  
-- Audit stores masked banking values only.  
+- Full IBAN/account reveal requires `suppliers.view_banking`.
+- Audit stores masked banking values only.
 - Control reports must not dump ciphertext.
 
 ---

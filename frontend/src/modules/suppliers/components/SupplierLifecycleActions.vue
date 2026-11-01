@@ -14,11 +14,18 @@ import {
   useDeleteSupplierMutation,
   useTransitionSupplierMutation,
 } from '../mutations/useSupplierMutations'
+import {
+  useEligibilityDefsQuery,
+  useSupplierEligibilityQuery,
+} from '../queries/useEligibilityQueries'
+import type { EligibilityReason } from '../types/eligibility'
 import type { Supplier, SupplierLifecycleActionDef } from '../types/suppliers'
+import { normalizeEligibilityReasons } from '../validation/eligibilityValidation'
 import {
   availableSupplierLifecycleActions,
   mapSupplierErrorCode,
 } from '../validation/supplierValidation'
+import EligibilityReasonList from './EligibilityReasonList.vue'
 
 const props = defineProps<{
   supplier: Supplier
@@ -36,6 +43,30 @@ const { can } = usePermissions()
 
 const transitionMutation = useTransitionSupplierMutation()
 const deleteMutation = useDeleteSupplierMutation()
+
+// Activation hint (UX only): the server stays the source of truth on click.
+const showEligibilityHint = computed(
+  () => props.supplier.status === 'under_review' && can('suppliers.view'),
+)
+const eligibilityQuery = useSupplierEligibilityQuery(() => props.supplier.id, {
+  enabled: showEligibilityHint,
+})
+const eligibility = computed(() => eligibilityQuery.data.value ?? null)
+const eligibilityConfigIds = computed(() => {
+  const value = eligibility.value
+  if (!value) return []
+  return (value.configs?.length ? value.configs : value.config ? [value.config] : []).map((c) => c.id)
+})
+const defsQuery = useEligibilityDefsQuery(eligibilityConfigIds, { enabled: showEligibilityHint })
+const requirementLabels = computed<Record<string, string>>(() =>
+  Object.fromEntries((defsQuery.data.value ?? []).map((def) => [def.requirement_key, def.label_ar])),
+)
+const activationReasons = ref<EligibilityReason[]>([])
+const hintReasons = computed(() =>
+  showEligibilityHint.value && eligibility.value && !eligibility.value.eligible
+    ? eligibility.value.reasons
+    : [],
+)
 
 const reasonDialogOpen = ref(false)
 const pendingAction = ref<SupplierLifecycleActionDef | null>(null)
@@ -88,6 +119,7 @@ function closeReasonDialog(): void {
 
 async function runTransition(action: SupplierLifecycleActionDef, reason?: string | null): Promise<void> {
   actionError.value = ''
+  activationReasons.value = []
   const toStatus = action.to === 'activate' ? 'active' : action.to
   try {
     await transitionMutation.mutateAsync({
@@ -103,7 +135,8 @@ async function runTransition(action: SupplierLifecycleActionDef, reason?: string
     const message = apiMessage(error)
     actionError.value = message
     if (error instanceof ApiError && error.code === 'SUPPLIER_NOT_ELIGIBLE') {
-      toast.info(message)
+      activationReasons.value = normalizeEligibilityReasons(error.reasons)
+      toast.info(t('suppliers.eligibility.banner.activationBlocked'))
     } else {
       toast.error(message)
     }
@@ -176,9 +209,28 @@ function buttonClass(action: SupplierLifecycleActionDef): string {
     <h3 class="text-base font-bold text-brand-text">{{ t('suppliers.lifecycleTitle') }}</h3>
     <p class="mt-1 text-sm text-brand-text-secondary">{{ t('suppliers.lifecycleHint') }}</p>
 
-    <p v-if="actionError" class="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-950">
-      {{ actionError }}
-    </p>
+    <div
+      v-if="actionError"
+      class="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-950"
+      role="alert"
+      data-testid="lifecycle-error"
+    >
+      <p>{{ actionError }}</p>
+      <div v-if="activationReasons.length > 0" class="mt-2">
+        <EligibilityReasonList :reasons="activationReasons" :labels="requirementLabels" />
+      </div>
+    </div>
+
+    <div
+      v-else-if="hintReasons.length > 0"
+      class="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-950"
+      data-testid="lifecycle-eligibility-hint"
+    >
+      <p class="font-semibold">{{ t('suppliers.eligibility.banner.ineligibleTitle') }}</p>
+      <div class="mt-1">
+        <EligibilityReasonList :reasons="hintReasons" :labels="requirementLabels" />
+      </div>
+    </div>
 
     <div class="mt-4 flex flex-wrap gap-2">
       <PermissionGuard permission="suppliers.transition">

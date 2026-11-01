@@ -51,6 +51,30 @@ describe('apiGet', () => {
     expect((error as ApiError).errors).toEqual({ name: ['required'] })
   })
 
+  it('exposes structured reasons from error envelopes', async () => {
+    mockFetchResponse(422, {
+      success: false,
+      message: 'غير مؤهل',
+      code: 'SUPPLIER_NOT_ELIGIBLE',
+      reasons: [{ code: 'SUPPLIER_DOCUMENT_MISSING', requirement_key: 'commercial_registration' }],
+    })
+
+    const error = await apiGet('/api/v1/example').catch((caught: unknown) => caught)
+
+    expect((error as ApiError).code).toBe('SUPPLIER_NOT_ELIGIBLE')
+    expect((error as ApiError).reasons).toEqual([
+      { code: 'SUPPLIER_DOCUMENT_MISSING', requirement_key: 'commercial_registration' },
+    ])
+  })
+
+  it('leaves reasons undefined when the envelope has none', async () => {
+    mockFetchResponse(422, { success: false, message: 'x', code: 'OTHER' })
+
+    const error = await apiGet('/api/v1/example').catch((caught: unknown) => caught)
+
+    expect((error as ApiError).reasons).toBeUndefined()
+  })
+
   it('throws ApiError when the network request fails', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Network down')))
 

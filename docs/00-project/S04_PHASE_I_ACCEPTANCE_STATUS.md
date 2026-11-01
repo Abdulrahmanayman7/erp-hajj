@@ -1,9 +1,9 @@
 # S04 — G2 Phase I — Acceptance Status
 
-> **G2 Phase I status:** `COMPLETE — OWNER ACCEPTED`  
-> **Overall S04 implementation status:** `IN PROGRESS` (Phase II–V **NOT_STARTED**)  
-> **Owner decision date:** 2026-10-31  
-> **Branch:** `feature/s04-phase-i-supplier-registry`  
+> **G2 Phase I status:** `COMPLETE — OWNER ACCEPTED`
+> **Overall S04 implementation status:** `IN PROGRESS` (Phase II–V **NOT_STARTED**)
+> **Owner decision date:** 2026-10-31
+> **Branch:** `feature/s04-phase-i-supplier-registry`
 > **Design baseline commit:** `14bb9234d9ed7801e8fc6185a2d7135fc8b35b6f`
 
 ## Owner decision
@@ -41,9 +41,6 @@ Project Owner formally accepted **S04 G2 Phase I** on **2026-10-31** as `COMPLET
 
 ## Next
 
-- Phase I acceptance **unchanged** by Phase II documentation work.  
-- Phase II Owner clarifications **II-D1–II-D4** recorded: [S04-PHASE-II-OWNER-CLARIFICATIONS-2026-10-31.md](../10-decisions/S04-PHASE-II-OWNER-CLARIFICATIONS-2026-10-31.md).  
-- II-A design **APPROVED** (controls C1–C6): [S04-PHASE-II-A-DESIGN-APPROVAL-2026-10-31.md](../10-decisions/S04-PHASE-II-A-DESIGN-APPROVAL-2026-10-31.md).  
-- II-A engineering pre-implementation gate **COMPLETE**: [S04-PHASE-II-A-ENGINEERING-GATE-2026-10-31.md](../10-decisions/S04-PHASE-II-A-ENGINEERING-GATE-2026-10-31.md).  
-- Phase II implementation status: **NOT_STARTED**. II-A coding **NOT GRANTED.**  
-- Do **not** treat Phase I acceptance, II-D1–II-D4, II-A design approval, or the engineering gate as permission to start Phase II–V or S05 application work.
+- Phase I acceptance **unchanged**.
+- Phase II-A subsequently **COMPLETE — OWNER ACCEPTED** (2026-11-01): [S04_PHASE_II_A_ACCEPTANCE_STATUS.md](S04_PHASE_II_A_ACCEPTANCE_STATUS.md).
+- Phase II-B / II-C / Phase III–V / S05 remain **NOT_STARTED — NOT AUTHORIZED** until separate Owner acts.

@@ -1,7 +1,7 @@
 # Suppliers & Procurement (S04) — Acceptance Criteria
 
-> **Status:** Designed (G1) — applies when implementation is later authorized  
-> **Last updated:** 2026-10-31  
+> **Status:** Phase I + Phase II-A criteria **SATISFIED — OWNER ACCEPTED** (II-A 2026-11-01); remaining S04 phases apply when separately authorized
+> **Last updated:** 2026-11-01
 > Traceability to ADR-0022 decisions **101–130**.
 
 A criterion is met only with automated and/or recorded UAT evidence under DEFINITION_OF_DONE. This file does **not** authorize coding.
@@ -80,6 +80,6 @@ A criterion is met only with automated and/or recorded UAT evidence under DEFINI
 
 ## F. Gate exclusions
 
-- ADR-0019 status unchanged.  
-- S04 implementation status remains NOT_STARTED until Owner authorizes coding.  
+- ADR-0019 status unchanged.
+- S04 overall remains **IN PROGRESS** (Phase I + II-A Owner-accepted; II-B/II-C / Phase III–V **NOT_STARTED**).
 - S05 scope not accepted as done by any S04 criterion.

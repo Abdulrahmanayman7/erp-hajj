@@ -8,6 +8,7 @@ use App\Core\Tenancy\TenantContext;
 use App\Models\User;
 use App\Modules\SuppliersAndProcurement\Exceptions\SupplierDomainException;
 use App\Modules\SuppliersAndProcurement\Models\SupplierCategory;
+use App\Modules\SuppliersAndProcurement\Models\SupplierDocumentRequirementDef;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -25,7 +26,8 @@ final class DeleteSupplierCategory
         DB::transaction(function () use ($actor, $category, $request, $tenant): void {
             $locked = SupplierCategory::query()->whereKey($category->id)->lockForUpdate()->firstOrFail();
 
-            if ($locked->suppliers()->exists()) {
+            if ($locked->suppliers()->exists()
+                || SupplierDocumentRequirementDef::query()->where('supplier_category_id', $locked->id)->exists()) {
                 throw SupplierDomainException::categoryInUse();
             }
 

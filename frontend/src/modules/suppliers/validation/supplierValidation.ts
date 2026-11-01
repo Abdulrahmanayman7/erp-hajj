@@ -6,6 +6,7 @@ import type {
   SupplierType,
   SupplierWarning,
 } from '../types/suppliers'
+import { mapEligibilityErrorCode } from './eligibilityValidation'
 
 export interface SupplierFieldErrors {
   display_name?: string
@@ -57,7 +58,7 @@ export function mapSupplierErrorCode(code: string | undefined): string {
     case 'SUPPLIER_PRIMARY_CONTACT_REQUIRED':
       return code
     default:
-      return 'generic'
+      return mapEligibilityErrorCode(code)
   }
 }
 

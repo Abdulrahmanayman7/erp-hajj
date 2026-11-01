@@ -18,6 +18,9 @@ final class SupplierLifecycle
                 SupplierStatus::Archived->value,
             ],
             SupplierStatus::UnderReview->value => [
+                // II-A: sole inbound edge to Active; the eligibility gate is enforced
+                // by TransitionSupplier via EligibilityService (fail closed).
+                SupplierStatus::Active->value,
                 SupplierStatus::Draft->value,
                 SupplierStatus::Blocked->value,
                 SupplierStatus::Archived->value,
@@ -40,10 +43,6 @@ final class SupplierLifecycle
 
     public static function assertAllowed(SupplierStatus $from, SupplierStatus $to): void
     {
-        if ($to === SupplierStatus::Active) {
-            throw SupplierDomainException::notEligible();
-        }
-
         $allowed = self::allowedTransitions()[$from->value] ?? [];
 
         if (! in_array($to->value, $allowed, true)) {

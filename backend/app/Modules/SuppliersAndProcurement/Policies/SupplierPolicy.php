@@ -49,4 +49,26 @@ class SupplierPolicy
     {
         return $this->update($actor, $supplier);
     }
+
+    public function viewDocumentRecords(User $actor, Supplier $supplier): bool
+    {
+        return ($actor->hasPermission('suppliers.view') || $actor->hasPermission('suppliers.manage_documents'))
+            && $this->sameTenant($actor, $supplier);
+    }
+
+    public function manageDocuments(User $actor, Supplier $supplier): bool
+    {
+        return $actor->hasPermission('suppliers.manage_documents')
+            && $this->sameTenant($actor, $supplier);
+    }
+
+    public function viewEligibility(User $actor, Supplier $supplier): bool
+    {
+        return $this->view($actor, $supplier);
+    }
+
+    private function sameTenant(User $actor, Supplier $supplier): bool
+    {
+        return $actor->tenant_id !== null && (int) $actor->tenant_id === (int) $supplier->tenant_id;
+    }
 }

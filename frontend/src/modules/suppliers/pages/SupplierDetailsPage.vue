@@ -6,6 +6,7 @@ import { ArrowRight, Building2, Lock, Pencil, Plus, Trash2 } from 'lucide-vue-ne
 
 import { listGeoPlaces } from '../api/suppliersApi'
 import SupplierFormDrawer from '../components/SupplierFormDrawer.vue'
+import SupplierDocumentsPanel from '../components/SupplierDocumentsPanel.vue'
 import SupplierLifecycleActions from '../components/SupplierLifecycleActions.vue'
 import SupplierStatusTimeline from '../components/SupplierStatusTimeline.vue'
 import {
@@ -53,7 +54,7 @@ const tabs = computed(() => [
   { key: 'contacts' as const, label: t('suppliers.tabs.contacts') },
   { key: 'history' as const, label: t('suppliers.tabs.statusHistory') },
   { key: 'banking' as const, label: t('suppliers.tabs.banking'), phaseII: true },
-  { key: 'documents' as const, label: t('suppliers.tabs.documents'), phaseII: true },
+  { key: 'documents' as const, label: t('suppliers.tabs.documents') },
   { key: 'evaluations' as const, label: t('suppliers.tabs.evaluations'), phaseII: true },
 ])
 
@@ -467,8 +468,10 @@ function onTabSelect(tab: TabKey, phaseII?: boolean): void {
         :transitions="supplier.transitions ?? []"
       />
 
+      <SupplierDocumentsPanel v-else-if="activeTab === 'documents'" :supplier="supplier" />
+
       <section
-        v-if="['banking', 'documents', 'evaluations'].includes(activeTab)"
+        v-if="['banking', 'evaluations'].includes(activeTab)"
         class="rounded-2xl border border-dashed border-brand-border bg-brand-bg/40 p-8 text-center"
       >
         <Lock class="mx-auto h-8 w-8 text-brand-text-muted" />

@@ -90,6 +90,11 @@ class DocumentDomainException extends RuntimeException
         return new self('تعذر حفظ الملف في التخزين الخاص.', 'DOCUMENT_STORAGE_FAILED', 422);
     }
 
+    public static function usedAsEvidence(): self
+    {
+        return new self('لا يمكن حذف المستند لأنه مستخدم كإثبات في سجل تأهيل مورد؛ يمكن أرشفته بدلاً من ذلك.', 'DOCUMENT_USED_AS_EVIDENCE', 422);
+    }
+
     public static function entityInUse(): self
     {
         return new self('لا يمكن حذف السجل لوجود مستندات مرتبطة به.', 'DOCUMENT_ENTITY_IN_USE', 422);

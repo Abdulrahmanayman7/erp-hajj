@@ -1,5 +1,6 @@
 import { apiDelete, apiGet, apiPatch, apiPost, type ApiSuccess } from '@/shared/api/http'
 
+import type { SupplierEligibility } from '../types/eligibility'
 import type {
   AddSupplierCoveragePayload,
   CreateSupplierContactPayload,
@@ -79,6 +80,11 @@ export async function transitionSupplier(
   payload: SupplierTransitionPayload,
 ): Promise<Supplier> {
   const response = await apiPost<Supplier>(`/api/v1/suppliers/${id}/transition`, payload)
+  return response.data
+}
+
+export async function getSupplierEligibility(id: number): Promise<SupplierEligibility> {
+  const response = await apiGet<SupplierEligibility>(`/api/v1/suppliers/${id}/eligibility`)
   return response.data
 }
 

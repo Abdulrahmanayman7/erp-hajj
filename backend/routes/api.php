@@ -50,6 +50,9 @@ use App\Modules\SuppliersAndProcurement\Controllers\SupplierCategoryController;
 use App\Modules\SuppliersAndProcurement\Controllers\SupplierContactController;
 use App\Modules\SuppliersAndProcurement\Controllers\SupplierController;
 use App\Modules\SuppliersAndProcurement\Controllers\SupplierCoverageController;
+use App\Modules\SuppliersAndProcurement\Controllers\SupplierDocumentRecordController;
+use App\Modules\SuppliersAndProcurement\Controllers\SupplierEligibilityController;
+use App\Modules\SuppliersAndProcurement\Controllers\SupplierEligibilityRequirementSetController;
 use App\Modules\Tasks\Controllers\TaskController;
 use App\Modules\Transportation\Controllers\TransportEntitlementController;
 use App\Modules\Transportation\Controllers\TransportExternalDriverController;
@@ -200,6 +203,21 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::get('/suppliers/{supplier}/coverages', [SupplierCoverageController::class, 'index'])->name('suppliers.coverages.index');
         Route::post('/suppliers/{supplier}/coverages', [SupplierCoverageController::class, 'store'])->name('suppliers.coverages.store');
         Route::delete('/suppliers/{supplier}/coverages/{supplier_coverage}', [SupplierCoverageController::class, 'destroy'])->name('suppliers.coverages.destroy');
+
+        Route::get('/suppliers/{supplier}/eligibility', [SupplierEligibilityController::class, 'show'])->name('suppliers.eligibility.show');
+
+        Route::get('/suppliers/{supplier}/document-records', [SupplierDocumentRecordController::class, 'index'])->name('suppliers.document-records.index');
+        Route::post('/suppliers/{supplier}/document-records', [SupplierDocumentRecordController::class, 'store'])->name('suppliers.document-records.store');
+        Route::post('/suppliers/{supplier}/document-records/{supplier_document_record}/verify', [SupplierDocumentRecordController::class, 'verify'])->name('suppliers.document-records.verify');
+        Route::post('/suppliers/{supplier}/document-records/{supplier_document_record}/reject', [SupplierDocumentRecordController::class, 'reject'])->name('suppliers.document-records.reject');
+        Route::post('/suppliers/{supplier}/document-records/{supplier_document_record}/supersede', [SupplierDocumentRecordController::class, 'supersede'])->name('suppliers.document-records.supersede');
+
+        Route::get('/supplier-eligibility-requirement-sets', [SupplierEligibilityRequirementSetController::class, 'index'])->name('supplier-eligibility-requirement-sets.index');
+        Route::post('/supplier-eligibility-requirement-sets', [SupplierEligibilityRequirementSetController::class, 'store'])->name('supplier-eligibility-requirement-sets.store');
+        Route::get('/supplier-eligibility-requirement-sets/{requirement_set}', [SupplierEligibilityRequirementSetController::class, 'show'])->name('supplier-eligibility-requirement-sets.show');
+        Route::patch('/supplier-eligibility-requirement-sets/{requirement_set}', [SupplierEligibilityRequirementSetController::class, 'update'])->name('supplier-eligibility-requirement-sets.update');
+        Route::post('/supplier-eligibility-requirement-sets/{requirement_set}/approve', [SupplierEligibilityRequirementSetController::class, 'approve'])->name('supplier-eligibility-requirement-sets.approve');
+        Route::post('/supplier-eligibility-requirement-sets/{requirement_set}/new-draft', [SupplierEligibilityRequirementSetController::class, 'newDraft'])->name('supplier-eligibility-requirement-sets.new-draft');
 
         Route::get('/meetings', [MeetingController::class, 'index'])->name('meetings.index');
         Route::post('/meetings', [MeetingController::class, 'store'])->name('meetings.store');

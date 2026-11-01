@@ -1,20 +1,20 @@
 # Suppliers & Procurement (S04) — API
 
-> **Status:** Phase I suppliers/geo **IMPLEMENTED**; Phase II–V including II-A **NOT IMPLEMENTED**  
-> **Last updated:** 2026-10-31  
-> Base: `/api/v1` · Sanctum · Form Requests · API Resources · Policies · correlation ID header echo  
-> Errors: stable machine codes in `ApiResponse` envelope; cross-tenant → **404**  
-> Owner **D1–D4** (G1) applied; Phase II **II-D1–II-D4** + II-A controls **C1–C6**  
-> II-A contracts (§12): **ENGINEERING PRE-IMPLEMENTATION LOCK** — coding **NOT AUTHORIZED**
+> **Status:** Phase I suppliers/geo **IMPLEMENTED**; Phase II-A eligibility/documents **IMPLEMENTED — OWNER ACCEPTED** (2026-11-01); Phase II-B/II-C / Phase III–V **NOT IMPLEMENTED**
+> **Last updated:** 2026-11-01
+> Base: `/api/v1` · Sanctum · Form Requests · API Resources · Policies · correlation ID header echo
+> Errors: stable machine codes in `ApiResponse` envelope; cross-tenant → **404**
+> Owner **D1–D4** (G1); Phase II **II-D1–II-D4** + II-A **C1–C6** + **M1=A**
+> II-A contracts (§12): **BINDING** — acceptance [S04_PHASE_II_A_ACCEPTANCE_STATUS.md](../../00-project/S04_PHASE_II_A_ACCEPTANCE_STATUS.md)
 
 ---
 
 ## 1. Conventions
 
-- All mutating routes: CSRF/session as existing SPA pattern.  
-- `tenant_id` never accepted from body.  
-- Seasonal PR lists may accept `season_id` query **or** honor `X-Season-Id` when present — **ENGINEERING PROPOSAL**: validate consistency if both sent.  
-- Pagination: existing platform defaults.  
+- All mutating routes: CSRF/session as existing SPA pattern.
+- `tenant_id` never accepted from body.
+- Seasonal PR lists may accept `season_id` query **or** honor `X-Season-Id` when present — **ENGINEERING PROPOSAL**: validate consistency if both sent.
+- Pagination: existing platform defaults.
 - Idempotency: `Idempotency-Key` optional on approval/financial-review actions (**ENGINEERING PROPOSAL**).
 
 ---
@@ -184,7 +184,7 @@ Tenant-scoped aggregates only.
 
 ## 10. Audit
 
-Domain Actions call `AuthorizationSecurity` / module audit helpers for: supplier transitions, bank verify, evaluation approve, PR submit/approve/reject/return/cancel, matrix publish, delegation create/revoke, financial review.  
+Domain Actions call `AuthorizationSecurity` / module audit helpers for: supplier transitions, bank verify, evaluation approve, PR submit/approve/reject/return/cancel, matrix publish, delegation create/revoke, financial review.
 Payloads exclude secrets.
 
 **II-A additions (when implemented):** eligibility config create/update/approve; document-record create/supersede/verify/reject; eligibility check failures; SoD violations. No document storage paths, file contents, or secrets in audit values.
@@ -199,11 +199,11 @@ No `/rfqs`, `/supplier-offers`, `/purchase-orders`, `/goods-receipts`.
 
 ## 12. Phase II-A — Eligibility & Documents (exact contracts)
 
-> **Status:** Documented for implementation — **coding NOT AUTHORIZED**  
-> **Authority:** [PHASE_II_A_ELIGIBILITY_DESIGN.md](PHASE_II_A_ELIGIBILITY_DESIGN.md) · [S04-PHASE-II-A-DESIGN-APPROVAL-2026-10-31.md](../../10-decisions/S04-PHASE-II-A-DESIGN-APPROVAL-2026-10-31.md) · controls **C1–C6**  
-> Envelope: `ApiResponse::success` / error envelope with `code`, `message`, optional `errors` / `reasons`.  
-> Isolation: `TenantOwned` scope; unknown / cross-tenant ids → **404**.  
-> Auth: Sanctum + Policy deny-by-default.  
+> **Status:** **IMPLEMENTED — OWNER ACCEPTED** (2026-11-01); remediation re-audit **ACCEPTABLE**
+> **Authority:** [PHASE_II_A_ELIGIBILITY_DESIGN.md](PHASE_II_A_ELIGIBILITY_DESIGN.md) · [S04-PHASE-II-A-DESIGN-APPROVAL-2026-10-31.md](../../10-decisions/S04-PHASE-II-A-DESIGN-APPROVAL-2026-10-31.md) · **C1–C6** · **M1=A** · [acceptance](../../00-project/S04_PHASE_II_A_ACCEPTANCE_STATUS.md)
+> Envelope: `ApiResponse::success` / error envelope with `code`, `message`, optional `errors` / `reasons`.
+> Isolation: `TenantOwned` scope; unknown / cross-tenant ids → **404**.
+> Auth: Sanctum + Policy deny-by-default.
 > File bytes: existing Documents module (`POST /api/v1/documents`); II-A stores **eligibility metadata** only.
 
 ### 12.1 Eligibility requirement sets (versioned config)
@@ -237,9 +237,9 @@ No `/rfqs`, `/supplier-offers`, `/purchase-orders`, `/goods-receipts`.
 }
 ```
 
-- `config_key`: tenant-scoped slug; versions share the same key.  
-- `country_code` / `supplier_category_id`: nullable = wildcard (**C2**).  
-- First version for a `config_key` starts at `version_no = 1`.  
+- `config_key`: tenant-scoped slug; versions share the same key.
+- `country_code` / `supplier_category_id`: nullable = wildcard (**C2**).
+- First version for a `config_key` starts at `version_no = 1`.
 - `authored_by` / last editor = authenticated actor (server-set).
 
 **PATCH draft body:** same fields as create (partial); may replace `requirement_defs` array atomically for the draft.
@@ -309,13 +309,13 @@ File upload remains:
 }
 ```
 
-- `expires_at`: calendar **DATE** (nullable). Interpretation: end of that calendar day in **tenant timezone** (§12.6).  
-- Creates row with `verification_status=pending_verification`, `uploaded_by=actor`.  
-- `document_id` must be tenant-scoped Documents row; Prefer linked to same supplier.  
+- `expires_at`: calendar **DATE** (nullable). Interpretation: end of that calendar day in **tenant timezone** (§12.6).
+- Creates row with `verification_status=pending_verification`, `uploaded_by=actor`.
+- `document_id` must be tenant-scoped Documents row; Prefer linked to same supplier.
 - If a non-superseded current record exists for same supplier+requirement_key family, prefer **supersede** endpoint instead → else `422 SUPPLIER_DOCUMENT_RECORD_EXISTS`.
 
-**Verify body:** `{}` or `{ "comment": "…" }` → `verification_status=valid`, `verified_by`, `verified_at`.  
-**Reject body:** `{ "rejection_reason": "…" }` (required) → `rejected`.  
+**Verify body:** `{}` or `{ "comment": "…" }` → `verification_status=valid`, `verified_by`, `verified_at`.
+**Reject body:** `{ "rejection_reason": "…" }` (required) → `rejected`.
 **Supersede body:**
 
 ```json
@@ -392,10 +392,10 @@ Evaluation rules: **C2** applicability; **C4** live expiry vs `expires_at` (stor
 
 **II-A behavior when `to=active`:**
 
-1. Only allowed inbound edge for II-A: **`under_review` → `active`** (see design § activation).  
-2. Inside DB transaction + `lockForUpdate` on supplier: run `EligibilityService::assertActivatable` (**C4**).  
-3. On failure → **422** `SUPPLIER_NOT_ELIGIBLE` with `reasons[]` (same shape as §12.3).  
-4. On success → set `status=active`, `activated_at=now()` (UTC instant), transition row + audit.  
+1. Only allowed inbound edge for II-A: **`under_review` → `active`** (see design § activation).
+2. Inside DB transaction + `lockForUpdate` on supplier: run `EligibilityService::assertActivatable` (**C4**).
+3. On failure → **422** `SUPPLIER_NOT_ELIGIBLE` with `reasons[]` (same shape as §12.3).
+4. On success → set `status=active`, `activated_at=now()` (UTC instant), transition row + audit.
 5. **No** other endpoint may set `status` / `activated_at` (PATCH supplier must reject status mass-assignment — Phase I hardened).
 
 Other `to` values: existing Phase I graph; eligibility gate does not apply.
@@ -410,7 +410,10 @@ Other `to` values: existing Phase I graph; eligibility gate does not apply.
 | `SUPPLIER_ELIGIBILITY_CONFIG_IMMUTABLE` | 422 | Mutate approved version (**C1**) |
 | `SUPPLIER_ELIGIBILITY_CONFIG_NOT_DRAFT` | 422 | Approve non-draft |
 | `SUPPLIER_ELIGIBILITY_DEFS_EMPTY` | 422 | Approve empty defs |
+| `SUPPLIER_ELIGIBILITY_DEFS_NO_MANDATORY` | 422 | Approve optional-only pack (**Owner M1=A**, 2026-11-01) |
+| `SUPPLIER_ELIGIBILITY_NO_MANDATORY_REQUIREMENTS` | 422 | Applicable approved defs exist but none mandatory (fail closed) |
 | `SUPPLIER_DOCUMENT_MISSING` | 422 | Mandatory key unsatisfied |
+| `SUPPLIER_DOCUMENT_EVIDENCE_INVALID` | 422 | Verified record but backing Document archived/unlinked/reassigned/cross-tenant (**H1**) |
 | `SUPPLIER_DOCUMENT_EXPIRED` | 422 | Effective expiry elapsed |
 | `SUPPLIER_DOCUMENT_REJECTED` | 422 | Latest record rejected |
 | `SUPPLIER_DOCUMENT_PENDING_VERIFICATION` | 422 | Not yet verified |
@@ -421,9 +424,9 @@ Other `to` values: existing Phase I graph; eligibility gate does not apply.
 
 ### 12.6 Expiration calendar convention
 
-- `expires_at` stored as **DATE** (no time component).  
-- A document is expired when tenant-local **calendar date** (from `tenants.timezone`, default/fallback `Asia/Riyadh` per Settings/Dashboard conventions) is **strictly greater than** `expires_at` (expiry date is inclusive through end of that day).  
-- Instants (`verified_at`, `activated_at`, `checked_at`) remain UTC in DB / ISO-8601 responses.  
+- `expires_at` stored as **DATE** (no time component).
+- A document is expired when tenant-local **calendar date** (from `tenants.timezone`, default/fallback `Asia/Riyadh` per Settings/Dashboard conventions) is **strictly greater than** `expires_at` (expiry date is inclusive through end of that day).
+- Instants (`verified_at`, `activated_at`, `checked_at`) remain UTC in DB / ISO-8601 responses.
 - Scheduled job may flip stored `verification_status` to `expired` — **supplementary only** (**C4**); gates always recompute from `expires_at`.
 
 ### 12.7 Audit events (II-A)
