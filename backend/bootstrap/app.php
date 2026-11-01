@@ -154,6 +154,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
             $code = 'VALIDATION_ERROR';
             $errors = $e->errors();
+            $failed = $e->validator->failed();
 
             if (isset($errors['email'])) {
                 foreach ($errors['email'] as $message) {
@@ -164,12 +165,16 @@ return Application::configure(basePath: dirname(__DIR__))
                 }
             }
 
-            if (isset($errors['name']) && str_contains(implode(' ', $errors['name']), 'taken')) {
-                $code = 'ROLE_NAME_TAKEN';
-            }
+            // Role unique conflicts: map from failed Unique rules (locale-independent).
+            // Message substring matching breaks under Arabic (`:attribute مستخدم بالفعل.`).
+            if ($request->is('api/v1/roles', 'api/v1/roles/*')) {
+                if (isset($failed['name']['Unique'])) {
+                    $code = 'ROLE_NAME_TAKEN';
+                }
 
-            if (isset($errors['code']) && str_contains(implode(' ', $errors['code']), 'taken')) {
-                $code = 'ROLE_CODE_TAKEN';
+                if (isset($failed['code']['Unique'])) {
+                    $code = 'ROLE_CODE_TAKEN';
+                }
             }
 
             return ApiResponse::error(
