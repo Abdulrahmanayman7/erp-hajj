@@ -16,6 +16,7 @@ use App\Modules\SuppliersAndProcurement\Actions\UpsertPurchaseApprovalMatrixRule
 use App\Modules\SuppliersAndProcurement\Enums\PurchaseRequestApprovalInstanceStatus;
 use App\Modules\SuppliersAndProcurement\Enums\PurchaseRequestApprovalStepStatus;
 use App\Modules\SuppliersAndProcurement\Enums\PurchaseRequestStatus;
+use App\Modules\SuppliersAndProcurement\Exceptions\SupplierDomainException;
 use App\Modules\SuppliersAndProcurement\Models\PurchaseApprovalMatrix;
 use App\Modules\SuppliersAndProcurement\Models\PurchaseRequest;
 use App\Modules\SuppliersAndProcurement\Models\PurchaseRequestApprovalInstance;
@@ -30,7 +31,6 @@ use Laravel\Sanctum\Sanctum;
  *
  *   php vendor/bin/pest -c phpunit.mysql.xml tests/Feature/SuppliersAndProcurement/SupplierPhase4Wp03ApprovalDecisionsTest.php
  */
-
 beforeEach(function (): void {
     if (! in_array(DB::connection()->getDriverName(), ['mysql', 'mariadb'], true)) {
         $this->markTestSkipped('WP03 approval tests require MySQL/MariaDB erp_hajj_testing (-c phpunit.mysql.xml).');
@@ -396,7 +396,7 @@ it('lets only one concurrent approve win; loser gets 409', function (): void {
                     $ctx['request'],
                 );
                 $out[] = 'ok';
-            } catch (\App\Modules\SuppliersAndProcurement\Exceptions\SupplierDomainException $e) {
+            } catch (SupplierDomainException $e) {
                 $out[] = $e->errorCode();
             }
         }

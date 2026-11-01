@@ -21,7 +21,7 @@ return new class extends Migration
             ->get();
 
         if ($duplicates->isNotEmpty()) {
-            throw new \RuntimeException(
+            throw new RuntimeException(
                 'Cannot add supplier_contacts primary uniqueness: duplicate primary contacts exist for supplier_id(s): '
                 .$duplicates->pluck('supplier_id')->implode(', '),
             );

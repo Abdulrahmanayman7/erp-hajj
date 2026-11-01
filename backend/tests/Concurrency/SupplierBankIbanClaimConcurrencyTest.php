@@ -3,6 +3,7 @@
 use App\Core\Tenancy\Models\Tenant;
 use App\Models\User;
 use App\Modules\SuppliersAndProcurement\Enums\SupplierBankAccountStatus;
+use App\Modules\SuppliersAndProcurement\Exceptions\SupplierDomainException;
 use App\Modules\SuppliersAndProcurement\Models\SupplierBankAccount;
 use App\Modules\SuppliersAndProcurement\Models\SupplierBankIbanClaim;
 use App\Modules\SuppliersAndProcurement\Support\BankIbanClaimService;
@@ -291,7 +292,7 @@ test('F-M1 nested unique-conflict recovery maps to domain duplicate without inva
             $claims->acquireOrRefresh($fx['holders'][0]->fresh());
 
             expect(fn () => $claims->acquireOrRefresh($fx['holders'][1]->fresh()))
-                ->toThrow(\App\Modules\SuppliersAndProcurement\Exceptions\SupplierDomainException::class);
+                ->toThrow(SupplierDomainException::class);
 
             // Outer transaction still usable after mapped duplicate (no aborted state).
             expect(SupplierBankIbanClaim::query()->count())->toBe(1);

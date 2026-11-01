@@ -30,7 +30,6 @@ use App\Modules\SuppliersAndProcurement\Enums\PurchaseRequestApprovalInstanceSta
 use App\Modules\SuppliersAndProcurement\Enums\PurchaseRequestStatus;
 use App\Modules\SuppliersAndProcurement\Jobs\RoutePurchaseRequestApprovalJob;
 use App\Modules\SuppliersAndProcurement\Models\PurchaseApprovalMatrix;
-use App\Modules\SuppliersAndProcurement\Models\PurchaseApproverAuthority;
 use App\Modules\SuppliersAndProcurement\Models\PurchaseRequest;
 use App\Modules\SuppliersAndProcurement\Models\PurchaseRequestApprovalInstance;
 use App\Modules\SuppliersAndProcurement\Models\PurchaseRequestApprovalStep;
@@ -201,7 +200,7 @@ function prSnapshot(Tenant $tenant, int $prId): array
         $pr = PurchaseRequest::query()->whereKey($prId)->firstOrFail();
 
         return [
-            'status' => $pr->status instanceof \BackedEnum ? $pr->status->value : (string) $pr->status,
+            'status' => $pr->status instanceof BackedEnum ? $pr->status->value : (string) $pr->status,
             'instances' => PurchaseRequestApprovalInstance::query()
                 ->where('purchase_request_id', $pr->id)
                 ->where('version_no', $pr->version_no)
@@ -620,7 +619,7 @@ try {
 
             return [
                 'approved_step_rows' => $approvedSteps,
-                'status' => $status instanceof \BackedEnum ? $status->value : (string) $status,
+                'status' => $status instanceof BackedEnum ? $status->value : (string) $status,
             ];
         });
         $dup = $state['approved_step_rows'] > 1 ? 1 : 0;

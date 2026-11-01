@@ -91,7 +91,6 @@ final class CreateSupplierEvaluation
     }
 
     /**
-     * @param  mixed  $scores
      * @return list<array{criterion_id: int, score: string, note: ?string}>|null
      */
     private function normalizeDraftScores(mixed $scores): ?array

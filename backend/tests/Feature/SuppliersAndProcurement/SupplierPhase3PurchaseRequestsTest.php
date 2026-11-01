@@ -2,6 +2,7 @@
 
 use App\Core\Authorization\Events\AuthorizationSecurityEvent;
 use App\Core\Tenancy\Models\Tenant;
+use App\Models\User;
 use App\Modules\OrganizationStructure\Models\OrganizationUnit;
 use App\Modules\SeasonPilgrims\Models\Season;
 use App\Modules\SuppliersAndProcurement\Enums\PurchaseRequestStatus;
@@ -11,6 +12,7 @@ use App\Modules\SuppliersAndProcurement\Models\PurchaseRequestFinancialReview;
 use App\Modules\SuppliersAndProcurement\Models\PurchaseRequestVersion;
 use App\Modules\SuppliersAndProcurement\Models\Supplier;
 use App\Modules\SuppliersAndProcurement\Models\SupplierDocumentRequirementDef;
+use App\Modules\SuppliersAndProcurement\Support\PurchaseRequestNumberGenerator;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -23,7 +25,6 @@ use Laravel\Sanctum\Sanctum;
  *
  *   php vendor/bin/pest -c phpunit.mysql.xml tests/Feature/SuppliersAndProcurement/SupplierPhase3PurchaseRequestsTest.php
  */
-
 beforeEach(function (): void {
     if (! in_array(DB::connection()->getDriverName(), ['mysql', 'mariadb'], true)) {
         $this->markTestSkipped('Phase III PR tests require MySQL erp_hajj_testing (-c phpunit.mysql.xml).');
@@ -36,9 +37,9 @@ beforeEach(function (): void {
  * @return array{
  *   tenant: Tenant,
  *   unit: OrganizationUnit,
- *   creator: \App\Models\User,
- *   viewer: \App\Models\User,
- *   financial: \App\Models\User,
+ *   creator: User,
+ *   viewer: User,
+ *   financial: User,
  *   base: string
  * }
  */
@@ -371,7 +372,7 @@ it('rolls back PR sequence allocation when the surrounding transaction rolls bac
     withTenant($ctx['tenant'], function () use ($ctx): void {
         try {
             DB::transaction(function (): void {
-                $number = app(\App\Modules\SuppliersAndProcurement\Support\PurchaseRequestNumberGenerator::class)->next();
+                $number = app(PurchaseRequestNumberGenerator::class)->next();
                 expect($number)->toBe('PR-000001');
                 throw new RuntimeException('force-sequence-rollback');
             });
@@ -384,7 +385,7 @@ it('rolls back PR sequence allocation when the surrounding transaction rolls bac
             ->value('next_value');
         expect($seq)->toBeNull();
 
-        $reissued = app(\App\Modules\SuppliersAndProcurement\Support\PurchaseRequestNumberGenerator::class)->next();
+        $reissued = app(PurchaseRequestNumberGenerator::class)->next();
         expect($reissued)->toBe('PR-000001');
     });
 });

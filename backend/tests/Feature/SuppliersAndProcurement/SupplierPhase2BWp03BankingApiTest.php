@@ -2,10 +2,10 @@
 
 use App\Core\Authorization\Events\AuthorizationSecurityEvent;
 use App\Core\Tenancy\Models\Tenant;
-use App\Modules\SuppliersAndProcurement\Enums\SupplierBankAccountStatus;
-use App\Modules\SuppliersAndProcurement\Models\SupplierBankAccount;
-use App\Modules\SuppliersAndProcurement\Models\SupplierBankIbanClaim;
+use App\Modules\SuppliersAndProcurement\Models\Supplier;
+use App\Modules\SuppliersAndProcurement\Support\EligibilityService;
 use Illuminate\Support\Facades\Event;
+use Laravel\Sanctum\Sanctum;
 
 require_once __DIR__.'/Helpers.php';
 
@@ -14,7 +14,7 @@ const WP03_IBAN_B = 'SA4420000001234567891234';
 
 /**
  * @param  list<string>  $extra
- * @return array{tenant: Tenant, supplier: \App\Modules\SuppliersAndProcurement\Models\Supplier, base: string}
+ * @return array{tenant: Tenant, supplier: Supplier, base: string}
  */
 function wp03Ctx(array $extra = []): array
 {
@@ -236,7 +236,7 @@ test('WP03-T8 supersession primary transfer and revoke through API', function ()
     $base = "/api/v1/suppliers/{$supplier->id}/bank-accounts";
 
     $creator = createSupplierUserWith(['suppliers.view', 'suppliers.manage_banking'], $tenant);
-    \Laravel\Sanctum\Sanctum::actingAs($creator);
+    Sanctum::actingAs($creator);
     $v1 = spaPostJson($base, [
         'account_holder_name' => 'شركة',
         'bank_name' => 'بنك',
@@ -244,10 +244,10 @@ test('WP03-T8 supersession primary transfer and revoke through API', function ()
     ])->assertCreated()->json('data.id');
 
     $verifier = createSupplierUserWith(['suppliers.view', 'suppliers.verify_banking'], $tenant);
-    \Laravel\Sanctum\Sanctum::actingAs($verifier);
+    Sanctum::actingAs($verifier);
     spaPostJson("{$base}/{$v1}/verify")->assertOk();
 
-    \Laravel\Sanctum\Sanctum::actingAs($creator);
+    Sanctum::actingAs($creator);
     spaPostJson("{$base}/{$v1}/set-primary")->assertOk()
         ->assertJsonPath('data.is_primary', true);
 
@@ -262,11 +262,11 @@ test('WP03-T8 supersession primary transfer and revoke through API', function ()
         ->assertJsonPath('data.is_primary', true)
         ->assertJsonPath('data.status', 'verified');
 
-    \Laravel\Sanctum\Sanctum::actingAs($verifier);
+    Sanctum::actingAs($verifier);
     spaPostJson("{$base}/{$v2}/verify")->assertOk()
         ->assertJsonPath('data.is_primary', false);
 
-    \Laravel\Sanctum\Sanctum::actingAs($creator);
+    Sanctum::actingAs($creator);
     spaPostJson("{$base}/{$v2}/set-primary")->assertOk()
         ->assertJsonPath('data.is_primary', true);
     spaGetJson("{$base}/{$v1}")->assertJsonPath('data.is_primary', false);
@@ -317,17 +317,17 @@ test('WP03-T11 historical/revoked versions remain revealable with view_banking',
     ], $tenant);
     $verifier = createSupplierUserWith(['suppliers.view', 'suppliers.verify_banking'], $tenant);
 
-    \Laravel\Sanctum\Sanctum::actingAs($manager);
+    Sanctum::actingAs($manager);
     $id = spaPostJson($base, [
         'account_holder_name' => 'شركة',
         'bank_name' => 'بنك',
         'iban' => WP03_IBAN,
     ])->assertCreated()->json('data.id');
 
-    \Laravel\Sanctum\Sanctum::actingAs($verifier);
+    Sanctum::actingAs($verifier);
     spaPostJson("{$base}/{$id}/verify")->assertOk();
 
-    \Laravel\Sanctum\Sanctum::actingAs($manager);
+    Sanctum::actingAs($manager);
     spaPostJson("{$base}/{$id}/revoke", ['reason' => 'إبطال بعد التحقق'])->assertOk();
 
     spaPostJson("{$base}/{$id}/reveal", ['reason' => 'مراجعة تاريخية مشروعة'])
@@ -337,7 +337,7 @@ test('WP03-T11 historical/revoked versions remain revealable with view_banking',
 });
 
 test('WP03-T12 II-D2 activation still independent of banking API presence', function (): void {
-    $ref = new ReflectionClass(\App\Modules\SuppliersAndProcurement\Support\EligibilityService::class);
+    $ref = new ReflectionClass(EligibilityService::class);
     $src = file_get_contents($ref->getFileName());
     expect($src)->not->toContain('SupplierBankAccount')
         ->and($src)->not->toContain('bank_account');

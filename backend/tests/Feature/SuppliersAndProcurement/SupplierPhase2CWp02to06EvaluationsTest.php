@@ -2,16 +2,17 @@
 
 use App\Core\Authorization\Events\AuthorizationSecurityEvent;
 use App\Core\Tenancy\Models\Tenant;
+use App\Models\User;
 use App\Modules\Notifications\Enums\NotificationType;
 use App\Modules\Notifications\Models\Notification;
 use App\Modules\SeasonPilgrims\Models\Season;
 use App\Modules\SuppliersAndProcurement\Enums\CriteriaPackStatus;
-use App\Modules\SuppliersAndProcurement\Enums\EvaluationStatus;
 use App\Modules\SuppliersAndProcurement\Enums\SupplierStatus;
 use App\Modules\SuppliersAndProcurement\Models\Supplier;
 use App\Modules\SuppliersAndProcurement\Models\SupplierCategory;
 use App\Modules\SuppliersAndProcurement\Models\SupplierEvaluation;
 use App\Modules\SuppliersAndProcurement\Models\SupplierEvaluationCriteriaPack;
+use App\Modules\SuppliersAndProcurement\Support\EvaluationNumberGenerator;
 use Database\Factories\SupplierEvaluationCriteriaPackFactory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
@@ -22,7 +23,6 @@ use Laravel\Sanctum\Sanctum;
  *
  *   php vendor/bin/pest -c phpunit.mysql.xml tests/Feature/SuppliersAndProcurement/SupplierPhase2CWp02to06EvaluationsTest.php
  */
-
 beforeEach(function (): void {
     if (! in_array(DB::connection()->getDriverName(), ['mysql', 'mariadb'], true)) {
         $this->markTestSkipped('II-C evaluation tests require MySQL erp_hajj_testing (-c phpunit.mysql.xml).');
@@ -38,10 +38,10 @@ beforeEach(function (): void {
  *   category: SupplierCategory,
  *   pack: SupplierEvaluationCriteriaPack,
  *   criterionId: int,
- *   preparer: \App\Models\User,
- *   approver: \App\Models\User,
- *   appealer: \App\Models\User,
- *   viewer: \App\Models\User,
+ *   preparer: User,
+ *   approver: User,
+ *   appealer: User,
+ *   viewer: User,
  *   base: string
  * }
  */
@@ -152,7 +152,7 @@ test('IIC evaluation sequence rolls back with surrounding transaction', function
     withTenant($ctx['tenant'], function () use ($ctx): void {
         try {
             DB::transaction(function (): void {
-                $n = app(\App\Modules\SuppliersAndProcurement\Support\EvaluationNumberGenerator::class)->next();
+                $n = app(EvaluationNumberGenerator::class)->next();
                 expect($n)->toBe('SEV-000001');
                 throw new RuntimeException('force-sev-rollback');
             });
@@ -160,7 +160,7 @@ test('IIC evaluation sequence rolls back with surrounding transaction', function
             expect($e->getMessage())->toBe('force-sev-rollback');
         }
         expect(DB::table('supplier_evaluation_number_sequences')->where('tenant_id', $ctx['tenant']->id)->value('next_value'))->toBeNull();
-        expect(app(\App\Modules\SuppliersAndProcurement\Support\EvaluationNumberGenerator::class)->next())->toBe('SEV-000001');
+        expect(app(EvaluationNumberGenerator::class)->next())->toBe('SEV-000001');
     });
 });
 

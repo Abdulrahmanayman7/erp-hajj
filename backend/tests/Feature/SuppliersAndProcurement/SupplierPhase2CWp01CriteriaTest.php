@@ -2,10 +2,12 @@
 
 use App\Core\Authorization\Events\AuthorizationSecurityEvent;
 use App\Core\Tenancy\Models\Tenant;
+use App\Models\User;
 use App\Modules\SuppliersAndProcurement\Enums\CriteriaPackStatus;
 use App\Modules\SuppliersAndProcurement\Models\SupplierCategory;
 use App\Modules\SuppliersAndProcurement\Models\SupplierEvaluationCriteriaPack;
 use App\Modules\SuppliersAndProcurement\Support\PublishedCriteriaResolver;
+use Database\Factories\SupplierEvaluationCriteriaPackFactory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Laravel\Sanctum\Sanctum;
@@ -16,7 +18,6 @@ use Laravel\Sanctum\Sanctum;
  * Run (MySQL isolated):
  *   php vendor/bin/pest -c phpunit.mysql.xml tests/Feature/SuppliersAndProcurement/SupplierPhase2CWp01CriteriaTest.php
  */
-
 beforeEach(function (): void {
     if (! in_array(DB::connection()->getDriverName(), ['mysql', 'mariadb'], true)) {
         $this->markTestSkipped('WP-01 criteria tests require MySQL erp_hajj_testing (-c phpunit.mysql.xml).');
@@ -29,9 +30,9 @@ beforeEach(function (): void {
  * @return array{
  *   tenant: Tenant,
  *   category: SupplierCategory,
- *   manager: \App\Models\User,
- *   publisher: \App\Models\User,
- *   viewer: \App\Models\User,
+ *   manager: User,
+ *   publisher: User,
+ *   viewer: User,
  *   base: string
  * }
  */
@@ -385,7 +386,7 @@ test('WP01 PublishedCriteriaResolver fails closed for missing invalid unpublishe
  */
 function SupplierEvaluationCriteriaPackFactory_withLines(SupplierEvaluationCriteriaPack $pack, array $lines): void
 {
-    Database\Factories\SupplierEvaluationCriteriaPackFactory::withLines($pack, $lines);
+    SupplierEvaluationCriteriaPackFactory::withLines($pack, $lines);
 }
 
 test('WP01 empty criteria cannot publish and validation rejects bad payload', function (): void {

@@ -12,13 +12,14 @@ use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\TestResponse;
 use Laravel\Sanctum\Sanctum;
+use Tests\ConcurrencyTestCase;
 use Tests\TestCase;
 
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
     ->in('Feature');
 
-pest()->extend(Tests\ConcurrencyTestCase::class)
+pest()->extend(ConcurrencyTestCase::class)
     ->in('Concurrency');
 
 require_once __DIR__.'/Feature/SeasonPilgrims/Helpers.php';

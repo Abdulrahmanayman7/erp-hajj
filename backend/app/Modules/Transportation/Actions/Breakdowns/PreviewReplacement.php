@@ -7,7 +7,6 @@ use App\Modules\Transportation\Enums\PassengerStatus;
 use App\Modules\Transportation\Enums\RunStatus;
 use App\Modules\Transportation\Exceptions\TransportationDomainException;
 use App\Modules\Transportation\Models\TransportRunPassenger;
-use App\Modules\Transportation\Models\TransportSeasonVehicle;
 use App\Modules\Transportation\Models\TransportVehicleBreakdown;
 use App\Modules\Transportation\Models\TransportVehicleRun;
 use App\Modules\Transportation\Support\ResourceOverlapGuard;
@@ -75,7 +74,7 @@ final class PreviewReplacement
             ->with(['currentVehicleAssignment.seasonVehicle.vehicle', 'movement'])
             ->orderBy('id')
             ->get()
-            ->map(function (TransportVehicleRun $candidate) use ($capacity): ?array {
+            ->map(function (TransportVehicleRun $candidate): ?array {
                 $sv = $candidate->currentVehicleAssignment?->seasonVehicle;
                 if ($sv === null || ! $sv->is_active) {
                     return null;

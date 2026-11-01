@@ -9,6 +9,7 @@ use App\Modules\SuppliersAndProcurement\Models\Supplier;
 use App\Modules\SuppliersAndProcurement\Models\SupplierCategory;
 use App\Modules\SuppliersAndProcurement\Models\SupplierEvaluation;
 use App\Modules\SuppliersAndProcurement\Models\SupplierEvaluationCriteriaPack;
+use App\Modules\SuppliersAndProcurement\Models\SupplierEvaluationScoreSnapshot;
 use Database\Factories\SupplierEvaluationCriteriaPackFactory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -225,7 +226,7 @@ test('IIC concurrent approve of same pending yields one approved evaluation SEC-
         $evaluation->save();
 
         // Minimal snapshot so approved state is coherent.
-        $snap = new \App\Modules\SuppliersAndProcurement\Models\SupplierEvaluationScoreSnapshot;
+        $snap = new SupplierEvaluationScoreSnapshot;
         $snap->forceFill([
             'evaluation_id' => $evaluation->id,
             'source_criterion_id' => $criterionId,

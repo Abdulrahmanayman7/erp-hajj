@@ -15,6 +15,7 @@ use App\Modules\SuppliersAndProcurement\Exceptions\SupplierDomainException;
 use App\Modules\SuppliersAndProcurement\Models\Supplier;
 use App\Modules\SuppliersAndProcurement\Models\SupplierBankAccount;
 use App\Modules\SuppliersAndProcurement\Models\SupplierBankIbanClaim;
+use App\Modules\SuppliersAndProcurement\Support\BankingTransaction;
 use App\Modules\SuppliersAndProcurement\Support\EligibilityService;
 use App\Modules\SuppliersAndProcurement\Support\IbanFingerprint;
 use Illuminate\Support\Facades\DB;
@@ -350,5 +351,5 @@ test('WP02-T11 II-D2 EligibilityService still ignores banking', function (): voi
 });
 
 test('WP02-T12 BankingTransaction outermost attempts remain two', function (): void {
-    expect(\App\Modules\SuppliersAndProcurement\Support\BankingTransaction::ATTEMPTS)->toBe(2);
+    expect(BankingTransaction::ATTEMPTS)->toBe(2);
 });

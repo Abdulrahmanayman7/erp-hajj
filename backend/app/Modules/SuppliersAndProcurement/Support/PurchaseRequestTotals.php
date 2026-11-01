@@ -16,6 +16,7 @@ final class PurchaseRequestTotals
             /** @var PurchaseRequestLine $line */
             if ($line->line_estimate === null && $line->unit_estimate === null) {
                 $hasUnpriced = true;
+
                 continue;
             }
 
@@ -26,6 +27,7 @@ final class PurchaseRequestTotals
 
             if ($lineTotal === null) {
                 $hasUnpriced = true;
+
                 continue;
             }
 

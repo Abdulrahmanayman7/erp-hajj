@@ -3,22 +3,31 @@
 use App\Core\Authorization\Events\AuthorizationSecurityEvent;
 use App\Core\Authorization\PermissionCatalog;
 use App\Core\Tenancy\Models\Tenant;
+use App\Models\User;
 use App\Modules\Documents\Enums\DocumentLinkableType;
 use App\Modules\Documents\Models\Document;
 use App\Modules\SuppliersAndProcurement\Enums\DocumentVerificationStatus;
 use App\Modules\SuppliersAndProcurement\Enums\SupplierStatus;
 use App\Modules\SuppliersAndProcurement\Enums\SupplierType;
+use App\Modules\SuppliersAndProcurement\Exceptions\SupplierDomainException;
 use App\Modules\SuppliersAndProcurement\Models\Supplier;
+use App\Modules\SuppliersAndProcurement\Models\SupplierCategory;
 use App\Modules\SuppliersAndProcurement\Models\SupplierDocumentRecord;
 use App\Modules\SuppliersAndProcurement\Models\SupplierDocumentRequirementDef;
 use App\Modules\SuppliersAndProcurement\Models\SupplierEligibilityRequirementSet;
+use App\Modules\SuppliersAndProcurement\Models\SupplierEligibilityRequirementSetEditor;
+use App\Modules\SuppliersAndProcurement\Support\EligibilityRequirementDefWriter;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Database\QueryException;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Testing\TestResponse;
 use Laravel\Sanctum\Sanctum;
 
 afterEach(function (): void {
@@ -26,7 +35,7 @@ afterEach(function (): void {
 });
 
 /**
- * @return array{tenant: Tenant, owner: \App\Models\User, approver: \App\Models\User, verifier: \App\Models\User}
+ * @return array{tenant: Tenant, owner: User, approver: User, verifier: User}
  */
 function iiaContext(): array
 {
@@ -84,7 +93,7 @@ function iiaReadySupplier(array $ctx, array $defRows = []): array
     return ['supplier' => $supplier, 'set' => $set, 'def' => $def];
 }
 
-function iiaActivate(Supplier $supplier): Illuminate\Testing\TestResponse
+function iiaActivate(Supplier $supplier): TestResponse
 {
     return spaPostJson("/api/v1/suppliers/{$supplier->id}/transition", ['to' => 'active']);
 }
@@ -416,7 +425,7 @@ test('IIA document record references are validated', function (): void {
 
 test('IIA-C2 wildcard and specific rows dedupe by requirement_key and country/category narrow applicability', function (): void {
     $ctx = iiaContext();
-    $category = withTenant($ctx['tenant'], fn () => App\Modules\SuppliersAndProcurement\Models\SupplierCategory::factory()->create());
+    $category = withTenant($ctx['tenant'], fn () => SupplierCategory::factory()->create());
     $ready = iiaReadySupplier($ctx, [
         ['requirement_key' => 'commercial_registration', 'supplier_type' => SupplierType::Company, 'country_code' => null],
         ['requirement_key' => 'commercial_registration', 'supplier_type' => SupplierType::Company, 'country_code' => 'SA'],
@@ -883,7 +892,7 @@ test('IIA-T14 supplier hard-delete is blocked by linked documents and by eligibi
 test('IIA supplier category referenced by a requirement definition cannot be deleted', function (): void {
     $ctx = iiaContext();
     Sanctum::actingAs($ctx['owner']);
-    $category = withTenant($ctx['tenant'], fn () => App\Modules\SuppliersAndProcurement\Models\SupplierCategory::factory()->create());
+    $category = withTenant($ctx['tenant'], fn () => SupplierCategory::factory()->create());
     approvedEligibilityConfig($ctx['tenant'], [[
         'requirement_key' => 'transport_permit',
         'supplier_type' => SupplierType::Company,
@@ -917,16 +926,9 @@ test('IIA document record resource never leaks storage paths', function (): void
     expect($json)->not->toContain('storage_path')->not->toContain('stored_filename')->not->toContain('checksum');
 });
 
-
 // ===========================================================================
 // Audit remediation (H1 / M1 / M2 / M3 / M4 / M5 + additional coverage)
 // ===========================================================================
-
-use App\Modules\SuppliersAndProcurement\Models\SupplierCategory;
-use App\Modules\SuppliersAndProcurement\Models\SupplierEligibilityRequirementSetEditor;
-use App\Modules\SuppliersAndProcurement\Support\EligibilityRequirementDefWriter;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
 /**
  * Approved config + supplier + a VALID record whose Document is linked to the supplier.
@@ -1279,7 +1281,7 @@ test('M3 wildcard uniqueness is enforced by STORED generated columns on MySQL/Ma
 
     // Writing a generated column directly is refused by the engine.
     expect(fn () => DB::table('supplier_document_requirement_defs')->insert($row(['requirement_key' => 'other', 'country_code_norm' => 'ZZ'])))
-        ->toThrow(\Illuminate\Database\QueryException::class);
+        ->toThrow(QueryException::class);
 });
 
 test('M3 on SQLite the model keeps the physical norm columns in sync (documented dual strategy)', function (): void {
@@ -1313,9 +1315,9 @@ test('M4 the def writer refuses an approved set and approved defs keep their row
         $writer = app(EligibilityRequirementDefWriter::class);
 
         expect(fn () => $writer->replace($approved, [iiaDefPayload(['requirement_key' => 'sneaky'])]))
-            ->toThrow(\App\Modules\SuppliersAndProcurement\Exceptions\SupplierDomainException::class);
+            ->toThrow(SupplierDomainException::class);
         expect(fn () => $writer->copy($ready['set']->fresh(), $approved))
-            ->toThrow(\App\Modules\SuppliersAndProcurement\Exceptions\SupplierDomainException::class);
+            ->toThrow(SupplierDomainException::class);
 
         expect($approved->requirementDefs()->count())->toBe(1)
             ->and($approved->requirementDefs()->first()->requirement_key)->toBe('commercial_registration');
@@ -1571,4 +1573,3 @@ test('II-A audit payloads never carry storage paths, filenames or secrets', func
     });
     expect($seen)->toBeGreaterThan(3);
 });
-

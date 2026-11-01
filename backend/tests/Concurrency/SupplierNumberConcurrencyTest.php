@@ -1,6 +1,7 @@
 <?php
 
 use App\Core\Tenancy\Models\Tenant;
+use App\Modules\SuppliersAndProcurement\Support\SupplierNumberGenerator;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\Process\Process;
 
@@ -147,7 +148,7 @@ test('SUP sequence rolls back with surrounding transaction', function (): void {
     withTenant($tenant, function () use ($tenant): void {
         try {
             DB::transaction(function (): void {
-                $n = app(\App\Modules\SuppliersAndProcurement\Support\SupplierNumberGenerator::class)->next();
+                $n = app(SupplierNumberGenerator::class)->next();
                 expect($n)->toBe('SUP-000001');
                 throw new RuntimeException('force-sup-rollback');
             });
@@ -155,6 +156,6 @@ test('SUP sequence rolls back with surrounding transaction', function (): void {
             expect($e->getMessage())->toBe('force-sup-rollback');
         }
         expect(DB::table('supplier_number_sequences')->where('tenant_id', $tenant->id)->value('next_value'))->toBeNull();
-        expect(app(\App\Modules\SuppliersAndProcurement\Support\SupplierNumberGenerator::class)->next())->toBe('SUP-000001');
+        expect(app(SupplierNumberGenerator::class)->next())->toBe('SUP-000001');
     });
 });

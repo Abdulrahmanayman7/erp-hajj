@@ -4,7 +4,9 @@ use App\Core\Tenancy\Models\Tenant;
 use App\Modules\SuppliersAndProcurement\Enums\DocumentVerificationStatus;
 use App\Modules\SuppliersAndProcurement\Enums\SupplierStatus;
 use App\Modules\SuppliersAndProcurement\Enums\SupplierType;
+use App\Modules\SuppliersAndProcurement\Models\Supplier;
 use App\Modules\SuppliersAndProcurement\Models\SupplierDocumentRecord;
+use App\Modules\SuppliersAndProcurement\Models\SupplierDocumentRequirementDef;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\Process\Process;
@@ -49,7 +51,7 @@ function supplierRecordWorkerEnv(): array
 }
 
 /**
- * @return array{tenant: Tenant, actor_id: int, supplier_id: int, def_id: int, supplier: \App\Modules\SuppliersAndProcurement\Models\Supplier, def: \App\Modules\SuppliersAndProcurement\Models\SupplierDocumentRequirementDef}
+ * @return array{tenant: Tenant, actor_id: int, supplier_id: int, def_id: int, supplier: Supplier, def: SupplierDocumentRequirementDef}
  */
 function supplierRecordRaceFixture(): array
 {

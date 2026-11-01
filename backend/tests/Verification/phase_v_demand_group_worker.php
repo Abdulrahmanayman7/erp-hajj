@@ -24,7 +24,6 @@ use App\Modules\SuppliersAndProcurement\Models\PurchaseDemandGroup;
 use App\Modules\SuppliersAndProcurement\Models\PurchaseRequest;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 putenv('APP_ENV=testing');
 putenv('DB_CONNECTION=mysql');

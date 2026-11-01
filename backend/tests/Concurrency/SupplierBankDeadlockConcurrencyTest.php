@@ -5,6 +5,7 @@ use App\Modules\SuppliersAndProcurement\Actions\CreateSupplierBankAccount;
 use App\Modules\SuppliersAndProcurement\Models\SupplierBankAccount;
 use App\Modules\SuppliersAndProcurement\Models\SupplierBankIbanClaim;
 use App\Modules\SuppliersAndProcurement\Support\BankingTransaction;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\Process\Process;
 
@@ -165,14 +166,14 @@ test('WP05-D2 BankingTransaction retry exhaustion surfaces QueryException after 
     try {
         BankingTransaction::run(function () use (&$attempts): void {
             $attempts++;
-            throw new Illuminate\Database\QueryException(
+            throw new QueryException(
                 'mysql',
                 'select 1',
                 [],
                 new PDOException('SQLSTATE[40001]: Serialization failure: 1213 Deadlock found when trying to get lock', 40001),
             );
         });
-    } catch (Illuminate\Database\QueryException $e) {
+    } catch (QueryException $e) {
         $thrown = $e;
     }
 

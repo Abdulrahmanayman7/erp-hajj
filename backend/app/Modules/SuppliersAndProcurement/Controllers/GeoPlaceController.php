@@ -2,10 +2,10 @@
 
 namespace App\Modules\SuppliersAndProcurement\Controllers;
 
+use App\Core\Shared\ApiResponse;
 use App\Modules\SuppliersAndProcurement\Actions\ListGeoPlaces;
 use App\Modules\SuppliersAndProcurement\Models\GeoPlace;
 use App\Modules\SuppliersAndProcurement\Resources\GeoPlaceResource;
-use App\Core\Shared\ApiResponse;
 use App\Modules\SuppliersAndProcurement\Support\SupplierApiResponse;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;

@@ -10,6 +10,7 @@ use App\Modules\SuppliersAndProcurement\Actions\UpsertPurchaseApprovalMatrixRule
 use App\Modules\SuppliersAndProcurement\Enums\PurchaseApprovalMatrixStatus;
 use App\Modules\SuppliersAndProcurement\Exceptions\SupplierDomainException;
 use App\Modules\SuppliersAndProcurement\Models\PurchaseApprovalMatrix;
+use App\Modules\SuppliersAndProcurement\Models\PurchaseApprovalMatrixRule;
 use App\Modules\SuppliersAndProcurement\Support\PurchaseApprovalMatrixPublishValidator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -20,7 +21,6 @@ use Illuminate\Support\Facades\Event;
  *
  *   php vendor/bin/pest -c phpunit.mysql.xml tests/Feature/SuppliersAndProcurement/SupplierPhase4Wp01cPublishTest.php
  */
-
 beforeEach(function (): void {
     if (! in_array(DB::connection()->getDriverName(), ['mysql', 'mariadb'], true)) {
         $this->markTestSkipped('WP01-C tests require MySQL/MariaDB erp_hajj_testing (-c phpunit.mysql.xml).');
@@ -314,7 +314,7 @@ it('allows overlapping bands when specificity differs', function (): void {
 });
 
 it('computes specificity score per publish validator contract', function (): void {
-    $rule = new \App\Modules\SuppliersAndProcurement\Models\PurchaseApprovalMatrixRule([
+    $rule = new PurchaseApprovalMatrixRule([
         'min_amount' => '10',
         'max_amount' => '20',
         'request_kind' => 'seasonal',

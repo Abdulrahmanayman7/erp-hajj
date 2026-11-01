@@ -1,5 +1,6 @@
 <?php
 
+use App\Core\Tenancy\Exceptions\MissingTenantContextException;
 use App\Core\Tenancy\Models\Tenant;
 use App\Models\User;
 use App\Modules\OrganizationStructure\Models\OrganizationUnit;
@@ -17,7 +18,6 @@ use Illuminate\Support\Facades\Schema;
  *
  *   php vendor/bin/pest -c phpunit.mysql.xml tests/Feature/SuppliersAndProcurement/SupplierPhase4Wp01aApprovalConfigSchemaTest.php
  */
-
 beforeEach(function (): void {
     if (! in_array(DB::connection()->getDriverName(), ['mysql', 'mariadb'], true)) {
         $this->markTestSkipped('WP01-A schema tests require MySQL/MariaDB erp_hajj_testing (-c phpunit.mysql.xml).');
@@ -143,5 +143,5 @@ it('enforces unique level_order per matrix', function (): void {
 
 it('fails closed without tenant context when querying matrices', function (): void {
     expect(fn () => PurchaseApprovalMatrix::query()->count())
-        ->toThrow(\App\Core\Tenancy\Exceptions\MissingTenantContextException::class);
+        ->toThrow(MissingTenantContextException::class);
 });

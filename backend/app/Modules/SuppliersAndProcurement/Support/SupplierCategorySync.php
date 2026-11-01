@@ -3,6 +3,7 @@
 namespace App\Modules\SuppliersAndProcurement\Support;
 
 use App\Modules\SuppliersAndProcurement\Models\Supplier;
+use App\Modules\SuppliersAndProcurement\Models\SupplierCategory;
 use App\Modules\SuppliersAndProcurement\Models\SupplierCategoryCoverage;
 use Illuminate\Support\Collection;
 
@@ -11,7 +12,7 @@ final class SupplierCategorySync
     /**
      * Sync category links and drop coverages for categories no longer linked.
      *
-     * @param  Collection<int, \App\Modules\SuppliersAndProcurement\Models\SupplierCategory>  $categories
+     * @param  Collection<int, SupplierCategory>  $categories
      */
     public function sync(Supplier $supplier, Collection $categories, int $tenantId): void
     {

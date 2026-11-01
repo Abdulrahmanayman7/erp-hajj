@@ -5,6 +5,7 @@ use App\Modules\Audit\Models\AuditLog;
 use App\Modules\Transportation\Enums\BreakdownStatus;
 use App\Modules\Transportation\Models\TransportVehicleBreakdown;
 use App\Modules\Transportation\Models\TransportVehicleReplacement;
+use Laravel\Sanctum\Sanctum;
 
 it('records a breakdown on a run and lists it for the season', function (): void {
     actingAsTenantOwner();
@@ -37,7 +38,7 @@ it('rejects breakdown operate without permission and closed season writes', func
         'reason' => 'عطل بدون صلاحية تشغيل',
     ], $h)->assertForbidden();
 
-    Laravel\Sanctum\Sanctum::actingAs($owner->fresh());
+    Sanctum::actingAs($owner->fresh());
     spaPostJson("/api/v1/seasons/{$s['season']['id']}/close")->assertOk();
     spaPostJson("/api/v1/transport-runs/{$s['run']['id']}/breakdowns", [
         'reason' => 'عطل بعد إغلاق الموسم',

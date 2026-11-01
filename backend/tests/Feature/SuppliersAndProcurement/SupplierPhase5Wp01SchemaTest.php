@@ -19,7 +19,6 @@ use Illuminate\Support\Facades\Schema;
  *
  *   php vendor/bin/pest -c phpunit.mysql.xml tests/Feature/SuppliersAndProcurement/SupplierPhase5Wp01SchemaTest.php
  */
-
 beforeEach(function (): void {
     if (! in_array(DB::connection()->getDriverName(), ['mysql', 'mariadb'], true)) {
         $this->markTestSkipped('Phase V schema tests require MySQL/MariaDB erp_hajj_testing (-c phpunit.mysql.xml).');
