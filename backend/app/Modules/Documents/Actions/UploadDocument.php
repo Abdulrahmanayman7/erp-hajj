@@ -48,6 +48,11 @@ final class UploadDocument
                     isset($data['linkable_type']) ? (string) $data['linkable_type'] : null,
                     $data['linkable_id'] ?? null,
                 );
+                $this->references->assertActorMayUseLink(
+                    $actor,
+                    $linkableType,
+                    $linkableId !== null ? (int) $linkableId : null,
+                );
 
                 $title = isset($data['title']) ? trim((string) $data['title']) : '';
                 if ($title === '') {

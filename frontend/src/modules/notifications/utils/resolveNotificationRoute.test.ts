@@ -21,6 +21,9 @@ describe('resolveNotificationRoute', () => {
     expect(resolveNotificationRoute({ entity_type: 'warehouse', entity_id: 4 })).toBe(
       '/app/warehouses/4',
     )
+    expect(resolveNotificationRoute({ entity_type: 'purchase_request', entity_id: 42 })).toBe(
+      '/app/purchase-requests/42',
+    )
   })
 
   it('routes custody to my-custodies without requiring an id', () => {

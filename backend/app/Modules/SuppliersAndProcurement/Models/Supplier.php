@@ -98,6 +98,11 @@ class Supplier extends Model implements TenantOwned
         return $this->hasMany(SupplierContact::class);
     }
 
+    public function bankAccounts(): HasMany
+    {
+        return $this->hasMany(SupplierBankAccount::class);
+    }
+
     public function documentRecords(): HasMany
     {
         return $this->hasMany(SupplierDocumentRecord::class);

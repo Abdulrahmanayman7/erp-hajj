@@ -180,7 +180,13 @@ The §7.1 rows above remain the **G0 filing snapshot**. Subsequent Owner-approve
 | II-A Eligibility & Documents design (C1–C6) | **APPROVED** — [S04-PHASE-II-A-DESIGN-APPROVAL-2026-10-31.md](S04-PHASE-II-A-DESIGN-APPROVAL-2026-10-31.md) (historical design record unchanged) |
 | II-A engineering pre-implementation gate | **COMPLETE** — [S04-PHASE-II-A-ENGINEERING-GATE-2026-10-31.md](S04-PHASE-II-A-ENGINEERING-GATE-2026-10-31.md) (historical gate record unchanged) |
 | Phase II-A application implementation | **COMPLETE — OWNER ACCEPTED** (2026-11-01) — [S04_PHASE_II_A_ACCEPTANCE_STATUS.md](../00-project/S04_PHASE_II_A_ACCEPTANCE_STATUS.md); remediation re-audit **ACCEPTABLE**; **M1=A** |
-| Phase II-B / II-C / Phase III–V | **NOT_STARTED — NOT AUTHORIZED** |
+| Phase II-B Owner decisions IIB-D1–IIB-D12 | **APPROVED** (docs, 2026-11-01) — [S04-PHASE-II-B-OWNER-DECISIONS-2026-11-01.md](S04-PHASE-II-B-OWNER-DECISIONS-2026-11-01.md) |
+| Phase II-B design | **OWNER APPROVED** (2026-11-01) — [S04-PHASE-II-B-DESIGN-APPROVAL-2026-11-01.md](S04-PHASE-II-B-DESIGN-APPROVAL-2026-11-01.md) |
+| Phase II-B implementation | **COMPLETE — FUNCTIONALLY CLOSED — OWNER ACCEPTED** (2026-11-01) — [S04_PHASE_II_B_ACCEPTANCE_STATUS.md](../00-project/S04_PHASE_II_B_ACCEPTANCE_STATUS.md); evidence [PHASE_II_B_WP05_ACCEPTANCE_EVIDENCE.md](../09-modules/19-suppliers-and-procurement/PHASE_II_B_WP05_ACCEPTANCE_EVIDENCE.md); commit/push/merge/deploy **NOT AUTHORIZED** |
+| Phase II-C Owner decisions IIC-D1–D8 + IIC-F1–F3 | **APPROVED** (docs, 2026-11-01; **11/11**) — [S04-PHASE-II-C-OWNER-DECISIONS-2026-11-01.md](S04-PHASE-II-C-OWNER-DECISIONS-2026-11-01.md) |
+| Phase II-C detailed design | **DRAFT — NOT OWNER ACCEPTED** — [PHASE_II_C_SUPPLIER_EVALUATIONS_DESIGN.md](../09-modules/19-suppliers-and-procurement/PHASE_II_C_SUPPLIER_EVALUATIONS_DESIGN.md) |
+| Phase II-C implementation | **NOT_STARTED — NOT AUTHORIZED** |
+| Phase III–V | **NOT_STARTED — NOT AUTHORIZED** |
 | Overall S04 | **IN PROGRESS** |
 | S05 | **NOT_STARTED** |
 | ADR-0019 | **PROPOSED / NOT ACCEPTED** (unchanged) |

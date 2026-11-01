@@ -13,6 +13,13 @@ use App\Modules\SuppliersAndProcurement\Support\SupplierNumberGenerator;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Support\Facades\DB;
 
+putenv('APP_ENV=testing');
+putenv('DB_CONNECTION=mysql');
+putenv('DB_DATABASE=erp_hajj_testing');
+putenv('DB_URL=');
+$_ENV['DB_DATABASE'] = 'erp_hajj_testing';
+$_ENV['DB_CONNECTION'] = 'mysql';
+
 require dirname(__DIR__, 2).'/vendor/autoload.php';
 
 $app = require dirname(__DIR__, 2).'/bootstrap/app.php';

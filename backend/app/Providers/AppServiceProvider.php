@@ -68,7 +68,9 @@ use App\Modules\SeasonPilgrims\Policies\SeasonProgramPolicy;
 use App\Modules\Settings\Mail\TenantMailChannel;
 use App\Modules\Settings\Policies\TenantSettingsPolicy;
 use App\Modules\Settings\Support\TenantMailSenderResolver;
+use App\Modules\SuppliersAndProcurement\Models\PurchaseRequest;
 use App\Modules\SuppliersAndProcurement\Models\Supplier;
+use App\Modules\SuppliersAndProcurement\Models\SupplierEvaluation;
 use App\Modules\Tasks\Models\Task;
 use App\Modules\Tasks\Policies\TaskPolicy;
 use App\Modules\Users\Policies\UserPolicy;
@@ -187,6 +189,8 @@ class AppServiceProvider extends ServiceProvider
             'asset' => Asset::class,
             'custody' => AssetCustody::class,
             'supplier' => Supplier::class,
+            'supplier_evaluation' => SupplierEvaluation::class,
+            'purchase_request' => PurchaseRequest::class,
         ]);
 
         Route::bind('user', function (string $value): User {
@@ -229,5 +233,6 @@ class AppServiceProvider extends ServiceProvider
                 ->where('tenant_id', $actor->tenant_id)
                 ->firstOrFail();
         });
+
     }
 }

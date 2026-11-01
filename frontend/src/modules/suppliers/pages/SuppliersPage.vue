@@ -13,7 +13,13 @@ import {
   useUpdateSupplierMutation,
 } from '../mutations/useSupplierMutations'
 import { useSuppliersQuery } from '../queries/useSuppliersQuery'
-import type { Supplier, SupplierFormState, SupplierStatus, SupplierType } from '../types/suppliers'
+import type {
+  Supplier,
+  SupplierFormState,
+  SupplierStatus,
+  SupplierType,
+  SupplierWarning,
+} from '../types/suppliers'
 import {
   SUPPLIER_STATUSES,
   SUPPLIER_TYPES,
@@ -151,7 +157,7 @@ function apiMessage(error: unknown): string {
   return error.message || t('suppliers.errors.generic')
 }
 
-function showWarnings(warnings: { message: string }[]): void {
+function showWarnings(warnings: SupplierWarning[]): void {
   if (warnings.length === 0) return
   toast.info(formatSupplierWarnings(warnings))
 }
@@ -302,7 +308,11 @@ async function submitForm(): Promise<void> {
       </div>
       <div v-else-if="listState === 'error'" class="p-10 text-center">
         <p class="text-sm text-red-600">{{ t('suppliers.errors.generic') }}</p>
-        <button type="button" class="mt-3 text-sm font-semibold text-brand-primary" @click="refetch">
+        <button
+          type="button"
+          class="mt-3 text-sm font-semibold text-brand-primary"
+          @click="() => { void refetch() }"
+        >
           {{ t('suppliers.retry') }}
         </button>
       </div>

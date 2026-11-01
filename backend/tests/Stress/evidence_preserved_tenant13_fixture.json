@@ -1,0 +1,11 @@
+{
+    "preserved_at": "2026-11-01T16:08:37+00:00",
+    "database": "erp_hajj_testing",
+    "tenant_id": 13,
+    "count": 0,
+    "unique": 0,
+    "sequence_next": null,
+    "first": null,
+    "last": null,
+    "sample_errors_from_run": "PR_NUMBER_CONFLICT x4"
+}

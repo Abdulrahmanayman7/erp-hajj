@@ -1,6 +1,6 @@
 # Suppliers & Procurement (S04) — Test Plan
 
-> **Status:** Phase I + Phase II-A tests **EXECUTED / OWNER ACCEPTED** (II-A 2026-11-01; includes MySQL concurrency); Phase II-B+ plans remain design-only until authorized
+> **Status:** Phase I–IV tests executed/accepted per stream evidence (Phase IV Owner functionally accepted 2026-11-01). **Phase V tests:** **EXECUTED — ENGINEERING PASS** (2026-11-01) — [PHASE_V_FINAL_IMPLEMENTATION_AND_ACCEPTANCE_EVIDENCE.md](PHASE_V_FINAL_IMPLEMENTATION_AND_ACCEPTANCE_EVIDENCE.md); Owner functional acceptance **PENDING**; commit/push/merge/deploy **NOT AUTHORIZED**  
 > **Last updated:** 2026-11-01
 > Tooling: **Pest** (backend) · **Vitest** (frontend) · optional MySQL concurrency job pattern from Transport/Accommodation
 > Binding: [TESTING_STRATEGY.md](../../07-testing/TESTING_STRATEGY.md) · tenancy matrix in `00-tenancy/TEST_PLAN.md`
@@ -40,25 +40,18 @@ For suppliers, evaluations, PRs, matrices, delegations, financial reviews:
 
 Valid/invalid transitions matrix; activate blocked when docs expired.
 
-### PR lifecycle
+### PR lifecycle — Phase III (**III-D1**, **III-D7**)
 
-draft→submit→under_review→approve/reject/return; edit while under_review → 422; return→edit→resubmit increments version and recreates pending steps; cancelled rules.
+draft→submit→**`submitted`** (no matrix/steps); edit while submitted → 422; structured version snapshot on submit; cancel non-approved; optional supplier eligibility; org unit active; duplicate ack (**III-D6**); FE has no approve CTAs (**III-D8**).
 
-### Approvals
+### Approvals — Phase IV
 
-Multi-level happy path; skip level impossible; conflict reassignment; delegation happy/expired/revoked; matrix snapshot isolation when matrix edited mid-flight.
+Multi-level happy path; skip level impossible; conflict reassignment; delegation happy/expired/revoked; matrix snapshot isolation when matrix edited mid-flight; return→edit→resubmit increments version and recreates pending steps.
 
-### Financial review (**D2**) + SoD (**D5**)
+### Financial review (**D2** / **III-D2**) + SoD (**D5**)
 
-- Submit/approve path: final approve without review → `PR_FINANCIAL_REVIEW_REQUIRED`.
-- Unpriced PR still requires cleared/cleared_with_conditions review.
-- `not_cleared` → final approve blocked.
-- Review row stores reviewer, outcome, timestamp, justification, version_no.
-- Same user as financial reviewer attempting final approve → `PR_FINANCIAL_REVIEWER_SOD` (hard fail, not warning).
-- User with both `financial_review` and `approve` permissions still blocked on final step if they reviewed.
-- Delegate whose principal would pass but acting user is reviewer → blocked (**D5**).
-- Sole eligible final approver is the reviewer → reassignment attempt; if no alternate → `PR_NO_ELIGIBLE_FINAL_APPROVER` + escalation audit; PR remains unapproved.
-- No inventory/finance side effects; no auto-approve.
+- Phase III: review on draft/submitted stores reviewer, outcome, timestamp, justification, version_no; creator may review (**III-D3**); no status change; no inventory/finance side effects.
+- Phase IV: final approve without review → `PR_FINANCIAL_REVIEW_REQUIRED`; unpriced still needs cleared/cleared_with_conditions; `not_cleared` blocks; reviewer final-approve → `PR_FINANCIAL_REVIEWER_SOD`; multi-role and delegation cannot bypass (**D5**); no alternate → `PR_NO_ELIGIBLE_FINAL_APPROVER`; never auto-approve.
 
 ### Approved cancel (**D3**)
 
@@ -85,8 +78,29 @@ Use MySQL + `lockForUpdate` patterns; do not weaken tests.
 ## 5. Audit
 
 - Critical actions create audit rows with `tenant_id` + correlation id.
-- Bank update audit contains last4/status only — never full IBAN plaintext.
+- Bank update / reveal audit contains last4/status/reason only — never full IBAN plaintext.
+- Reveal success **and** denied attempts audited where feasible (`_REVEALED` / `_REVEAL_DENIED`).
 - Feature test spies/`Event::fake` per module convention.
+
+### 5.1 Phase II-B banking (FUNCTIONALLY CLOSED — OWNER ACCEPTED 2026-11-01)
+
+> Evidence: [PHASE_II_B_WP05_ACCEPTANCE_EVIDENCE.md](PHASE_II_B_WP05_ACCEPTANCE_EVIDENCE.md) · closure [S04_PHASE_II_B_ACCEPTANCE_STATUS.md](../../00-project/S04_PHASE_II_B_ACCEPTANCE_STATUS.md).
+
+See design pack §11–§12 (AC-B01–**B22**; controls **B1–B8**; doc closure **M1–M3**). Must cover when coding authorized:
+
+- Claims table: same-IBAN supersession OK; different-IBAN keeps old primary’s IBAN claimed; cross-family duplicate fails; reuse only after safe **DELETE** release (**E3**, **M2**, C1 remediation).
+- Pending PATCH IBAN change: acquire new claim, reject foreign ownership, update ciphertext/last4, safe-release old; metadata-only PATCH must not release claims (**M1**, AC-B20). Real-MySQL concurrency for PATCH vs foreign create / release vs acquire.
+- Claim ownership integrity: no cross-family reassignment; no stale holder; no orphans; rollback of version+claim on failure (**M2**, AC-B21).
+- D11 primary retention; verify no transfer; explicit set-primary; revoke clears (**E2**).
+- Reveal reason ≥10; revoked reveal via reveal only; deny audits (**E1**/**E4**).
+- Frontend: reveal modal blank/short/valid reasons; Arabic message; no persistence; no plaintext in FE logs (**M3**, AC-B22).
+- MySQL: primary races; dual claim; supersede-while-primary; foreign claim of retained-primary IBAN; PATCH IBAN races; release/acquire races.
+
+### 5.2 Phase II-C evaluations (DESIGN DRAFT — not executed)
+
+> Matrix: [PHASE_II_C_SUPPLIER_EVALUATIONS_DESIGN.md](PHASE_II_C_SUPPLIER_EVALUATIONS_DESIGN.md) §11 · decisions [S04-PHASE-II-C-OWNER-DECISIONS-2026-11-01.md](../../10-decisions/S04-PHASE-II-C-OWNER-DECISIONS-2026-11-01.md).
+
+When coding authorized: AC-E01–E05; criteria publish SoD; evaluation SoD; appeal independence; weight ±0.01; snapshot immutability; cross-tenant 404; submit/approve races; **IIC-F1** season matrix; monitoring — draft proposal does **not** notify; approve+true notifies `supplier_evaluations.approve` holders only (**IIC-F2/F3**); notification idempotency; no supplier lifecycle mutation; evidence ownership; FE RTL permission CTAs.
 
 ---
 
@@ -128,6 +142,26 @@ Use MySQL + `lockForUpdate` patterns; do not weaken tests.
 
 ---
 
-## 10. Explicit non-tests (S04)
+## 10. Phase V — Demand groups & control reports (**V-D1…V-D8**)
 
-RFQ/PO/GRN flows, payment posting, supplier portal, forced contract backfill.
+> Design only until coding auth. Binding AC: [PHASE_V_DETAILED_DESIGN.md](PHASE_V_DETAILED_DESIGN.md) §15.
+
+| Area | Cases |
+|---|---|
+| Exclusive membership | Concurrent link same PR → one win / `DG_PR_ALREADY_GROUPED`; re-link after unlink OK |
+| Mixed season/OU | Link succeeds; warning payloads present; null scope OK |
+| Lifecycle | Transition matrix; frozen/closed reject membership edits |
+| Cancel auto-unlink | `cancel_approved` unlinks; history retained; idempotent; IV cancel suite still green |
+| Engagement freeze | Fixture `procurement_engaged_at` blocks link/unlink; Phase V never writes field |
+| Tenant isolation | Cross-tenant group/PR → 404 |
+| Partial visibility | Under III-D5 no-op; forward-compat redaction unit tests if helpers land |
+| Reports RPT-V01…V04 | Fixture aggregates; unpriced not zeroed; cancelled/returned semantics |
+| CSV | Auth 401/403; UTF-8 BOM; injection prefix; size 422; empty headers; audit `CONTROL_REPORT_EXPORTED` |
+| Concurrency / audit | Dual transition; export audit; unlink audit |
+| Regression | Phase III/IV samples; zero `/rfqs` `/purchase-orders` |
+
+---
+
+## 11. Explicit non-tests (S04)
+
+RFQ/PO/GRN flows, payment posting, supplier portal, forced contract backfill, XLSX export.

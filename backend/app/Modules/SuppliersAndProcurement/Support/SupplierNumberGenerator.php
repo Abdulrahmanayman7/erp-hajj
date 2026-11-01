@@ -7,8 +7,19 @@ use App\Modules\SuppliersAndProcurement\Exceptions\SupplierDomainException;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
+/**
+ * Tenant-scoped SUP-###### allocator (config prefix/pad).
+ *
+ * Cold-start under MariaDB/MySQL REPEATABLE READ: the prior SELECT-miss → INSERT
+ * → re-SELECT FOR UPDATE path could throw SUPPLIER_NUMBER_TAKEN when a concurrent
+ * first insert left the loser observing a null row. Allocation is now one atomic
+ * INSERT … ON DUPLICATE KEY UPDATE using LAST_INSERT_ID (same proven pattern as
+ * PurchaseRequestNumberGenerator). Scope remains tenant_id primary key only.
+ */
 final class SupplierNumberGenerator
 {
+    private const TRANSACTION_ATTEMPTS = 5;
+
     public function __construct(
         private readonly TenantContext $tenantContext,
     ) {}
@@ -20,46 +31,21 @@ final class SupplierNumberGenerator
         $pad = max(1, (int) config('suppliers.number_pad', 6));
 
         $allocate = function () use ($tenant, $prefix, $pad): string {
-            $row = DB::table('supplier_number_sequences')
-                ->where('tenant_id', $tenant->id)
-                ->lockForUpdate()
-                ->first();
+            $now = now()->format('Y-m-d H:i:s');
 
-            if ($row === null) {
-                try {
-                    DB::table('supplier_number_sequences')->insert([
-                        'tenant_id' => $tenant->id,
-                        'next_value' => 2,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-                    $value = 1;
-                } catch (Throwable) {
-                    $row = DB::table('supplier_number_sequences')
-                        ->where('tenant_id', $tenant->id)
-                        ->lockForUpdate()
-                        ->first();
+            DB::affectingStatement(
+                'INSERT INTO supplier_number_sequences
+                    (tenant_id, next_value, created_at, updated_at)
+                 VALUES (?, LAST_INSERT_ID(1) + 1, ?, ?)
+                 ON DUPLICATE KEY UPDATE
+                    next_value = LAST_INSERT_ID(next_value) + 1,
+                    updated_at = VALUES(updated_at)',
+                [$tenant->id, $now, $now],
+            );
 
-                    if ($row === null) {
-                        throw SupplierDomainException::numberTaken();
-                    }
-
-                    $value = (int) $row->next_value;
-                    DB::table('supplier_number_sequences')
-                        ->where('tenant_id', $tenant->id)
-                        ->update([
-                            'next_value' => $value + 1,
-                            'updated_at' => now(),
-                        ]);
-                }
-            } else {
-                $value = (int) $row->next_value;
-                DB::table('supplier_number_sequences')
-                    ->where('tenant_id', $tenant->id)
-                    ->update([
-                        'next_value' => $value + 1,
-                        'updated_at' => now(),
-                    ]);
+            $value = (int) (DB::selectOne('SELECT LAST_INSERT_ID() AS v')->v ?? 0);
+            if ($value < 1) {
+                throw SupplierDomainException::numberTaken();
             }
 
             return $prefix.str_pad((string) $value, $pad, '0', STR_PAD_LEFT);
@@ -69,6 +55,14 @@ final class SupplierNumberGenerator
             return $allocate();
         }
 
-        return DB::transaction($allocate);
+        try {
+            return DB::transaction($allocate, self::TRANSACTION_ATTEMPTS);
+        } catch (Throwable $e) {
+            if ($e instanceof SupplierDomainException) {
+                throw $e;
+            }
+
+            throw SupplierDomainException::numberTaken();
+        }
     }
 }

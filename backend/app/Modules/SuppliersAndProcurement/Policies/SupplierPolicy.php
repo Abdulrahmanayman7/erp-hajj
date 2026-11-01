@@ -67,6 +67,33 @@ class SupplierPolicy
         return $this->view($actor, $supplier);
     }
 
+    /** Masked banking list/show — never grants reveal. */
+    public function viewBanking(User $actor, Supplier $supplier): bool
+    {
+        return $actor->hasPermission('suppliers.view')
+            && $this->sameTenant($actor, $supplier);
+    }
+
+    public function manageBanking(User $actor, Supplier $supplier): bool
+    {
+        return $actor->hasPermission('suppliers.manage_banking')
+            && $this->sameTenant($actor, $supplier);
+    }
+
+    /** Verify or reject pending versions (design §5.1). */
+    public function verifyBanking(User $actor, Supplier $supplier): bool
+    {
+        return $actor->hasPermission('suppliers.verify_banking')
+            && $this->sameTenant($actor, $supplier);
+    }
+
+    /** Dedicated audited reveal only (IIB-D12). */
+    public function revealBanking(User $actor, Supplier $supplier): bool
+    {
+        return $actor->hasPermission('suppliers.view_banking')
+            && $this->sameTenant($actor, $supplier);
+    }
+
     private function sameTenant(User $actor, Supplier $supplier): bool
     {
         return $actor->tenant_id !== null && (int) $actor->tenant_id === (int) $supplier->tenant_id;

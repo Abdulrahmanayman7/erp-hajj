@@ -1,10 +1,10 @@
 # Suppliers & Procurement (S04) — Permissions
 
-> **Status:** Phase I + Phase II-A permissions **IMPLEMENTED — OWNER ACCEPTED** (II-A 2026-11-01; `approve_eligibility_config` sensitive / C6); Phase II-B/II-C / Phase III–V **NOT SEEDED**
+> **Status:** Phase I–IV permissions implemented/accepted per stream evidence; Phase V `consolidate_planning` + `view_control_reports` **IMPLEMENTED in catalog** (engineering) — Owner Phase V functional acceptance **PENDING**; S05 / release acts **NOT AUTHORIZED**
 > **Last updated:** 2026-11-01
 > Rules: [PERMISSION_MODEL.md](../../06-security/PERMISSION_MODEL.md) — `module.action`, deny-by-default, no Owner bypass, no direct user↔permission grants.
-> Owner **D4** (2026-10-31): sensitive permissions are **not** auto-granted via default role templates.
-> II-A design (**C6**, 2026-10-31): `suppliers.approve_eligibility_config` is **sensitive** — explicit assignment only; never default templates.
+> Owner **D4**: sensitive permissions are **not** auto-granted via default role templates.
+> II-A **C6**: `suppliers.approve_eligibility_config` sensitive. II-B banking trio sensitive (**IIB**; B6). II-C: `approve` / `approve_criteria` / `handle_appeal` sensitive (**Eng** — design pack).
 
 **Seed rule:** Seed permission **catalog** rows when code exists. **Role ↔ permission** template grants follow §3; sensitive set in §3.1 starts **ungranted** on all templates including Tenant Owner.
 
@@ -23,42 +23,43 @@
 | `suppliers.manage_documents` | Link eligibility docs / mark superseded | No |
 | `suppliers.manage_eligibility_config` | Draft/edit eligibility requirement set versions | No |
 | `suppliers.approve_eligibility_config` | Approve eligibility config version (**C6**) | **Yes** |
-| `suppliers.view_banking` | Reveal unmasked bank details | **Yes** |
-| `suppliers.manage_banking` | Create/update bank accounts; submit verification | **Yes** |
-| `suppliers.verify_banking` | Approve/reject bank verification | **Yes** |
+| `suppliers.view_banking` | Dedicated audited reveal only (**IIB-D12**, **E1**/**E4**); does **not** unmask list/show | **Yes** |
+| `suppliers.manage_banking` | Create/edit pending; supersede (**E5**); set/clear primary; **revoke (E2)**; optional evidence | **Yes** |
+| `suppliers.verify_banking` | Verify or reject pending (SoD **IIB-D4**); no primary transfer on verify (**IIB-D11**) | **Yes** |
 | `suppliers.delete` | Hard-delete eligible drafts only | No |
 
-### Evaluations
+### Evaluations (Phase II-C design draft — **IIC-D1**)
 
 | Permission | Purpose | Sensitive? |
 |---|---|---|
-| `supplier_evaluations.view` | View evaluations | No |
-| `supplier_evaluations.prepare` | Create/edit draft evaluations | No |
-| `supplier_evaluations.approve` | Approve/reject evaluation (≠ preparer) | No* |
-| `supplier_evaluations.manage_criteria` | Criteria & weights per category | No |
-| `supplier_evaluations.handle_appeal` | Objection / correction review | No |
+| `supplier_evaluations.view` | View evaluations / published criteria | No |
+| `supplier_evaluations.prepare` | Create/edit draft evaluations; submit; file appeal | No |
+| `supplier_evaluations.approve` | Approve/reject evaluation (≠ preparer) | **Yes*** |
+| `supplier_evaluations.manage_criteria` | Draft criteria packs & lines | No |
+| `supplier_evaluations.approve_criteria` | Publish criteria pack (≠ preparer/editors) | **Yes*** |
+| `supplier_evaluations.handle_appeal` | Accept/reject appeals (independent) | **Yes*** |
 
-\*SoD still enforced in Policy even if granted.
+\*Sensitive = explicit assignment only (**D4**). SoD still enforced in Policy even if granted. See [PHASE_II_C_SUPPLIER_EVALUATIONS_DESIGN.md](PHASE_II_C_SUPPLIER_EVALUATIONS_DESIGN.md) §5.
 
 ### Purchase requests
 
-| Permission | Purpose | Sensitive? |
-|---|---|---|
-| `purchase_requests.view` | List/show PRs | No |
-| `purchase_requests.create` | Create draft PR | No |
-| `purchase_requests.update` | Edit draft / returned PR | No |
-| `purchase_requests.submit` | Submit / resubmit | No |
-| `purchase_requests.approve` | Act on approval steps within authority ceiling | **Yes** (financial approval) |
-| `purchase_requests.reject` | Final reject at an approval step | **Yes** (paired with approve path) |
-| `purchase_requests.return` | Return for revision | **Yes** (approval-path action) |
-| `purchase_requests.cancel` | Cancel non-approved PRs | No |
-| `purchase_requests.cancel_approved` | Cancel **approved** PR (**D3**) | **Yes** |
-| `purchase_requests.financial_review` | Mandatory financial review (**D2**) | **Yes** |
-| `purchase_requests.verify_priority` | Confirm urgent/emergency priority | No |
-| `purchase_requests.consolidate_planning` | Planning-only demand groups | No |
-| `purchase_requests.manage_approval_config` | Matrices, SLA policies, authority ceilings | **Yes** |
-| `purchase_requests.manage_delegations` | Create/revoke delegations (**D4**) | **Yes** |
-| `purchase_requests.view_control_reports` | Compliance / latency reports | No |
+| Permission | Purpose | Sensitive? | Phase |
+|---|---|---|---|
+| `purchase_requests.view` | List/show PRs | No | III |
+| `purchase_requests.create` | Create draft PR | No | III |
+| `purchase_requests.update` | Edit draft / returned PR | No | III |
+| `purchase_requests.submit` | Submit / resubmit → `submitted` (**III-D1**) | No | III |
+| `purchase_requests.cancel` | Cancel non-approved PRs | No | III |
+| `purchase_requests.verify_priority` | Confirm urgent/emergency priority | No | III |
+| `purchase_requests.financial_review` | Record financial review (**D2**/**III-D2**; creator allowed **III-D3**) | **Yes** | III |
+| `purchase_requests.approve` | Act on approval steps within authority ceiling | **Yes** | **IV** |
+| `purchase_requests.reject` | Final reject at an approval step | **Yes** | **IV** |
+| `purchase_requests.return` | Return for revision | **Yes** | **IV** |
+| `purchase_requests.cancel_approved` | Cancel **approved** PR (**D3**) | **Yes** | **IV** |
+| `purchase_requests.manage_approval_config` | Matrices, SLA policies, authority ceilings | **Yes** | **IV** |
+| `purchase_requests.manage_delegations` | Create/revoke delegations (**D4**) | **Yes** | **IV** |
+| `purchase_requests.consolidate_planning` | Planning-only demand groups (mutate) | No | **V** (**V-D7**) |
+| `purchase_requests.view_control_reports` | Control reports JSON **and CSV export** (RPT-V01…V04) | No | **V** (**V-D6**, **V-D8=A**) |
 
 ### Geographic catalog
 
@@ -75,9 +76,9 @@
 |---|---|
 | Evaluation preparer ≠ approver | Policy + Action (**114**) |
 | PR creator ≠ approver on any step | Policy (**126**) |
-| Financial reviewer ≠ final approver on same PR version | **Hard block (D5)** — Policy/Action; multi-role cannot bypass |
-| Delegation cannot complete final approve if acting user is financial reviewer | **Hard block (D5)** |
-| No eligible independent final approver | Block + escalate to authorized admin; **never** auto-approve (**D5**) |
+| Financial reviewer ≠ final approver on same PR version | **Hard block (D5)** — **Phase IV** Policy/Action; multi-role cannot bypass. Phase III **persists** `reviewer_id` only (**III-D2**/**III-D3**); creator may review |
+| Delegation cannot complete final approve if acting user is financial reviewer | **Hard block (D5)** — **Phase IV** |
+| No eligible independent final approver | Block + escalate to authorized admin; **never** auto-approve (**D5**) — **Phase IV** |
 | Banking verify ≠ submitter of same change | Policy (**110**) |
 | Document uploader ≠ verifier on same eligibility record | Policy (**II-A C3**) |
 | Eligibility config author/editor ≠ approver of same version | Policy (**II-A C3**) |

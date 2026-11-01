@@ -33,6 +33,10 @@ export function resolveNotificationRoute(n: {
     case 'custody':
       // MVP: custody events without an asset id go to my-custodies
       return '/app/my-custodies'
+    case 'purchase_request':
+      return hasId ? `/app/purchase-requests/${id}` : '/app/purchase-requests/approval-inbox'
+    case 'supplier_evaluation':
+      return hasId ? `/app/supplier-evaluations/${id}` : '/app/supplier-evaluations'
     default:
       return null
   }

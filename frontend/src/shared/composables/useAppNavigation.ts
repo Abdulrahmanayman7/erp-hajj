@@ -5,7 +5,12 @@ import {
   Boxes,
   CalendarDays,
   Building2,
+  ClipboardList,
+  FileInput,
+  FileCheck2,
+  FileChartColumn,
   FileText,
+  FolderKanban,
   Gavel,
   Home,
   IdCard,
@@ -15,6 +20,7 @@ import {
   ScrollText,
   Settings,
   Shield,
+  SlidersHorizontal,
   Users,
   Warehouse,
   Tent,
@@ -245,6 +251,66 @@ export function buildTenantNavGroups(can: (permission: string) => boolean): AppN
       to: '/app/suppliers',
       icon: Building2,
       permission: 'suppliers.view',
+      match: 'prefix',
+    })
+  }
+  if (can('supplier_evaluations.view')) {
+    governanceItems.push({
+      key: 'supplier-evaluations',
+      labelKey: 'nav.supplierEvaluations',
+      to: '/app/supplier-evaluations',
+      icon: ClipboardList,
+      permission: 'supplier_evaluations.view',
+      match: 'prefix',
+    })
+  }
+  if (can('purchase_requests.view') || can('purchase_requests.create')) {
+    governanceItems.push({
+      key: 'purchase-requests',
+      labelKey: 'nav.purchaseRequests',
+      to: '/app/purchase-requests',
+      icon: FileInput,
+      permission: 'purchase_requests.view',
+      match: 'prefix',
+    })
+  }
+  if (can('purchase_requests.approve')) {
+    governanceItems.push({
+      key: 'purchase-requests-approval-inbox',
+      labelKey: 'nav.purchaseApprovalInbox',
+      to: '/app/purchase-requests/approval-inbox',
+      icon: FileCheck2,
+      permission: 'purchase_requests.approve',
+      match: 'exact',
+    })
+  }
+  if (can('purchase_requests.view') || can('purchase_requests.consolidate_planning')) {
+    governanceItems.push({
+      key: 'purchase-demand-groups',
+      labelKey: 'nav.purchaseDemandGroups',
+      to: '/app/purchase-demand-groups',
+      icon: FolderKanban,
+      permission: 'purchase_requests.view',
+      match: 'prefix',
+    })
+  }
+  if (can('purchase_requests.view_control_reports')) {
+    governanceItems.push({
+      key: 'purchase-control-reports',
+      labelKey: 'nav.purchaseControlReports',
+      to: '/app/purchase-control-reports',
+      icon: FileChartColumn,
+      permission: 'purchase_requests.view_control_reports',
+      match: 'prefix',
+    })
+  }
+  if (can('purchase_requests.manage_approval_config') || can('purchase_requests.manage_delegations')) {
+    governanceItems.push({
+      key: 'purchase-approval-settings',
+      labelKey: 'nav.purchaseApprovalSettings',
+      to: '/app/purchase-approval-settings',
+      icon: SlidersHorizontal,
+      permission: 'purchase_requests.manage_approval_config',
       match: 'prefix',
     })
   }

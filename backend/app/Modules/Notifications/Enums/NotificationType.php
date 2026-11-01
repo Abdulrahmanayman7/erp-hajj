@@ -31,6 +31,17 @@ enum NotificationType: string
 
     case StockBelowMinimum = 'STOCK_BELOW_MINIMUM';
 
+    case SupplierEvaluationMonitoringRecommended = 'SUPPLIER_EVALUATION_MONITORING_RECOMMENDED';
+
+    case PurchaseApprovalSlaEscalated = 'PURCHASE_APPROVAL_SLA_ESCALATED';
+    case PurchaseApprovalPoolReady = 'PURCHASE_APPROVAL_POOL_READY';
+    case PurchaseApprovalRoutingBlocked = 'PURCHASE_APPROVAL_ROUTING_BLOCKED';
+    case PurchaseApprovalNoEligibleFinal = 'PURCHASE_APPROVAL_NO_ELIGIBLE_FINAL';
+    case PurchaseRequestReturned = 'PURCHASE_REQUEST_RETURNED';
+    case PurchaseRequestRejected = 'PURCHASE_REQUEST_REJECTED';
+    case PurchaseRequestApproved = 'PURCHASE_REQUEST_APPROVED';
+    case PurchaseRequestCancelApproved = 'PURCHASE_REQUEST_CANCEL_APPROVED';
+
     public function defaultSeverity(): NotificationSeverity
     {
         return match ($this) {
@@ -41,7 +52,13 @@ enum NotificationType: string
             self::DecisionReturnedToDraft,
             self::TaskDueSoon,
             self::CustodyExpectedReturnSoon,
-            self::StockBelowMinimum => NotificationSeverity::Warning,
+            self::StockBelowMinimum,
+            self::SupplierEvaluationMonitoringRecommended,
+            self::PurchaseApprovalSlaEscalated,
+            self::PurchaseApprovalRoutingBlocked,
+            self::PurchaseApprovalNoEligibleFinal,
+            self::PurchaseRequestRejected,
+            self::PurchaseRequestReturned => NotificationSeverity::Warning,
 
             self::ContractExpired,
             self::MeetingCancelled,

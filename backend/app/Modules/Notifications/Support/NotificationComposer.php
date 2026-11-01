@@ -99,6 +99,71 @@ final class NotificationComposer
                 'title' => 'عهدة متأخرة الإرجاع',
                 'body' => $this->clip($number !== '' ? "العهدة {$number} متأخرة عن موعد الإرجاع." : 'إحدى العهد متأخرة عن موعد الإرجاع.'),
             ],
+            NotificationType::SupplierEvaluationMonitoringRecommended => [
+                'title' => 'توصية بمراقبة مورد',
+                'body' => sprintf(
+                    'التقييم %s للمورد %s أوصى بالمراقبة (الدرجة: %s).',
+                    (string) ($context['evaluation_number'] ?? ''),
+                    (string) ($context['supplier_number'] ?? $context['supplier_id'] ?? ''),
+                    (string) ($context['total_score'] ?? '—'),
+                ),
+            ],
+            NotificationType::PurchaseApprovalSlaEscalated => [
+                'title' => 'تصعيد اعتماد طلب شراء',
+                'body' => $this->clip(
+                    $number !== ''
+                        ? sprintf(
+                            'تجاوزت خطوة اعتماد الطلب %s (المستوى %s) مهلة SLA.',
+                            $number,
+                            (string) ($context['level_order'] ?? '—'),
+                        )
+                        : 'تجاوزت خطوة اعتماد مهلة SLA.',
+                ),
+            ],
+            NotificationType::PurchaseApprovalPoolReady => [
+                'title' => 'طلب شراء بانتظار اعتمادك',
+                'body' => $this->clip(
+                    $number !== ''
+                        ? sprintf('الطلب %s بانتظار إجراء الاعتماد في المستوى %s.', $number, (string) ($context['level_order'] ?? '—'))
+                        : 'يوجد طلب شراء بانتظار اعتمادك.',
+                ),
+            ],
+            NotificationType::PurchaseApprovalRoutingBlocked => [
+                'title' => 'تعذّر توجيه اعتماد طلب شراء',
+                'body' => $this->clip(
+                    $number !== ''
+                        ? sprintf(
+                            'تعذّر توجيه الطلب %s (%s).',
+                            $number,
+                            (string) ($context['routing_block_code'] ?? 'PR_ROUTING_BLOCKED'),
+                        )
+                        : 'تعذّر توجيه أحد طلبات الشراء لمسار الاعتماد.',
+                ),
+            ],
+            NotificationType::PurchaseApprovalNoEligibleFinal => [
+                'title' => 'لا يوجد معتمد نهائي مؤهل',
+                'body' => $this->clip(
+                    $number !== ''
+                        ? sprintf('الطلب %s بلا معتمد نهائي مؤهل بعد استبعاد مراجع المالية.', $number)
+                        : 'لا يوجد معتمد نهائي مؤهل لطلب شراء.',
+                ),
+            ],
+            NotificationType::PurchaseRequestReturned => [
+                'title' => 'أُعيد طلب الشراء للتعديل',
+                'body' => $this->clip($number !== '' ? "أُعيد الطلب {$number} للتعديل." : 'أُعيد أحد طلبات الشراء للتعديل.'),
+            ],
+            NotificationType::PurchaseRequestRejected => [
+                'title' => 'رُفض طلب الشراء',
+                'body' => $this->clip($number !== '' ? "رُفض الطلب {$number}." : 'رُفض أحد طلبات الشراء.'),
+            ],
+            NotificationType::PurchaseRequestApproved => [
+                'title' => 'اعتمد طلب الشراء',
+                'body' => $this->clip($number !== '' ? "اعتمد الطلب {$number} نهائياً." : 'اعتمد أحد طلبات الشراء نهائياً.'),
+            ],
+            NotificationType::PurchaseRequestCancelApproved => [
+                'title' => 'أُلغي طلب شراء معتمد',
+                'body' => $this->clip($number !== '' ? "أُلغي الطلب المعتمد {$number}." : 'أُلغي أحد طلبات الشراء المعتمدة.'),
+            ],
             NotificationType::StockBelowMinimum => [
                 'title' => 'مخزون دون الحد الأدنى',
                 'body' => $this->clip($this->stockLine($item, $warehouse)),

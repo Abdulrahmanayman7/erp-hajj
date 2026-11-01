@@ -6,6 +6,7 @@ import type {
   SupplierType,
   SupplierWarning,
 } from '../types/suppliers'
+import { mapBankingErrorCode } from './bankingValidation'
 import { mapEligibilityErrorCode } from './eligibilityValidation'
 
 export interface SupplierFieldErrors {
@@ -57,8 +58,11 @@ export function mapSupplierErrorCode(code: string | undefined): string {
     case 'SUPPLIER_GEO_PLACE_INVALID':
     case 'SUPPLIER_PRIMARY_CONTACT_REQUIRED':
       return code
-    default:
+    default: {
+      const banking = mapBankingErrorCode(code)
+      if (banking !== 'generic') return banking
       return mapEligibilityErrorCode(code)
+    }
   }
 }
 

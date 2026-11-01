@@ -49,6 +49,7 @@ return Application::configure(basePath: dirname(__DIR__))
         __DIR__.'/../app/Core/Demo/Console',
         __DIR__.'/../app/Modules/Contracts/Console',
         __DIR__.'/../app/Modules/Notifications/Console',
+        __DIR__.'/../app/Modules/SuppliersAndProcurement/Console',
     ])
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->statefulApi();

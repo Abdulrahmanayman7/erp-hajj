@@ -1,11 +1,14 @@
 # Suppliers & Procurement (S04) — API
 
-> **Status:** Phase I suppliers/geo **IMPLEMENTED**; Phase II-A eligibility/documents **IMPLEMENTED — OWNER ACCEPTED** (2026-11-01); Phase II-B/II-C / Phase III–V **NOT IMPLEMENTED**
+> **Status:** Phase I–IV APIs implemented/accepted per stream evidence; Phase V demand groups + control reports + CSV (§8–9) **IMPLEMENTED (engineering)** — Owner Phase V functional acceptance **PENDING**; S05 / commit/push/merge/deploy **NOT AUTHORIZED**
 > **Last updated:** 2026-11-01
 > Base: `/api/v1` · Sanctum · Form Requests · API Resources · Policies · correlation ID header echo
 > Errors: stable machine codes in `ApiResponse` envelope; cross-tenant → **404**
-> Owner **D1–D4** (G1); Phase II **II-D1–II-D4** + II-A **C1–C6** + **M1=A**
-> II-A contracts (§12): **BINDING** — acceptance [S04_PHASE_II_A_ACCEPTANCE_STATUS.md](../../00-project/S04_PHASE_II_A_ACCEPTANCE_STATUS.md)
+> Owner **D1–D5** (G1); **II-D1–II-D4**; II-A **C1–C6** + **M1=A**; II-B **IIB-D1–IIB-D12**; II-C **IIC-D1–IIC-D8** + **IIC-F1–F3**; Phase III **III-D1–D8**
+> II-A contracts (§12): **BINDING** — [acceptance](../../00-project/S04_PHASE_II_A_ACCEPTANCE_STATUS.md)
+> II-B contracts (§13): **BINDING — FUNCTIONALLY CLOSED** — [PHASE_II_B_SUPPLIER_BANKING_DESIGN.md](PHASE_II_B_SUPPLIER_BANKING_DESIGN.md) · [S04_PHASE_II_B_ACCEPTANCE_STATUS.md](../../00-project/S04_PHASE_II_B_ACCEPTANCE_STATUS.md)
+> II-C contracts (§14): see [PHASE_II_C_SUPPLIER_EVALUATIONS_DESIGN.md](PHASE_II_C_SUPPLIER_EVALUATIONS_DESIGN.md)
+> Phase III contracts (**§15**): **DESIGN DRAFT** — [PHASE_III_PURCHASE_REQUESTS_DESIGN.md](PHASE_III_PURCHASE_REQUESTS_DESIGN.md) · [S04-PHASE-III-OWNER-DECISIONS-2026-11-01.md](../../10-decisions/S04-PHASE-III-OWNER-DECISIONS-2026-11-01.md); coding **NOT AUTHORIZED**
 
 ---
 
@@ -52,36 +55,28 @@ Filters: `country_code`, `kind`, `parent_id`, `q`.
 | PATCH | `/suppliers/{id}` | `suppliers.update` |
 | POST | `/suppliers/{id}/transition` | `suppliers.transition` body: `{ "to": "...", "reason": "..." }` |
 | GET/POST | `/suppliers/{id}/contacts` | view/update |
-| GET/POST/PATCH | `/suppliers/{id}/bank-accounts` | view_banking / manage_banking |
-| POST | `/suppliers/{id}/bank-accounts/{bankId}/verify` | `suppliers.verify_banking` |
 | GET/POST | `/suppliers/{id}/documents` | manage_documents |
 | GET/POST | `/suppliers/{id}/coverages` | update |
+| *(bank accounts)* | see **§13** (II-B **FUNCTIONALLY CLOSED**) | banking permissions |
 
-**Resource rules:** Bank fields masked unless `view_banking`. Similarity warning returned as non-blocking `warnings[]` on create/update (**103**).
+**Resource rules:** Similarity warning returned as non-blocking `warnings[]` on create/update (**103**). Banking: masked by default; see §13.
 
 ### Stable error codes (examples)
 
-`SUPPLIER_INVALID_TRANSITION`, `SUPPLIER_NOT_ELIGIBLE`, `SUPPLIER_CATEGORY_IN_USE`, `SUPPLIER_LEGAL_ID_DUPLICATE`, `SUPPLIER_BANK_PRIMARY_REQUIRED`, `SUPPLIER_DOCUMENT_EXPIRED`
+`SUPPLIER_INVALID_TRANSITION`, `SUPPLIER_NOT_ELIGIBLE`, `SUPPLIER_CATEGORY_IN_USE`, `SUPPLIER_LEGAL_ID_DUPLICATE`, `SUPPLIER_DOCUMENT_EXPIRED` (+ banking codes in §13)
 
 ---
 
-## 5. Evaluations
+## 5. Evaluations (outline — see **§14** for Phase II-C draft contracts)
 
-| Method | Path | Perm |
-|---|---|---|
-| GET/POST | `/supplier-evaluations` | view / prepare |
-| GET/PATCH | `/supplier-evaluations/{id}` | view / prepare (draft) |
-| POST | `/supplier-evaluations/{id}/submit` | prepare |
-| POST | `/supplier-evaluations/{id}/approve` | approve |
-| POST | `/supplier-evaluations/{id}/reject` | approve |
-| POST | `/supplier-evaluations/{id}/appeals` | handle_appeal |
-| CRUD | `/supplier-evaluation-criteria` | manage_criteria |
-
-Errors: `EVALUATION_SOD_VIOLATION`, `EVALUATION_WEIGHTS_INVALID`, `EVALUATION_NOT_DRAFT`
+Outline retained for navigation. **Authoritative II-C draft:** §14 + [PHASE_II_C_SUPPLIER_EVALUATIONS_DESIGN.md](PHASE_II_C_SUPPLIER_EVALUATIONS_DESIGN.md).
 
 ---
 
-## 6. Approval configuration
+## 6. Approval configuration — **Phase IV (design draft; coding not authorized)**
+
+> **Authoritative Phase IV design:** [PHASE_IV_APPROVAL_ENGINE_DESIGN.md](PHASE_IV_APPROVAL_ENGINE_DESIGN.md) §12 · Owner decisions [S04-PHASE-IV-OWNER-DECISIONS-2026-11-01.md](../../10-decisions/S04-PHASE-IV-OWNER-DECISIONS-2026-11-01.md) (**IV-D1–D15**).  
+> Outline below retained for navigation. **Do not implement** until Owner design acceptance **and** separate coding authorization (**IV-D15**).
 
 | Method | Path | Perm |
 |---|---|---|
@@ -91,94 +86,71 @@ Errors: `EVALUATION_SOD_VIOLATION`, `EVALUATION_WEIGHTS_INVALID`, `EVALUATION_NO
 | CRUD | `/purchase-approval-sla-policies` | manage_approval_config |
 | GET/POST/DELETE | `/purchase-approval-delegations` | manage_delegations |
 
----
-
-## 7. Purchase requests
-
-| Method | Path | Perm |
-|---|---|---|
-| GET | `/purchase-requests` | view |
-| POST | `/purchase-requests` | create |
-| GET | `/purchase-requests/{id}` | view |
-| PATCH | `/purchase-requests/{id}` | update (draft/returned only) |
-| PUT | `/purchase-requests/{id}/lines` | update |
-| POST | `/purchase-requests/{id}/submit` | submit |
-| POST | `/purchase-requests/{id}/financial-reviews` | financial_review (**D2** — required before final approve) |
-| POST | `/purchase-requests/{id}/approve` | approve |
-| POST | `/purchase-requests/{id}/reject` | reject |
-| POST | `/purchase-requests/{id}/return` | return |
-| POST | `/purchase-requests/{id}/cancel` | cancel (non-approved only) |
-| POST | `/purchase-requests/{id}/cancel-approved` | cancel_approved (**D3** — reason required) |
-| POST | `/purchase-requests/{id}/verify-priority` | verify_priority |
-| GET | `/purchase-requests/duplicate-hints` | view (or on submit response) |
-
-### Submit / approve payloads (sketch)
-
-```json
-{
-  "acknowledge_duplicate_warning": true,
-  "comment": "optional"
-}
-```
-
-```json
-{
-  "step_id": 123,
-  "comment": "موافق",
-  "idempotency_key": "optional-uuid"
-}
-```
-
-### Financial review body (**D2**)
-
-```json
-{
-  "outcome": "cleared",
-  "justification": "…",
-  "version_no": 2
-}
-```
-
-Required on **every** PR before final approval (including unpriced). Persists reviewer from auth context, outcome, timestamp, justification, version.
-
-**D5:** `POST …/approve` that would complete the **final** step fails with `PR_FINANCIAL_REVIEWER_SOD` if `actor_id === financial_review.reviewer_id` for the current version (including delegated actors). Server attempts reassignment to another eligible approver when configured; if none, returns `PR_NO_ELIGIBLE_FINAL_APPROVER` and records escalation — **never** auto-approves.
-
-### Cancel approved body (**D3**)
-
-```json
-{
-  "reason": "…"
-}
-```
-
-Errors if `procurement_engaged_at` is set: `PR_PROCUREMENT_ENGAGED` (future S05 lock — no S05 body in S04).
-
-### Errors
-
-`PR_INVALID_TRANSITION`, `PR_SEASON_REQUIRED`, `PR_EDIT_LOCKED`, `PR_SOD_VIOLATION`, `PR_AUTHORITY_EXCEEDED`, `PR_FINANCIAL_REVIEW_REQUIRED`, `PR_FINANCIAL_REVIEW_NOT_CLEARED`, `PR_FINANCIAL_REVIEWER_SOD`, `PR_NO_ELIGIBLE_FINAL_APPROVER`, `PR_STEP_NOT_PENDING`, `PR_MATRIX_MISSING`, `PR_UNPRICED_REASON_REQUIRED`, `PR_CANCEL_REASON_REQUIRED`, `PR_PROCUREMENT_ENGAGED`
+**Not in Phase III.** Do not implement or expose in III FE (**III-D8**).
 
 ---
 
-## 8. Planning consolidation
+## 7. Purchase requests — outline
 
-| Method | Path | Perm |
-|---|---|---|
-| GET/POST | `/purchase-demand-groups` | consolidate_planning |
-| POST | `/purchase-demand-groups/{id}/items` | consolidate_planning |
+> **Authoritative Phase III contracts:** **[§15](#15-phase-iii-purchase-requests-authoritative)** · [PHASE_III_PURCHASE_REQUESTS_DESIGN.md](PHASE_III_PURCHASE_REQUESTS_DESIGN.md) · **III-D1–D8**.  
+> Phase IV actions (`approve` / `reject` / `return` / `cancel-approved`) remain listed for full-S04 orientation but are **deferred**.
 
-Only **approved** PRs linkable. No RFQ side effects.
+| Method | Path | Perm | Phase |
+|---|---|---|---|
+| GET | `/purchase-requests` | view | III |
+| POST | `/purchase-requests` | create | III |
+| GET | `/purchase-requests/{id}` | view | III |
+| PATCH | `/purchase-requests/{id}` | update (draft/returned only) | III |
+| PUT | `/purchase-requests/{id}/lines` | update | III |
+| POST | `/purchase-requests/{id}/submit` | submit → **`submitted`** only (**III-D1**) | III |
+| POST | `/purchase-requests/{id}/financial-reviews` | financial_review (**D2**/**III-D2**) | III |
+| GET | `/purchase-requests/{id}/financial-reviews` | view | III |
+| GET | `/purchase-requests/{id}/versions` | view | III |
+| POST | `/purchase-requests/{id}/cancel` | cancel (non-approved only) | III |
+| POST | `/purchase-requests/{id}/verify-priority` | verify_priority | III |
+| GET | `/purchase-requests/duplicate-hints` | view | III |
+| POST | `/purchase-requests/{id}/approve` | approve | **IV** |
+| POST | `/purchase-requests/{id}/reject` | reject | **IV** |
+| POST | `/purchase-requests/{id}/return` | return | **IV** |
+| POST | `/purchase-requests/{id}/cancel-approved` | cancel_approved (**D3**) | **IV** |
+
+### Errors (shared vocabulary)
+
+Phase III subset + Phase IV codes (IV-only marked):  
+`PR_INVALID_TRANSITION`, `PR_SEASON_REQUIRED`, `PR_EDIT_LOCKED`, `PR_UNPRICED_REASON_REQUIRED`, `PR_CANCEL_REASON_REQUIRED`, `PR_DUPLICATE_ACK_REQUIRED`, `PR_SUPPLIER_NOT_FOUND`, `PR_SUPPLIER_ARCHIVED`, `PR_SUPPLIER_NOT_ELIGIBLE`, `PR_ORG_UNIT_INVALID`, `PR_LINES_REQUIRED`, `PR_PROCUREMENT_ENGAGED`,  
+`PR_SOD_VIOLATION` *(IV)*, `PR_AUTHORITY_EXCEEDED` *(IV)*, `PR_FINANCIAL_REVIEW_REQUIRED` *(IV)*, `PR_FINANCIAL_REVIEW_NOT_CLEARED` *(IV)*, `PR_FINANCIAL_REVIEWER_SOD` *(IV)*, `PR_NO_ELIGIBLE_FINAL_APPROVER` *(IV)*, `PR_STEP_NOT_PENDING` *(IV)*, `PR_MATRIX_MISSING` *(IV)*
 
 ---
 
-## 9. Control reports
+## 8. Planning consolidation — **Phase V** (**V-D1…V-D5**, **V-D7**)
 
 | Method | Path | Perm |
 |---|---|---|
-| GET | `/purchase-control-reports/approval-latency` | view_control_reports |
-| GET | `/purchase-control-reports/outcomes` | view_control_reports |
-| GET | `/purchase-control-reports/overdue` | view_control_reports |
+| GET | `/purchase-demand-groups` | `consolidate_planning` **or** `purchase_requests.view` |
+| POST | `/purchase-demand-groups` | `consolidate_planning` |
+| GET/PATCH | `/purchase-demand-groups/{id}` | view or consolidate / consolidate |
+| POST | `/purchase-demand-groups/{id}/transition` | `consolidate_planning` |
+| POST | `/purchase-demand-groups/{id}/items` | `consolidate_planning` |
+| DELETE | `/purchase-demand-groups/{id}/items/{purchaseRequestId}` | `consolidate_planning` |
 
-Tenant-scoped aggregates only.
+Only **approved** PR **headers** linkable; exclusive active membership; no RFQ side effects. Full contract: [PHASE_V_DETAILED_DESIGN.md](PHASE_V_DETAILED_DESIGN.md) §7.1.
+
+---
+
+## 9. Control reports — **Phase V** (**V-D6=A**, **V-D8=A**)
+
+| Method | Path | Perm |
+|---|---|---|
+| GET | `/purchase-control-reports/approval-latency` | `view_control_reports` |
+| GET | `/purchase-control-reports/overdue` | `view_control_reports` |
+| GET | `/purchase-control-reports/outcomes` | `view_control_reports` |
+| GET | `/purchase-control-reports/compliance` | `view_control_reports` |
+| GET | `/purchase-control-reports/approval-latency/export.csv` | `view_control_reports` |
+| GET | `/purchase-control-reports/overdue/export.csv` | `view_control_reports` |
+| GET | `/purchase-control-reports/outcomes/export.csv` | `view_control_reports` |
+| GET | `/purchase-control-reports/compliance/export.csv` | `view_control_reports` |
+
+Tenant-scoped aggregates + CSV (UTF-8 BOM, injection-safe). **No XLSX.** Export audited. See [PHASE_V_DETAILED_DESIGN.md](PHASE_V_DETAILED_DESIGN.md) §§8–9.
 
 ---
 
@@ -443,3 +415,379 @@ Other `to` values: existing Phase I graph; eligibility gate does not apply.
 | `SUPPLIER_TRANSITIONED` | Existing; include eligibility snapshot ids when activating |
 | `SUPPLIER_ELIGIBILITY_CHECK_FAILED` | Blocked activation (and future use-time) |
 | `SUPPLIER_SOD_VIOLATION` | Rejected SoD attempt (optional security) |
+
+---
+
+## 13. Phase II-B — Supplier banking (**IMPLEMENTED — FUNCTIONALLY CLOSED — OWNER ACCEPTED**)
+
+> **Status:** **FUNCTIONALLY CLOSED — OWNER ACCEPTED** 2026-11-01 — [S04_PHASE_II_B_ACCEPTANCE_STATUS.md](../../00-project/S04_PHASE_II_B_ACCEPTANCE_STATUS.md) · [S04-PHASE-II-B-FUNCTIONAL-CLOSURE-2026-11-01.md](../../10-decisions/S04-PHASE-II-B-FUNCTIONAL-CLOSURE-2026-11-01.md) · evidence [PHASE_II_B_WP05_ACCEPTANCE_EVIDENCE.md](PHASE_II_B_WP05_ACCEPTANCE_EVIDENCE.md)  
+> Design authority: [PHASE_II_B_SUPPLIER_BANKING_DESIGN.md](PHASE_II_B_SUPPLIER_BANKING_DESIGN.md) · **IIB-D1–IIB-D12** · IBAN **claims** · **E1–E5** · **B1–B8** · doc closure **M1–M3 VERIFIED**  
+> **Commit / push / merge / deploy / default `erp_hajj` migrate:** **NOT AUTHORIZED**  
+> **II-D2:** Banking is **not** an activation prerequisite.  
+> **IIB-D11=A / IIB-D12=A:** Primary retention; audited reveal (reason ≥10).
+
+Prefix: `/api/v1/suppliers/{supplier}` · tenant-scoped · cross-tenant → **404**.
+
+### 13.1 Endpoints
+
+| Method | Path | Permission | Notes |
+|---|---|---|---|
+| GET | `/bank-accounts` | `suppliers.view` | List; `?include=history`; **always masked** |
+| POST | `/bank-accounts` | `suppliers.manage_banking` | Create pending (new `account_key`); acquire IBAN claim |
+| GET | `/bank-accounts/{id}` | `suppliers.view` | Show; **always masked** |
+| PATCH | `/bank-accounts/{id}` | `suppliers.manage_banking` | Edit **pending** only; record editor; see **§13.2a** (**M1**) |
+| POST | `/bank-accounts/{id}/supersede` | `suppliers.manage_banking` | Full identifiers required (**E5**); retain prior primary (**IIB-D11**); IBAN claims §2.4 |
+| POST | `/bank-accounts/{id}/verify` | `suppliers.verify_banking` | pending → verified; SoD; **no** primary transfer |
+| POST | `/bank-accounts/{id}/reject` | `suppliers.verify_banking` | pending → rejected; **DELETE** claim if safe (**M2**); clear primary if set |
+| POST | `/bank-accounts/{id}/revoke` | `suppliers.manage_banking` (**E2**) | verified → revoked; clear primary; **DELETE** claim if safe; no auto-promote |
+| POST | `/bank-accounts/{id}/set-primary` | `suppliers.manage_banking` | Target `status=verified` (any `current_slot`); explicit demote others |
+| POST | `/bank-accounts/{id}/clear-primary` | `suppliers.manage_banking` | Clear; no auto-promote |
+| POST | `/bank-accounts/{id}/evidence` | `suppliers.manage_banking` | Optional `{ "document_id": n }` |
+| POST | `/bank-accounts/{id}/reveal` | `suppliers.view_banking` | `{ "reason" }` trimmed length ≥10 (**E1**); audited; `Cache-Control: no-store` |
+
+### 13.2 Create body (binding)
+
+```json
+{
+  "label": "الحساب الرئيسي",
+  "account_holder_name": "شركة …",
+  "bank_name": "مصرف …",
+  "iban": "SA…",
+  "account_number": null,
+  "evidence_document_id": null
+}
+```
+
+Rules: holder required (**IIB-D1**); free-text bank_name (**IIB-D2**); ≥1 of iban/account_number (**IIB-D3**); currency SAR only (**IIB-D10**).
+
+### 13.2a Pending PATCH — IBAN claim maintenance (**M1**)
+
+- **Path:** `PATCH …/bank-accounts/{id}` — **pending only**; otherwise `422 SUPPLIER_BANK_INVALID_STATUS` / `SUPPLIER_BANK_IMMUTABLE`.  
+- **Partial body** allowed.  
+- **When `iban` is present and normalized value differs from the version’s current IBAN:**  
+  1. Normalize → compute tenant-bound keyed fingerprint.  
+  2. Acquire or validate claim for the new fingerprint (same family OK; other family → `422 SUPPLIER_BANK_IBAN_DUPLICATE`).  
+  3. Update `iban_ciphertext`, `iban_last4`, and version `iban_fingerprint` consistently.  
+  4. Release (**DELETE**) the previous fingerprint’s claim **only if** no pending/verified version in that family still requires it.  
+  5. Preserve historical fingerprints on other versions.  
+  6. Execute version + claim mutations **atomically**; lock order supplier → claim rows (fingerprint asc) → family rows → editors; deadlock retry once.  
+- **When only non-identifier metadata changes** (e.g. `label`, `account_holder_name`, `bank_name`, evidence, or local `account_number` without IBAN change): **must not** acquire or release IBAN claims; **must not** alter IBAN ciphertext/fingerprint.  
+- **When IBAN is cleared** while local account remains (still ≥1 identifier): treat as change-away; safe-release prior IBAN claim; clear this version’s IBAN fields only.  
+- **Audit:** `SUPPLIER_BANK_ACCOUNT_UPDATED` (last4/status/ids only — never plaintext).
+
+### 13.3 Supersede (binding) — **E5**
+
+- **Path:** `POST …/bank-accounts/{id}/supersede`  
+- **Body (required identifiers):** same shape as create — `account_holder_name`, `bank_name`, and ≥1 of `iban` / `account_number` (**IIB-D3**). Optional `label` (if omitted, may copy prior label).  
+- **Forbidden:** empty body that silently reuses prior ciphertext.  
+- **Effects:** new pending `current_slot=0`, `is_primary=false`; prior `current_slot=id`; prior status unchanged; prior primary retained if set (**IIB-D11**); IBAN claims acquired/refreshed per design §2.4 (same-IBAN OK; different-IBAN keeps old claim while prior remains pending/verified).  
+- **Concurrency:** lock order supplier → claims → family rows.  
+- **Audit:** `SUPPLIER_BANK_ACCOUNT_SUPERSEDED` (prior_id, new_id, last4, primary_retained).
+
+### 13.4 Verify / reject / revoke / primary (binding)
+
+| Action | Perm | Body | Primary / claim | Audit |
+|---|---|---|---|---|
+| verify | `verify_banking` | `{}` / `{ "comment" }` | No primary change; claim unchanged | `_VERIFIED` |
+| reject | `verify_banking` | `{ "reason" }` | Clear primary if any; **DELETE** claim if safe (**M2**) | `_REJECTED` |
+| revoke | `manage_banking` (**E2**) | `{ "reason" }` | Clear primary; no auto-promote; **DELETE** claim if safe | `_REVOKED` |
+| set-primary | `manage_banking` | `{}` | Demote others; set verified target | `_PRIMARY_SET` |
+| clear-primary | `manage_banking` | `{}` | Clear; no auto-promote | `_PRIMARY_CLEARED` |
+
+### 13.5 Reveal (binding) — **IIB-D12=A** / **E1** / **E4**
+
+```http
+POST /api/v1/suppliers/{supplier}/bank-accounts/{id}/reveal
+Permission: suppliers.view_banking
+Body: { "reason": "مراجعة امتثال قبل التحويل" }
+```
+
+**Validation:** trim reason; length ≥ **10** or `422 SUPPLIER_BANK_REVEAL_REASON_REQUIRED`.  
+**Success 200:** plaintext `iban` / `account_number` once; headers `Cache-Control: no-store, private`.  
+Allowed for pending/verified/**revoked**/historical ids in tenant (**E4**).  
+**403** missing perm; **404** missing/cross-tenant.  
+Audit `_REVEALED` / `_REVEAL_DENIED`: reason + ids + outcome — **never** plaintext.
+
+### 13.6 Masked resource (binding)
+
+```json
+{
+  "id": 1,
+  "account_key": "…",
+  "version_no": 1,
+  "label": "…",
+  "account_holder_name": "…",
+  "bank_name": "…",
+  "iban_masked": "****1234",
+  "account_masked": null,
+  "currency": "SAR",
+  "status": "verified",
+  "is_primary": true,
+  "is_current": false,
+  "supersedes_id": null,
+  "evidence_document_id": null,
+  "created_by": 10,
+  "verified_by": 11,
+  "verified_at": "…"
+}
+```
+
+Note: `is_primary=true` with `is_current=false` is valid during replacement (**IIB-D11**). List/show **never** include plaintext `iban` / `account_number`.
+
+### 13.7 Status codes
+
+| HTTP | When |
+|---|---|
+| 200/201 | Success |
+| 401 | Unauthenticated |
+| 403 | Missing permission / SoD / reveal denied |
+| 404 | Missing / cross-tenant |
+| 409/422 | Duplicate IBAN, invalid status, immutable, primary not verified, currency, reveal reason |
+| 429 | Reveal rate limit |
+
+### 13.8 Domain error codes (binding)
+
+`SUPPLIER_BANK_NOT_FOUND`, `SUPPLIER_BANK_INVALID_STATUS`, `SUPPLIER_BANK_SOD_VIOLATION`, `SUPPLIER_BANK_IBAN_DUPLICATE`, `SUPPLIER_BANK_IDENTIFIER_REQUIRED`, `SUPPLIER_BANK_CURRENCY_UNSUPPORTED`, `SUPPLIER_BANK_PRIMARY_NOT_VERIFIED`, `SUPPLIER_BANK_IMMUTABLE`, `SUPPLIER_BANK_EVIDENCE_INVALID`, `SUPPLIER_BANK_REVEAL_REASON_REQUIRED`, `DOCUMENT_USED_AS_BANK_EVIDENCE`
+
+### 13.9 Audit (binding)
+
+`…_CREATED` · `_UPDATED` · `_SUPERSEDED` · `_VERIFIED` · `_REJECTED` · `_REVOKED` · `_PRIMARY_SET` · `_PRIMARY_CLEARED` · `_REVEALED` · `_REVEAL_DENIED` — last4 + ids + reason (reveal) only; **never** full IBAN/account or ciphertext.
+
+### 13.10 Concurrency (binding)
+
+Lock order: supplier → IBAN claim rows (fingerprint asc) → family bank rows → editors.  
+Uniques: claims `(tenant_id, iban_fingerprint)`; `primary_flag`; family `current_slot`.  
+Claim release = **DELETE** claim row when safe; ownership checks on acquire (**M2**).  
+Failed transactions roll back version **and** claim writes together.  
+MySQL tests: primary transfer; supersede-while-primary; same-IBAN supersession; cross-family claim race; foreign claim of primary’s IBAN after different-IBAN supersession (must fail); pending PATCH IBAN vs foreign create (**M1**); concurrent release vs acquire (**M2**).
+
+---
+
+## 14. Phase II-C — Supplier evaluations (**DESIGN DRAFT — NOT OWNER ACCEPTED — NOT IMPLEMENTATION-AUTHORIZED**)
+
+> **Status:** Owner decisions **IIC-D1–D8 + IIC-F1–F3 APPROVED** (2026-11-01; **11/11**); detailed design **DRAFT** pending **final Owner design acceptance** (not coding auth).  
+> Authority: [PHASE_II_C_SUPPLIER_EVALUATIONS_DESIGN.md](PHASE_II_C_SUPPLIER_EVALUATIONS_DESIGN.md) · [S04-PHASE-II-C-OWNER-DECISIONS-2026-11-01.md](../../10-decisions/S04-PHASE-II-C-OWNER-DECISIONS-2026-11-01.md)  
+> **Coding / migrations / commit / push / merge / deploy:** **NOT AUTHORIZED**  
+> **II-D3 / II-D4:** No auto lifecycle; tenant criteria; no platform threshold/pack.  
+> **IIC-F1:** `post_season` requires same-tenant `season_id`; other kinds optional.  
+> **IIC-F2 / F3:** Notify only holders of `supplier_evaluations.approve`; only after approve with final monitoring `true`.
+
+Prefix base: `/api/v1` · tenant-scoped · cross-tenant → **404**. Envelope: existing `ApiResponse`.
+
+### 14.1 Criteria packs
+
+| Method | Path | Perm |
+|---|---|---|
+| GET | `/supplier-evaluation-criteria-packs` | `manage_criteria` **or** `view` (list published for scorers — **Eng**: `view` sees published only; `manage_criteria` sees all) |
+| POST | `/supplier-evaluation-criteria-packs` | `manage_criteria` |
+| GET | `/supplier-evaluation-criteria-packs/{pack}` | view / manage_criteria |
+| PATCH | `/supplier-evaluation-criteria-packs/{pack}` | `manage_criteria` (draft only) |
+| POST | `/supplier-evaluation-criteria-packs/{pack}/publish` | `approve_criteria` |
+| POST | `/supplier-evaluation-criteria-packs/{pack}/new-draft` | `manage_criteria` |
+| GET/POST | `/supplier-evaluation-criteria-packs/{pack}/criteria` | manage_criteria (POST draft) |
+| PATCH/DELETE | `/supplier-evaluation-criteria-packs/{pack}/criteria/{criterion}` | manage_criteria (draft) |
+
+**POST pack body (allowlist):** `supplier_category_id` (required), `notes?`, `supersedes_pack_id?`.
+
+**PATCH pack body:** `notes?` only while draft.
+
+**POST criterion body:** `name`, `weight`, `sort_order?`, `is_active?` (default true).
+
+**PATCH criterion:** `name?`, `weight?`, `sort_order?`, `is_active?`.
+
+**Publish:** empty body; server validates weight sum ∈ [99.99, 100.01], ≥1 active line, SoD, draft status → `published`; prior published for category → `archived`.
+
+**POST `…/{pack}/new-draft` (version spawn — II-A eligibility pattern):**
+
+- **Purpose:** From an immutable source pack, create the next **draft** for the same `supplier_category_id` without mutating the source (`published` / `archived` remain immutable). Aligns with design §3.1 (`supersedes_pack_id` → prior pack) and WP-01 “new draft version” requirement.
+- **Permission:** `supplier_evaluations.manage_criteria` (+ same-tenant policy). Cross-tenant / unknown pack → **404**. Missing auth → **401**; missing permission → **403**.
+- **Request body:** empty (no Form Request fields). Optional JSON `{}` ignored.
+- **Source constraints:** path `{pack}` must be `published` **or** `archived`; otherwise **409** `CRITERIA_PACK_INVALID_STATUS`. At most one draft per `(tenant, supplier_category)` — if a draft already exists → **409** `CRITERIA_PACK_DRAFT_EXISTS`.
+- **Server behavior:** allocates `version_no = max(category)+1`; sets `supersedes_pack_id = {pack}`; copies **active** criteria lines (`name`/`weight`/`sort_order`/`is_active=true`); sets `prepared_by` / `last_edited_by` / editor SoD set to the actor; emits `CRITERIA_PACK_CREATED`. Does **not** publish or archive any pack. SoD (preparer/editors ≠ publisher) is enforced later on **publish**, not on `new-draft`.
+- **Response:** **201** + `EvaluationCriteriaPackResource` (includes nested `criteria`, `supersedes_pack_id`, `version_no`, `status=draft`).
+- **Concurrency:** row/category locks + draft uniqueness; concurrent `new-draft` / create for the same category yields one draft and **409** for the loser (see concurrency suite).
+- **Equivalent path:** `POST /supplier-evaluation-criteria-packs` with `supersedes_pack_id` also creates a draft successor but does **not** copy criteria lines — prefer `new-draft` when copying active lines is required.
+
+### 14.2 Evaluations
+
+| Method | Path | Perm |
+|---|---|---|
+| GET | `/supplier-evaluations` | `view` |
+| POST | `/supplier-evaluations` | `prepare` |
+| GET | `/supplier-evaluations/{evaluation}` | `view` |
+| PATCH | `/supplier-evaluations/{evaluation}` | `prepare` (draft only) |
+| POST | `/supplier-evaluations/{evaluation}/submit` | `prepare` |
+| POST | `/supplier-evaluations/{evaluation}/approve` | `approve` |
+| POST | `/supplier-evaluations/{evaluation}/reject` | `approve` |
+
+**Filters (GET list):** `supplier_id`, `supplier_category_id`, `evaluation_kind`, `status`, `season_id`, `monitoring_recommended`, `q` (number), pagination `page`/`per_page`.
+
+**POST create allowlist:** `supplier_id`, `supplier_category_id`, `evaluation_kind`, `season_id?`, `monitoring_recommended?` (proposal only — **IIC-F3**), `scores?` (array), `notes?`.
+
+**Season validation (**IIC-F1**):** if `evaluation_kind=post_season` → `season_id` required (same tenant); other kinds may omit; supplied `season_id` always same-tenant or **404**.
+
+**Score line object:** `{ "criterion_id": number, "score": number, "note?": string }` — `criterion_id` must belong to current **published** pack for category when drafting; at submit, server snapshots name/weight from pack.
+
+**PATCH draft allowlist:** `evaluation_kind?`, `season_id?`, `monitoring_recommended?` (proposal — **does not notify**), `scores?` (replace-all **Eng**).
+
+**Submit:** empty body; builds immutable snapshots; computes `total_score`; → `pending_approval`; **must not** emit monitoring notification (**IIC-F3**).
+
+**Approve body:** `{ "monitoring_recommended?": boolean }` — **final** monitoring decision (**IIC-F3**). If omitted, carry forward draft proposal **(Eng)**. On success with final `true` → enqueue in-app notification to same-tenant `supplier_evaluations.approve` holders (**IIC-F2**). Never mutates supplier lifecycle.
+
+**Reject body:** `{ "reason": string }` trimmed ≥10 **(Eng)**.
+
+### 14.3 Appeals
+
+| Method | Path | Perm |
+|---|---|---|
+| GET | `/supplier-evaluations/{evaluation}/appeals` | `view` |
+| POST | `/supplier-evaluations/{evaluation}/appeals` | `prepare` **or** `handle_appeal` |
+| POST | `/supplier-evaluation-appeals/{appeal}/accept` | `handle_appeal` |
+| POST | `/supplier-evaluation-appeals/{appeal}/reject` | `handle_appeal` |
+
+**POST appeal:** `{ "reason": string }` (≥10). Evaluation must be `approved`; no other `open` appeal.
+
+**Accept:** creates new draft evaluation version; returns appeal + `resulting_evaluation`.
+
+**Reject body:** `{ "review_outcome_note?": string }`.
+
+### 14.4 Resources (Eng field sets)
+
+**CriteriaPackResource:** `id`, `supplier_category_id`, `version_no`, `status`, `prepared_by`, `last_edited_by`, `approved_by`, `approved_at`, `supersedes_pack_id`, `notes`, `criteria[]` (when loaded), `created_at`, `updated_at`.
+
+**EvaluationResource:** `id`, `evaluation_number`, `supplier_id`, `supplier_category_id`, `evaluation_kind`, `season_id`, `status`, `criteria_pack_id`, `criteria_pack_version_no`, `total_score`, `monitoring_recommended`, `prepared_by`, `submitted_at`, `approved_by`, `approved_at`, `version_no`, `evaluation_family_key`, `supersedes_evaluation_id`, `origin_appeal_id`, `score_snapshots[]` (after submit), `created_at`, `updated_at`.
+
+**AppealResource:** `id`, `evaluation_id`, `reason`, `status`, `filed_by`, `filed_at`, `reviewed_by`, `reviewed_at`, `resulting_evaluation_id`.
+
+Never expose internal sequence counters or unrelated supplier banking fields.
+
+### 14.5 Error codes
+
+`EVALUATION_SOD_VIOLATION`, `EVALUATION_WEIGHTS_INVALID`, `EVALUATION_NOT_DRAFT`, `EVALUATION_CRITERIA_MISSING`, `EVALUATION_SUPPLIER_ARCHIVED`, `EVALUATION_CATEGORY_NOT_LINKED`, `EVALUATION_SEASON_REQUIRED`, `EVALUATION_INVALID_STATUS`, `EVALUATION_SCORE_OUT_OF_RANGE`, `EVALUATION_APPEAL_NOT_OPEN`, `EVALUATION_APPEAL_EXISTS`, `CRITERIA_PACK_SOD_VIOLATION`, `CRITERIA_PACK_NOT_DRAFT`, `CRITERIA_PACK_INVALID_WEIGHTS`, `CRITERIA_PACK_EMPTY`.
+
+HTTP: `401` / `403` / `404` / `409` (status races) / `422` (validation + domain envelope codes).
+
+### 14.6 Idempotency & audit
+
+- Submit/approve/reject/publish under row locks; replay on terminal state → `409` + stable code.  
+- Audit events per design pack §10; correlation ID mandatory.  
+- Monitoring notification **only** after approve commit when final flag true; recipients = `supplier_evaluations.approve` only; dedupe per design pack §6.1 (**IIC-F2**/ **IIC-F3**).
+
+### 14.7 Evidence
+
+Use Documents module: upload + link `documentable_type=supplier_evaluation`, `documentable_id={evaluation}`. Optional. Requires Documents permissions + `supplier_evaluations.view` to list in eval UI.
+
+---
+
+## 15. Phase III Purchase Requests (authoritative)
+
+> **Status:** `OWNER ACCEPTED — FUNCTIONAL` (III-WP01–WP05). Design **OWNER ACCEPTED**; Phase IV approval engine **designed (draft)** — coding **not** authorized.  
+> Design pack: [PHASE_III_PURCHASE_REQUESTS_DESIGN.md](PHASE_III_PURCHASE_REQUESTS_DESIGN.md) · Decisions: [S04-PHASE-III-OWNER-DECISIONS-2026-11-01.md](../../10-decisions/S04-PHASE-III-OWNER-DECISIONS-2026-11-01.md) · Evidence: [PHASE_III_WP01_TO_05_ACCEPTANCE_EVIDENCE.md](PHASE_III_WP01_TO_05_ACCEPTANCE_EVIDENCE.md)
+
+Prefix: `/api/v1` · tenant-scoped · cross-tenant → **404**. Envelope: existing `ApiResponse`.
+
+### 15.1 Endpoints (Phase III only)
+
+| Method | Path | Perm | Notes |
+|---|---|---|---|
+| GET | `/purchase-requests` | `purchase_requests.view` | Filters: `status`, `request_kind`, `season_id`, `priority`, `optional_supplier_id`, `beneficiary_organization_unit_id`, `requested_by`, `q` (number/title), `page`/`per_page` |
+| POST | `/purchase-requests` | `create` | **201** draft |
+| GET | `/purchase-requests/{id}` | `view` | Includes lines, latest financial review summary, version_no, `pending_approval_engine` flag **(Eng)** when `status=submitted` |
+| PATCH | `/purchase-requests/{id}` | `update` | `draft`/`returned` only; else `422 PR_EDIT_LOCKED` |
+| PUT | `/purchase-requests/{id}/lines` | `update` | Replace-all lines; draft/returned only |
+| POST | `/purchase-requests/{id}/submit` | `submit` | → `submitted` (**III-D1**); writes structured version snapshot (**III-D7**); **no** matrix/steps |
+| POST | `/purchase-requests/{id}/cancel` | `cancel` | Non-approved; body `{ "reason": "…" }` |
+| POST | `/purchase-requests/{id}/verify-priority` | `verify_priority` | Records verifier; does not bypass future approvals |
+| GET | `/purchase-requests/duplicate-hints` | `view` | Query by draft payload or `purchase_request_id` |
+| POST | `/purchase-requests/{id}/financial-reviews` | `financial_review` | **III-D2**; draft or submitted |
+| GET | `/purchase-requests/{id}/financial-reviews` | `view` | History for PR |
+| GET | `/purchase-requests/{id}/versions` | `view` | Structured version headers (+ optional `?include=lines`) |
+
+**Deferred Phase IV (do not implement in III):** `POST …/approve|reject|return|cancel-approved` and §6 matrix APIs.
+
+### 15.2 Create body (allowlist)
+
+```json
+{
+  "request_kind": "seasonal",
+  "season_id": 12,
+  "title": "…",
+  "purpose": "…",
+  "priority": "normal",
+  "urgency_justification": null,
+  "beneficiary_organization_unit_id": 5,
+  "optional_supplier_id": null,
+  "currency": "SAR",
+  "lines": [
+    {
+      "line_no": 1,
+      "description": "…",
+      "specifications": "…",
+      "quantity": 10,
+      "unit": "قطعة",
+      "need_date": "2026-12-01",
+      "inventory_item_id": null,
+      "unit_estimate": 50.00,
+      "unpriced_reason": null
+    }
+  ]
+}
+```
+
+**Validation:** seasonal ⇒ `season_id` required same-tenant; administrative ⇒ `season_id` null; org unit active same-tenant (**III-D5**); optional supplier eligibility (**III-D4**); priority ≠ normal ⇒ justification required; unpriced line ⇒ `unpriced_reason` required.
+
+### 15.3 Submit body
+
+```json
+{
+  "acknowledge_duplicate_warning": true,
+  "comment": "optional"
+}
+```
+
+If duplicate hints exist and ack false/missing → `422 PR_DUPLICATE_ACK_REQUIRED` (**III-D6**). On success: `status=submitted`, version snapshot written, `matrix_id` remains null (**III-D1**). Concurrent double-submit → one success + `409 PR_INVALID_TRANSITION`.
+
+### 15.3a Cancel body (non-approved)
+
+```json
+{
+  "reason": "…"
+}
+```
+
+Allowed when `status` ∈ {`draft`, `submitted`} (and later `returned`/`under_review` when Phase IV exists). Reason trimmed required (**Eng** ≥10). Errors: `422 PR_CANCEL_REASON_REQUIRED`, `409 PR_INVALID_TRANSITION`, `422 PR_PROCUREMENT_ENGAGED` if lock set. **Not** `cancel-approved` (Phase IV / **D3**).
+
+### 15.3b Verify priority body
+
+```json
+{
+  "comment": "optional"
+}
+```
+
+Records `priority_verified_by` / `priority_verified_at`. Does **not** change status and does **not** bypass future Phase IV approvals (**122**). Allowed on `draft`/`submitted` (**Eng**).
+
+### 15.4 Financial review body (**III-D2**)
+
+```json
+{
+  "outcome": "cleared",
+  "justification": "…",
+  "version_no": 1
+}
+```
+
+`version_no` must match current PR `version_no` (or Eng-allowed draft version). `reviewer_id` = auth user (may equal requester — **III-D3**). Does **not** transition status. Phase IV later requires latest cleared/cleared_with_conditions before final approve (**D2**).
+
+### 15.5 Resources (Eng)
+
+**PurchaseRequestResource:** `id`, `pr_number`, `version_no`, `status`, `request_kind`, `season_id`, `title`, `purpose`, `priority`, urgency fields, `requested_by`, `beneficiary_organization_unit_id`, `optional_supplier_id`, currency/totals flags, `duplicate_warning_acknowledged_at`, `submitted_at`, cancel fields, `pending_approval_engine` (true when `submitted`), `lines[]`, `latest_financial_review?`, timestamps.  
+**Never** invent approval step UI fields in III responses beyond null placeholders for `matrix_id`.
+
+### 15.6 Documents
+
+Optional: Documents link `documentable_type=purchase_request`. Requires Documents perms + `purchase_requests.view`.
+
+### 15.7 Audit (III)
+
+`PR_CREATED`, `PR_UPDATED`, `PR_LINES_REPLACED`, `PR_SUBMITTED`, `PR_CANCELLED`, `PR_PRIORITY_VERIFIED`, `PR_FINANCIAL_REVIEW_RECORDED`, `PR_DUPLICATE_ACKNOWLEDGED`.

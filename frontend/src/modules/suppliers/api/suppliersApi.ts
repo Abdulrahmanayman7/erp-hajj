@@ -32,7 +32,7 @@ function toQuery(params: ListSuppliersParams): string {
   return qs ? `?${qs}` : ''
 }
 
-function withWarnings<T>(response: SuccessWithWarnings<T>): SupplierMutationResult {
+function withWarnings(response: SuccessWithWarnings<Supplier>): SupplierMutationResult {
   return {
     supplier: response.data,
     warnings: response.warnings ?? [],

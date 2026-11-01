@@ -42,17 +42,23 @@ Reuse ISO alpha-2 country codes consistent with pilgrim nationality fields.
 
 **II-A design approval (2026-10-31):** Eligibility & Documents design **APPROVED** including binding controls **C1–C6** (immutable approved versions; applicability combine/dedupe/no exemptions; SoD uploader≠verifier and author≠approver; activation + use-time recheck with scheduled checks supplementary; exact API contracts before coding; `approve_eligibility_config` sensitive / never template-seeded). Records: [S04-PHASE-II-A-DESIGN-APPROVAL-2026-10-31.md](S04-PHASE-II-A-DESIGN-APPROVAL-2026-10-31.md); [PHASE_II_A_ELIGIBILITY_DESIGN.md](../09-modules/19-suppliers-and-procurement/PHASE_II_A_ELIGIBILITY_DESIGN.md).
 
-**II-A Owner acceptance (2026-11-01):** Phase II-A **COMPLETE — OWNER ACCEPTED**; independent remediation re-audit **ACCEPTABLE**; Owner **M1=A** (≥1 mandatory on approve). Acceptance: [S04_PHASE_II_A_ACCEPTANCE_STATUS.md](../00-project/S04_PHASE_II_A_ACCEPTANCE_STATUS.md). Phase II-B / II-C / Phase III–V / S05 remain **NOT AUTHORIZED**.
+**II-A Owner acceptance (2026-11-01):** Phase II-A **COMPLETE — OWNER ACCEPTED**; independent remediation re-audit **ACCEPTABLE**; Owner **M1=A** (≥1 mandatory on approve). Acceptance: [S04_PHASE_II_A_ACCEPTANCE_STATUS.md](../00-project/S04_PHASE_II_A_ACCEPTANCE_STATUS.md).
+
+**II-B Owner decisions (2026-11-01):** **IIB-D1–IIB-D12 APPROVED** — [S04-PHASE-II-B-OWNER-DECISIONS-2026-11-01.md](S04-PHASE-II-B-OWNER-DECISIONS-2026-11-01.md).  
+**II-B design approval (2026-11-01):** Supplier Banking design **OWNER APPROVED** (IBAN **claims**, **E1–E5**, **B1–B8**, **II-D2**) — [S04-PHASE-II-B-DESIGN-APPROVAL-2026-11-01.md](S04-PHASE-II-B-DESIGN-APPROVAL-2026-11-01.md); pack [PHASE_II_B_SUPPLIER_BANKING_DESIGN.md](../09-modules/19-suppliers-and-procurement/PHASE_II_B_SUPPLIER_BANKING_DESIGN.md). Independent re-gate **PASS**. Doc closure **M1–M3 VERIFIED** — [S04-PHASE-II-B-DOC-CLOSURE-M1-M3-2026-11-01.md](S04-PHASE-II-B-DOC-CLOSURE-M1-M3-2026-11-01.md).  
+**II-B functional closure (2026-11-01):** Phase II-B **COMPLETE — FUNCTIONALLY CLOSED — OWNER ACCEPTED** (WP-01–WP-05) — [S04_PHASE_II_B_ACCEPTANCE_STATUS.md](../00-project/S04_PHASE_II_B_ACCEPTANCE_STATUS.md) · [S04-PHASE-II-B-FUNCTIONAL-CLOSURE-2026-11-01.md](S04-PHASE-II-B-FUNCTIONAL-CLOSURE-2026-11-01.md) · evidence [PHASE_II_B_WP05_ACCEPTANCE_EVIDENCE.md](../09-modules/19-suppliers-and-procurement/PHASE_II_B_WP05_ACCEPTANCE_EVIDENCE.md). **Commit / push / merge / deploy / default `erp_hajj` migrate NOT AUTHORIZED**. II-C / Phase III–V / S05 coding remain **NOT AUTHORIZED** (Phase III **III-D1–D8** decisions approved; detailed design pending Owner acceptance — see §6).
 
 ### 2.5 Bank accounts (**110**)
 
 **Chosen:** encrypt IBAN/account with application key; store last4; permissions `view_banking` / `manage_banking` / `verify_banking`; verification workflow.
 **Rejected:** plaintext IBAN; payments.
 Sensitive banking permissions are **not** auto-granted (**D4**).
+**II-B refinement (design approved; later functionally closed 2026-11-01):** mandatory holder (**IIB-D1**); free-text bank name (**IIB-D2**); IBAN∨local account (**IIB-D3**); hard SoD including intermediate editors (**IIB-D4**); optional evidence Document (**IIB-D5**); tenant-wide IBAN uniqueness via claims (**IIB-D6**); `revoked` status (**IIB-D7**); verified immutability + supersession (**IIB-D8**); verified-only primary with clear on reject/revoke (**IIB-D9**); SAR only (**IIB-D10**); primary retention (**IIB-D11**); audited reveal (**IIB-D12**); **E1–E5** / **B1–B8**.
 
 ### 2.6 Evaluations (**112–116**)
 
 Weighted criteria per category; evaluation versions; preparer ≠ approver; monitoring flag ≠ supplier status; no auto-suspend.
+**II-C Owner decisions (2026-11-01):** **IIC-D1–D8 + IIC-F1–F3 APPROVED** (11/11) — [S04-PHASE-II-C-OWNER-DECISIONS-2026-11-01.md](S04-PHASE-II-C-OWNER-DECISIONS-2026-11-01.md). Detailed design pack **DRAFT — NOT OWNER ACCEPTED** — [PHASE_II_C_SUPPLIER_EVALUATIONS_DESIGN.md](../09-modules/19-suppliers-and-procurement/PHASE_II_C_SUPPLIER_EVALUATIONS_DESIGN.md) · [API.md §14](../09-modules/19-suppliers-and-procurement/API.md). Implementation **NOT AUTHORIZED**.
 
 ### 2.7 PR model (**117–123**) — Owner **D2** / **D3**
 
@@ -150,7 +156,18 @@ Deny-by-default; SoD (including **D5** hard enforcement); banking least privileg
 | II-A Eligibility & Documents design (C1–C6) | **APPROVED** (2026-10-31) |
 | II-A engineering pre-implementation gate | **COMPLETE** (2026-10-31) |
 | Phase II-A implementation + acceptance | **COMPLETE — OWNER ACCEPTED** (2026-11-01); remediations H1/M1–M5 closed |
-| Explicit Phase II-B / II-C / Phase III–V authorization | **OWNER** — separate; not granted |
+| Phase II-B Owner decisions IIB-D1–IIB-D12 | **APPROVED** (docs, 2026-11-01) |
+| Phase II-B design approval | **OWNER APPROVED** (2026-11-01) |
+| Phase II-B documentation closure M1–M3 | **VERIFIED** (2026-11-01) |
+| Phase II-B implementation | **COMPLETE — FUNCTIONALLY CLOSED — OWNER ACCEPTED** (2026-11-01; WP-01–WP-05) |
+| Commit / push / merge / deploy / default `erp_hajj` migrate | **NOT AUTHORIZED** — separate Owner act required |
+| Phase II-C Owner decisions IIC-D1–D8 + IIC-F1–F3 | **APPROVED** (2026-11-01; **11/11**) |
+| Phase II-C detailed design | **DRAFT — NOT OWNER ACCEPTED** (see II-C evidence / Owner acts) |
+| Phase II-C coding / migrations | See Owner II-C coding authorization acts |
+| Phase III Owner decisions III-D1–D8 | **APPROVED** (2026-11-01; **8/8**) — [S04-PHASE-III-OWNER-DECISIONS-2026-11-01.md](S04-PHASE-III-OWNER-DECISIONS-2026-11-01.md) |
+| Phase III detailed design | **DRAFT — PENDING OWNER DESIGN ACCEPTANCE** — [PHASE_III_PURCHASE_REQUESTS_DESIGN.md](../09-modules/19-suppliers-and-procurement/PHASE_III_PURCHASE_REQUESTS_DESIGN.md) |
+| Phase III coding / migrations | **NOT AUTHORIZED** |
+| Explicit Phase IV–V / S05 authorization | **OWNER** — separate; not granted |
 
 ## 7. References
 

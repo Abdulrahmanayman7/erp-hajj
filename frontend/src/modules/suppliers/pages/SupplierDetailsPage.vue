@@ -2,11 +2,13 @@
 import { computed, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, RouterLink } from 'vue-router'
-import { ArrowRight, Building2, Lock, Pencil, Plus, Trash2 } from 'lucide-vue-next'
+import { ArrowRight, Building2, Pencil, Plus, Trash2 } from 'lucide-vue-next'
 
 import { listGeoPlaces } from '../api/suppliersApi'
 import SupplierFormDrawer from '../components/SupplierFormDrawer.vue'
+import SupplierBankingPanel from '../components/SupplierBankingPanel.vue'
 import SupplierDocumentsPanel from '../components/SupplierDocumentsPanel.vue'
+import SupplierEvaluationsPanel from '../components/SupplierEvaluationsPanel.vue'
 import SupplierLifecycleActions from '../components/SupplierLifecycleActions.vue'
 import SupplierStatusTimeline from '../components/SupplierStatusTimeline.vue'
 import {
@@ -53,9 +55,9 @@ const tabs = computed(() => [
   { key: 'categories' as const, label: t('suppliers.tabs.categoriesCoverage') },
   { key: 'contacts' as const, label: t('suppliers.tabs.contacts') },
   { key: 'history' as const, label: t('suppliers.tabs.statusHistory') },
-  { key: 'banking' as const, label: t('suppliers.tabs.banking'), phaseII: true },
+  { key: 'banking' as const, label: t('suppliers.tabs.banking') },
   { key: 'documents' as const, label: t('suppliers.tabs.documents') },
-  { key: 'evaluations' as const, label: t('suppliers.tabs.evaluations'), phaseII: true },
+  { key: 'evaluations' as const, label: t('suppliers.tabs.evaluations') },
 ])
 
 const canEdit = computed(
@@ -245,8 +247,7 @@ const geoPlaceOptions = computed<AppSelectOption[]>(() =>
   geoPlaces.value.map((p) => ({ value: p.id, label: p.name_ar })),
 )
 
-function onTabSelect(tab: TabKey, phaseII?: boolean): void {
-  if (phaseII) return
+function onTabSelect(tab: TabKey): void {
   activeTab.value = tab
   if (tab === 'categories') {
     void loadGeoPlaces()
@@ -315,19 +316,13 @@ function onTabSelect(tab: TabKey, phaseII?: boolean): void {
           type="button"
           class="rounded-t-lg px-3 py-2 text-sm font-semibold transition"
           :class="
-            tab.phaseII
-              ? 'cursor-not-allowed text-brand-text-muted opacity-70'
-              : activeTab === tab.key
-                ? 'border-b-2 border-brand-primary text-brand-primary'
-                : 'text-brand-text-secondary hover:text-brand-text'
+            activeTab === tab.key
+              ? 'border-b-2 border-brand-primary text-brand-primary'
+              : 'text-brand-text-secondary hover:text-brand-text'
           "
-          :disabled="tab.phaseII"
-          @click="onTabSelect(tab.key, tab.phaseII)"
+          @click="onTabSelect(tab.key)"
         >
           {{ tab.label }}
-          <span v-if="tab.phaseII" class="ms-1 text-[10px] font-normal">{{
-            t('suppliers.phaseIIPlaceholder')
-          }}</span>
         </button>
       </nav>
 
@@ -470,14 +465,9 @@ function onTabSelect(tab: TabKey, phaseII?: boolean): void {
 
       <SupplierDocumentsPanel v-else-if="activeTab === 'documents'" :supplier="supplier" />
 
-      <section
-        v-if="['banking', 'evaluations'].includes(activeTab)"
-        class="rounded-2xl border border-dashed border-brand-border bg-brand-bg/40 p-8 text-center"
-      >
-        <Lock class="mx-auto h-8 w-8 text-brand-text-muted" />
-        <p class="mt-3 text-sm font-semibold text-brand-text">{{ t('suppliers.phaseIILockedTitle') }}</p>
-        <p class="mt-1 text-sm text-brand-text-secondary">{{ t('suppliers.phaseIILockedBody') }}</p>
-      </section>
+      <SupplierBankingPanel v-else-if="activeTab === 'banking'" :supplier="supplier" />
+
+      <SupplierEvaluationsPanel v-else-if="activeTab === 'evaluations'" :supplier="supplier" />
     </template>
 
     <SupplierFormDrawer

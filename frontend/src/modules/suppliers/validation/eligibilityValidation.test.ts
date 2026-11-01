@@ -298,9 +298,11 @@ describe('checklist', () => {
 })
 
 describe('Phase II-A scope guard', () => {
-  it('keeps banking and evaluations as phase II placeholders only (no UI strings added)', () => {
+  it('keeps evaluations as phase II placeholder; banking is Phase II-B UI', () => {
     expect(ar.suppliers.phaseIILockedBody).not.toContain('الوثائق')
+    expect(ar.suppliers.phaseIILockedBody).toContain('التقييمات')
     expect(ar.suppliers.tabs.banking).toBeTruthy()
     expect(ar.suppliers.tabs.evaluations).toBeTruthy()
+    expect(ar.suppliers.banking.title).toBeTruthy()
   })
 })

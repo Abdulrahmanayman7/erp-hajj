@@ -28,7 +28,7 @@ class DocumentController
     {
         $this->authorize('viewAny', Document::class);
 
-        $paginator = $action->execute([
+        $paginator = $action->execute($request->user(), [
             'search' => $request->query('search'),
             'status' => $request->query('status'),
             'category_id' => $request->query('category_id'),

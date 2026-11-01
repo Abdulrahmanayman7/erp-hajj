@@ -1,8 +1,8 @@
 # Suppliers & Procurement (S04) — Data Model
 
-> **Status:** Phase I + Phase II-A tables **IMPLEMENTED — OWNER ACCEPTED** (II-A 2026-11-01); Phase II-B/II-C / Phase III–V schema **NOT IMPLEMENTED**
+> **Status:** Phase I–IV schemas implemented/accepted per stream evidence; Phase V demand-group tables (`250001`…`250004`) **IMPLEMENTED (engineering)** — Owner Phase V functional acceptance **PENDING**; S05 tables **NOT STARTED**  
 > **Last updated:** 2026-11-01
-> Functional binding: ADR-0022 · Engineering: ADR-0023 · Owner G1 decisions **D1–D4**
+> Functional binding: ADR-0022 · Engineering: ADR-0023 · Owner G1 **D1–D5** · Phase III **III-D1–D8**
 > All tenant business tables: `TenantOwned` + `UsesTenantScope` unless marked **platform reference**.
 
 Classification labels follow DATABASE_PRINCIPLES / tenancy docs.
@@ -12,7 +12,7 @@ Classification labels follow DATABASE_PRINCIPLES / tenancy docs.
 ## 1. Proposed migration order (conceptual — do not create files yet)
 
 1. Platform minimal geo catalog (if adopted as platform)
-2. Sequences: `supplier_number_sequences`, `purchase_request_number_sequences`, `supplier_evaluation_number_sequences`
+2. Sequences: `supplier_number_sequences`, `purchase_request_number_sequences` (alias Eng name `purchase_request_sequences` — prefer `*_number_sequences` for consistency), `supplier_evaluation_number_sequences`
 3. `supplier_categories`
 4. `suppliers` + `supplier_category_supplier` (pivot) + coverage + contacts + bank accounts
 5. Document requirement & eligibility tables
@@ -109,26 +109,49 @@ Tenant coverage rows FK → `geo_places.id` (RESTRICT).
 
 name, role_title, email, phone, is_primary_contact, soft operational flags.
 
-### `supplier_bank_accounts`
+### `supplier_bank_accounts` — Phase II-B (**IMPLEMENTED — FUNCTIONALLY CLOSED — OWNER ACCEPTED** 2026-11-01)
+
+> Authority: [PHASE_II_B_SUPPLIER_BANKING_DESIGN.md](PHASE_II_B_SUPPLIER_BANKING_DESIGN.md) · [S04-PHASE-II-B-DESIGN-APPROVAL-2026-11-01.md](../../10-decisions/S04-PHASE-II-B-DESIGN-APPROVAL-2026-11-01.md) · [IIB-D1–IIB-D12](../../10-decisions/S04-PHASE-II-B-OWNER-DECISIONS-2026-11-01.md) · functional closure [S04_PHASE_II_B_ACCEPTANCE_STATUS.md](../../00-project/S04_PHASE_II_B_ACCEPTANCE_STATUS.md). Implementation exists on the feature branch; **commit/push/merge/deploy** and default-DB migrate remain **NOT AUTHORIZED** without a separate Owner act.
 
 | Column | Notes |
 |---|---|
-| `tenant_id`, `supplier_id` | |
-| `label` | |
-| `bank_name` | |
-| `iban_ciphertext` / `account_ciphertext` | App-encrypted (**ENGINEERING PROPOSAL**) |
-| `iban_last4` / `account_last4` | For UI mask |
-| `currency` | CHAR(3) default SAR |
-| `is_primary` | Partial unique: one primary per supplier |
-| `verification_status` | `pending` \| `verified` \| `rejected` |
-| `verified_by` / `verified_at` | |
+| `tenant_id`, `supplier_id` | TenantOwned; FK same-tenant supplier |
+| `account_key`, `version_no` | Versioned family (**IIB-D8**) |
+| `label` | Optional |
+| `account_holder_name` | **Required** (**IIB-D1**) |
+| `bank_name` | Free text **required** (**IIB-D2**); no catalog |
+| `iban_ciphertext` / `account_ciphertext` | App-encrypted; ≥1 of IBAN or local account (**IIB-D3**) |
+| `iban_last4` / `account_last4` | Mask display |
+| `iban_fingerprint` | Keyed HMAC on every version (history); **not** uniquely constrained on this table |
+| `currency` | Fixed `SAR` (**IIB-D10**) |
+| `status` | `pending` \| `verified` \| `rejected` \| `revoked` (**IIB-D7**) |
+| `current_slot` | `0` = family edit head; historical `= id` (orthogonal to primary) |
+| `is_primary` / generated `primary_flag` | Verified-only (**IIB-D9**); **independent of `current_slot`** (**IIB-D11**) |
+| `supersedes_id` | Prior version FK |
+| `evidence_document_id` | Optional Document (**IIB-D5**) |
+| `created_by`, `last_edited_by`, verify/reject/revoke actors + timestamps | |
 | timestamps | |
 
-**Never** put full IBAN in audit `old`/`new` values — store last4 + status only.
+**Editors:** `supplier_bank_account_editors` — SoD (**IIB-D4**).  
+
+**IBAN claims (C1 + M1/M2):** `supplier_bank_iban_claims` with `UNIQUE (tenant_id, iban_fingerprint)` mapping fingerprint → owning `account_key` / `supplier_id` / `holder_bank_account_id`.
+
+| Field | Integrity |
+|---|---|
+| `tenant_id` | FK; TenantOwned; must match supplier + holder |
+| `supplier_id` | FK → suppliers |
+| `account_key` | Owning family; app-enforced match to holder |
+| `holder_bank_account_id` | FK → `supplier_bank_accounts.id` (`ON DELETE RESTRICT` while pointed); must belong to same tenant/supplier/family |
+| `iban_fingerprint` | Keyed HMAC; unique with tenant |
+
+Rules: same-family same-IBAN supersession refreshes holder; different-IBAN supersession keeps claim on old primary’s IBAN until no pending/verified row retains that fingerprint; **pending PATCH** that changes IBAN acquires/releases claims (**M1**); metadata-only PATCH must not touch claims; safe release **DELETE**s the claim row (**M2**); no cross-family reassignment; no orphan claims; failed txn rolls back version+claim. **Do not** unique version-level fingerprints. See design pack §2.4.
+
+**Never** put full IBAN in audit — last4 + status/reason only; reveal = dedicated audited action (**IIB-D12**, **E1**/**E4**).  
+**D11:** supersede retains old primary → verify (no transfer) → explicit `set-primary` → revoke clears primary without auto-promote.
 
 ### Document eligibility
 
-> **II-A (2026-10-31):** **DESIGN APPROVED**; **ENGINEERING PRE-IMPLEMENTATION GATE** — see [PHASE_II_A_ELIGIBILITY_DESIGN.md](PHASE_II_A_ELIGIBILITY_DESIGN.md), [API.md §12](API.md), [S04-PHASE-II-A-ENGINEERING-GATE-2026-10-31.md](../../10-decisions/S04-PHASE-II-A-ENGINEERING-GATE-2026-10-31.md). **Not implemented** — do not author migrations until coding authorization.
+> **II-A:** **IMPLEMENTED — OWNER ACCEPTED** (2026-11-01) — [PHASE_II_A_ELIGIBILITY_DESIGN.md](PHASE_II_A_ELIGIBILITY_DESIGN.md), [API.md §12](API.md).
 
 #### `supplier_eligibility_requirement_sets` (tenant-owned)
 
@@ -212,34 +235,37 @@ Aligns with ADR-0010. Expiry does **not** auto-change lifecycle (**II-D3**). Ban
 
 ---
 
-## 4. Evaluations
+## 4. Evaluations — Phase II-C (**DESIGN DRAFT** — IIC-D1–D8)
 
-### `supplier_evaluation_criteria` (tenant-owned, per category)
+> Authoritative detail: [PHASE_II_C_SUPPLIER_EVALUATIONS_DESIGN.md](PHASE_II_C_SUPPLIER_EVALUATIONS_DESIGN.md). **Not migrated.** Design **not** Owner-accepted.
 
-`supplier_category_id`, `name`, `weight` DECIMAL, `is_active`. Sum of active weights for category = 100 (**ENGINEERING PROPOSAL** enforce on save).
+### `supplier_evaluation_criteria_packs` / `supplier_evaluation_criteria`
+
+Versioned packs per category (**IIC-D1**): draft → publish → immutable; active weights sum **100 ±0.01** (**IIC-D2**). Editors table for SoD. See design pack §2.2–2.3.
 
 ### `supplier_evaluations`
 
 | Column | Notes |
 |---|---|
 | `evaluation_number` | `SEV-######` |
-| `supplier_id`, optional `supplier_category_id` | |
+| `supplier_id`, `supplier_category_id` | Category **required**; must be linked to supplier (**IIC-D5**) |
 | `evaluation_kind` | qualification / periodic / operational / post_season |
-| `season_id` | Nullable |
+| `season_id` | Nullable; **required iff** `evaluation_kind=post_season` (**IIC-F1=A**); same-tenant FK |
 | `status` | draft / pending_approval / approved / rejected |
-| `total_score` | 0–100 |
-| `monitoring_recommended` | BOOL — **115** descriptor |
-| `prepared_by` / `approved_by` / timestamps | SoD: prepared_by ≠ approved_by |
-| `version_no` | INT ≥ 1 |
-| `supersedes_evaluation_id` | Nullable |
+| `criteria_pack_id` + `criteria_pack_version_no` | Bound published pack |
+| `total_score` | 0–100 after submit |
+| `monitoring_recommended` | BOOL — **115** / **IIC-D3** |
+| `prepared_by` / `approved_by` | SoD (**114**) |
+| `version_no` / `evaluation_family_key` / `supersedes_evaluation_id` | Correction family |
+| `origin_appeal_id` | From accepted appeal |
 
-### `supplier_evaluation_scores`
+### `supplier_evaluation_score_snapshots`
 
-Per criterion score + note.
+Immutable rows at **submit** (**IIC-D2**): snapped name/weight/score/note.
 
-### `supplier_evaluation_appeals` (optional thin table)
+### `supplier_evaluation_appeals` (**IIC-D4** — required, not optional)
 
-Links evaluation, reason, reviewer, outcome — **116**.
+Links approved evaluation, reason, reviewer, outcome; accepted → new evaluation version.
 
 ---
 
@@ -251,8 +277,8 @@ Links evaluation, reason, reviewer, outcome — **116**.
 
 ### `purchase_approval_matrix_rules`
 
-Match predicates: `min_amount`, `max_amount` (nullable open end), `request_kind` nullable, `organization_unit_id` nullable, `season_required` bool nullable.
-**Amounts are tenant-configured — no platform defaults mandated.**
+Match predicates: `min_amount`, `max_amount` (nullable open end), `request_kind` nullable, `organization_unit_id` nullable, `season_required` bool nullable, **`applies_when_unpriced`** (BOOL — **Phase IV / EC-03**).
+**Amounts are tenant-configured — no platform defaults mandated.** Unpriced/mixed PRs match only rules with `applies_when_unpriced=true` (never null-as-zero; never priced-subtotal bypass).
 
 ### `purchase_approval_matrix_levels`
 
@@ -261,11 +287,12 @@ Match predicates: `min_amount`, `max_amount` (nullable open end), `request_kind`
 
 ### `purchase_approver_authority` (tenant-owned)
 
-`user_id`, `max_amount`, `currency`, `effective_from`/`to` — enforces **125** ceilings.
+`user_id`, `max_amount`, `currency`, `covers_unpriced` (BOOL — **Phase IV / EC-03**), `effective_from`/`to` — enforces **125** ceilings. No platform-default amounts.
 
 ### `purchase_approval_delegations`
 
-`from_user_id`, `to_user_id`, `max_amount`, `starts_at`, `ends_at`, `authorized_by`, `revoked_at`.
+`from_user_id`, `to_user_id`, `max_amount`, `starts_at`, `ends_at`, `authorized_by`, `revoked_at`.  
+**Phase IV / EC-02:** depth-1 only; `from_user_id ≠ to_user_id`; no overlapping active identical pairs; ceiling ≤ delegator direct authority.
 
 ### `purchase_approval_sla_policies`
 
@@ -292,7 +319,7 @@ Match predicates: `min_amount`, `max_amount` (nullable open end), `request_kind`
 | `currency` | CHAR(3) |
 | `estimated_total_priced` | DECIMAL |
 | `has_unpriced_lines` | BOOL |
-| `matrix_id` / `matrix_version_no` | Snapshot refs |
+| `matrix_id` / `matrix_version_no` | Snapshot refs — **NULL in Phase III** (**III-D1**); filled by Phase IV |
 | `duplicate_warning_acknowledged_at` | Nullable |
 | `procurement_engaged_at` | TIMESTAMP NULL — **D3** future S05 lock; unset in S04 |
 | `procurement_engagement_ref` | VARCHAR(64) NULL — opaque future RFQ/PO ref; no S05 FK |
@@ -303,26 +330,39 @@ Match predicates: `min_amount`, `max_amount` (nullable open end), `request_kind`
 
 `line_no`, specs, `quantity`, `unit`, `need_date`, `inventory_item_id` nullable, `unit_estimate` nullable, `unpriced_reason` nullable, optional document links via Documents morph.
 
-### `purchase_request_versions` (**ENGINEERING PROPOSAL**)
+### `purchase_request_versions` + `purchase_request_version_lines` — Owner **III-D7=A**
 
-Snapshot JSON or mirrored header+lines at each resubmit for auditability. Prefer **structured snapshot table** over opaque JSON for queryability.
+**Binding:** structured relational snapshots (not opaque JSON). On each submit/resubmit, insert immutable version header + version lines copying business fields from working PR/lines. Unique `(tenant_id, purchase_request_id, version_no)`. Historical rows are immutable.
 
-### `purchase_request_financial_reviews` — Owner **D2**
+### `purchase_request_financial_reviews` — Owner **D2** + **III-D2** / **III-D3**
 
 `purchase_request_id`, `version_no`, `reviewer_id`, `outcome`, `justification`, `reviewed_at`.
 
-**Gate (mandatory — D2):** **Every** PR version must have a financial review with outcome `cleared` or `cleared_with_conditions` before **final** approval completes — including fully unpriced PRs. Outcome `not_cleared` blocks final approval.
+**Phase III:** reviews may be recorded while PR is `draft` or `submitted`; `reviewer_id` may equal `requested_by` if permitted (**III-D3**). Does not mutate status.
+
+**Phase IV gate (D2):** **Every** PR version must have a latest financial review with outcome `cleared` or `cleared_with_conditions` before **final** approval — including fully unpriced PRs. Outcome `not_cleared` blocks final approval.
 Does not post accounting, reserve budget, or authorize payment.
 
-**SoD gate (D5):** `reviewer_id` of the current version’s financial review **must not equal** the user completing final approval (including when acting via delegation). On conflict: reassign final step or block + escalate; persist reassignment/escalation audit fields on the approval step (**ENGINEERING PROPOSAL**: `conflict_reason`, `reassigned_from_user_id`, `escalated_to_admin_at`).
+**SoD gate (D5 — Phase IV):** `reviewer_id` of the current version’s financial review **must not equal** the user completing final approval (including when acting via delegation).  
+**Owner IV-D10=C (binding for Phase IV):** automatically **exclude** the financial reviewer from the eligible final-approver **pool**; another eligible actor may approve without manual reassignment; if no eligible final approver remains → **block** final approval and notify an authorized approval administrator — never grant new authority or auto-approve.  
+*(ADR-0023 §2.8 “reassign” wording is reconciled by pool exclusion + escalation; see [PHASE_IV_APPROVAL_ENGINE_DESIGN.md](PHASE_IV_APPROVAL_ENGINE_DESIGN.md) §0. Prior Eng columns `reassigned_from_user_id` are not required under IV-D10; prefer `conflict_code` / escalation timestamps on the step.)*
 
-### `purchase_request_approval_instances` / `_steps`
+### `purchase_request_approval_instances` / `_steps` — **Phase IV**
 
-Instance per PR version; steps with `level_order`, `status` (pending/approved/rejected/returned/skipped_conflict_reassigned), `assignee_user_id`, `acted_by`, `acted_at`, `comment`, `due_at`, `escalated_at`.
+Instance per PR version; steps with `level_order`, `status` (pending/approved/rejected/returned/skipped_conflict_reassigned), `assignee_user_id`, `acted_by`, `acted_at`, `comment`, `due_at`, `escalated_at`.  
+**Phase III:** do not create these tables’ rows; leave `purchase_requests.matrix_id` / `matrix_version_no` null (**III-D1**).
 
-### `purchase_demand_groups` + `purchase_demand_group_items`
+### `purchase_demand_groups` + `purchase_demand_group_items` + `purchase_demand_group_active_memberships` — **Phase V**
 
-Planning-only grouping of **approved** PRs (**123**). No RFQ entity.
+Planning-only grouping of **approved** PR **headers** (**123**, **V-D1=A**). No RFQ entity.
+
+| Table | Role |
+|---|---|
+| `purchase_demand_groups` | Tenant-owned header: `group_number`, optional `season_id` / `beneficiary_organization_unit_id` (**V-D2=B**), status `draft\|active\|frozen\|closed` (**V-D3=A**), freeze metadata |
+| `purchase_demand_group_items` | Membership **history** (link/unlink timestamps, `pr_version_no_at_link`, unlink reasons incl. `cancel_approved`) |
+| `purchase_demand_group_active_memberships` | MariaDB 10.4–safe **UNIQUE(tenant_id, purchase_request_id)** active index (EC-V01) |
+
+Binding design: [PHASE_V_DETAILED_DESIGN.md](PHASE_V_DETAILED_DESIGN.md) §2. Coding unauthorized until Owner design acceptance + coding auth.
 
 ---
 
@@ -347,4 +387,5 @@ No change to Document immutability.
 
 - Number sequences: `SELECT … FOR UPDATE` inside transaction.
 - Approval step action: row lock on step + verify still `pending` (idempotent replay by action key **ENGINEERING PROPOSAL**).
-- Bank primary flag: transactional demote/promote.
+- Bank primary flag: transactional demote/promote + generated unique (II-B); MySQL concurrency required.
+- Bank IBAN: claims table unique `(tenant_id, iban_fingerprint)`; version fingerprints non-unique; create/supersede/**PATCH**/reject/revoke claim acquire/**DELETE**-release under supplier→claims→family lock order (design §2.4; **M1**/**M2**).

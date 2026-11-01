@@ -40,6 +40,8 @@ final class CreateSupplier
         $legalValue = $data['legal_id_value'] ?? null;
         $legalNormalized = SupplierLegalIdNormalizer::normalize($legalType, is_string($legalValue) ? $legalValue : null);
 
+        // Bounded InnoDB deadlock / lock-wait retries. Numbering correctness is
+        // the sequence primary-key upsert; attempts recover transient contention.
         return DB::transaction(function () use ($actor, $data, $request, $tenant, $categoryIds, $legalType, $legalValue, $legalNormalized): array {
             $this->references->assertLegalIdUnique($legalType, $legalNormalized);
 
@@ -79,6 +81,6 @@ final class CreateSupplier
                 'supplier' => $supplier,
                 'warnings' => $this->similarNames->warningsFor($supplier->display_name, (int) $supplier->id),
             ];
-        });
+        }, 5);
     }
 }

@@ -46,13 +46,24 @@ use App\Modules\SeasonPilgrims\Controllers\SeasonPilgrimGroupController;
 use App\Modules\SeasonPilgrims\Controllers\SeasonProgramController;
 use App\Modules\Settings\Controllers\TenantSettingsController;
 use App\Modules\SuppliersAndProcurement\Controllers\GeoPlaceController;
+use App\Modules\SuppliersAndProcurement\Controllers\PurchaseApprovalMatrixController;
+use App\Modules\SuppliersAndProcurement\Controllers\PurchaseApprovalDelegationController;
+use App\Modules\SuppliersAndProcurement\Controllers\PurchaseControlReportController;
+use App\Modules\SuppliersAndProcurement\Controllers\PurchaseDemandGroupController;
+use App\Modules\SuppliersAndProcurement\Controllers\PurchaseApprovalSlaPolicyController;
+use App\Modules\SuppliersAndProcurement\Controllers\PurchaseApproverAuthorityController;
+use App\Modules\SuppliersAndProcurement\Controllers\PurchaseRequestController;
 use App\Modules\SuppliersAndProcurement\Controllers\SupplierCategoryController;
 use App\Modules\SuppliersAndProcurement\Controllers\SupplierContactController;
 use App\Modules\SuppliersAndProcurement\Controllers\SupplierController;
 use App\Modules\SuppliersAndProcurement\Controllers\SupplierCoverageController;
+use App\Modules\SuppliersAndProcurement\Controllers\SupplierBankAccountController;
 use App\Modules\SuppliersAndProcurement\Controllers\SupplierDocumentRecordController;
 use App\Modules\SuppliersAndProcurement\Controllers\SupplierEligibilityController;
 use App\Modules\SuppliersAndProcurement\Controllers\SupplierEligibilityRequirementSetController;
+use App\Modules\SuppliersAndProcurement\Controllers\SupplierEvaluationAppealController;
+use App\Modules\SuppliersAndProcurement\Controllers\SupplierEvaluationController;
+use App\Modules\SuppliersAndProcurement\Controllers\SupplierEvaluationCriteriaPackController;
 use App\Modules\Tasks\Controllers\TaskController;
 use App\Modules\Transportation\Controllers\TransportEntitlementController;
 use App\Modules\Transportation\Controllers\TransportExternalDriverController;
@@ -212,12 +223,114 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::post('/suppliers/{supplier}/document-records/{supplier_document_record}/reject', [SupplierDocumentRecordController::class, 'reject'])->name('suppliers.document-records.reject');
         Route::post('/suppliers/{supplier}/document-records/{supplier_document_record}/supersede', [SupplierDocumentRecordController::class, 'supersede'])->name('suppliers.document-records.supersede');
 
+        Route::get('/suppliers/{supplier}/bank-accounts', [SupplierBankAccountController::class, 'index'])->name('suppliers.bank-accounts.index');
+        Route::post('/suppliers/{supplier}/bank-accounts', [SupplierBankAccountController::class, 'store'])->name('suppliers.bank-accounts.store');
+        Route::scopeBindings()->group(function (): void {
+            Route::get('/suppliers/{supplier}/bank-accounts/{bank_account}', [SupplierBankAccountController::class, 'show'])->name('suppliers.bank-accounts.show');
+            Route::patch('/suppliers/{supplier}/bank-accounts/{bank_account}', [SupplierBankAccountController::class, 'update'])->name('suppliers.bank-accounts.update');
+            Route::post('/suppliers/{supplier}/bank-accounts/{bank_account}/verify', [SupplierBankAccountController::class, 'verify'])->name('suppliers.bank-accounts.verify');
+            Route::post('/suppliers/{supplier}/bank-accounts/{bank_account}/reject', [SupplierBankAccountController::class, 'reject'])->name('suppliers.bank-accounts.reject');
+            Route::post('/suppliers/{supplier}/bank-accounts/{bank_account}/revoke', [SupplierBankAccountController::class, 'revoke'])->name('suppliers.bank-accounts.revoke');
+            Route::post('/suppliers/{supplier}/bank-accounts/{bank_account}/supersede', [SupplierBankAccountController::class, 'supersede'])->name('suppliers.bank-accounts.supersede');
+            Route::post('/suppliers/{supplier}/bank-accounts/{bank_account}/set-primary', [SupplierBankAccountController::class, 'setPrimary'])->name('suppliers.bank-accounts.set-primary');
+            Route::post('/suppliers/{supplier}/bank-accounts/{bank_account}/clear-primary', [SupplierBankAccountController::class, 'clearPrimary'])->name('suppliers.bank-accounts.clear-primary');
+            Route::post('/suppliers/{supplier}/bank-accounts/{bank_account}/reveal', [SupplierBankAccountController::class, 'reveal'])->name('suppliers.bank-accounts.reveal');
+        });
+
         Route::get('/supplier-eligibility-requirement-sets', [SupplierEligibilityRequirementSetController::class, 'index'])->name('supplier-eligibility-requirement-sets.index');
         Route::post('/supplier-eligibility-requirement-sets', [SupplierEligibilityRequirementSetController::class, 'store'])->name('supplier-eligibility-requirement-sets.store');
         Route::get('/supplier-eligibility-requirement-sets/{requirement_set}', [SupplierEligibilityRequirementSetController::class, 'show'])->name('supplier-eligibility-requirement-sets.show');
         Route::patch('/supplier-eligibility-requirement-sets/{requirement_set}', [SupplierEligibilityRequirementSetController::class, 'update'])->name('supplier-eligibility-requirement-sets.update');
         Route::post('/supplier-eligibility-requirement-sets/{requirement_set}/approve', [SupplierEligibilityRequirementSetController::class, 'approve'])->name('supplier-eligibility-requirement-sets.approve');
         Route::post('/supplier-eligibility-requirement-sets/{requirement_set}/new-draft', [SupplierEligibilityRequirementSetController::class, 'newDraft'])->name('supplier-eligibility-requirement-sets.new-draft');
+
+        Route::get('/supplier-evaluation-criteria-packs', [SupplierEvaluationCriteriaPackController::class, 'index'])->name('supplier-evaluation-criteria-packs.index');
+        Route::post('/supplier-evaluation-criteria-packs', [SupplierEvaluationCriteriaPackController::class, 'store'])->name('supplier-evaluation-criteria-packs.store');
+        Route::get('/supplier-evaluation-criteria-packs/{criteria_pack}', [SupplierEvaluationCriteriaPackController::class, 'show'])->name('supplier-evaluation-criteria-packs.show');
+        Route::patch('/supplier-evaluation-criteria-packs/{criteria_pack}', [SupplierEvaluationCriteriaPackController::class, 'update'])->name('supplier-evaluation-criteria-packs.update');
+        Route::post('/supplier-evaluation-criteria-packs/{criteria_pack}/publish', [SupplierEvaluationCriteriaPackController::class, 'publish'])->name('supplier-evaluation-criteria-packs.publish');
+        Route::post('/supplier-evaluation-criteria-packs/{criteria_pack}/new-draft', [SupplierEvaluationCriteriaPackController::class, 'newDraft'])->name('supplier-evaluation-criteria-packs.new-draft');
+        Route::get('/supplier-evaluation-criteria-packs/{criteria_pack}/criteria', [SupplierEvaluationCriteriaPackController::class, 'indexCriteria'])->name('supplier-evaluation-criteria-packs.criteria.index');
+        Route::post('/supplier-evaluation-criteria-packs/{criteria_pack}/criteria', [SupplierEvaluationCriteriaPackController::class, 'storeCriterion'])->name('supplier-evaluation-criteria-packs.criteria.store');
+        Route::patch('/supplier-evaluation-criteria-packs/{criteria_pack}/criteria/{criterion}', [SupplierEvaluationCriteriaPackController::class, 'updateCriterion'])->name('supplier-evaluation-criteria-packs.criteria.update');
+        Route::delete('/supplier-evaluation-criteria-packs/{criteria_pack}/criteria/{criterion}', [SupplierEvaluationCriteriaPackController::class, 'destroyCriterion'])->name('supplier-evaluation-criteria-packs.criteria.destroy');
+
+        Route::get('/supplier-evaluations', [SupplierEvaluationController::class, 'index'])->name('supplier-evaluations.index');
+        Route::post('/supplier-evaluations', [SupplierEvaluationController::class, 'store'])->name('supplier-evaluations.store');
+        Route::get('/supplier-evaluations/{evaluation}', [SupplierEvaluationController::class, 'show'])->name('supplier-evaluations.show');
+        Route::patch('/supplier-evaluations/{evaluation}', [SupplierEvaluationController::class, 'update'])->name('supplier-evaluations.update');
+        Route::post('/supplier-evaluations/{evaluation}/submit', [SupplierEvaluationController::class, 'submit'])->name('supplier-evaluations.submit');
+        Route::post('/supplier-evaluations/{evaluation}/approve', [SupplierEvaluationController::class, 'approve'])->name('supplier-evaluations.approve');
+        Route::post('/supplier-evaluations/{evaluation}/reject', [SupplierEvaluationController::class, 'reject'])->name('supplier-evaluations.reject');
+        Route::get('/supplier-evaluations/{evaluation}/appeals', [SupplierEvaluationController::class, 'indexAppeals'])->name('supplier-evaluations.appeals.index');
+        Route::post('/supplier-evaluations/{evaluation}/appeals', [SupplierEvaluationController::class, 'storeAppeal'])->name('supplier-evaluations.appeals.store');
+        Route::post('/supplier-evaluation-appeals/{appeal}/accept', [SupplierEvaluationAppealController::class, 'accept'])->name('supplier-evaluation-appeals.accept');
+        Route::post('/supplier-evaluation-appeals/{appeal}/reject', [SupplierEvaluationAppealController::class, 'reject'])->name('supplier-evaluation-appeals.reject');
+
+        Route::get('/purchase-requests/duplicate-hints', [PurchaseRequestController::class, 'duplicateHints'])->name('purchase-requests.duplicate-hints');
+        Route::get('/purchase-requests/approval-inbox', [PurchaseRequestController::class, 'approvalInbox'])->name('purchase-requests.approval-inbox');
+        Route::get('/purchase-requests', [PurchaseRequestController::class, 'index'])->name('purchase-requests.index');
+        Route::post('/purchase-requests', [PurchaseRequestController::class, 'store'])->name('purchase-requests.store');
+        Route::get('/purchase-requests/{purchase_request}', [PurchaseRequestController::class, 'show'])->name('purchase-requests.show');
+        Route::patch('/purchase-requests/{purchase_request}', [PurchaseRequestController::class, 'update'])->name('purchase-requests.update');
+        Route::put('/purchase-requests/{purchase_request}/lines', [PurchaseRequestController::class, 'replaceLines'])->name('purchase-requests.lines.replace');
+        Route::post('/purchase-requests/{purchase_request}/submit', [PurchaseRequestController::class, 'submit'])->name('purchase-requests.submit');
+        Route::post('/purchase-requests/{purchase_request}/route', [PurchaseRequestController::class, 'route'])->name('purchase-requests.route');
+        Route::post('/purchase-requests/{purchase_request}/approve', [PurchaseRequestController::class, 'approve'])->name('purchase-requests.approve');
+        Route::post('/purchase-requests/{purchase_request}/reject', [PurchaseRequestController::class, 'reject'])->name('purchase-requests.reject');
+        Route::post('/purchase-requests/{purchase_request}/return', [PurchaseRequestController::class, 'returnForRevision'])->name('purchase-requests.return');
+        Route::post('/purchase-requests/{purchase_request}/cancel', [PurchaseRequestController::class, 'cancel'])->name('purchase-requests.cancel');
+        Route::post('/purchase-requests/{purchase_request}/cancel-approved', [PurchaseRequestController::class, 'cancelApproved'])->name('purchase-requests.cancel-approved');
+        Route::post('/purchase-requests/{purchase_request}/verify-priority', [PurchaseRequestController::class, 'verifyPriority'])->name('purchase-requests.verify-priority');
+        Route::get('/purchase-requests/{purchase_request}/financial-reviews', [PurchaseRequestController::class, 'indexFinancialReviews'])->name('purchase-requests.financial-reviews.index');
+        Route::post('/purchase-requests/{purchase_request}/financial-reviews', [PurchaseRequestController::class, 'storeFinancialReview'])->name('purchase-requests.financial-reviews.store');
+        Route::get('/purchase-requests/{purchase_request}/versions', [PurchaseRequestController::class, 'indexVersions'])->name('purchase-requests.versions.index');
+
+        Route::get('/purchase-approval-matrices', [PurchaseApprovalMatrixController::class, 'index'])->name('purchase-approval-matrices.index');
+        Route::post('/purchase-approval-matrices', [PurchaseApprovalMatrixController::class, 'store'])->name('purchase-approval-matrices.store');
+        Route::get('/purchase-approval-matrices/{purchase_approval_matrix}', [PurchaseApprovalMatrixController::class, 'show'])->name('purchase-approval-matrices.show');
+        Route::patch('/purchase-approval-matrices/{purchase_approval_matrix}', [PurchaseApprovalMatrixController::class, 'update'])->name('purchase-approval-matrices.update');
+        Route::post('/purchase-approval-matrices/{purchase_approval_matrix}/publish', [PurchaseApprovalMatrixController::class, 'publish'])->name('purchase-approval-matrices.publish');
+        Route::get('/purchase-approval-matrices/{purchase_approval_matrix}/rules', [PurchaseApprovalMatrixController::class, 'indexRules'])->name('purchase-approval-matrices.rules.index');
+        Route::post('/purchase-approval-matrices/{purchase_approval_matrix}/rules', [PurchaseApprovalMatrixController::class, 'storeRule'])->name('purchase-approval-matrices.rules.store');
+        Route::patch('/purchase-approval-matrices/{purchase_approval_matrix}/rules/{matrix_rule}', [PurchaseApprovalMatrixController::class, 'updateRule'])->name('purchase-approval-matrices.rules.update');
+        Route::delete('/purchase-approval-matrices/{purchase_approval_matrix}/rules/{matrix_rule}', [PurchaseApprovalMatrixController::class, 'destroyRule'])->name('purchase-approval-matrices.rules.destroy');
+        Route::get('/purchase-approval-matrices/{purchase_approval_matrix}/levels', [PurchaseApprovalMatrixController::class, 'indexLevels'])->name('purchase-approval-matrices.levels.index');
+        Route::post('/purchase-approval-matrices/{purchase_approval_matrix}/levels', [PurchaseApprovalMatrixController::class, 'storeLevel'])->name('purchase-approval-matrices.levels.store');
+        Route::patch('/purchase-approval-matrices/{purchase_approval_matrix}/levels/{matrix_level}', [PurchaseApprovalMatrixController::class, 'updateLevel'])->name('purchase-approval-matrices.levels.update');
+        Route::delete('/purchase-approval-matrices/{purchase_approval_matrix}/levels/{matrix_level}', [PurchaseApprovalMatrixController::class, 'destroyLevel'])->name('purchase-approval-matrices.levels.destroy');
+
+        Route::get('/purchase-approver-authorities', [PurchaseApproverAuthorityController::class, 'index'])->name('purchase-approver-authorities.index');
+        Route::post('/purchase-approver-authorities', [PurchaseApproverAuthorityController::class, 'store'])->name('purchase-approver-authorities.store');
+        Route::get('/purchase-approver-authorities/{purchase_approver_authority}', [PurchaseApproverAuthorityController::class, 'show'])->name('purchase-approver-authorities.show');
+        Route::patch('/purchase-approver-authorities/{purchase_approver_authority}', [PurchaseApproverAuthorityController::class, 'update'])->name('purchase-approver-authorities.update');
+        Route::post('/purchase-approver-authorities/{purchase_approver_authority}/revoke', [PurchaseApproverAuthorityController::class, 'revoke'])->name('purchase-approver-authorities.revoke');
+
+        Route::get('/purchase-approval-delegations', [PurchaseApprovalDelegationController::class, 'index'])->name('purchase-approval-delegations.index');
+        Route::post('/purchase-approval-delegations', [PurchaseApprovalDelegationController::class, 'store'])->name('purchase-approval-delegations.store');
+        Route::get('/purchase-approval-delegations/{purchase_approval_delegation}', [PurchaseApprovalDelegationController::class, 'show'])->name('purchase-approval-delegations.show');
+        Route::post('/purchase-approval-delegations/{purchase_approval_delegation}/revoke', [PurchaseApprovalDelegationController::class, 'revoke'])->name('purchase-approval-delegations.revoke');
+
+        Route::get('/purchase-approval-sla-policies', [PurchaseApprovalSlaPolicyController::class, 'index'])->name('purchase-approval-sla-policies.index');
+        Route::put('/purchase-approval-sla-policies', [PurchaseApprovalSlaPolicyController::class, 'upsert'])->name('purchase-approval-sla-policies.upsert');
+        Route::delete('/purchase-approval-sla-policies/{purchase_approval_sla_policy}', [PurchaseApprovalSlaPolicyController::class, 'destroy'])->name('purchase-approval-sla-policies.destroy');
+
+        Route::get('/purchase-demand-groups', [PurchaseDemandGroupController::class, 'index'])->name('purchase-demand-groups.index');
+        Route::post('/purchase-demand-groups', [PurchaseDemandGroupController::class, 'store'])->name('purchase-demand-groups.store');
+        Route::get('/purchase-demand-groups/{purchase_demand_group}', [PurchaseDemandGroupController::class, 'show'])->name('purchase-demand-groups.show');
+        Route::patch('/purchase-demand-groups/{purchase_demand_group}', [PurchaseDemandGroupController::class, 'update'])->name('purchase-demand-groups.update');
+        Route::post('/purchase-demand-groups/{purchase_demand_group}/transition', [PurchaseDemandGroupController::class, 'transition'])->name('purchase-demand-groups.transition');
+        Route::post('/purchase-demand-groups/{purchase_demand_group}/items', [PurchaseDemandGroupController::class, 'linkItem'])->name('purchase-demand-groups.items.store');
+        Route::delete('/purchase-demand-groups/{purchase_demand_group}/items/{purchaseRequestId}', [PurchaseDemandGroupController::class, 'unlinkItem'])->name('purchase-demand-groups.items.destroy');
+
+        Route::get('/purchase-control-reports/approval-latency', [PurchaseControlReportController::class, 'approvalLatency'])->name('purchase-control-reports.approval-latency');
+        Route::get('/purchase-control-reports/overdue', [PurchaseControlReportController::class, 'overdue'])->name('purchase-control-reports.overdue');
+        Route::get('/purchase-control-reports/outcomes', [PurchaseControlReportController::class, 'outcomes'])->name('purchase-control-reports.outcomes');
+        Route::get('/purchase-control-reports/compliance', [PurchaseControlReportController::class, 'compliance'])->name('purchase-control-reports.compliance');
+        Route::get('/purchase-control-reports/approval-latency/export.csv', [PurchaseControlReportController::class, 'exportApprovalLatency'])->name('purchase-control-reports.approval-latency.export');
+        Route::get('/purchase-control-reports/overdue/export.csv', [PurchaseControlReportController::class, 'exportOverdue'])->name('purchase-control-reports.overdue.export');
+        Route::get('/purchase-control-reports/outcomes/export.csv', [PurchaseControlReportController::class, 'exportOutcomes'])->name('purchase-control-reports.outcomes.export');
+        Route::get('/purchase-control-reports/compliance/export.csv', [PurchaseControlReportController::class, 'exportCompliance'])->name('purchase-control-reports.compliance.export');
 
         Route::get('/meetings', [MeetingController::class, 'index'])->name('meetings.index');
         Route::post('/meetings', [MeetingController::class, 'store'])->name('meetings.store');

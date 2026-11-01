@@ -18,6 +18,7 @@ enum DocumentLinkableType: string
     case Asset = 'asset';
     case Custody = 'custody';
     case Supplier = 'supplier';
+    case PurchaseRequest = 'purchase_request';
 
     /**
      * @return list<string>

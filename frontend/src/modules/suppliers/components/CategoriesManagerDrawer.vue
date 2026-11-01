@@ -246,7 +246,11 @@ async function confirmDelete(category: SupplierCategory): Promise<void> {
             </div>
             <div v-else-if="isError" class="py-8 text-center">
               <p class="text-sm text-red-600">{{ t('suppliers.errors.generic') }}</p>
-              <button type="button" class="mt-2 text-sm font-semibold text-brand-primary" @click="refetch">
+              <button
+                type="button"
+                class="mt-2 text-sm font-semibold text-brand-primary"
+                @click="() => { void refetch() }"
+              >
                 {{ t('suppliers.retry') }}
               </button>
             </div>

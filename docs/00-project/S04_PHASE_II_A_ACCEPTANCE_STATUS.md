@@ -1,7 +1,7 @@
 # S04 — G2 Phase II-A — Acceptance Status
 
 > **Phase II-A status:** `COMPLETE — OWNER ACCEPTED`
-> **Overall S04 implementation status:** `IN PROGRESS` (Phase II-B / II-C / Phase III–V **NOT_STARTED**)
+> **Overall S04 implementation status:** `IN PROGRESS` (Phase II-B **COMPLETE — FUNCTIONALLY CLOSED**; II-C / Phase III–V **NOT_STARTED**)
 > **Owner decision date:** 2026-11-01
 > **Branch:** `feature/s04-phase-i-supplier-registry`
 > **Design / engineering baseline commit:** `257eacc0f806b10ea1a3fa88b6885a85d449ae48`
@@ -27,12 +27,12 @@ Owner remediation decision **M1=A** (2026-11-01): approve requires ≥1 mandator
 
 ## Explicitly out of this acceptance
 
-- Phase II-B banking — **NOT_STARTED** / **NOT AUTHORIZED**.
+- Phase II-B banking — accepted later under [S04_PHASE_II_B_ACCEPTANCE_STATUS.md](S04_PHASE_II_B_ACCEPTANCE_STATUS.md) (2026-11-01); **not** part of this II-A act.
 - Phase II-C evaluations — **NOT_STARTED** / **NOT AUTHORIZED**.
 - Phase III purchase requests / approval engine — **NOT_STARTED**.
 - S05 procurement cycle — **NOT_STARTED**.
 - `temporarily_suspended → active` — not authorized.
-- Push / merge / deploy of this acceptance — separate Owner acts.
+- Push / merge / deploy — separate Owner acts.
 
 ## Preserved
 
@@ -43,4 +43,5 @@ Owner remediation decision **M1=A** (2026-11-01): approve requires ≥1 mandator
 
 ## Next
 
-II-B readiness assessment only after separate Owner authorization. Do **not** treat this acceptance as permission to start II-B, II-C, PR, or S05.
+- Phase II-B later reached **COMPLETE — FUNCTIONALLY CLOSED — OWNER ACCEPTED** (2026-11-01) — [S04_PHASE_II_B_ACCEPTANCE_STATUS.md](S04_PHASE_II_B_ACCEPTANCE_STATUS.md).  
+- II-C / Phase III–V / S05 remain **NOT AUTHORIZED**. Commit / push / merge / deploy require separate Owner acts.
