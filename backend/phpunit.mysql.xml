@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-    MySQL 8 test configuration (Transportation / SeasonPilgrims / Concurrency).
-    The database name is forced to erp_hajj_testing so a developer database is
-    never wiped; host, port and credentials come from the environment
-    (defaults: 127.0.0.1:3306, root, no password).
+    MySQL 8 test configuration (Transportation / SeasonPilgrims / S04 Suppliers /
+    Concurrency). The database name is forced to erp_hajj_testing so a developer
+    database is never wiped; host, port and credentials come from the environment
+    (defaults: 127.0.0.1:3306, root, no password). CI overrides password=root.
 
     php vendor/bin/pest -c phpunit.mysql.xml tests/Feature/Transportation tests/Feature/SeasonPilgrims
+    php vendor/bin/pest -c phpunit.mysql.xml tests/Feature/SuppliersAndProcurement
     php vendor/bin/pest -c phpunit.mysql.xml tests/Concurrency
 -->
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"

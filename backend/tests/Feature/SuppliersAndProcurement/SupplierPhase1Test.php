@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Event;
 use Laravel\Sanctum\Sanctum;
 
 beforeEach(function (): void {
+    requireSuppliersMysqlTestingDatabase();
     seedGeoPlaces();
 });
 

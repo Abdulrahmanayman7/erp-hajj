@@ -63,12 +63,13 @@ jobs:
         env:
           CACHE_STORE: array
 
-  # SQLite cannot exercise InnoDB locking, MySQL FK/index names or real
-  # concurrent transactions; this job covers them for Transportation.
+  # SQLite cannot exercise InnoDB locking, MySQL FK/index names, LAST_INSERT_ID
+  # upserts, or real concurrent transactions. This job covers Transportation,
+  # SeasonPilgrims, and S04 Suppliers & Procurement Feature + Concurrency.
   backend-mysql:
-    name: Backend (MySQL 8 — Transportation)
+    name: Backend (MySQL 8 — Transport + S04)
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     services:
       mysql:
         image: mysql:8.0
@@ -123,10 +124,30 @@ jobs:
           cp .env.example .env
           php artisan key:generate
 
-      - name: Migrations (fresh, roll back Transportation through latest, re-migrate)
+      - name: Assert disposable MySQL test database
+        run: |
+          test "${DB_DATABASE}" = "erp_hajj_testing"
+          php -r 'exit(getenv("DB_DATABASE") === "erp_hajj_testing" ? 0 : 1);'
+
+      - name: Assert S04 MySQL suite paths exist
+        run: |
+          test -d tests/Feature/SuppliersAndProcurement
+          test -f tests/Concurrency/SupplierNumberConcurrencyTest.php
+          test -f tests/Concurrency/SupplierDocumentRecordConcurrencyTest.php
+          test -f tests/Concurrency/SupplierBankIbanClaimConcurrencyTest.php
+          test -f tests/Concurrency/SupplierBankActionConcurrencyTest.php
+          test -f tests/Concurrency/SupplierBankDeadlockConcurrencyTest.php
+          test -f tests/Concurrency/SupplierCriteriaPackConcurrencyTest.php
+          test -f tests/Concurrency/SupplierEvaluationConcurrencyTest.php
+          test -f tests/Concurrency/TransportConcurrencyTest.php
+
+      - name: Migrations (fresh; optional recent-batch remigrate)
         run: |
           php artisan migrate:fresh --force
-          # 15 Transportation + later Accommodation migrations that sit above them
+          # NOTE (S04 drift): --step=31 no longer equals "Transportation + Accommodation".
+          # After S04 it re-applies only the newest ~31 procurement migrations sitting
+          # above the batch. Transport create migrations are NOT rolled back here.
+          # Full Transport remigrate coverage is a separate Owner decision.
           php artisan migrate:rollback --step=31 --force
           php artisan migrate --force
 
@@ -135,6 +156,21 @@ jobs:
 
       - name: Transportation concurrency tests (MySQL)
         run: php vendor/bin/pest -c phpunit.mysql.xml tests/Concurrency/TransportConcurrencyTest.php
+
+      - name: S04 Suppliers and Procurement Feature tests (MySQL)
+        run: php vendor/bin/pest -c phpunit.mysql.xml tests/Feature/SuppliersAndProcurement
+
+      # Sequential on shared erp_hajj_testing — ConcurrencyTestCase uses migrate:fresh.
+      - name: S04 Supplier concurrency tests (MySQL, sequential)
+        run: |
+          php vendor/bin/pest -c phpunit.mysql.xml \
+            tests/Concurrency/SupplierNumberConcurrencyTest.php \
+            tests/Concurrency/SupplierDocumentRecordConcurrencyTest.php \
+            tests/Concurrency/SupplierBankIbanClaimConcurrencyTest.php \
+            tests/Concurrency/SupplierBankActionConcurrencyTest.php \
+            tests/Concurrency/SupplierBankDeadlockConcurrencyTest.php \
+            tests/Concurrency/SupplierCriteriaPackConcurrencyTest.php \
+            tests/Concurrency/SupplierEvaluationConcurrencyTest.php
 
   frontend:
     name: Frontend (Vue)

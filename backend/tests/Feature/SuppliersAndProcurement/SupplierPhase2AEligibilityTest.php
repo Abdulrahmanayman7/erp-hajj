@@ -30,6 +30,13 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Testing\TestResponse;
 use Laravel\Sanctum\Sanctum;
 
+beforeEach(function (): void {
+    // Keep the documented SQLite-only M3 dual-strategy test executable under phpunit.xml.
+    requireSuppliersMysqlTestingDatabase(
+        'M3 on SQLite the model keeps the physical norm columns in sync'
+    );
+});
+
 afterEach(function (): void {
     Carbon::setTestNow();
 });
@@ -1249,12 +1256,16 @@ test('M3 wildcard uniqueness is enforced by STORED generated columns on MySQL/Ma
         $this->markTestSkipped('Generated columns are MySQL/MariaDB-only; SQLite keeps app-maintained norms (run with phpunit.mysql.xml).');
     }
 
+    // MySQL information_schema column labels are uppercase via PDO (see Phase II-B WP01).
     $generated = DB::select(
-        "select column_name, extra from information_schema.columns where table_schema = database() and table_name = 'supplier_document_requirement_defs' and column_name in ('country_code_norm','supplier_category_id_norm')",
+        "SELECT COLUMN_NAME, EXTRA FROM information_schema.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE()
+           AND TABLE_NAME = 'supplier_document_requirement_defs'
+           AND COLUMN_NAME IN ('country_code_norm', 'supplier_category_id_norm')",
     );
     expect($generated)->toHaveCount(2);
     foreach ($generated as $column) {
-        expect(strtoupper((string) $column->extra))->toContain('GENERATED');
+        expect(strtoupper((string) $column->EXTRA))->toContain('GENERATED');
     }
 
     $ctx = iiaContext();

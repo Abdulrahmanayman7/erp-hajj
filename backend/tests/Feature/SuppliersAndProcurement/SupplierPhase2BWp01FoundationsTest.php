@@ -22,6 +22,10 @@ use Illuminate\Support\Str;
 
 require_once __DIR__.'/Helpers.php';
 
+beforeEach(function (): void {
+    requireSuppliersMysqlTestingDatabase();
+});
+
 function wp01Actor(Tenant $tenant): User
 {
     return tenantUser($tenant);

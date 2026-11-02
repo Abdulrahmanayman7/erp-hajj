@@ -22,6 +22,10 @@ use Illuminate\Support\Facades\DB;
 
 require_once __DIR__.'/Helpers.php';
 
+beforeEach(function (): void {
+    requireSuppliersMysqlTestingDatabase();
+});
+
 const WP02_VALID_IBAN = 'SA0380000000608010167519';
 const WP02_OTHER_IBAN = 'SA4420000001234567891234';
 
