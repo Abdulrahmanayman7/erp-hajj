@@ -1,7 +1,8 @@
 # Suppliers & Procurement (S04) — UI
 
-> **Status:** Phase I–IV UI delivered/accepted per stream evidence (Phase IV Owner functionally accepted 2026-11-01). **Phase V UI:** **IMPLEMENTED** (demand groups + control reports + CSV download; Arabic RTL) — Owner functional acceptance **PENDING**. Release acts **NOT AUTHORIZED**.  
-> **Last updated:** 2026-11-01
+> **Status:** S04 UI Owner-accepted (FINAL FUNCTIONAL CLOSURE 2026-11-02). **S05 UI specified in §10 (Part 0 design) — NOT implemented.** Parts 1–6 coding **NOT AUTHORIZED**.  
+> **Last updated:** 2026-11-02
+> S05 design: [PHASE_S05_PROCUREMENT_CYCLE_DESIGN.md](PHASE_S05_PROCUREMENT_CYCLE_DESIGN.md)
 > Arabic-first, RTL, desktop-first, deep green + gold per design system. Sidebar on the right.
 > Frontend layout target: `frontend/src/modules/suppliers/` and/or `purchase-requests/` mirroring `contracts` / `inventory` (`api|pages|mutations|queries|types|validation`).
 > Owner **D1–D4**: geo picker limited seed; financial review mandatory UX; cancel-approved gated; sensitive actions hidden unless explicitly permitted.
@@ -19,7 +20,7 @@
 | مجموعات تخطيط الطلبات | `/app/purchase-demand-groups` | `consolidate_planning` (mutate CTAs) / `purchase_requests.view` (read) |
 | تقارير اعتماد المشتريات | `/app/purchase-control-reports` | `purchase_requests.view_control_reports` |
 
-Group under a procurement section without implying S05 PO screens.
+Group under a procurement section. **S04 screens must not imply shipped S05 PO/RFQ** until Parts 1–6 UI land. Demand-group banner remains planning-only.
 
 ---
 
@@ -131,3 +132,52 @@ Tablet: stack tabs; keep tables at `lg+` per RESPONSIVE_UX.
 ## 9. Out of UI scope (S04)
 
 RFQ composer, offer comparison grids, PO screens, goods receipt against PO, supplier public portal.
+
+> Still true for **S04**. S05 screens are specified in **§10** for future Parts — not present in the product until coded.
+
+---
+
+## 10. S05 — UI (DESIGN ONLY)
+
+Frontend layout target: extend `frontend/src/modules/purchase-requests/` **or** add sibling folders `rfq/`, `purchase-orders/`, `goods-receipts/` under the same procurement IA — **same module pack**, not a new product module.
+
+### 10.1 Navigation (additive)
+
+| Sidebar label (AR) | Route | Permission gate | Part |
+|---|---|---|---|
+| طلبات عروض الأسعار | `/app/rfqs` | `rfq.view` | 1 |
+| أوامر الشراء | `/app/purchase-orders` | `purchase_orders.view` | 3 |
+| سندات الاستلام | `/app/goods-receipts` | `goods_receipts.view` | 4 |
+
+Keep «مجموعات تخطيط الطلبات» with explicit copy: لا يُنشئ RFQ/PO.
+
+### 10.2 RFQ (Part 1–2)
+
+- Entry CTA from **approved** PR detail: «إنشاء طلب عروض أسعار» (`rfq.create`).
+- RFQ detail tabs: أسطر · المدعوون · العروض · الاختيار · سجل.
+- Publish confirmation warns that PR cancel-approved will lock.
+- Comparison table: supplier, price totals, lead time, eligibility badge; select + mandatory rationale modal.
+- Show read-only engagement badge on PR when locked.
+
+### 10.3 PO (Part 3)
+
+- Create from awarded RFQ; show linked PR/RFQ/supplier; optional contract picker (same tenant).
+- Issue / cancel (pre-receipt) gated CTAs.
+- No payment fields.
+
+### 10.4 Receipt & close (Parts 4–5)
+
+- From PO: «تسجيل استلام»; show ordered vs received vs remaining per line.
+- Warehouse picker when any stock-capable line.
+- Block submit when line qty would over-receive (client hint + server authority).
+- Close PO: if remainder > 0 require Arabic reason; confirm no further receipts.
+
+### 10.5 UX states
+
+Loading / empty / error / 403 hidden CTAs / 404; RTL; Arabic validation for rationale/close reason (min length Eng ≥ 10 aligned with other sensitive reasons).
+
+### 10.6 Part 6 polish (implemented locally 2026-11-03)
+
+- Next-action hint banner on PR / RFQ / PO / GRN details (`procurementCycle.next.*`).
+- Demand-group pages retain planning-only banner (no RFQ/PO create from DG).
+- Sidebar nav entries for RFQ / PO / GRN remain permission-gated.

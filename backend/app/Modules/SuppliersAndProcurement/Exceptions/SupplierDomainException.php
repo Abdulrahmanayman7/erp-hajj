@@ -879,4 +879,243 @@ class SupplierDomainException extends RuntimeException
             422,
         );
     }
+
+    public static function rfqNumberConflict(): self
+    {
+        return new self('تعذر تخصيص رقم طلب عروض الأسعار.', 'RFQ_NUMBER_CONFLICT', 409);
+    }
+
+    public static function rfqPrNotApproved(): self
+    {
+        return new self(
+            'لا يمكن إنشاء طلب عروض أسعار إلا من طلب شراء معتمد.',
+            'RFQ_PR_NOT_APPROVED',
+            422,
+        );
+    }
+
+    public static function rfqInvalidStatus(): self
+    {
+        return new self('حالة طلب عروض الأسعار لا تسمح بهذه العملية.', 'RFQ_INVALID_STATUS', 422);
+    }
+
+    public static function rfqLinesRequired(): self
+    {
+        return new self('يجب إضافة سطر واحد على الأقل قبل النشر.', 'RFQ_LINES_REQUIRED', 422);
+    }
+
+    public static function rfqSeasonMismatch(): self
+    {
+        return new self('موسم طلب عروض الأسعار لا يطابق طلب الشراء.', 'RFQ_SEASON_MISMATCH', 422);
+    }
+
+    public static function rfqCancelReasonRequired(): self
+    {
+        return new self('سبب الإلغاء مطلوب (10 أحرف على الأقل).', 'RFQ_CANCEL_REASON_REQUIRED', 422);
+    }
+
+    public static function rfqAlreadyPublished(): self
+    {
+        return new self('طلب عروض الأسعار منشور مسبقاً.', 'RFQ_ALREADY_PUBLISHED', 422);
+    }
+
+    public static function rfqAlreadyAwarded(): self
+    {
+        return new self('طلب عروض الأسعار مُرسى مسبقاً.', 'RFQ_ALREADY_AWARDED', 422);
+    }
+
+    public static function rfqSupplierNotActive(): self
+    {
+        return new self('المورد يجب أن يكون نشطاً للدعوة أو الترسية.', 'SUPPLIER_NOT_ACTIVE', 422);
+    }
+
+    public static function rfqSupplierAlreadyInvited(): self
+    {
+        return new self('المورد مدعو مسبقاً إلى طلب عروض الأسعار.', 'RFQ_SUPPLIER_ALREADY_INVITED', 422);
+    }
+
+    public static function rfqSupplierNotInvited(): self
+    {
+        return new self('المورد غير مدعو إلى طلب عروض الأسعار.', 'RFQ_SUPPLIER_NOT_INVITED', 422);
+    }
+
+    public static function offerNumberConflict(): self
+    {
+        return new self('تعذر تخصيص رقم العرض.', 'OFFER_NUMBER_CONFLICT', 409);
+    }
+
+    public static function offerInvalidStatus(): self
+    {
+        return new self('حالة العرض لا تسمح بهذه العملية.', 'OFFER_INVALID_STATUS', 422);
+    }
+
+    public static function offerAlreadyExists(): self
+    {
+        return new self('يوجد عرض نشط لهذا المورد على طلب عروض الأسعار.', 'OFFER_ALREADY_EXISTS', 422);
+    }
+
+    public static function offerLinesInvalid(): self
+    {
+        return new self('بنود العرض غير صالحة — يلزم كمية وسعر موجبان لكل بند RFQ.', 'OFFER_LINES_INVALID', 422);
+    }
+
+    public static function offerSupplierMismatch(): self
+    {
+        return new self('العرض لا يطابق المورد المحدد للترسية.', 'OFFER_SUPPLIER_MISMATCH', 422);
+    }
+
+    public static function selectionRationaleRequired(): self
+    {
+        return new self('سبب اختيار المورد مطلوب.', 'SELECTION_RATIONALE_REQUIRED', 422);
+    }
+
+    public static function poNumberConflict(): self
+    {
+        return new self('تعذر تخصيص رقم أمر الشراء.', 'PO_NUMBER_CONFLICT', 409);
+    }
+
+    public static function poRfqNotAwarded(): self
+    {
+        return new self(
+            'لا يمكن إنشاء أمر شراء إلا من طلب عروض أسعار مُرسى.',
+            'PO_RFQ_NOT_AWARDED',
+            422,
+        );
+    }
+
+    public static function poAlreadyExists(): self
+    {
+        return new self(
+            'يوجد أمر شراء مرتبط بهذه الترسية مسبقاً.',
+            'PO_ALREADY_EXISTS',
+            422,
+        );
+    }
+
+    public static function poWinningOfferMissing(): self
+    {
+        return new self(
+            'لا يوجد عرض فائز صالح لإنشاء بنود أمر الشراء.',
+            'PO_WINNING_OFFER_MISSING',
+            422,
+        );
+    }
+
+    public static function poInvalidStatus(): self
+    {
+        return new self('حالة أمر الشراء لا تسمح بهذه العملية.', 'PO_INVALID_STATUS', 422);
+    }
+
+    public static function poHasReceipts(): self
+    {
+        return new self(
+            'لا يمكن إلغاء أمر الشراء بعد تسجيل أي كميات مستلمة.',
+            'PO_HAS_RECEIPTS',
+            422,
+        );
+    }
+
+    public static function poCancelReasonRequired(): self
+    {
+        return new self('سبب الإلغاء مطلوب (10 أحرف على الأقل).', 'PO_CANCEL_REASON_REQUIRED', 422);
+    }
+
+    public static function poCloseReasonRequired(): self
+    {
+        return new self(
+            'سبب إقفال أمر الشراء مع متبقي مطلوب (10 أحرف على الأقل).',
+            'PO_CLOSE_REASON_REQUIRED',
+            422,
+        );
+    }
+
+    public static function poAlreadyClosed(): self
+    {
+        return new self('أمر الشراء مغلق مسبقًا.', 'PO_ALREADY_CLOSED', 422);
+    }
+
+    public static function contractSupplierMismatch(): self
+    {
+        return new self(
+            'المورد المرتبط بالعقد لا يطابق مورد أمر الشراء.',
+            'CONTRACT_SUPPLIER_MISMATCH',
+            422,
+        );
+    }
+
+    public static function grnNumberConflict(): self
+    {
+        return new self('تعذر تخصيص رقم سند الاستلام.', 'GRN_NUMBER_CONFLICT', 409);
+    }
+
+    public static function grnPoNotReceivable(): self
+    {
+        return new self(
+            'لا يمكن الاستلام إلا على أمر شراء صادر أو مستلم جزئيًا.',
+            'GRN_PO_NOT_RECEIVABLE',
+            422,
+        );
+    }
+
+    public static function grnPoClosed(): self
+    {
+        return new self('أمر الشراء مغلق ولا يقبل استلامات جديدة.', 'GRN_PO_CLOSED', 422);
+    }
+
+    public static function grnOverReceipt(): self
+    {
+        return new self(
+            'الكمية المطلوبة تتجاوز المتبقي في بند أمر الشراء.',
+            'GRN_OVER_RECEIPT',
+            422,
+        );
+    }
+
+    public static function grnDuplicatePost(): self
+    {
+        return new self('تم ترحيل سند الاستلام مسبقًا.', 'GRN_DUPLICATE_POST', 422);
+    }
+
+    public static function grnInvalidStatus(): self
+    {
+        return new self('حالة سند الاستلام لا تسمح بهذه العملية.', 'GRN_INVALID_STATUS', 422);
+    }
+
+    public static function grnLinesRequired(): self
+    {
+        return new self('يجب إضافة بند استلام واحد على الأقل.', 'GRN_LINES_REQUIRED', 422);
+    }
+
+    public static function grnLinesInvalid(): self
+    {
+        return new self('بنود الاستلام غير صالحة — يلزم كمية موجبة لكل بند أمر شراء.', 'GRN_LINES_INVALID', 422);
+    }
+
+    public static function grnWarehouseRequired(): self
+    {
+        return new self(
+            'المستودع مطلوب عند وجود بنود مخزنية في سند الاستلام.',
+            'GRN_WAREHOUSE_REQUIRED',
+            422,
+        );
+    }
+
+    public static function warehouseInactive(?string $message = null): self
+    {
+        return new self(
+            $message ?? 'المستودع غير نشط أو غير صالح للترحيل المخزني.',
+            'WAREHOUSE_INACTIVE',
+            422,
+        );
+    }
+
+    public static function itemInactive(?string $message = null): self
+    {
+        return new self(
+            $message ?? 'صنف المخزون غير نشط أو غير صالح للترحيل المخزني.',
+            'ITEM_INACTIVE',
+            422,
+        );
+    }
 }
+

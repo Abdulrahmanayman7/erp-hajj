@@ -65,6 +65,18 @@ final class ReceiveStock
                 'occurred_at' => now(),
                 'correlation_id' => $this->correlationId->get(),
             ]);
+
+            // Optional S05 Part 4 procurement linkage (manual receive leaves these null).
+            if (isset($data['purchase_order_id']) && (int) $data['purchase_order_id'] > 0) {
+                $movement->setAttribute('purchase_order_id', (int) $data['purchase_order_id']);
+            }
+            if (isset($data['goods_receipt_id']) && (int) $data['goods_receipt_id'] > 0) {
+                $movement->setAttribute('goods_receipt_id', (int) $data['goods_receipt_id']);
+            }
+            if (isset($data['goods_receipt_line_id']) && (int) $data['goods_receipt_line_id'] > 0) {
+                $movement->setAttribute('goods_receipt_line_id', (int) $data['goods_receipt_line_id']);
+            }
+
             $movement->save();
 
             $balance->on_hand = $after;

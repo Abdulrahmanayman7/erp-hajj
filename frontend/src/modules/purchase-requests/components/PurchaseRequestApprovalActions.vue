@@ -38,8 +38,16 @@ const canShowReject = computed(
 const canShowReturn = computed(
   () => underReview.value && can('purchase_requests.return'),
 )
+const isProcurementEngaged = computed(
+  () => props.purchaseRequest.procurement_engaged_at != null
+    && props.purchaseRequest.procurement_engaged_at !== '',
+)
+
 const canShowCancelApproved = computed(
-  () => isApproved.value && can('purchase_requests.cancel_approved'),
+  () =>
+    isApproved.value
+    && !isProcurementEngaged.value
+    && can('purchase_requests.cancel_approved'),
 )
 
 function open(kind: typeof dialog.value): void {

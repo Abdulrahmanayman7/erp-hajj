@@ -172,6 +172,15 @@ jobs:
             tests/Concurrency/SupplierCriteriaPackConcurrencyTest.php \
             tests/Concurrency/SupplierEvaluationConcurrencyTest.php
 
+      - name: S05 procurement concurrency tests (MySQL, sequential)
+        run: |
+          php vendor/bin/pest -c phpunit.mysql.xml \
+            tests/Concurrency/ProcurementRfqPublishConcurrencyTest.php \
+            tests/Concurrency/ProcurementRfqSelectConcurrencyTest.php \
+            tests/Concurrency/PurchaseOrderCreateConcurrencyTest.php \
+            tests/Concurrency/GoodsReceiptPostConcurrencyTest.php \
+            tests/Concurrency/PurchaseOrderCloseConcurrencyTest.php
+
   frontend:
     name: Frontend (Vue)
     runs-on: ubuntu-latest

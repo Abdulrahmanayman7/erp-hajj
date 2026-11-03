@@ -1,7 +1,8 @@
 # Suppliers & Procurement (S04) — API
 
-> **Status:** Phase I–IV APIs implemented/accepted per stream evidence; Phase V demand groups + control reports + CSV (§8–9) **IMPLEMENTED (engineering)** — Owner Phase V functional acceptance **PENDING**; S05 / commit/push/merge/deploy **NOT AUTHORIZED**
-> **Last updated:** 2026-11-01
+> **Status:** S04 APIs Owner-accepted (FINAL FUNCTIONAL CLOSURE 2026-11-02). **S05 §16:** Parts 1–3 Owner-accepted; Part 4 goods-receipts **IMPLEMENTED locally (2026-11-03)** awaiting Owner review; Parts 5–6 not started. No commit/push/merge/deploy.
+> **Last updated:** 2026-11-03
+> S05 design: [PHASE_S05_PROCUREMENT_CYCLE_DESIGN.md](PHASE_S05_PROCUREMENT_CYCLE_DESIGN.md)
 > Base: `/api/v1` · Sanctum · Form Requests · API Resources · Policies · correlation ID header echo
 > Errors: stable machine codes in `ApiResponse` envelope; cross-tenant → **404**
 > Owner **D1–D5** (G1); **II-D1–II-D4**; II-A **C1–C6** + **M1=A**; II-B **IIB-D1–IIB-D12**; II-C **IIC-D1–IIC-D8** + **IIC-F1–F3**; Phase III **III-D1–D8**
@@ -791,3 +792,82 @@ Optional: Documents link `documentable_type=purchase_request`. Requires Document
 ### 15.7 Audit (III)
 
 `PR_CREATED`, `PR_UPDATED`, `PR_LINES_REPLACED`, `PR_SUBMITTED`, `PR_CANCELLED`, `PR_PRIORITY_VERIFIED`, `PR_FINANCIAL_REVIEW_RECORDED`, `PR_DUPLICATE_ACKNOWLEDGED`.
+
+---
+
+## 16. S05 — Procurement cycle API (DESIGN ONLY)
+
+Base conventions §1 apply. **Do not ship these routes in S04.** Implement only under [S05_IMPLEMENTATION_PLAN.md](S05_IMPLEMENTATION_PLAN.md) Parts 1–5.
+
+### 16.1 RFQs (Part 1)
+
+| Method | Path | Perm |
+|---|---|---|
+| GET | `/rfqs` | `rfq.view` |
+| POST | `/rfqs` | `rfq.create` — body includes `purchase_request_id` (approved) |
+| GET | `/rfqs/{rfq}` | `rfq.view` |
+| PATCH | `/rfqs/{rfq}` | `rfq.update` — draft only |
+| PUT | `/rfqs/{rfq}/lines` | `rfq.update` |
+| POST | `/rfqs/{rfq}/publish` | `rfq.publish` — sets PR `procurement_engaged_*` |
+| POST | `/rfqs/{rfq}/cancel` | `rfq.cancel` — reason required |
+
+Stable errors (Eng): `RFQ_PR_NOT_APPROVED`, `RFQ_INVALID_STATUS`, `PR_PROCUREMENT_ENGAGED` (existing), `RFQ_SEASON_MISMATCH`.
+
+**PurchaseRequestResource (S05 additive):** expose `procurement_engaged_at`, `procurement_engagement_ref` when present (read-only).
+
+### 16.2 Invitations & offers (Part 2)
+
+| Method | Path | Perm |
+|---|---|---|
+| GET/POST | `/rfqs/{rfq}/invitations` | `rfq.view` / `rfq.invite` |
+| GET | `/rfqs/{rfq}/offers` | `rfq.view` |
+| POST | `/rfqs/{rfq}/offers` | `rfq.record_offer` |
+| PATCH | `/offers/{offer}` | `rfq.record_offer` — draft |
+| POST | `/offers/{offer}/submit` | `rfq.record_offer` |
+| POST | `/offers/{offer}/withdraw` | `rfq.record_offer` |
+| POST | `/rfqs/{rfq}/select-supplier` | `rfq.select_supplier` — body: `supplier_id`, `selection_rationale`, optional `offer_id` |
+
+Errors: `SUPPLIER_NOT_ELIGIBLE`, `RFQ_ALREADY_AWARDED`, `OFFER_INVALID_STATUS`, `SELECTION_RATIONALE_REQUIRED`.
+
+### 16.3 Purchase orders (Part 3) — IMPLEMENTED locally
+
+| Method | Path | Perm |
+|---|---|---|
+| GET | `/purchase-orders` | `purchase_orders.view` |
+| POST | `/purchase-orders` | `purchase_orders.create` — from awarded `rfq_id` |
+| GET | `/purchase-orders/{po}` | `purchase_orders.view` |
+| PATCH | `/purchase-orders/{po}` | `purchase_orders.update` — draft; optional `contract_id` |
+| POST | `/purchase-orders/{po}/issue` | `purchase_orders.issue` |
+| POST | `/purchase-orders/{po}/cancel` | `purchase_orders.cancel` — body `reason` (≥10 chars) |
+| POST | `/purchase-orders/{po}/close` | `purchase_orders.close` — **Part 5 IMPLEMENTED locally** — body optional `close_reason` (mandatory ≥10 when remainder > 0) |
+
+Body (create): `{ rfq_id, notes?, contract_id?, currency? }`. Lines copied from winning selected offer; supplier/lines immutable after create. Unique one PO per RFQ (`tenant_id`,`procurement_rfq_id`).
+
+Errors: `PO_RFQ_NOT_AWARDED`, `PO_ALREADY_EXISTS`, `PO_WINNING_OFFER_MISSING`, `PO_HAS_RECEIPTS`, `PO_INVALID_STATUS`, `PO_CANCEL_REASON_REQUIRED`, `PO_CLOSE_REASON_REQUIRED`, `PO_ALREADY_CLOSED`, `CONTRACT_SUPPLIER_MISMATCH` (cross-tenant contract → **404** via tenant scope).
+
+Detail resource includes per-line `quantity_remaining` and header `quantity_summary` (`ordered`/`received`/`remaining`) when lines are loaded. Close sets `closed_at` / `closed_by` / `close_reason`; does not mutate historical `quantity_received` or invent GRN/stock for abandoned remainder. Engagement on PR remains through close.
+
+### 16.4 Goods receipts (Part 4) — IMPLEMENTED locally
+
+| Method | Path | Perm |
+|---|---|---|
+| GET | `/goods-receipts` | `goods_receipts.view` |
+| POST | `/goods-receipts` | `goods_receipts.create` — `purchase_order_id`, lines[], optional `warehouse_id`, optional `idempotency_key` / `Idempotency-Key` |
+| GET | `/goods-receipts/{grn}` | `goods_receipts.view` |
+| POST | `/goods-receipts/{grn}/post` | `goods_receipts.post` — posts stock via `ReceiveStock` for catalog lines; updates PO `quantity_received` + status |
+
+Create allowed only for PO `issued`\|`partially_received`. Post is once (`draft→posted`). Over-receipt checked under row locks. Non-catalog lines fulfill PO qty without movement.
+
+Errors: `GRN_OVER_RECEIPT`, `GRN_DUPLICATE_POST`, `GRN_PO_CLOSED`, `GRN_PO_NOT_RECEIVABLE`, `GRN_WAREHOUSE_REQUIRED`, `WAREHOUSE_INACTIVE`, `ITEM_INACTIVE`, `GRN_INVALID_STATUS`, `GRN_LINES_REQUIRED`, `GRN_LINES_INVALID`.
+
+### 16.5 Audit events (S05 Eng names)
+
+`RFQ_CREATED`, `RFQ_PUBLISHED`, `RFQ_CANCELLED`, `RFQ_SUPPLIER_INVITED`, `OFFER_SUBMITTED`, `OFFER_WITHDRAWN`, `RFQ_SUPPLIER_SELECTED`, `PO_CREATED`, `PO_ISSUED`, `PO_CANCELLED`, `PO_CLOSED`, `GRN_CREATED`, `GRN_POSTED`, `PR_PROCUREMENT_ENGAGED`, `PR_PROCUREMENT_ENGAGEMENT_CLEARED`.
+
+### 16.5.1 In-app notifications (Part 6 / ADR-0013)
+
+Requester lifecycle types (best-effort, deduped): `PROCUREMENT_RFQ_PUBLISHED`, `PROCUREMENT_RFQ_SUPPLIER_SELECTED`, `PURCHASE_ORDER_ISSUED`, `GOODS_RECEIPT_POSTED`, `PURCHASE_ORDER_CLOSED`. Recipient = PR `requested_by` only. Offer-deadline notifications deferred (no RFQ deadline column).
+
+### 16.6 Out of S05 API
+
+Payment endpoints, supplier portal, budget reservation, XLSX export mandates.

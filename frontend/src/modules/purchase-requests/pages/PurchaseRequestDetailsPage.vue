@@ -29,6 +29,8 @@ import {
   usePurchaseRequestQuery,
   usePurchaseRequestVersionsQuery,
 } from '../queries/usePurchaseRequestsQuery'
+import { nextCycleHint } from '@/modules/purchase-orders/utils/procurementCycleHints'
+
 import { mapPurchaseRequestErrorCode } from '../validation/purchaseRequestValidation'
 
 const { t } = useI18n()
@@ -44,6 +46,15 @@ const purchaseRequestId = computed(() => {
 
 const { data, isLoading, isError, refetch } = usePurchaseRequestQuery(purchaseRequestId)
 const pr = computed(() => data.value ?? null)
+const cycleHint = computed(() =>
+  pr.value
+    ? nextCycleHint({
+        kind: 'pr',
+        status: pr.value.status,
+        engaged: Boolean(pr.value.procurement_engaged_at),
+      })
+    : null,
+)
 const { data: versionsData, refetch: refetchVersions } = usePurchaseRequestVersionsQuery(purchaseRequestId)
 const versions = computed(() => versionsData.value ?? [])
 const { data: reviewsData, refetch: refetchReviews } = usePurchaseRequestFinancialReviewsQuery(
@@ -338,6 +349,13 @@ async function onCancelApproved(reason: string): Promise<void> {
           >
             {{ t('purchaseRequests.pendingApprovalEngine') }}
           </span>
+          <span
+            v-if="pr.procurement_engaged_at"
+            data-testid="pr-procurement-engaged-badge"
+            class="rounded-md bg-emerald-50 px-2 py-1 text-xs text-emerald-900"
+          >
+            {{ t('purchaseRequests.procurementEngagement.engaged') }}
+          </span>
         </div>
         <p class="text-sm text-muted-foreground">
           {{ t('purchaseRequests.versionLabel', { n: pr.version_no }) }}
@@ -345,6 +363,50 @@ async function onCancelApproved(reason: string): Promise<void> {
           · {{ t(`purchaseRequests.priorities.${pr.priority}`) }}
         </p>
       </header>
+
+      <section
+        class="rounded-md border border-border p-4 text-sm space-y-2"
+        data-testid="pr-procurement-engagement"
+      >
+        <h2 class="font-medium">{{ t('purchaseRequests.procurementEngagement.title') }}</h2>
+        <p
+          v-if="cycleHint"
+          class="rounded-md border border-border bg-muted/30 px-3 py-2 text-sm text-muted-foreground"
+        >
+          <span class="font-medium text-foreground">{{ t('procurementCycle.nextAction') }}:</span>
+          {{ t(cycleHint.labelKey) }}
+        </p>
+        <template v-if="pr.procurement_engaged_at">
+          <p>{{ t('purchaseRequests.procurementEngagement.engaged') }}</p>
+          <p v-if="pr.procurement_engagement_ref">
+            {{ t('purchaseRequests.procurementEngagement.ref') }}:
+            <strong>{{ pr.procurement_engagement_ref }}</strong>
+          </p>
+          <p class="text-muted-foreground">
+            {{ t('purchaseRequests.procurementEngagement.at') }}: {{ pr.procurement_engaged_at }}
+          </p>
+          <p class="text-xs text-amber-800">
+            {{ t('purchaseRequests.procurementEngagement.cancelBlocked') }}
+          </p>
+        </template>
+        <template v-else>
+          <p class="text-muted-foreground">
+            {{ t('purchaseRequests.procurementEngagement.notEngaged') }}
+          </p>
+          <PermissionGuard
+            v-if="pr.status === 'approved'"
+            permission="rfq.create"
+          >
+            <RouterLink
+              data-testid="pr-create-rfq-cta"
+              class="inline-flex rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground"
+              :to="`/app/rfqs/create?purchase_request_id=${pr.id}`"
+            >
+              {{ t('purchaseRequests.procurementEngagement.createRfq') }}
+            </RouterLink>
+          </PermissionGuard>
+        </template>
+      </section>
 
       <section
         v-if="showRoutingBlocked"

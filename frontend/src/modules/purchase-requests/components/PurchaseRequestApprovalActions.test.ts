@@ -102,4 +102,24 @@ describe('PurchaseRequestApprovalActions permission visibility', () => {
     await nextTick()
     expect(host.querySelector('[data-testid="pr-approve-btn"]')).toBeNull()
   })
+
+  it('hides cancel-approved when procurement is engaged', async () => {
+    mockedPermissions.value = ['purchase_requests.cancel_approved']
+    const host = mountActions(
+      basePr({
+        status: 'approved',
+        procurement_engaged_at: '2026-11-02T10:00:00+00:00',
+        procurement_engagement_ref: 'RFQ:1',
+      }),
+    )
+    await nextTick()
+    expect(host.textContent).not.toContain('إلغاء معتمد')
+  })
+
+  it('shows cancel-approved for approved PR without engagement', async () => {
+    mockedPermissions.value = ['purchase_requests.cancel_approved']
+    const host = mountActions(basePr({ status: 'approved', procurement_engaged_at: null }))
+    await nextTick()
+    expect(host.textContent).toContain('إلغاء معتمد')
+  })
 })

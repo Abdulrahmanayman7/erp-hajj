@@ -75,8 +75,8 @@ The following were historically listed as outside the **Foundation delivery** Ph
 
 | Theme | Workflow | Note |
 |---|---|---|
-| Suppliers & purchase requests | S04 | IN PROGRESS (Phase I + II-A Owner-accepted; II-B COMPLETE — FUNCTIONALLY CLOSED — OWNER ACCEPTED 2026-11-01; Phase III DESIGN DRAFT — III-D1–D8 approved / detailed design pending Owner acceptance / coding unauthorized; Phase IV–V NOT_STARTED; commit/push/merge/deploy NOT AUTHORIZED) |
-| Procurement cycle (RFQ / PO / receive) | S05 | NOT_STARTED |
+| Suppliers & purchase requests | S04 | **FINAL FUNCTIONAL CLOSURE — OWNER GRANTED (2026-11-02)** — [S04-FINAL-FUNCTIONAL-CLOSURE-2026-11-02.md](../10-decisions/S04-FINAL-FUNCTIONAL-CLOSURE-2026-11-02.md); residual follow-ups preserved (`fr_count=2`; MariaDB 1213 3/112); commit/push/merge/deploy **NOT AUTHORIZED** by closure |
+| Procurement cycle (RFQ / PO / receive) | S05 | NOT_STARTED (implementation); design readiness [S05_DESIGN_READINESS_AUDIT.md](S05_DESIGN_READINESS_AUDIT.md); coding **NOT AUTHORIZED** |
 | Seasonal projects & advanced tasking | S06 | NOT_STARTED (MVP Tasks ≠ Phase 2 projects) |
 | Risks & complaints | S07 | NOT_STARTED |
 | Seasonal templates (safe reference copy only) | S08 | NOT_STARTED; unsafe pilgrim/ops cloning remains forbidden |

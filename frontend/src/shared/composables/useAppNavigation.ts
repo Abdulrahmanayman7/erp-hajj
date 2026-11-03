@@ -274,6 +274,36 @@ export function buildTenantNavGroups(can: (permission: string) => boolean): AppN
       match: 'prefix',
     })
   }
+  if (can('rfq.view') || can('rfq.create')) {
+    governanceItems.push({
+      key: 'rfqs',
+      labelKey: 'nav.rfqs',
+      to: '/app/rfqs',
+      icon: ClipboardList,
+      permission: 'rfq.view',
+      match: 'prefix',
+    })
+  }
+  if (can('purchase_orders.view') || can('purchase_orders.create')) {
+    governanceItems.push({
+      key: 'purchase-orders',
+      labelKey: 'nav.purchaseOrders',
+      to: '/app/purchase-orders',
+      icon: ScrollText,
+      permission: 'purchase_orders.view',
+      match: 'prefix',
+    })
+  }
+  if (can('goods_receipts.view') || can('goods_receipts.create')) {
+    governanceItems.push({
+      key: 'goods-receipts',
+      labelKey: 'nav.goodsReceipts',
+      to: '/app/goods-receipts',
+      icon: Package,
+      permission: 'goods_receipts.view',
+      match: 'prefix',
+    })
+  }
   if (can('purchase_requests.approve')) {
     governanceItems.push({
       key: 'purchase-requests-approval-inbox',

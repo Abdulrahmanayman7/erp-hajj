@@ -42,6 +42,13 @@ enum NotificationType: string
     case PurchaseRequestApproved = 'PURCHASE_REQUEST_APPROVED';
     case PurchaseRequestCancelApproved = 'PURCHASE_REQUEST_CANCEL_APPROVED';
 
+    /** S05 procurement cycle (requester lifecycle). */
+    case ProcurementRfqPublished = 'PROCUREMENT_RFQ_PUBLISHED';
+    case ProcurementRfqSupplierSelected = 'PROCUREMENT_RFQ_SUPPLIER_SELECTED';
+    case PurchaseOrderIssued = 'PURCHASE_ORDER_ISSUED';
+    case GoodsReceiptPosted = 'GOODS_RECEIPT_POSTED';
+    case PurchaseOrderClosed = 'PURCHASE_ORDER_CLOSED';
+
     public function defaultSeverity(): NotificationSeverity
     {
         return match ($this) {

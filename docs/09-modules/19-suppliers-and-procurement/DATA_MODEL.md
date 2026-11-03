@@ -1,8 +1,8 @@
 # Suppliers & Procurement (S04) — Data Model
 
-> **Status:** Phase I–IV schemas implemented/accepted per stream evidence; Phase V demand-group tables (`250001`…`250004`) **IMPLEMENTED (engineering)** — Owner Phase V functional acceptance **PENDING**; S05 tables **NOT STARTED**  
-> **Last updated:** 2026-11-01
-> Functional binding: ADR-0022 · Engineering: ADR-0023 · Owner G1 **D1–D5** · Phase III **III-D1–D8**
+> **Status:** Phase I–V S04 schemas implemented + Owner-functionally accepted (S04 FINAL FUNCTIONAL CLOSURE 2026-11-02). **S05 tables: DESIGNED (Part 0) — NOT MIGRATED / NOT IMPLEMENTED.** See §10.  
+> **Last updated:** 2026-11-02
+> Functional binding: ADR-0022 · Engineering: ADR-0023 · Owner G1 **D1–D5** · Phase III **III-D1–D8** · S05 design [PHASE_S05_PROCUREMENT_CYCLE_DESIGN.md](PHASE_S05_PROCUREMENT_CYCLE_DESIGN.md)
 > All tenant business tables: `TenantOwned` + `UsesTenantScope` unless marked **platform reference**.
 
 Classification labels follow DATABASE_PRINCIPLES / tenancy docs.
@@ -321,8 +321,8 @@ Match predicates: `min_amount`, `max_amount` (nullable open end), `request_kind`
 | `has_unpriced_lines` | BOOL |
 | `matrix_id` / `matrix_version_no` | Snapshot refs — **NULL in Phase III** (**III-D1**); filled by Phase IV |
 | `duplicate_warning_acknowledged_at` | Nullable |
-| `procurement_engaged_at` | TIMESTAMP NULL — **D3** future S05 lock; unset in S04 |
-| `procurement_engagement_ref` | VARCHAR(64) NULL — opaque future RFQ/PO ref; no S05 FK |
+| `procurement_engaged_at` | TIMESTAMP NULL — **D3** S05 engagement lock; **unset by S04**; **written on RFQ publish (S05 Part 1)** |
+| `procurement_engagement_ref` | VARCHAR(64) NULL — opaque RFQ business ref (e.g. RFQ number); **not** a DB FK |
 | `cancelled_at` / `cancelled_by` / `cancellation_reason` | Set on cancel |
 | timestamps | |
 
@@ -377,15 +377,98 @@ No change to Document immutability.
 
 `rfqs`, `supplier_offers`, `purchase_orders`, `goods_receipts`, `budget_reservations`, `payment_*`, GPS, finance ledgers.
 
-### Contracts bridge
+> S04 absence stands. S05 proposes these tables in **§10** (design only until Parts 1–5 migrations are authorized).
 
-`contracts.supplier_id` nullable — **DEFERRED** to separate engineering CR; keep `counterparty_name`.
+### Contracts bridge (S04 stance)
+
+`contracts.supplier_id` nullable — historically deferred. S05 Part 3 may add it as **nullable, no backfill** under ADR-0022 **111**, or rely on PO.`contract_id` only for the first coding slice.
 
 ---
 
-## 9. Concurrency
+## 9. Concurrency (S04)
 
 - Number sequences: `SELECT … FOR UPDATE` inside transaction.
 - Approval step action: row lock on step + verify still `pending` (idempotent replay by action key **ENGINEERING PROPOSAL**).
+
+---
+
+## 10. S05 — Proposed schema (DESIGN ONLY — do not migrate in Part 0)
+
+All tables tenant-owned unless noted. Numbers via per-tenant sequences + `FOR UPDATE` (`RFQ-######`, `PO-######`, `GRN-######`, offer numbers Eng).
+
+### 10.1 `procurement_rfqs`
+
+| Column | Notes |
+|---|---|
+| `rfq_number` | Immutable unique `(tenant_id, rfq_number)` |
+| `purchase_request_id` | FK → approved PR |
+| `season_id` | Nullable; required if PR seasonal |
+| `status` | `draft` \| `published` \| `awarded` \| `cancelled` |
+| `title` / `notes` | |
+| `published_at` / `published_by` | |
+| `awarded_at` / `awarded_by` | |
+| `selection_rationale` | Required at award |
+| `selected_supplier_id` | Nullable until award; FK suppliers |
+| `cancelled_at` / `cancelled_by` / `cancellation_reason` | |
+| timestamps | |
+
+### 10.2 `procurement_rfq_lines`
+
+`rfq_id`, `line_no`, `purchase_request_line_id` nullable, specs, `quantity`, `unit`, `need_date`, `inventory_item_id` nullable, timestamps.  
+Check: quantities positive.
+
+### 10.3 `procurement_rfq_invitations`
+
+`rfq_id`, `supplier_id`, `invited_at`, `invited_by`, `status` (`invited`\|`responded`\|`declined`\|`excluded`).  
+Unique `(tenant_id, rfq_id, supplier_id)`.
+
+### 10.4 `supplier_offers` + `supplier_offer_lines`
+
+Offer header: `rfq_id`, `supplier_id`, `offer_number`, `status` (`draft`\|`submitted`\|`withdrawn`\|`selected`\|`rejected`), `submitted_at`, currency, notes.  
+Lines: `rfq_line_id`, `quantity`, `unit_price`, optional lead time.  
+Unique submitted offer per `(tenant_id, rfq_id, supplier_id)` for active statuses (Eng: one current submitted).
+
+### 10.5 `purchase_orders` + `purchase_order_lines`
+
+| Column | Notes |
+|---|---|
+| `po_number` | Immutable |
+| `rfq_id` / `purchase_request_id` / `supplier_id` | Required FKs |
+| `contract_id` | Nullable FK contracts (same tenant) |
+| `season_id` | As RFQ |
+| `status` | `draft`\|`issued`\|`partially_received`\|`received`\|`closed`\|`cancelled` |
+| `issued_at` / `issued_by` | |
+| `closed_at` / `closed_by` / `close_reason` | Set on cycle close (Part 5). `close_reason` required when total remaining qty > 0 (short-close); null when fully received. Does **not** invent GRN/stock or mutate historical `quantity_received`. |
+| `currency` | Default SAR |
+
+Lines: `rfq_line_id` / `offer_line_id` nullable, `quantity_ordered`, `quantity_received` (materialized or computed — Eng prefer stored updated under lock), `unit`, `unit_price`, `inventory_item_id` nullable, specs.
+
+### 10.6 `goods_receipts` + `goods_receipt_lines`
+
+Header: `grn_number`, `purchase_order_id`, `warehouse_id` (required when any stock-posting line), `status` (`draft`\|`posted`), `posted_at` / `posted_by`, `idempotency_key` nullable unique `(tenant_id, idempotency_key)`, correlation_id.  
+Lines: `purchase_order_line_id`, `quantity`, `inventory_item_id` nullable, `inventory_movement_id` nullable after post.
+
+### 10.7 Inventory touch (Part 4)
+
+**Preferred:** add nullable `purchase_order_id`, `goods_receipt_id`, `goods_receipt_line_id` on `inventory_movements` **or** bridge table `goods_receipt_inventory_posts` with UNIQUE `(tenant_id, goods_receipt_line_id)` to guarantee one stock post per GRN line.
+
+### 10.8 Contracts touch (Part 3, optional)
+
+`contracts.supplier_id` NULL FK → `suppliers`, **no backfill**, no change to contract status graph.
+
+### 10.9 Documents morph (S05)
+
+Add aliases: `procurement_rfq`, `purchase_order`, `goods_receipt` (Eng names). Preserve ADR-0010 immutability.
+
+### 10.10 Indexes (minimum)
+
+- `(tenant_id, status)` on RFQ/PO/GRN  
+- `(tenant_id, purchase_request_id)` on RFQ  
+- `(tenant_id, purchase_order_id)` on GRN  
+- `(tenant_id, supplier_id)` on invitations/offers/PO  
+
+### 10.11 Still absent (Phase 3)
+
+`budget_reservations`, `payment_*`, GPS, finance ledgers, supplier portal tables.
 - Bank primary flag: transactional demote/promote + generated unique (II-B); MySQL concurrency required.
 - Bank IBAN: claims table unique `(tenant_id, iban_fingerprint)`; version fingerprints non-unique; create/supersede/**PATCH**/reject/revoke claim acquire/**DELETE**-release under supplier→claims→family lock order (design §2.4; **M1**/**M2**).

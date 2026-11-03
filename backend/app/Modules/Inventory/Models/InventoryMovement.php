@@ -36,6 +36,9 @@ class InventoryMovement extends Model implements TenantOwned
         'performed_by',
         'occurred_at',
         'correlation_id',
+        'purchase_order_id',
+        'goods_receipt_id',
+        'goods_receipt_line_id',
     ];
 
     /**

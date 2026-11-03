@@ -9,6 +9,10 @@ use App\Modules\SuppliersAndProcurement\Models\PurchaseApprovalMatrixLevel;
 use App\Modules\SuppliersAndProcurement\Models\PurchaseApprovalMatrixRule;
 use App\Modules\SuppliersAndProcurement\Models\PurchaseApprovalSlaPolicy;
 use App\Modules\SuppliersAndProcurement\Models\PurchaseApproverAuthority;
+use App\Modules\SuppliersAndProcurement\Models\ProcurementRfq;
+use App\Modules\SuppliersAndProcurement\Models\GoodsReceipt;
+use App\Modules\SuppliersAndProcurement\Models\PurchaseOrder;
+use App\Modules\SuppliersAndProcurement\Models\SupplierOffer;
 use App\Modules\SuppliersAndProcurement\Models\PurchaseDemandGroup;
 use App\Modules\SuppliersAndProcurement\Models\PurchaseRequest;
 use App\Modules\SuppliersAndProcurement\Models\Supplier;
@@ -26,6 +30,10 @@ use App\Modules\SuppliersAndProcurement\Policies\PurchaseApprovalDelegationPolic
 use App\Modules\SuppliersAndProcurement\Policies\PurchaseApprovalMatrixPolicy;
 use App\Modules\SuppliersAndProcurement\Policies\PurchaseApprovalSlaPolicyPolicy;
 use App\Modules\SuppliersAndProcurement\Policies\PurchaseApproverAuthorityPolicy;
+use App\Modules\SuppliersAndProcurement\Policies\ProcurementRfqPolicy;
+use App\Modules\SuppliersAndProcurement\Policies\GoodsReceiptPolicy;
+use App\Modules\SuppliersAndProcurement\Policies\PurchaseOrderPolicy;
+use App\Modules\SuppliersAndProcurement\Policies\SupplierOfferPolicy;
 use App\Modules\SuppliersAndProcurement\Policies\PurchaseDemandGroupPolicy;
 use App\Modules\SuppliersAndProcurement\Policies\PurchaseRequestPolicy;
 use App\Modules\SuppliersAndProcurement\Policies\SupplierCategoryPolicy;
@@ -50,6 +58,10 @@ class SuppliersAndProcurementServiceProvider extends ServiceProvider
         Gate::policy(SupplierEvaluation::class, SupplierEvaluationPolicy::class);
         Gate::policy(SupplierEvaluationAppeal::class, SupplierEvaluationAppealPolicy::class);
         Gate::policy(PurchaseRequest::class, PurchaseRequestPolicy::class);
+        Gate::policy(ProcurementRfq::class, ProcurementRfqPolicy::class);
+        Gate::policy(SupplierOffer::class, SupplierOfferPolicy::class);
+        Gate::policy(PurchaseOrder::class, PurchaseOrderPolicy::class);
+        Gate::policy(GoodsReceipt::class, GoodsReceiptPolicy::class);
         Gate::policy(PurchaseDemandGroup::class, PurchaseDemandGroupPolicy::class);
         Gate::policy(PurchaseApprovalMatrix::class, PurchaseApprovalMatrixPolicy::class);
         Gate::policy(PurchaseApproverAuthority::class, PurchaseApproverAuthorityPolicy::class);
@@ -63,6 +75,42 @@ class SuppliersAndProcurementServiceProvider extends ServiceProvider
             }
 
             return PurchaseRequest::query()->whereKey($value)->firstOrFail();
+        });
+
+        Route::bind('rfq', function (string $value): ProcurementRfq {
+            $actor = auth()->user();
+            if ($actor === null || $actor->tenant_id === null) {
+                abort(404);
+            }
+
+            return ProcurementRfq::query()->whereKey($value)->firstOrFail();
+        });
+
+        Route::bind('offer', function (string $value): SupplierOffer {
+            $actor = auth()->user();
+            if ($actor === null || $actor->tenant_id === null) {
+                abort(404);
+            }
+
+            return SupplierOffer::query()->whereKey($value)->firstOrFail();
+        });
+
+        Route::bind('po', function (string $value): PurchaseOrder {
+            $actor = auth()->user();
+            if ($actor === null || $actor->tenant_id === null) {
+                abort(404);
+            }
+
+            return PurchaseOrder::query()->whereKey($value)->firstOrFail();
+        });
+
+        Route::bind('grn', function (string $value): GoodsReceipt {
+            $actor = auth()->user();
+            if ($actor === null || $actor->tenant_id === null) {
+                abort(404);
+            }
+
+            return GoodsReceipt::query()->whereKey($value)->firstOrFail();
         });
 
         Route::bind('purchase_demand_group', function (string $value): PurchaseDemandGroup {
