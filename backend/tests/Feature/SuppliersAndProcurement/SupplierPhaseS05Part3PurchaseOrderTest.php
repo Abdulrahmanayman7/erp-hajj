@@ -5,10 +5,8 @@ use App\Core\Tenancy\Models\Tenant;
 use App\Models\User;
 use App\Modules\Contracts\Models\Contract;
 use App\Modules\OrganizationStructure\Models\OrganizationUnit;
-use App\Modules\SuppliersAndProcurement\Enums\ProcurementRfqStatus;
 use App\Modules\SuppliersAndProcurement\Enums\PurchaseOrderStatus;
 use App\Modules\SuppliersAndProcurement\Enums\PurchaseRequestStatus;
-use App\Modules\SuppliersAndProcurement\Enums\SupplierOfferStatus;
 use App\Modules\SuppliersAndProcurement\Enums\SupplierStatus;
 use App\Modules\SuppliersAndProcurement\Models\ProcurementRfq;
 use App\Modules\SuppliersAndProcurement\Models\ProcurementRfqLine;
@@ -280,7 +278,7 @@ it('links optional same-tenant contract and rejects supplier mismatch / cross-te
         'supplier_id' => null,
     ]));
 
-    $mismatchContract = withTenant($ctx['tenant'], function () use ($ctx, $fx): Contract {
+    $mismatchContract = withTenant($ctx['tenant'], function () use ($ctx): Contract {
         $otherSupplier = Supplier::factory()->create(['status' => SupplierStatus::Active]);
 
         return Contract::factory()->create([

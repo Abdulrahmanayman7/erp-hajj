@@ -14,6 +14,7 @@ use App\Modules\SuppliersAndProcurement\Models\PurchaseRequest;
 use App\Modules\SuppliersAndProcurement\Models\PurchaseRequestLine;
 use App\Modules\SuppliersAndProcurement\Models\Supplier;
 use App\Modules\SuppliersAndProcurement\Models\SupplierDocumentRequirementDef;
+use App\Modules\SuppliersAndProcurement\Models\SupplierEligibilityRequirementSet;
 use App\Modules\SuppliersAndProcurement\Models\SupplierOffer;
 use Illuminate\Support\Facades\Event;
 use Laravel\Sanctum\Sanctum;
@@ -154,7 +155,7 @@ it('records submits withdraws offers and selects supplier with rationale', funct
     $configKey = 's05p2-select-'.uniqid('', true);
     $supplier = s05p2EligibleSupplier($ctx['tenant'], $configKey);
     $other = withTenant($ctx['tenant'], function () use ($ctx, $configKey): Supplier {
-        $set = \App\Modules\SuppliersAndProcurement\Models\SupplierEligibilityRequirementSet::query()
+        $set = SupplierEligibilityRequirementSet::query()
             ->where('config_key', $configKey)
             ->orderByDesc('version_no')
             ->firstOrFail();

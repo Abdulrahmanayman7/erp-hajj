@@ -1118,4 +1118,3 @@ class SupplierDomainException extends RuntimeException
         );
     }
 }
-

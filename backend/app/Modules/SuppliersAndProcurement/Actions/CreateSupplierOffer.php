@@ -15,6 +15,7 @@ use App\Modules\SuppliersAndProcurement\Models\SupplierOffer;
 use App\Modules\SuppliersAndProcurement\Models\SupplierOfferLine;
 use App\Modules\SuppliersAndProcurement\Support\SupplierOfferNumberGenerator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 final class CreateSupplierOffer
@@ -125,7 +126,7 @@ final class CreateSupplierOffer
     }
 
     /**
-     * @param  \Illuminate\Support\Collection<int, ProcurementRfqLine>  $rfqLines
+     * @param  Collection<int, ProcurementRfqLine>  $rfqLines
      * @param  list<array<string, mixed>>  $incoming
      * @return list<array{procurement_rfq_line_id: int, quantity: string, unit_price: string, lead_time_days: int|null}>
      */

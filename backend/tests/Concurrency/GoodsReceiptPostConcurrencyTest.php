@@ -8,16 +8,16 @@ use App\Modules\Inventory\Models\Warehouse;
 use App\Modules\OrganizationStructure\Models\OrganizationUnit;
 use App\Modules\SuppliersAndProcurement\Enums\GoodsReceiptStatus;
 use App\Modules\SuppliersAndProcurement\Enums\PurchaseOrderStatus;
+use App\Modules\SuppliersAndProcurement\Enums\PurchaseRequestStatus;
+use App\Modules\SuppliersAndProcurement\Enums\SupplierStatus;
 use App\Modules\SuppliersAndProcurement\Models\GoodsReceipt;
 use App\Modules\SuppliersAndProcurement\Models\GoodsReceiptLine;
 use App\Modules\SuppliersAndProcurement\Models\PurchaseOrder;
 use App\Modules\SuppliersAndProcurement\Models\PurchaseOrderLine;
 use App\Modules\SuppliersAndProcurement\Models\PurchaseRequest;
-use App\Modules\SuppliersAndProcurement\Enums\PurchaseRequestStatus;
 use App\Modules\SuppliersAndProcurement\Models\Supplier;
-use App\Modules\SuppliersAndProcurement\Enums\SupplierStatus;
-use App\Modules\SuppliersAndProcurement\Support\PurchaseOrderNumberGenerator;
 use App\Modules\SuppliersAndProcurement\Support\GoodsReceiptNumberGenerator;
+use App\Modules\SuppliersAndProcurement\Support\PurchaseOrderNumberGenerator;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\Process\Process;
 
@@ -93,8 +93,8 @@ function runGrnPostWorkers(array $jobs): array
 /**
  * @return array{
  *   tenant: Tenant,
- *   actorA: \App\Models\User,
- *   actorB: \App\Models\User,
+ *   actorA: User,
+ *   actorB: User,
  *   po: PurchaseOrder,
  *   grnA: GoodsReceipt,
  *   grnB: GoodsReceipt,

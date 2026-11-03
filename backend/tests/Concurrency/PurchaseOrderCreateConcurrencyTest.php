@@ -1,6 +1,7 @@
 <?php
 
 use App\Core\Tenancy\Models\Tenant;
+use App\Models\User;
 use App\Modules\OrganizationStructure\Models\OrganizationUnit;
 use App\Modules\SuppliersAndProcurement\Enums\ProcurementRfqInvitationStatus;
 use App\Modules\SuppliersAndProcurement\Enums\ProcurementRfqStatus;
@@ -95,8 +96,8 @@ function runPoCreateWorkers(array $jobs): array
 /**
  * @return array{
  *   tenant: Tenant,
- *   actorA: \App\Models\User,
- *   actorB: \App\Models\User,
+ *   actorA: User,
+ *   actorB: User,
  *   rfq: ProcurementRfq
  * }
  */

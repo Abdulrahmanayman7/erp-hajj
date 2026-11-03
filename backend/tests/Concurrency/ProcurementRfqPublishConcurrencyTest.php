@@ -1,6 +1,7 @@
 <?php
 
 use App\Core\Tenancy\Models\Tenant;
+use App\Models\User;
 use App\Modules\OrganizationStructure\Models\OrganizationUnit;
 use App\Modules\SuppliersAndProcurement\Enums\ProcurementRfqStatus;
 use App\Modules\SuppliersAndProcurement\Enums\PurchaseRequestStatus;
@@ -82,7 +83,7 @@ function runRfqPublishWorkers(array $jobs): array
 }
 
 /**
- * @return array{tenant: Tenant, unit: OrganizationUnit, actorA: \App\Models\User, actorB: \App\Models\User, pr: PurchaseRequest}
+ * @return array{tenant: Tenant, unit: OrganizationUnit, actorA: User, actorB: User, pr: PurchaseRequest}
  */
 function s05RfqConcurrencyFixture(): array
 {

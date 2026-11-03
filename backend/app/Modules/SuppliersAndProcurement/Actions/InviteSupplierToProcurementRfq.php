@@ -7,6 +7,7 @@ use App\Core\Authorization\Support\AuthorizationSecurity;
 use App\Core\Tenancy\TenantContext;
 use App\Models\User;
 use App\Modules\SuppliersAndProcurement\Enums\ProcurementRfqInvitationStatus;
+use App\Modules\SuppliersAndProcurement\Enums\ProcurementRfqStatus;
 use App\Modules\SuppliersAndProcurement\Exceptions\SupplierDomainException;
 use App\Modules\SuppliersAndProcurement\Models\ProcurementRfq;
 use App\Modules\SuppliersAndProcurement\Models\ProcurementRfqInvitation;
@@ -33,7 +34,7 @@ final class InviteSupplierToProcurementRfq
                 /** @var ProcurementRfq $locked */
                 $locked = ProcurementRfq::query()->whereKey($rfq->id)->lockForUpdate()->firstOrFail();
 
-                if ($locked->status === \App\Modules\SuppliersAndProcurement\Enums\ProcurementRfqStatus::Awarded) {
+                if ($locked->status === ProcurementRfqStatus::Awarded) {
                     throw SupplierDomainException::rfqAlreadyAwarded();
                 }
 

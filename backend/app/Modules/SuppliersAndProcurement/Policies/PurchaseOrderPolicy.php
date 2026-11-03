@@ -53,4 +53,3 @@ class PurchaseOrderPolicy
             && (int) $actor->tenant_id === (int) $po->tenant_id;
     }
 }
-
