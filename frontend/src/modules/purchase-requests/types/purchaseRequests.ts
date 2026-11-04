@@ -98,6 +98,8 @@ export interface PurchaseRequest {
   routing_block_code?: string | null
   routing_block_message?: string | null
   duplicate_warning_acknowledged_at: string | null
+  procurement_engaged_at?: string | null
+  procurement_engagement_ref?: string | null
   submitted_at: string | null
   cancelled_at: string | null
   cancelled_by: PurchaseRequestActorRef | null

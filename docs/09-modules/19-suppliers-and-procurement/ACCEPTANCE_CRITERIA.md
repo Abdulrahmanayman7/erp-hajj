@@ -1,8 +1,8 @@
 # Suppliers & Procurement (S04) — Acceptance Criteria
 
-> **Status:** Phase I–V **all Owner-functionally accepted** (II-C/IV/V FINAL 2026-11-01); accepted non-blocking follow-ups preserved; S04 overall **READY FOR OWNER CLOSURE** but **NOT CLOSED**; S05 / Git release unauthorized  
-> **Last updated:** 2026-11-01
-> Traceability to ADR-0022 decisions **101–130**.
+> **Status:** Phase I–V **all Owner-functionally accepted**; S04 **FINAL FUNCTIONAL CLOSURE — OWNER GRANTED (2026-11-02)**. Accepted non-blocking follow-ups preserved. **S05 AC drafted in §G (Part 0) — not met until Parts 1–6 implemented & accepted.** S05 coding / Git release unauthorized without separate Owner acts.  
+> **Last updated:** 2026-11-02
+> Traceability: ADR-0022 **101–130** (S04) · ADR-0020 §S05 · [PHASE_S05_PROCUREMENT_CYCLE_DESIGN.md](PHASE_S05_PROCUREMENT_CYCLE_DESIGN.md)
 
 A criterion is met only with automated and/or recorded UAT evidence under DEFINITION_OF_DONE. This file does **not** authorize coding.
 
@@ -85,7 +85,89 @@ A criterion is met only with automated and/or recorded UAT evidence under DEFINI
 ## F. Gate exclusions
 
 - ADR-0019 status unchanged.
-- S04 overall is **READY FOR OWNER CLOSURE** but remains **NOT OWNER-CLOSED** until a separate FINAL FUNCTIONAL CLOSURE act — [S04_OWNER_FINAL_CLOSURE_DECISION_PACKET.md](../../00-project/S04_OWNER_FINAL_CLOSURE_DECISION_PACKET.md).
+- S04 **FINAL FUNCTIONAL CLOSURE** Owner-granted 2026-11-02 — [S04-FINAL-FUNCTIONAL-CLOSURE-2026-11-02.md](../../10-decisions/S04-FINAL-FUNCTIONAL-CLOSURE-2026-11-02.md).
 - Phase II-C evaluations are **Owner-functionally accepted** — [S04-PHASE-II-C-FINAL-FUNCTIONAL-ACCEPTANCE-2026-11-01.md](../../10-decisions/S04-PHASE-II-C-FINAL-FUNCTIONAL-ACCEPTANCE-2026-11-01.md).
 - Phase V AC-V\* / AC-P09b / AC-A08 report+CSV are **Owner-functionally accepted**; MariaDB 1213 residual **non-blocking**.
-- Commit/push/merge/deploy / S05 remain **NOT AUTHORIZED** without separate Owner acts.
+- Commit/push/merge/deploy / **S05 Parts 1–6 coding** remain **NOT AUTHORIZED** without separate Owner acts.
+- AC-N06 remains true for the **S04 delivery slice**; S05 routes appear only after authorized Parts.
+
+---
+
+## G. S05 — Acceptance criteria (DESIGN — unmet until implemented)
+
+Plan mapping: [S05_IMPLEMENTATION_PLAN.md](S05_IMPLEMENTATION_PLAN.md).
+
+### G.1 RFQ & engagement (Part 1) — AC-S05-R\*
+
+| ID | Criterion |
+|---|---|
+| AC-S05-R01 | RFQ create allowed only for same-tenant PR status `approved` |
+| AC-S05-R02 | Seasonal PR forces RFQ `season_id`; administrative omits season |
+| AC-S05-R03 | Publish sets `procurement_engaged_at` + opaque ref on source PR |
+| AC-S05-R04 | After publish, `cancel_approved` returns `PR_PROCUREMENT_ENGAGED` |
+| AC-S05-R05 | Engaged PR cannot gain/lose DG active membership |
+| AC-S05-R06 | Cross-tenant RFQ id → 404 |
+| AC-S05-R07 | Publish/cancel audited with actor + correlation ID |
+| AC-S05-R08 | Pre-award RFQ cancel clears engagement when no other active RFQ remains |
+
+### G.2 Offers & selection (Part 2) — AC-S05-O\*
+
+| ID | Criterion |
+|---|---|
+| AC-S05-O01 | Invite rejects non-Active or ineligible supplier |
+| AC-S05-O02 | Award re-checks eligibility; failure → 422 |
+| AC-S05-O03 | Exactly one selected supplier per awarded RFQ |
+| AC-S05-O04 | Selection requires non-empty rationale |
+| AC-S05-O05 | Offer submit/withdraw status rules enforced |
+| AC-S05-O06 | Cross-tenant offer → 404 |
+| AC-S05-O07 | Selection audited |
+| AC-S05-O08 | Evaluations may display; never auto-award |
+
+### G.3 Purchase orders & contracts (Part 3) — AC-S05-P\*
+
+| ID | Criterion |
+|---|---|
+| AC-S05-P01 | PO only from awarded RFQ; supplier matches selection |
+| AC-S05-P02 | Issue permission-gated; draft editable, issued controlled |
+| AC-S05-P03 | Cancel after any posted receipt → 422 |
+| AC-S05-P04 | Optional `contract_id` same-tenant only |
+| AC-S05-P05 | If `contracts.supplier_id` added: nullable, no backfill, Contracts transitions unchanged |
+| AC-S05-P06 | No payment/banking fields on PO APIs/UI |
+| AC-S05-P07 | Cross-tenant PO → 404 |
+| AC-S05-P08 | Existing Contracts suites still pass |
+
+### G.4 Goods receipt & inventory (Part 4) — AC-S05-G\*
+
+| ID | Criterion |
+|---|---|
+| AC-S05-G01 | Partial receipt allowed while remaining > 0 |
+| AC-S05-G02 | Over-receipt rejected (`GRN_OVER_RECEIPT`) |
+| AC-S05-G03 | Duplicate post does not double stock |
+| AC-S05-G04 | Concurrent receipts never exceed ordered qty |
+| AC-S05-G05 | Stock lines post inbound movement; balances correct; no negative stock |
+| AC-S05-G06 | Non-catalog lines receive without movement |
+| AC-S05-G07 | Manual `ReceiveStock` does not fulfill PO qty |
+| AC-S05-G08 | Inactive warehouse/item blocked for stock post |
+| AC-S05-G09 | Cross-tenant GRN → 404 |
+| AC-S05-G10 | Inventory transfer/issue/adjust regression green |
+
+### G.5 Cycle close (Part 5) — AC-S05-C\*
+
+| ID | Criterion |
+|---|---|
+| AC-S05-C01 | Fully received PO can close |
+| AC-S05-C02 | Short-close requires reason when remainder > 0 |
+| AC-S05-C03 | Post-close GRN → 422 |
+| AC-S05-C04 | Close audited |
+| AC-S05-C05 | Engagement remains consistent with design (engaged through close) |
+
+### G.6 Nonfunctional (Part 6) — AC-S05-N\*
+
+| ID | Criterion |
+|---|---|
+| AC-S05-N01 | Sensitive S05 perms not auto-granted on default templates |
+| AC-S05-N02 | Arabic RTL pages for RFQ/PO/GRN list+detail |
+| AC-S05-N03 | Demand-group UI still states planning-only (no RFQ/PO create) |
+| AC-S05-N04 | Vitest + `tsc`/build pass for new UI |
+| AC-S05-N05 | S04 Phase1–5 Pest regression green |
+| AC-S05-N06 | DEFINITION_OF_DONE evidence pack retained for Owner acceptance |

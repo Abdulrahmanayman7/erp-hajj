@@ -31,6 +31,11 @@ const TYPE_LABELS_AR: Record<string, string> = {
   PURCHASE_REQUEST_REJECTED: 'رُفض طلب الشراء',
   PURCHASE_REQUEST_APPROVED: 'اعتمد طلب الشراء',
   PURCHASE_REQUEST_CANCEL_APPROVED: 'أُلغي طلب شراء معتمد',
+  PROCUREMENT_RFQ_PUBLISHED: 'نُشر طلب عروض أسعار',
+  PROCUREMENT_RFQ_SUPPLIER_SELECTED: 'تمّت ترسية طلب عروض أسعار',
+  PURCHASE_ORDER_ISSUED: 'صدر أمر شراء',
+  GOODS_RECEIPT_POSTED: 'رُحّل سند استلام',
+  PURCHASE_ORDER_CLOSED: 'أُقفل أمر شراء',
 }
 
 const SEVERITY_LABELS_AR: Record<NotificationSeverity, string> = {

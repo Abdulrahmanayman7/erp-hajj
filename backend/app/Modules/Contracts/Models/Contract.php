@@ -11,6 +11,7 @@ use App\Modules\Contracts\Enums\CounterpartyKind;
 use App\Modules\Contracts\Support\ContractNumberGenerator;
 use App\Modules\Employees\Models\Employee;
 use App\Modules\OrganizationStructure\Models\OrganizationUnit;
+use App\Modules\SuppliersAndProcurement\Models\Supplier;
 use Database\Factories\ContractFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -32,6 +33,7 @@ use Illuminate\Support\Carbon;
  * @property CounterpartyKind $counterparty_kind
  * @property int|null $employee_id
  * @property int|null $organization_unit_id
+ * @property int|null $supplier_id
  * @property Carbon $start_date
  * @property Carbon|null $end_date
  * @property string|null $value
@@ -55,6 +57,7 @@ class Contract extends Model implements TenantOwned
         'counterparty_kind',
         'employee_id',
         'organization_unit_id',
+        'supplier_id',
         'start_date',
         'end_date',
         'value',
@@ -123,6 +126,11 @@ class Contract extends Model implements TenantOwned
     public function organizationUnit(): BelongsTo
     {
         return $this->belongsTo(OrganizationUnit::class, 'organization_unit_id');
+    }
+
+    public function supplier(): BelongsTo
+    {
+        return $this->belongsTo(Supplier::class);
     }
 
     public function createdBy(): BelongsTo

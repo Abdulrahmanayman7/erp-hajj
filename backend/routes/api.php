@@ -46,12 +46,15 @@ use App\Modules\SeasonPilgrims\Controllers\SeasonPilgrimGroupController;
 use App\Modules\SeasonPilgrims\Controllers\SeasonProgramController;
 use App\Modules\Settings\Controllers\TenantSettingsController;
 use App\Modules\SuppliersAndProcurement\Controllers\GeoPlaceController;
+use App\Modules\SuppliersAndProcurement\Controllers\GoodsReceiptController;
+use App\Modules\SuppliersAndProcurement\Controllers\ProcurementRfqController;
 use App\Modules\SuppliersAndProcurement\Controllers\PurchaseApprovalDelegationController;
 use App\Modules\SuppliersAndProcurement\Controllers\PurchaseApprovalMatrixController;
 use App\Modules\SuppliersAndProcurement\Controllers\PurchaseApprovalSlaPolicyController;
 use App\Modules\SuppliersAndProcurement\Controllers\PurchaseApproverAuthorityController;
 use App\Modules\SuppliersAndProcurement\Controllers\PurchaseControlReportController;
 use App\Modules\SuppliersAndProcurement\Controllers\PurchaseDemandGroupController;
+use App\Modules\SuppliersAndProcurement\Controllers\PurchaseOrderController;
 use App\Modules\SuppliersAndProcurement\Controllers\PurchaseRequestController;
 use App\Modules\SuppliersAndProcurement\Controllers\SupplierBankAccountController;
 use App\Modules\SuppliersAndProcurement\Controllers\SupplierCategoryController;
@@ -64,6 +67,7 @@ use App\Modules\SuppliersAndProcurement\Controllers\SupplierEligibilityRequireme
 use App\Modules\SuppliersAndProcurement\Controllers\SupplierEvaluationAppealController;
 use App\Modules\SuppliersAndProcurement\Controllers\SupplierEvaluationController;
 use App\Modules\SuppliersAndProcurement\Controllers\SupplierEvaluationCriteriaPackController;
+use App\Modules\SuppliersAndProcurement\Controllers\SupplierOfferController;
 use App\Modules\Tasks\Controllers\TaskController;
 use App\Modules\Transportation\Controllers\TransportBreakdownController;
 use App\Modules\Transportation\Controllers\TransportEntitlementController;
@@ -314,6 +318,35 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::get('/purchase-approval-sla-policies', [PurchaseApprovalSlaPolicyController::class, 'index'])->name('purchase-approval-sla-policies.index');
         Route::put('/purchase-approval-sla-policies', [PurchaseApprovalSlaPolicyController::class, 'upsert'])->name('purchase-approval-sla-policies.upsert');
         Route::delete('/purchase-approval-sla-policies/{purchase_approval_sla_policy}', [PurchaseApprovalSlaPolicyController::class, 'destroy'])->name('purchase-approval-sla-policies.destroy');
+
+        Route::get('/rfqs', [ProcurementRfqController::class, 'index'])->name('rfqs.index');
+        Route::post('/rfqs', [ProcurementRfqController::class, 'store'])->name('rfqs.store');
+        Route::get('/rfqs/{rfq}', [ProcurementRfqController::class, 'show'])->name('rfqs.show');
+        Route::patch('/rfqs/{rfq}', [ProcurementRfqController::class, 'update'])->name('rfqs.update');
+        Route::put('/rfqs/{rfq}/lines', [ProcurementRfqController::class, 'replaceLines'])->name('rfqs.lines.replace');
+        Route::post('/rfqs/{rfq}/publish', [ProcurementRfqController::class, 'publish'])->name('rfqs.publish');
+        Route::post('/rfqs/{rfq}/cancel', [ProcurementRfqController::class, 'cancel'])->name('rfqs.cancel');
+        Route::get('/rfqs/{rfq}/invitations', [ProcurementRfqController::class, 'invitations'])->name('rfqs.invitations.index');
+        Route::post('/rfqs/{rfq}/invitations', [ProcurementRfqController::class, 'invite'])->name('rfqs.invitations.store');
+        Route::get('/rfqs/{rfq}/offers', [SupplierOfferController::class, 'index'])->name('rfqs.offers.index');
+        Route::post('/rfqs/{rfq}/offers', [SupplierOfferController::class, 'store'])->name('rfqs.offers.store');
+        Route::post('/rfqs/{rfq}/select-supplier', [ProcurementRfqController::class, 'selectSupplier'])->name('rfqs.select-supplier');
+        Route::patch('/offers/{offer}', [SupplierOfferController::class, 'update'])->name('offers.update');
+        Route::post('/offers/{offer}/submit', [SupplierOfferController::class, 'submit'])->name('offers.submit');
+        Route::post('/offers/{offer}/withdraw', [SupplierOfferController::class, 'withdraw'])->name('offers.withdraw');
+
+        Route::get('/purchase-orders', [PurchaseOrderController::class, 'index'])->name('purchase-orders.index');
+        Route::post('/purchase-orders', [PurchaseOrderController::class, 'store'])->name('purchase-orders.store');
+        Route::get('/purchase-orders/{po}', [PurchaseOrderController::class, 'show'])->name('purchase-orders.show');
+        Route::patch('/purchase-orders/{po}', [PurchaseOrderController::class, 'update'])->name('purchase-orders.update');
+        Route::post('/purchase-orders/{po}/issue', [PurchaseOrderController::class, 'issue'])->name('purchase-orders.issue');
+        Route::post('/purchase-orders/{po}/cancel', [PurchaseOrderController::class, 'cancel'])->name('purchase-orders.cancel');
+        Route::post('/purchase-orders/{po}/close', [PurchaseOrderController::class, 'close'])->name('purchase-orders.close');
+
+        Route::get('/goods-receipts', [GoodsReceiptController::class, 'index'])->name('goods-receipts.index');
+        Route::post('/goods-receipts', [GoodsReceiptController::class, 'store'])->name('goods-receipts.store');
+        Route::get('/goods-receipts/{grn}', [GoodsReceiptController::class, 'show'])->name('goods-receipts.show');
+        Route::post('/goods-receipts/{grn}/post', [GoodsReceiptController::class, 'post'])->name('goods-receipts.post');
 
         Route::get('/purchase-demand-groups', [PurchaseDemandGroupController::class, 'index'])->name('purchase-demand-groups.index');
         Route::post('/purchase-demand-groups', [PurchaseDemandGroupController::class, 'store'])->name('purchase-demand-groups.store');

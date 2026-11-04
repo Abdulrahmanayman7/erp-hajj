@@ -1,7 +1,7 @@
 # Roadmap
 
 > **Status:** Draft (delivery order aligned to completed / next sprints)
-> **Last updated:** 2026-10-30
+> **Last updated:** 2026-11-02
 > **Phase 2 product scope:** [ADR-0020](../10-decisions/ADR-0020-FULL-PHASE2-OPERATIONAL-SCOPE.md) (Full Phase 2 Operational Scope Adoption). Matrix: [PHASE2_SCOPE_MATRIX.md](PHASE2_SCOPE_MATRIX.md). Reconciliation: [PHASE2_SCOPE_RECONCILIATION.md](PHASE2_SCOPE_RECONCILIATION.md).
 
 ## Purpose
@@ -75,8 +75,8 @@ Adopted by Project Owner via [ADR-0020](../10-decisions/ADR-0020-FULL-PHASE2-OPE
 | Movements & convoy ops | S02 | In scope; **COMPLETE — ACCEPTED** (Owner 2026-10-30). Evidence: Breakdown Pest 8, MySQL concurrency 7, browser UAT 16/16 on `erp_hajj_s02_uat` — `docs/audits/s02-transport-browser-uat/REPORT.md` / `S02_ACCEPTANCE_STATUS.md`. GPS live remains open Phase 2 obligation |
 
 | Accommodation & camps | S03 | In scope; **COMPLETE — ACCEPTED** (Owner **2026-10-31**). Evidence (unchanged from 2026-10-30 pack): UAT on `erp_hajj_s03_uat`; Pest Feature/Unit 63 PASS; MySQL concurrency 14 PASS; Vitest 46 PASS — `docs/audits/s03-accommodation-browser-uat/REPORT.md` / `S03_ACCEPTANCE_STATUS.md`. ADR-0019 still **PROPOSED / NOT ACCEPTED** |
-| Suppliers & purchase requests | S04 | **In Phase 2 product scope;** **READY FOR OWNER CLOSURE — NOT OWNER-CLOSED** — Phase I–V **all OWNER FUNCTIONALLY ACCEPTED** (II-C/IV/V FINAL 2026-11-01); accepted follow-ups preserved; closure packet [S04_OWNER_FINAL_CLOSURE_DECISION_PACKET.md](S04_OWNER_FINAL_CLOSURE_DECISION_PACKET.md); S05 untouched; commit/push/merge/deploy **NOT AUTHORIZED** |
-| Procurement cycle (RFQ/PO/receive) | S05 | **In Phase 2; NOT_STARTED** |
+| Suppliers & purchase requests | S04 | **In Phase 2 product scope;** **FINAL FUNCTIONAL CLOSURE — OWNER GRANTED (2026-11-02)** on baseline `develop` @ `2d128a7` — [S04-FINAL-FUNCTIONAL-CLOSURE-2026-11-02.md](../10-decisions/S04-FINAL-FUNCTIONAL-CLOSURE-2026-11-02.md). Phases I–V Owner-accepted; residual follow-ups preserved (`fr_count=2`; MariaDB 1213 3/112). Commit/push/merge/deploy **NOT AUTHORIZED** by closure act |
+| Procurement cycle (RFQ/PO/receive) | S05 | **In Phase 2; Part 0 docs COMPLETE** (2026-11-02) inside module 19 — [PHASE_S05_PROCUREMENT_CYCLE_DESIGN.md](../09-modules/19-suppliers-and-procurement/PHASE_S05_PROCUREMENT_CYCLE_DESIGN.md); **implementation NOT_STARTED**; Parts 1–6 coding **NOT AUTHORIZED** |
 | Seasonal projects & tasks | S06 | **In Phase 2; NOT_STARTED** (MVP Tasks ≠ Phase 2 projects) |
 | Risks & complaints | S07 | **In Phase 2; NOT_STARTED** |
 | Seasonal templates (safe copy) | S08 | **In Phase 2; NOT_STARTED** |
@@ -107,4 +107,4 @@ Authentication-related future items (not Sprint 005): MFA, SSO, email verificati
 - Phase 2 does not expand the 21-module MVP.
 - Product-scope approval (ADR-0020) is not implementation authorization for S04–S10 code without stream design and engineering change control.
 - S04 functional-decision approval (ADR-0022) is not implementation authorization.
-- S04 engineering design approval (ADR-0023) and CR design/scope approval are **not** blanket release authorization. Phases **I–V** are Owner-functionally accepted (II-C/IV/V FINAL 2026-11-01). **S04 overall FINAL FUNCTIONAL CLOSURE**, **S05**, and **commit / push / merge / deploy** still require separate Owner authorization.
+- S04 engineering design approval (ADR-0023) and CR design/scope approval are **not** blanket release authorization. Phases **I–V** are Owner-functionally accepted (II-C/IV/V FINAL 2026-11-01). **S04 FINAL FUNCTIONAL CLOSURE** was **Owner-granted on 2026-11-02**. **S05 implementation** and **commit / push / merge / deploy** still require separate Owner authorization.

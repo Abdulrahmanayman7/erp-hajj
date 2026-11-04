@@ -1,11 +1,13 @@
 # S04 — Final Closure Readiness Audit
 
 > **Audit date:** 2026-11-01  
-> **Last sync:** 2026-11-01 (after Phase II-C FINAL functional acceptance)  
+> **Last sync:** 2026-11-02 (Owner FINAL FUNCTIONAL CLOSURE recorded; historical audit body preserved)  
 > **Mode:** Documentation + read-only inspection  
-> **Branch:** `feature/s04-phase-i-supplier-registry`  
-> **HEAD:** `09a902a0a08aa31a8686ce3824e6ee25f922a112` (dirty worktree preserved)  
-> **Does not:** declare S04 closed · authorize release · implement fixes · write to any database
+> **Branch (historical audit context):** `feature/s04-phase-i-supplier-registry`  
+> **HEAD (historical audit context):** `09a902a0a08aa31a8686ce3824e6ee25f922a112` (dirty worktree preserved at audit time)  
+> **Closure recording baseline (2026-11-02):** `develop` @ `2d128a7` — act [S04-FINAL-FUNCTIONAL-CLOSURE-2026-11-02.md](../10-decisions/S04-FINAL-FUNCTIONAL-CLOSURE-2026-11-02.md)  
+> **Post-closure note:** This audit established **READY FOR OWNER CLOSURE**. Owner later granted **FINAL FUNCTIONAL CLOSURE** on **2026-11-02**. Residual risks (`fr_count=2`; MariaDB 1213 3/112) remain accepted and **not fixed**.  
+> **Does not:** authorize release · implement fixes · write to any database · authorize S05 implementation
 
 ---
 
@@ -53,7 +55,7 @@
 |---|---|
 | Functional closure readiness | **READY FOR OWNER S04 CLOSURE** (all phases Owner-accepted; accepted follow-ups preserved; release still separate) |
 | Release readiness | **NOT IN SCOPE of functional closure** (commit/push/merge/deploy separately unauthorized) |
-| S04 CLOSED | **NO** — requires separate Owner FINAL FUNCTIONAL CLOSURE act |
+| S04 CLOSED (functional) | **YES — Owner FINAL FUNCTIONAL CLOSURE 2026-11-02** (historical row below recorded pre-decision readiness; see closure act) |
 
 ---
 
@@ -122,12 +124,12 @@ Historical classification **B** is retained as audit history; current status is 
 | Documentation reflects accepted status | **YES** (this sync) |
 | Release/deployment separately identified | **YES** |
 
-**Verdict:** **READY FOR OWNER S04 CLOSURE**
+**Verdict (2026-11-01 audit):** **READY FOR OWNER S04 CLOSURE**
 
-Do **not** mark S04 CLOSED until the Project Owner issues an explicit FINAL FUNCTIONAL CLOSURE decision.
+**Outcome (2026-11-02):** Owner issued **FINAL FUNCTIONAL CLOSURE** — [S04-FINAL-FUNCTIONAL-CLOSURE-2026-11-02.md](../10-decisions/S04-FINAL-FUNCTIONAL-CLOSURE-2026-11-02.md). Release/deploy/S05 implementation remain separately unauthorized.
 
 ---
 
 ## 8. Companion packet
 
-[S04_OWNER_FINAL_CLOSURE_DECISION_PACKET.md](S04_OWNER_FINAL_CLOSURE_DECISION_PACKET.md)
+[S04_OWNER_FINAL_CLOSURE_DECISION_PACKET.md](S04_OWNER_FINAL_CLOSURE_DECISION_PACKET.md) · S05 design (planning): [S05_DESIGN_READINESS_AUDIT.md](S05_DESIGN_READINESS_AUDIT.md)

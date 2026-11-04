@@ -1,7 +1,7 @@
 # Module: Suppliers and Procurement (الموردون والمشتريات) — S04 slice
 
-> **Status:** Overall S04 **READY FOR OWNER CLOSURE** (**NOT OWNER-CLOSED** until separate FINAL FUNCTIONAL CLOSURE act). **Phase I–V all OWNER FUNCTIONALLY ACCEPTED** (II-C FINAL 2026-11-01 — [S04-PHASE-II-C-FINAL-FUNCTIONAL-ACCEPTANCE-2026-11-01.md](../../10-decisions/S04-PHASE-II-C-FINAL-FUNCTIONAL-ACCEPTANCE-2026-11-01.md); IV/V FINAL with accepted follow-ups). **S05: NOT_STARTED**. Commit/push/merge/deploy **NOT AUTHORIZED**. Closure packet: [S04_OWNER_FINAL_CLOSURE_DECISION_PACKET.md](../../00-project/S04_OWNER_FINAL_CLOSURE_DECISION_PACKET.md).
-> **Last updated:** 2026-11-01
+> **Status:** Overall S04 **FINAL FUNCTIONAL CLOSURE — OWNER GRANTED (2026-11-02)** — [S04-FINAL-FUNCTIONAL-CLOSURE-2026-11-02.md](../../10-decisions/S04-FINAL-FUNCTIONAL-CLOSURE-2026-11-02.md) on baseline `develop` @ `2d128a7`. Residual follow-ups preserved (`fr_count=2`; MariaDB 1213 3/112). **S05 Parts 0–6 Owner Accepted — FUNCTIONALLY FINAL CLOSED (2026-11-03)**. Merge / deploy / prod migrate **NOT AUTHORIZED** until PR review + CI. Do not start S06. See [S05_IMPLEMENTATION_PLAN.md](S05_IMPLEMENTATION_PLAN.md) · [S05_FINAL_READINESS_REPORT.md](../../00-project/S05_FINAL_READINESS_REPORT.md).
+> **Last updated:** 2026-11-02
 > **Phase I acceptance:** [S04_PHASE_I_ACCEPTANCE_STATUS.md](../../00-project/S04_PHASE_I_ACCEPTANCE_STATUS.md)
 > **Phase II-A acceptance:** [S04_PHASE_II_A_ACCEPTANCE_STATUS.md](../../00-project/S04_PHASE_II_A_ACCEPTANCE_STATUS.md)
 > **Phase II-B decisions:** [S04-PHASE-II-B-OWNER-DECISIONS-2026-11-01.md](../../10-decisions/S04-PHASE-II-B-OWNER-DECISIONS-2026-11-01.md) (**IIB-D1–IIB-D12 APPROVED**)
@@ -29,7 +29,7 @@
 > **II-A design:** [PHASE_II_A_ELIGIBILITY_DESIGN.md](PHASE_II_A_ELIGIBILITY_DESIGN.md) · contracts [API.md §12](API.md)
 > **Functional ADR:** [ADR-0022](../../10-decisions/ADR-0022-S04-SUPPLIERS-AND-PURCHASE-REQUESTS-FUNCTIONAL-DECISIONS.md) (`APPROVED — FUNCTIONAL DECISIONS`)
 > **Engineering ADR:** [ADR-0023](../../10-decisions/ADR-0023-S04-ENGINEERING-DESIGN.md) (`APPROVED — ENGINEERING DESIGN`, Owner 2026-10-31)
-> **Change Request:** [CHANGE_REQUEST_S04_SUPPLIERS_AND_PROCUREMENT.md](../../00-project/CHANGE_REQUEST_S04_SUPPLIERS_AND_PROCUREMENT.md) (design/scope approved; Phase I–V functionally accepted; S04 overall closure / S05 / release acts unauthorized)
+> **Change Request:** [CHANGE_REQUEST_S04_SUPPLIERS_AND_PROCUREMENT.md](../../00-project/CHANGE_REQUEST_S04_SUPPLIERS_AND_PROCUREMENT.md) (design/scope approved; Phase I–V functionally accepted; S04 FINAL FUNCTIONAL CLOSURE Owner-granted 2026-11-02; S05 implementation / release acts unauthorized)
 > **Product scope parent:** [ADR-0020](../../10-decisions/ADR-0020-FULL-PHASE2-OPERATIONAL-SCOPE.md) §S04 / §S05
 > **G1 Owner design decisions D1–D5:** Approved 2026-10-31 (geo, mandatory financial review, approved-PR cancel, sensitive permission seeding, **financial reviewer ≠ final approver hard SoD**).
 
@@ -39,15 +39,20 @@ Provide a **tenant-isolated** supplier master, supplier evaluation, purchase-req
 
 ## S04 vs S05 (binding)
 
-| In **S04** (this module pack) | Deferred to **S05** (out of this delivery) |
+| In **S04** (delivered / Owner-closed) | In **S05** (Part 0 designed; Parts 1–6 not coded) |
 |---|---|
-| Supplier registry & classifications | RFQ issuance |
-| Supplier evaluation | Supplier quotations & comparison |
-| Purchase requests (PR) | Supplier selection |
-| Multi-level PR approvals | Purchase orders (PO) |
-| Supporting notifications, audit, control reports | PO-based inventory receipt & cycle close |
+| Supplier registry & classifications | RFQ issuance from **approved PR** |
+| Supplier evaluation | Supplier quotations & comparison + selection |
+| Purchase requests (PR) + multi-level approvals | Purchase orders (PO) |
+| Planning demand groups + control reports | PO-based goods receipt (partial/full) + cycle close |
+| Engagement **readers**/guards on PR | Engagement **writers** on RFQ publish |
 
-**Do not** implement RFQ/PO/receive in S04. Inventory receipt remains the existing Inventory Actions path ([ADR-0011](../../10-decisions/ADR-0011-INVENTORY-LEDGER-BALANCE-AND-TRANSFER.md)) until S05 designs PO linkage.
+**S04 code must not ship RFQ/PO/GRN.** S05 design for PO↔inventory linkage: [PHASE_S05_PROCUREMENT_CYCLE_DESIGN.md](PHASE_S05_PROCUREMENT_CYCLE_DESIGN.md) (extends [ADR-0011](../../10-decisions/ADR-0011-INVENTORY-LEDGER-BALANCE-AND-TRANSFER.md) without replacing manual `ReceiveStock`).
+
+### S05 operational cycle (binding for design)
+
+Approved PR → RFQ → supplier offers → compare & select → PO → partial/full receipt → close  
+Integrations: suppliers (S04) · optional contracts link · warehouses/inventory posting on GRN.
 
 ## Domain separations
 
@@ -70,8 +75,8 @@ Provide a **tenant-isolated** supplier master, supplier evaluation, purchase-req
 | Notifications (ADR-0013) | In-app alerts for approvals / SLA / low evaluation |
 | Organization units | Requester / beneficiary department |
 | Seasons (ADR-0017) | Required `season_id` for seasonal PRs only |
-| Inventory items (optional FK) | Catalog reference on PR lines — no stock mutation |
-| Contracts | Optional **future** nullable `supplier_id` — separate CR; no forced historical migration |
+| Inventory items (optional FK) | Catalog reference on PR lines — no stock mutation in S04; S05 GRN may post stock for linked items |
+| Contracts | Optional gradual link (**111**): PO.`contract_id` and/or nullable `contracts.supplier_id` without backfill — S05 Part 3 design |
 
 ## Personas (expected consumers)
 
@@ -90,13 +95,15 @@ Provide a **tenant-isolated** supplier master, supplier evaluation, purchase-req
 
 | File | Role |
 |---|---|
-| [BUSINESS_RULES.md](BUSINESS_RULES.md) | Domain rules & transitions (101–130) |
-| [DATA_MODEL.md](DATA_MODEL.md) | Proposed tables / constraints (**ENGINEERING PROPOSAL**) |
-| [PERMISSIONS.md](PERMISSIONS.md) | Proposed `module.action` catalog |
-| [API.md](API.md) | Proposed REST contracts |
-| [UI.md](UI.md) | Arabic RTL UX |
-| [TEST_PLAN.md](TEST_PLAN.md) | Pest / Vitest / security |
-| [ACCEPTANCE_CRITERIA.md](ACCEPTANCE_CRITERIA.md) | Verifiable DoD for S04 |
+| [BUSINESS_RULES.md](BUSINESS_RULES.md) | Domain rules (S04 101–130 + **§7 S05**) |
+| [DATA_MODEL.md](DATA_MODEL.md) | Tables (S04 implemented + **§10 S05 design**) |
+| [PERMISSIONS.md](PERMISSIONS.md) | Catalog (S04 seeded + **§6 S05 design**) |
+| [API.md](API.md) | REST (S04 live + **§16 S05 design**) |
+| [UI.md](UI.md) | Arabic RTL UX (S04 + **§10 S05 design**) |
+| [TEST_PLAN.md](TEST_PLAN.md) | Pest / Vitest (S04 + **§12 S05 design**) |
+| [ACCEPTANCE_CRITERIA.md](ACCEPTANCE_CRITERIA.md) | DoD (S04 met + **§G S05 drafted**) |
+| [PHASE_S05_PROCUREMENT_CYCLE_DESIGN.md](PHASE_S05_PROCUREMENT_CYCLE_DESIGN.md) | **S05 Part 0** detailed design pack |
+| [S05_IMPLEMENTATION_PLAN.md](S05_IMPLEMENTATION_PLAN.md) | Parts 0–6 plan + acceptance mapping |
 | [PHASE_II_A_ELIGIBILITY_DESIGN.md](PHASE_II_A_ELIGIBILITY_DESIGN.md) | II-A eligibility + Documents (**COMPLETE — OWNER ACCEPTED** 2026-11-01; C1–C6; M1=A) |
 | [PHASE_II_B_SUPPLIER_BANKING_DESIGN.md](PHASE_II_B_SUPPLIER_BANKING_DESIGN.md) | II-B supplier banking design (**OWNER APPROVED**; implementation **FUNCTIONALLY CLOSED — OWNER ACCEPTED** 2026-11-01) |
 | [PHASE_II_B_WP05_ACCEPTANCE_EVIDENCE.md](PHASE_II_B_WP05_ACCEPTANCE_EVIDENCE.md) | II-B WP-05 acceptance evidence matrix (**OWNER ACCEPTED** with Phase II-B closure) |
@@ -113,7 +120,7 @@ Provide a **tenant-isolated** supplier master, supplier evaluation, purchase-req
 7. ~~Phase II-A implementation + remediation (H1, M1=A, M2–M5)~~ **Owner-accepted** (2026-11-01) — [S04_PHASE_II_A_ACCEPTANCE_STATUS.md](../../00-project/S04_PHASE_II_A_ACCEPTANCE_STATUS.md).
 8. Phase II-B Owner decisions **IIB-D1–IIB-D12** recorded/approved (2026-11-01); design pack **OWNER APPROVED**; documentation closure M1–M3 **VERIFIED**; WP-01–WP-05 **OWNER ACCEPTED**; Phase II-B **COMPLETE — FUNCTIONALLY CLOSED** (2026-11-01).
 9. Phase II-C Owner decisions **IIC-D1–D8 + IIC-F1–F3** recorded/approved (2026-11-01; **11/11**); detailed design pack **DRAFT** (not Owner-accepted as final design); coding **NOT AUTHORIZED**.
-10. **Phase III–V** and **S05** remain **NOT AUTHORIZED**. Commit / push / merge / deploy require separate Owner acts.
+10. **S04** is functionally closed (Owner 2026-11-02). **S05 Parts 0–6 Owner Accepted — functionally final closed (2026-11-03)**. Merge awaits PR review + CI. **Do not start S06** or deploy without separate Owner acts.
 
 ## References
 

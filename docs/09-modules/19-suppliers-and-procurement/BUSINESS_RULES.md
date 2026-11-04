@@ -1,9 +1,9 @@
 # Suppliers & Procurement (S04) — Business Rules
 
-> **Status:** Phase I–IV rules implemented/accepted per stream evidence (Phase IV FINAL 2026-11-01); Phase II-C see evidence (do not assume full Owner closure); Phase V demand-group + control-report rules **IMPLEMENTED (engineering)** — functional acceptance **PENDING**; S05 / release acts **NOT AUTHORIZED**  
-> **Last updated:** 2026-11-01
-> Binding functional decisions: [ADR-0022](../../10-decisions/ADR-0022-S04-SUPPLIERS-AND-PURCHASE-REQUESTS-FUNCTIONAL-DECISIONS.md) **101–130**
-> Engineering proposals: [ADR-0023](../../10-decisions/ADR-0023-S04-ENGINEERING-DESIGN.md)
+> **Status:** Phase I–V rules Owner-functionally accepted; S04 **FINAL FUNCTIONAL CLOSURE — OWNER GRANTED (2026-11-02)**. Residual S04 follow-ups preserved. **S05 Part 0 design docs COMPLETE (2026-11-02)** — [PHASE_S05_PROCUREMENT_CYCLE_DESIGN.md](PHASE_S05_PROCUREMENT_CYCLE_DESIGN.md). **S05 Parts 1–6 coding / release acts NOT AUTHORIZED**.  
+> **Last updated:** 2026-11-02
+> Binding functional decisions: [ADR-0022](../../10-decisions/ADR-0022-S04-SUPPLIERS-AND-PURCHASE-REQUESTS-FUNCTIONAL-DECISIONS.md) **101–130** (S04) · [ADR-0020](../../10-decisions/ADR-0020-FULL-PHASE2-OPERATIONAL-SCOPE.md) §S05 (cycle membership)
+> Engineering proposals: [ADR-0023](../../10-decisions/ADR-0023-S04-ENGINEERING-DESIGN.md) (S04) · S05 design pack (this folder)
 
 Legend: **(Fn)** = functional decision n. Labels **ENGINEERING PROPOSAL** / **OWNER DECISION REQUIRED** / **DEFERRED** mark non-frozen implementation choices.
 
@@ -231,3 +231,62 @@ Emit in-app notifications (ADR-0013) for Phase IV events per **IV-D14** / **EC-0
 ## 6. Explicit non-goals (S04)
 
 RFQ, quotes, vendor selection, PO, GRN against PO, payments, e-invoice, supplier self-service portal, forced contract backfill, inventory mutations from PR.
+
+> **Note:** Items above remain **out of S04**. They are specified for **S05** in §7+ and the design pack — still **not coded** until Parts 1–6 are Owner-authorized.
+
+---
+
+## 7. S05 — Procurement cycle business rules
+
+Binding narrative: [PHASE_S05_PROCUREMENT_CYCLE_DESIGN.md](PHASE_S05_PROCUREMENT_CYCLE_DESIGN.md). S04 invariants §0.1–0.3, 0.5–0.7 still apply. §0.4 (“No RFQ… in S04”) remains true for the S04 slice.
+
+### 7.1 Upstream
+
+1. RFQ may be created only from a same-tenant PR with status **`approved`**.
+2. Demand groups **do not** create RFQ/PO (**123** preserved).
+3. Seasonal PR → RFQ/PO carry the same `season_id`. Administrative PR → no season required on RFQ/PO.
+4. RFQ lines derive from PR lines (qty/specs/unit/`inventory_item_id` where present); RFQ qty must not exceed open PR demand without explicit Eng short-rationale field (default: copy PR line qty 1:1 for first delivery).
+
+### 7.2 Engagement lock (writers = S05)
+
+1. On **RFQ publish**, set `purchase_requests.procurement_engaged_at = now()` and `procurement_engagement_ref` to an opaque RFQ business ref (e.g. RFQ number) — **no cross-schema FK required** in the lock columns.
+2. Existing S04 cancel-approved / cancel / DG membership guards remain fail-closed.
+3. Idempotent DG freeze via existing `PurchaseDemandGroupEngagementGuard` behavior.
+4. **Unlock:** if RFQ is cancelled **before** selection/award **and** no other published/awarded RFQ exists for that PR → clear engagement fields + audit. After award/PO issue, keep engaged through cycle close.
+
+### 7.3 Invitations, offers, selection
+
+1. Invite only suppliers that are **Active** and **eligible** at invite time.
+2. Re-check Active + eligible at **award**; failure → 422 stable code (e.g. `SUPPLIER_NOT_ELIGIBLE`).
+3. Offers belong to one RFQ + one invited supplier; quantities/prices per line.
+4. Selection: exactly **one** winning supplier per awarded RFQ; **mandatory** `selection_rationale`; single-offer RFQ may award with rationale.
+5. Historical supplier evaluations may be displayed; they **never** auto-award.
+
+### 7.4 Purchase orders
+
+1. PO created from awarded RFQ; supplier = selected supplier; lines from awarded offer / RFQ lines.
+2. Optional nullable `contract_id` (same tenant). Does not replace Contracts lifecycle.
+3. Optional nullable `contracts.supplier_id` bridge allowed without historical backfill (**111**).
+4. Issue requires `purchase_orders.issue`. No PR approval-matrix reuse for PO in first delivery.
+5. Cancel issued PO only if **zero** posted received qty; otherwise 422.
+6. No payment / banking / budget reservation fields on PO.
+
+### 7.5 Goods receipt & inventory
+
+1. GRN against **issued** (or partially received) PO only.
+2. Partial receipt allowed while remaining qty > 0.
+3. **Over-receipt forbidden:** `sum(posted GRN line qty) + new qty ≤ PO line qty` (decimal-safe compare).
+4. **Duplicate post forbidden:** Idempotency-Key and/or unique `(tenant_id, goods_receipt_id)` post once; concurrent second post fails safely.
+5. Lines with `inventory_item_id` + warehouse → post inbound `inventory_movements` in same transaction as GRN post (extend ledger; do not bypass ADR-0011 balance rules / no negative stock).
+6. Lines without inventory item → operational receive only (no stock movement).
+7. Manual Inventory `ReceiveStock` **does not** increase PO fulfilled qty.
+
+### 7.6 Cycle close
+
+1. Close when remaining qty = 0 (fully received) **or** short-close with mandatory reason zeroing remainder without stock.
+2. After close: reject new GRN posts (422).
+3. Audit close actor, timestamp, reason, remaining-before.
+
+### 7.7 S05 non-goals
+
+Payments, e-invoice, supplier portal, auto-suspend from award, consolidating multiple PRs into one RFQ via demand group, treating Contracts as PO.

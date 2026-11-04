@@ -279,6 +279,42 @@ final class AuthorizationSecurityEvent
 
     public const CONTROL_REPORT_EXPORTED = 'CONTROL_REPORT_EXPORTED';
 
+    public const RFQ_CREATED = 'RFQ_CREATED';
+
+    public const RFQ_UPDATED = 'RFQ_UPDATED';
+
+    public const RFQ_PUBLISHED = 'RFQ_PUBLISHED';
+
+    public const RFQ_CANCELLED = 'RFQ_CANCELLED';
+
+    public const PR_PROCUREMENT_ENGAGED = 'PR_PROCUREMENT_ENGAGED';
+
+    public const PR_PROCUREMENT_ENGAGEMENT_CLEARED = 'PR_PROCUREMENT_ENGAGEMENT_CLEARED';
+
+    public const RFQ_SUPPLIER_INVITED = 'RFQ_SUPPLIER_INVITED';
+
+    public const OFFER_CREATED = 'OFFER_CREATED';
+
+    public const OFFER_SUBMITTED = 'OFFER_SUBMITTED';
+
+    public const OFFER_WITHDRAWN = 'OFFER_WITHDRAWN';
+
+    public const RFQ_SUPPLIER_SELECTED = 'RFQ_SUPPLIER_SELECTED';
+
+    public const PO_CREATED = 'PO_CREATED';
+
+    public const PO_UPDATED = 'PO_UPDATED';
+
+    public const PO_ISSUED = 'PO_ISSUED';
+
+    public const PO_CANCELLED = 'PO_CANCELLED';
+
+    public const PO_CLOSED = 'PO_CLOSED';
+
+    public const GRN_CREATED = 'GRN_CREATED';
+
+    public const GRN_POSTED = 'GRN_POSTED';
+
     public const MEETING_CREATED = 'MEETING_CREATED';
 
     public const MEETING_UPDATED = 'MEETING_UPDATED';

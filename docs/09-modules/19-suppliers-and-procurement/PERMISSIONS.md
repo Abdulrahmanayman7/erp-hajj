@@ -1,7 +1,7 @@
 # Suppliers & Procurement (S04) — Permissions
 
-> **Status:** Phase I–IV permissions implemented/accepted per stream evidence; Phase V `consolidate_planning` + `view_control_reports` **IMPLEMENTED in catalog** (engineering) — Owner Phase V functional acceptance **PENDING**; S05 / release acts **NOT AUTHORIZED**
-> **Last updated:** 2026-11-01
+> **Status:** S04 permissions Owner-accepted (FINAL FUNCTIONAL CLOSURE 2026-11-02). **S05:** Parts 0–6 Owner Accepted — functionally final closed (2026-11-03). Sensitive `rfq.publish/cancel/select_supplier`, `purchase_orders.issue/cancel/close`, `goods_receipts.post` remain explicit-only (not in default templates). Merge/deploy not authorized until PR+CI.
+> **Last updated:** 2026-11-02
 > Rules: [PERMISSION_MODEL.md](../../06-security/PERMISSION_MODEL.md) — `module.action`, deny-by-default, no Owner bypass, no direct user↔permission grants.
 > Owner **D4**: sensitive permissions are **not** auto-granted via default role templates.
 > II-A **C6**: `suppliers.approve_eligibility_config` sensitive. II-B banking trio sensitive (**IIB**; B6). II-C: `approve` / `approve_criteria` / `handle_appeal` sensitive (**Eng** — design pack).
@@ -134,3 +134,63 @@ Never included in default template seeds (including Tenant Owner template for S0
 ## 5. Not in catalog (S04)
 
 `rfq.*`, `purchase_orders.*`, `goods_receipts.*`, payment verbs, supplier portal verbs.
+
+> Remains accurate for **S04 runtime**. S05 verbs are specified in **§6** for future seeding when Parts 1–6 are authorized.
+
+---
+
+## 6. S05 — Catalog (Parts 1–3 seeded locally; remainder DESIGN)
+
+Module action names below are **ENGINEERING PROPOSAL** consistent with `module.action` model. Seed into `PermissionCatalog` only with coding Parts.
+
+### RFQ / offers / selection
+
+| Permission | Purpose | Sensitive? | Part |
+|---|---|---|---|
+| `rfq.view` | List/show RFQs, invitations, offers (read) | No | 1 |
+| `rfq.create` | Create RFQ draft from approved PR | No | 1 |
+| `rfq.update` | Edit draft RFQ / lines | No | 1 |
+| `rfq.publish` | Publish RFQ (writes PR engagement) | **Yes** | 1 |
+| `rfq.cancel` | Cancel RFQ (pre-award unlock rules) | **Yes** | 1 |
+| `rfq.invite` | Invite eligible suppliers | No | 2 |
+| `rfq.record_offer` | Create/submit/withdraw offers | No | 2 |
+| `rfq.select_supplier` | Award / select winning supplier | **Yes** | 2 |
+
+### Purchase orders
+
+| Permission | Purpose | Sensitive? | Part |
+|---|---|---|---|
+| `purchase_orders.view` | List/show POs | No | 3 |
+| `purchase_orders.create` | Create PO draft from award | No | 3 |
+| `purchase_orders.update` | Edit draft PO | No | 3 |
+| `purchase_orders.issue` | Issue PO | **Yes** | 3 |
+| `purchase_orders.cancel` | Cancel PO before any receipt | **Yes** | 3 |
+| `purchase_orders.close` | Close cycle / short-close | **Yes** | 5 |
+
+### Goods receipts
+
+| Permission | Purpose | Sensitive? | Part |
+|---|---|---|---|
+| `goods_receipts.view` | List/show GRNs | No | 4 |
+| `goods_receipts.create` | Create GRN draft | No | 4 |
+| `goods_receipts.post` | Post GRN (stock + qty fulfill) | **Yes** | 4 |
+
+### 6.1 Sensitive set — explicit assignment only (extends D4)
+
+Never auto-grant on default templates (including Tenant Owner template):
+
+- `rfq.publish`, `rfq.cancel`, `rfq.select_supplier`
+- `purchase_orders.issue`, `purchase_orders.cancel`, `purchase_orders.close`
+- `goods_receipts.post`
+
+### 6.2 Suggested non-sensitive template grants (Eng — not auto-applied until coding)
+
+| Persona | May include |
+|---|---|
+| Procurement officer | `rfq.view/create/update/invite/record_offer`; `purchase_orders.view/create/update`; `goods_receipts.view/create` |
+| Warehouse receiver | `goods_receipts.view/create` (+ `post` only if explicitly assigned) |
+| Auditor | `rfq.view`, `purchase_orders.view`, `goods_receipts.view` |
+
+### 6.3 Still out of catalog
+
+Payment verbs, supplier portal verbs, budget reservation verbs.

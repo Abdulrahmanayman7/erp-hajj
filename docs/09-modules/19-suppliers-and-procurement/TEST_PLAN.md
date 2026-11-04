@@ -1,7 +1,7 @@
 # Suppliers & Procurement (S04) — Test Plan
 
-> **Status:** Phase I–IV tests executed/accepted per stream evidence (Phase IV Owner functionally accepted 2026-11-01). **Phase V tests:** **EXECUTED — ENGINEERING PASS** (2026-11-01) — [PHASE_V_FINAL_IMPLEMENTATION_AND_ACCEPTANCE_EVIDENCE.md](PHASE_V_FINAL_IMPLEMENTATION_AND_ACCEPTANCE_EVIDENCE.md); Owner functional acceptance **PENDING**; commit/push/merge/deploy **NOT AUTHORIZED**  
-> **Last updated:** 2026-11-01
+> **Status:** S04 tests Owner-accepted (FINAL FUNCTIONAL CLOSURE 2026-11-02). **S05 test design in §12 (Part 0) — NOT executed** (no S05 code yet). Parts 1–6 coding **NOT AUTHORIZED**.  
+> **Last updated:** 2026-11-02
 > Tooling: **Pest** (backend) · **Vitest** (frontend) · optional MySQL concurrency job pattern from Transport/Accommodation
 > Binding: [TESTING_STRATEGY.md](../../07-testing/TESTING_STRATEGY.md) · tenancy matrix in `00-tenancy/TEST_PLAN.md`
 
@@ -165,3 +165,82 @@ When coding authorized: AC-E01–E05; criteria publish SoD; evaluation SoD; appe
 ## 11. Explicit non-tests (S04)
 
 RFQ/PO/GRN flows, payment posting, supplier portal, forced contract backfill, XLSX export.
+
+> S04 regression continues to assert **absence** of S05 routes until Part 1 ships. After Part 1+, §12 tests apply; §8 bullet “No new routes under `/rfqs`” remains a **S04-era** check — supersede with “S05 routes permission-gated + tenancy-safe” in S05 suites.
+
+---
+
+## 12. S05 — Test plan (DESIGN ONLY)
+
+### 12.1 Feature API matrix (each aggregate)
+
+RFQ, invitation, offer, PO, GRN:
+
+| Case | Expect |
+|---|---|
+| Happy path | 200/201 |
+| Validation | 422 + stable codes |
+| Unauthenticated | 401 |
+| Missing permission | 403 |
+| Cross-tenant id | **404** |
+| Wrong status transition | 422 |
+
+**Mandatory:** ≥1 cross-tenant attack test per new tenant-owned aggregate.
+
+### 12.2 Engagement & S04 regression
+
+- Publish RFQ → PR `procurement_engaged_at` set; `cancel_approved` → `PR_PROCUREMENT_ENGAGED`.
+- DG link/unlink while engaged → `DG_MEMBERSHIP_LOCKED_ENGAGED` (+ freeze).
+- Cancel RFQ pre-award → engagement cleared only if no other active RFQ.
+- Existing Phase3–5 Pest suites remain green.
+
+### 12.3 Eligibility & selection
+
+- Invite/award blocked for non-Active or ineligible supplier.
+- Award without rationale → 422.
+- Second award → 422.
+
+### 12.4 Receipt integrity
+
+- Partial receive OK; cumulative exact remaining.
+- Over-receive → `GRN_OVER_RECEIPT`.
+- Double post same Idempotency-Key / GRN → no double stock (second 422 or idempotent same movement id).
+- Concurrent two posters on same PO line → one success / one fail; never exceed ordered qty.
+- Stock-posted line creates movement; balance matches; no negative stock.
+- Manual `ReceiveStock` does not change `quantity_received` on PO.
+
+### 12.5 Close (Part 5 — Owner Accepted 2026-11-03)
+
+- Full receive → close without reason OK (status `received` then close).
+- Short-close requires reason (≥10); further GRN create/post → `GRN_PO_CLOSED`.
+- Cancelled / already-closed → `PO_INVALID_STATUS` / `PO_ALREADY_CLOSED`.
+- Draft / early close without eligible status → `PO_INVALID_STATUS`.
+- Concurrent close vs GRN post serializes under PO row lock; never invents stock for short-close remainder.
+- Engagement (`procurement_engaged_*`) remains after close.
+- Qty precision: repeated partials; reject stock qty that normalizes to zero at inventory scale-3 (`GRN_LINES_INVALID`).
+
+### 12.6 Contracts / inventory regression
+
+- Contracts CRUD/transitions unchanged.
+- Inventory transfer/issue/adjust suites green.
+- Optional `contracts.supplier_id` null-safe.
+
+### 12.7 Frontend Vitest
+
+- RFQ/PO/GRN list empty/loading/error.
+- Permission-hidden CTAs.
+- Over-receipt client validation.
+- Demand-group banner still states no RFQ/PO.
+- Part 6: `procurementCycleHints` next-action mapping.
+
+### 12.9 Part 6 E2E / hardening (implemented locally 2026-11-03)
+
+- Full cycle PR→RFQ→offer→award→PO→GRN→close with stock + engagement + requester notifications.
+- Partial + short-close; post-close GRN blocked; failed over-receipt leaves no draft GRN.
+- Sensitive S05 permissions absent from default role templates.
+- Inventory scale-3 zero-normalize reject.
+- CI sequential S05 concurrency suite.
+
+### 12.8 Non-tests (still)
+
+Payments, supplier portal, XLSX-only flows, GPS.

@@ -29,6 +29,8 @@ export function mapPurchaseRequestErrorCode(code: string | undefined): string {
       return 'purchaseRequests.errors.cancelReason'
     case 'PR_JUSTIFICATION_TOO_SHORT':
       return 'purchaseRequests.errors.justificationShort'
+    case 'PR_PROCUREMENT_ENGAGED':
+      return 'purchaseRequests.errors.procurementEngaged'
     default:
       return 'purchaseRequests.errors.generic'
   }

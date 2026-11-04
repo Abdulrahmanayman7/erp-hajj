@@ -55,6 +55,9 @@ const EXPECTED_LINK_KEYS = [
   'suppliers',
   'supplier-evaluations',
   'purchase-requests',
+  'rfqs',
+  'purchase-orders',
+  'goods-receipts',
   'purchase-requests-approval-inbox',
   'purchase-demand-groups',
   'purchase-control-reports',
@@ -141,11 +144,11 @@ describe('buildTenantNavGroups', () => {
     expect(groups.map((group) => group.key)).toEqual([...EXPECTED_GROUP_ORDER])
   })
 
-  it('exposes exactly 35 sidebar links without duplication', () => {
+  it('exposes exactly 38 sidebar links without duplication', () => {
     const groups = buildTenantNavGroups(allowAll)
     const keys = groups.flatMap((group) => group.items.map((item) => item.key))
     expect(keys).toEqual([...EXPECTED_LINK_KEYS])
-    expect(new Set(keys).size).toBe(35)
+    expect(new Set(keys).size).toBe(38)
   })
 
   it('preserves routes for every link', () => {
@@ -170,6 +173,9 @@ describe('buildTenantNavGroups', () => {
     expect(byKey.suppliers).toBe('/app/suppliers')
     expect(byKey['supplier-evaluations']).toBe('/app/supplier-evaluations')
     expect(byKey['purchase-requests']).toBe('/app/purchase-requests')
+    expect(byKey.rfqs).toBe('/app/rfqs')
+    expect(byKey['purchase-orders']).toBe('/app/purchase-orders')
+    expect(byKey['goods-receipts']).toBe('/app/goods-receipts')
     expect(byKey['purchase-requests-approval-inbox']).toBe('/app/purchase-requests/approval-inbox')
     expect(byKey['purchase-demand-groups']).toBe('/app/purchase-demand-groups')
     expect(byKey['purchase-control-reports']).toBe('/app/purchase-control-reports')

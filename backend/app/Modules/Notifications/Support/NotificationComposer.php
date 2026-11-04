@@ -164,6 +164,56 @@ final class NotificationComposer
                 'title' => 'أُلغي طلب شراء معتمد',
                 'body' => $this->clip($number !== '' ? "أُلغي الطلب المعتمد {$number}." : 'أُلغي أحد طلبات الشراء المعتمدة.'),
             ],
+            NotificationType::ProcurementRfqPublished => [
+                'title' => 'نُشر طلب عروض أسعار',
+                'body' => $this->clip(
+                    sprintf(
+                        'نُشر طلب عروض الأسعار %s المرتبط بطلب الشراء %s.',
+                        (string) ($context['rfq_number'] ?? '—'),
+                        $number !== '' ? $number : '—',
+                    ),
+                ),
+            ],
+            NotificationType::ProcurementRfqSupplierSelected => [
+                'title' => 'تمّت ترسية طلب عروض أسعار',
+                'body' => $this->clip(
+                    sprintf(
+                        'أُرسي طلب عروض الأسعار %s المرتبط بطلب الشراء %s.',
+                        (string) ($context['rfq_number'] ?? '—'),
+                        $number !== '' ? $number : '—',
+                    ),
+                ),
+            ],
+            NotificationType::PurchaseOrderIssued => [
+                'title' => 'صدر أمر شراء',
+                'body' => $this->clip(
+                    sprintf(
+                        'صدر أمر الشراء %s لطلب الشراء %s.',
+                        (string) ($context['po_number'] ?? '—'),
+                        $number !== '' ? $number : '—',
+                    ),
+                ),
+            ],
+            NotificationType::GoodsReceiptPosted => [
+                'title' => 'رُحّل سند استلام',
+                'body' => $this->clip(
+                    sprintf(
+                        'رُحّل سند الاستلام %s لأمر الشراء %s.',
+                        (string) ($context['grn_number'] ?? '—'),
+                        (string) ($context['po_number'] ?? '—'),
+                    ),
+                ),
+            ],
+            NotificationType::PurchaseOrderClosed => [
+                'title' => 'أُقفل أمر شراء',
+                'body' => $this->clip(
+                    sprintf(
+                        'أُقفل أمر الشراء %s المرتبط بطلب الشراء %s.',
+                        (string) ($context['po_number'] ?? '—'),
+                        $number !== '' ? $number : '—',
+                    ),
+                ),
+            ],
             NotificationType::StockBelowMinimum => [
                 'title' => 'مخزون دون الحد الأدنى',
                 'body' => $this->clip($this->stockLine($item, $warehouse)),

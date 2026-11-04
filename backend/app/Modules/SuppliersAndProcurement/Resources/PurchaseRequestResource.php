@@ -49,6 +49,8 @@ class PurchaseRequestResource extends JsonResource
             'routing_block_code' => $this->routing_block_code,
             'routing_block_message' => $this->routing_block_message,
             'duplicate_warning_acknowledged_at' => $this->duplicate_warning_acknowledged_at?->toIso8601String(),
+            'procurement_engaged_at' => $this->procurement_engaged_at?->toIso8601String(),
+            'procurement_engagement_ref' => $this->procurement_engagement_ref,
             'submitted_at' => $this->submitted_at?->toIso8601String(),
             'cancelled_at' => $this->cancelled_at?->toIso8601String(),
             'cancelled_by' => $this->userRef('canceller', $this->cancelled_by),
