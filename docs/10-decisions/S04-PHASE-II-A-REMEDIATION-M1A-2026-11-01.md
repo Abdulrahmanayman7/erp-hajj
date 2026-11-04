@@ -23,7 +23,7 @@ Binding consequences:
 |---|---|
 | H1 | Backing Document must remain active and linked to the supplier for eligibility |
 | M2 | DB uniqueness of current document records (`current_slot`) |
-| M3 | MySQL STORED generated wildcard norm columns |
+| M3 | Wildcard norm uniqueness (physical `*_norm` + UNIQUE; MySQL/MariaDB BEFORE INSERT/UPDATE triggers after MariaDB Hostinger rejected STORED GENERATED IFNULL) |
 | M4 | Approved config immutability (application + residual raw-SQL risk documented) |
 | M5 | Multi-editor SoD via additive editors table |
 

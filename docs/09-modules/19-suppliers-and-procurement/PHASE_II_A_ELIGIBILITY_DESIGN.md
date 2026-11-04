@@ -274,7 +274,7 @@ Exact contracts: **[API.md §12](API.md)** (paths, JSON shapes, HTTP status, rea
 | Expiry calendar + live recheck | **Locked** — §2.3.1 (**C4**) |
 | Inbound to `active` for II-A | **Locked** — `under_review` → `active` only |
 | `temporarily_suspended` → `active` | **Owner follow-up** — not authorized |
-| NULL-safe unique indexing | **Locked** — generated columns in DATA_MODEL |
+| NULL-safe unique indexing | **Locked** — physical `*_norm` columns + UNIQUE; MySQL/MariaDB triggers (migration `190015`; MariaDB Hostinger cannot use STORED GENERATED with IFNULL here); SQLite model hook — see DATA_MODEL |
 | Numeric default validity days mandated platform-wide | **Not authorized** — guidance only |
 | Platform-wide document matrix | **Forbidden** (II-D1) |
 
