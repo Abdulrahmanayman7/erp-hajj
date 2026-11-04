@@ -18,7 +18,6 @@ use App\Modules\SuppliersAndProcurement\Models\SupplierEligibilityRequirementSet
 use App\Modules\SuppliersAndProcurement\Models\SupplierEligibilityRequirementSetEditor;
 use App\Modules\SuppliersAndProcurement\Support\EligibilityRequirementDefWriter;
 use Illuminate\Database\Eloquent\Relations\Relation;
-use Illuminate\Database\QueryException;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Http\UploadedFile;
@@ -1251,22 +1250,36 @@ test('M2 the database admits only one current row per key but unlimited supersed
 // M3 — wildcard normalization is database-enforced on MySQL
 // ---------------------------------------------------------------------------
 
-test('M3 wildcard uniqueness is enforced by STORED generated columns on MySQL/MariaDB', function (): void {
+test('M3 wildcard uniqueness is enforced by triggers and physical norm columns on MySQL/MariaDB', function (): void {
     if (! in_array(DB::connection()->getDriverName(), ['mysql', 'mariadb'], true)) {
-        $this->markTestSkipped('Generated columns are MySQL/MariaDB-only; SQLite keeps app-maintained norms (run with phpunit.mysql.xml).');
+        $this->markTestSkipped('Norm triggers are MySQL/MariaDB-only; SQLite keeps app-maintained norms (run with phpunit.mysql.xml).');
     }
 
-    // MySQL information_schema column labels are uppercase via PDO (see Phase II-B WP01).
-    $generated = DB::select(
+    // Physical (non-generated) norm columns — Hostinger MariaDB rejects IFNULL in STORED GENERATED.
+    $columns = DB::select(
         "SELECT COLUMN_NAME, EXTRA FROM information_schema.COLUMNS
          WHERE TABLE_SCHEMA = DATABASE()
            AND TABLE_NAME = 'supplier_document_requirement_defs'
            AND COLUMN_NAME IN ('country_code_norm', 'supplier_category_id_norm')",
     );
-    expect($generated)->toHaveCount(2);
-    foreach ($generated as $column) {
-        expect(strtoupper((string) $column->EXTRA))->toContain('GENERATED');
+    expect($columns)->toHaveCount(2);
+    foreach ($columns as $column) {
+        expect(strtoupper((string) $column->EXTRA))->not->toContain('GENERATED');
     }
+
+    $triggers = collect(DB::select(
+        "SELECT TRIGGER_NAME, EVENT_MANIPULATION, ACTION_TIMING
+         FROM information_schema.TRIGGERS
+         WHERE TRIGGER_SCHEMA = DATABASE()
+           AND EVENT_OBJECT_TABLE = 'supplier_document_requirement_defs'
+           AND TRIGGER_NAME IN ('supplier_req_defs_norms_bi', 'supplier_req_defs_norms_bu')",
+    ))->keyBy(fn ($row) => strtolower((string) $row->TRIGGER_NAME));
+
+    expect($triggers)->toHaveCount(2)
+        ->and(strtoupper((string) $triggers['supplier_req_defs_norms_bi']->ACTION_TIMING))->toBe('BEFORE')
+        ->and(strtoupper((string) $triggers['supplier_req_defs_norms_bi']->EVENT_MANIPULATION))->toBe('INSERT')
+        ->and(strtoupper((string) $triggers['supplier_req_defs_norms_bu']->ACTION_TIMING))->toBe('BEFORE')
+        ->and(strtoupper((string) $triggers['supplier_req_defs_norms_bu']->EVENT_MANIPULATION))->toBe('UPDATE');
 
     $ctx = iiaContext();
     $set = withTenant($ctx['tenant'], fn () => SupplierEligibilityRequirementSet::factory()->create(['authored_by' => $ctx['owner']->id]));
@@ -1284,20 +1297,96 @@ test('M3 wildcard uniqueness is enforced by STORED generated columns on MySQL/Ma
         'updated_at' => now(),
     ], $over);
 
-    // Raw SQL, no model hooks: two NULL-wildcard rows collide through the generated norms.
+    // Raw SQL, no model hooks: two NULL-wildcard rows collide through trigger-maintained norms.
     DB::table('supplier_document_requirement_defs')->insert($row());
     expect(fn () => DB::table('supplier_document_requirement_defs')->insert($row()))->toThrow(UniqueConstraintViolationException::class);
     DB::table('supplier_document_requirement_defs')->insert($row(['country_code' => 'SA']));
     expect(fn () => DB::table('supplier_document_requirement_defs')->insert($row(['country_code' => 'SA'])))->toThrow(UniqueConstraintViolationException::class);
 
-    // Writing a generated column directly is refused by the engine.
-    expect(fn () => DB::table('supplier_document_requirement_defs')->insert($row(['requirement_key' => 'other', 'country_code_norm' => 'ZZ'])))
-        ->toThrow(QueryException::class);
+    // Unlike STORED generated columns, a direct write to *_norm is accepted then overwritten by the trigger.
+    DB::table('supplier_document_requirement_defs')->insert($row([
+        'requirement_key' => 'other',
+        'country_code' => null,
+        'country_code_norm' => 'ZZ',
+        'supplier_category_id_norm' => 999,
+    ]));
+    $overwritten = DB::table('supplier_document_requirement_defs')
+        ->where('requirement_key', 'other')
+        ->where('requirement_set_id', $set->id)
+        ->first();
+    expect($overwritten)->not->toBeNull()
+        ->and((string) $overwritten->country_code_norm)->toBe('')
+        ->and((int) $overwritten->supplier_category_id_norm)->toBe(0);
+
+    // BEFORE UPDATE also recomputes norms from base columns.
+    DB::table('supplier_document_requirement_defs')->where('id', $overwritten->id)->update([
+        'country_code' => 'EG',
+        'country_code_norm' => 'ZZ',
+        'supplier_category_id_norm' => 123,
+    ]);
+    $updated = DB::table('supplier_document_requirement_defs')->where('id', $overwritten->id)->first();
+    expect((string) $updated->country_code)->toBe('EG')
+        ->and((string) $updated->country_code_norm)->toBe('EG')
+        ->and((int) $updated->supplier_category_id_norm)->toBe(0);
+});
+
+test('M3 migration 190015 recovers when unique index and norm columns were already dropped', function (): void {
+    if (! in_array(DB::connection()->getDriverName(), ['mysql', 'mariadb'], true)) {
+        $this->markTestSkipped('Partial-state recovery is MySQL/MariaDB-only.');
+    }
+
+    // Simulate the Hostinger failure mid-flight: index + norm columns gone, triggers may be absent,
+    // migration row not recorded (we re-invoke up() directly).
+    $indexes = collect(Schema::getIndexes('supplier_document_requirement_defs'))
+        ->pluck('name')
+        ->all();
+    if (in_array('supplier_req_defs_applicability_unique', $indexes, true)) {
+        Schema::table('supplier_document_requirement_defs', function ($table): void {
+            $table->dropUnique('supplier_req_defs_applicability_unique');
+        });
+    }
+    DB::unprepared('DROP TRIGGER IF EXISTS `supplier_req_defs_norms_bi`');
+    DB::unprepared('DROP TRIGGER IF EXISTS `supplier_req_defs_norms_bu`');
+    $drop = [];
+    if (Schema::hasColumn('supplier_document_requirement_defs', 'country_code_norm')) {
+        $drop[] = 'country_code_norm';
+    }
+    if (Schema::hasColumn('supplier_document_requirement_defs', 'supplier_category_id_norm')) {
+        $drop[] = 'supplier_category_id_norm';
+    }
+    if ($drop !== []) {
+        Schema::table('supplier_document_requirement_defs', function ($table) use ($drop): void {
+            $table->dropColumn($drop);
+        });
+    }
+
+    expect(Schema::hasColumn('supplier_document_requirement_defs', 'country_code_norm'))->toBeFalse();
+
+    $migration = require database_path('migrations/2026_10_31_190015_make_requirement_def_wildcard_norms_generated.php');
+    $migration->up();
+
+    expect(Schema::hasColumn('supplier_document_requirement_defs', 'country_code_norm'))->toBeTrue()
+        ->and(Schema::hasColumn('supplier_document_requirement_defs', 'supplier_category_id_norm'))->toBeTrue();
+
+    $triggerNames = collect(DB::select(
+        "SELECT TRIGGER_NAME FROM information_schema.TRIGGERS
+         WHERE TRIGGER_SCHEMA = DATABASE()
+           AND EVENT_OBJECT_TABLE = 'supplier_document_requirement_defs'",
+    ))->pluck('TRIGGER_NAME')->map(fn ($n) => strtolower((string) $n))->all();
+    expect($triggerNames)->toContain('supplier_req_defs_norms_bi')
+        ->and($triggerNames)->toContain('supplier_req_defs_norms_bu');
+
+    $indexNames = collect(Schema::getIndexes('supplier_document_requirement_defs'))->pluck('name')->all();
+    expect($indexNames)->toContain('supplier_req_defs_applicability_unique');
+
+    // Second up() must also be safe (idempotent repair).
+    $migration->up();
+    expect(Schema::hasColumn('supplier_document_requirement_defs', 'country_code_norm'))->toBeTrue();
 });
 
 test('M3 on SQLite the model keeps the physical norm columns in sync (documented dual strategy)', function (): void {
     if (DB::connection()->getDriverName() !== 'sqlite') {
-        $this->markTestSkipped('SQLite-only: MySQL uses generated columns.');
+        $this->markTestSkipped('SQLite-only: MySQL/MariaDB use BEFORE INSERT/UPDATE norm triggers.');
     }
 
     $ctx = iiaContext();

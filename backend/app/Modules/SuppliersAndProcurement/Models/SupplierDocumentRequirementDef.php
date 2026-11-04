@@ -60,8 +60,9 @@ class SupplierDocumentRequirementDef extends Model implements TenantOwned
             $country = is_string($country) && trim($country) !== '' ? strtoupper(trim($country)) : null;
             $def->setAttribute('country_code', $country);
 
-            // MySQL/MariaDB: the *_norm columns are STORED generated columns (M3) and must
-            // never be written. SQLite (tests) keeps physical columns maintained here.
+            // MySQL/MariaDB: BEFORE INSERT/UPDATE triggers (migration 190015) recompute
+            // *_norm from base columns for raw SQL as well. SQLite does not use those triggers,
+            // so the model keeps the physical norm columns in sync here.
             if (! in_array($def->getConnection()->getDriverName(), ['mysql', 'mariadb'], true)) {
                 $def->setAttribute('country_code_norm', $country ?? '');
 

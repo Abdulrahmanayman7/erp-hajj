@@ -184,8 +184,8 @@ Rules: same-family same-IBAN supersession refreshes holder; different-IBAN super
 | `supplier_type` | VARCHAR — required |
 | `country_code` | CHAR(2) NULL = wildcard |
 | `supplier_category_id` | BIGINT NULL = wildcard (FK categories when not null) |
-| `country_code_norm` | **MySQL STORED generated** `IFNULL(country_code,'')` (migration `190015`); **SQLite tests:** physical column maintained by model `saving` |
-| `supplier_category_id_norm` | **MySQL STORED generated** `IFNULL(supplier_category_id,0)`; SQLite as above |
+| `country_code_norm` | Physical CHAR(2) default `''`. **MySQL/MariaDB:** maintained by BEFORE INSERT/UPDATE triggers (`supplier_req_defs_norms_bi` / `_bu`, migration `190015`) as `IFNULL(country_code,'')` — Hostinger MariaDB 11.8 rejects IFNULL inside STORED GENERATED. **SQLite tests:** model `saving` hook |
+| `supplier_category_id_norm` | Physical UNSIGNED BIGINT default `0`. **MySQL/MariaDB:** same triggers as `IFNULL(supplier_category_id,0)`; **SQLite:** model `saving` |
 | `is_mandatory` | BOOLEAN — approve requires ≥1 true (**M1=A**) |
 | `default_validity_days` | INT NULL — guidance only |
 | timestamps | |
