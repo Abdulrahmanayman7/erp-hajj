@@ -1,17 +1,19 @@
-import { computed, type Ref } from 'vue'
+import { computed, type MaybeRefOrGetter, type Ref, toValue } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
 
 import { getPurchaseOrder, listPurchaseOrders } from '../api/purchaseOrdersApi'
 
-export function usePurchaseOrdersQuery(filters: {
-  status?: string
-  q?: string
-  page?: number
-  rfq_id?: number
-}) {
+export function usePurchaseOrdersQuery(
+  filters: MaybeRefOrGetter<{
+    status?: string
+    q?: string
+    page?: number
+    rfq_id?: number
+  }>,
+) {
   return useQuery({
-    queryKey: computed(() => ['purchase-orders', { ...filters }]),
-    queryFn: () => listPurchaseOrders(filters),
+    queryKey: computed(() => ['purchase-orders', toValue(filters)]),
+    queryFn: () => listPurchaseOrders(toValue(filters)),
   })
 }
 
