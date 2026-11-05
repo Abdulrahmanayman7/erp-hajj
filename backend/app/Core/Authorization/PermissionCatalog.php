@@ -342,6 +342,7 @@ final class PermissionCatalog
         $all = array_values(array_filter(
             self::allNames(),
             static fn (string $name): bool => ! str_starts_with($name, 'accommodation.')
+                && ! self::isPlatformPermission($name)
                 && ! in_array($name, $sensitiveExplicitOnly, true),
         ));
 

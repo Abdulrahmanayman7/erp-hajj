@@ -29,7 +29,7 @@
 1. Provision staging host with persistent PHP, MySQL/MariaDB, private storage, queue worker, cron `schedule:run`, HTTPS.
 2. Set `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL`, `FRONTEND_URL`, Sanctum domains, CORS origin = SPA.
 3. On **staging PHP**: record `php -i` → `upload_max_filesize` ≥ 20M and `post_max_size` ≥ 25M.
-4. Deploy backend (`composer install --no-dev`, `migrate --force`, restart workers).
+4. Deploy backend (`composer install --no-dev`, `migrate --force`, `rbac:sync-tenant-owner-permissions`, restart workers). Verify the sync command succeeds before continuing; stop deployment on failure. Confirm tenant_owner receives newly introduced template permissions without granting sensitive/platform permissions or changing other roles.
 5. Deploy frontend (Vercel root `frontend`, `npm ci` / `npm run build`, `dist`, SPA rewrites).
 6. Smoke: health, login, dashboard, settings GET/PATCH, tasks, notifications unread-count, audit, document upload+download, logout.
 7. Confirm `X-Correlation-ID` exposed; no stack traces; private document path not in JSON.

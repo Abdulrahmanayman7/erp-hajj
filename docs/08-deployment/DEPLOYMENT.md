@@ -74,6 +74,7 @@ See `backend/.env.example` for the full inventory. Never commit real secrets.
 cd backend
 composer install --no-dev --optimize-autoloader
 php artisan migrate --force
+php artisan rbac:sync-tenant-owner-permissions
 php artisan config:cache
 php artisan route:cache
 # restart queue workers after deploy
@@ -140,11 +141,12 @@ Public; returns application name, API version, status, timestamp. Does **not** e
 2. Maintenance window if required by ops policy.
 3. Deploy backend code; `composer install --no-dev --optimize-autoloader`.
 4. `php artisan migrate --force`.
-5. Cache config/routes if safe for the environment.
-6. Restart queue workers.
-7. Deploy frontend build (Vercel / static host).
-8. Run [MVP_RELEASE_CHECKLIST.md](MVP_RELEASE_CHECKLIST.md) smoke tests.
-9. Confirm scheduler still ticking.
+5. `php artisan rbac:sync-tenant-owner-permissions` (required; stop deployment if it fails).
+6. Cache config/routes if safe for the environment.
+7. Restart queue workers.
+8. Deploy frontend build (Vercel / static host).
+9. Run [MVP_RELEASE_CHECKLIST.md](MVP_RELEASE_CHECKLIST.md) smoke tests.
+10. Confirm scheduler still ticking.
 
 ## Rollback
 
