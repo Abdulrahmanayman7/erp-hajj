@@ -15,7 +15,15 @@ vi.mock('@/shared/composables/usePermissions', () => ({
 }))
 
 vi.mock('../api/demandGroupsApi', () => ({
-  fetchControlReport: vi.fn(async () => ({ summary: { count: 0 } })),
+  fetchControlReport: vi.fn(async () => ({
+    report_id: 'RPT-V01',
+    count: 0,
+    avg_hours: null,
+    median_hours: null,
+    p95_hours: null,
+    in_flight_count: 0,
+    rows: [],
+  })),
   downloadControlReportCsv: vi.fn(),
 }))
 
@@ -71,5 +79,13 @@ describe('PurchaseControlReportsPage', () => {
     mockedPermissions.value = []
     const host = await mountPage()
     expect(host.textContent).not.toContain('تصدير CSV')
+  })
+
+  it('renders summary cards instead of raw JSON', async () => {
+    const host = await mountPage()
+    expect(host.textContent).toContain('عدد السجلات')
+    expect(host.textContent).toContain('لا توجد نتائج ضمن المرشحات المحددة.')
+    expect(host.innerHTML).not.toContain('JSON.stringify')
+    expect(host.querySelector('pre')).toBeNull()
   })
 })

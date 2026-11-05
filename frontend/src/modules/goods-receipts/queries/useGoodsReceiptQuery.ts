@@ -1,17 +1,19 @@
-import { computed, type Ref } from 'vue'
+import { computed, type MaybeRefOrGetter, type Ref, toValue } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
 
 import { getGoodsReceipt, listGoodsReceipts } from '../api/goodsReceiptsApi'
 
-export function useGoodsReceiptsQuery(filters: {
-  status?: string
-  q?: string
-  page?: number
-  purchase_order_id?: number
-}) {
+export function useGoodsReceiptsQuery(
+  filters: MaybeRefOrGetter<{
+    status?: string
+    q?: string
+    page?: number
+    purchase_order_id?: number
+  }>,
+) {
   return useQuery({
-    queryKey: computed(() => ['goods-receipts', { ...filters }]),
-    queryFn: () => listGoodsReceipts(filters),
+    queryKey: computed(() => ['goods-receipts', toValue(filters)]),
+    queryFn: () => listGoodsReceipts(toValue(filters)),
   })
 }
 

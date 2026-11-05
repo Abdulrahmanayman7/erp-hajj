@@ -1,8 +1,18 @@
 <script setup lang="ts">
-import { computed, reactive } from 'vue'
+import { computed, reactive, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
-import { FilePlus2 } from 'lucide-vue-next'
+import { FilePlus2, Search } from 'lucide-vue-next'
+
+import AppMobileFilters from '@/shared/components/AppMobileFilters.vue'
+import AppPageHeader from '@/shared/components/AppPageHeader.vue'
+import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
+import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
+import {
+  resolvePurchaseListState,
+  softStatusBadgeClass,
+  softStatusDotClass,
+} from '@/modules/purchase-requests/validation/purchaseRequestValidation'
 
 import { usePurchaseOrdersQuery } from '../queries/usePurchaseOrderQuery'
 
@@ -14,99 +24,185 @@ const filters = reactive({
   page: 1,
 })
 
-const { data, isLoading, isError, refetch } = usePurchaseOrdersQuery(filters)
+const committedSearch = useDebouncedRef(() => filters.q)
+const queryParams = computed(() => ({
+  status: filters.status || undefined,
+  q: committedSearch.value || undefined,
+  page: filters.page,
+}))
+
+watch(
+  () => [committedSearch.value, filters.status],
+  () => {
+    filters.page = 1
+  },
+)
+
+const { data, isLoading, isError, refetch, isFetching } = usePurchaseOrdersQuery(queryParams)
 const rows = computed(() => data.value?.data ?? [])
+const meta = computed(() => (data.value as { meta?: Record<string, number> } | undefined)?.meta ?? {})
+const listState = computed(() =>
+  resolvePurchaseListState({
+    isLoading: isLoading.value,
+    isError: isError.value,
+    count: rows.value.length,
+  }),
+)
+
+const statusFilterOptions = computed<AppSelectOption[]>(() => [
+  { value: '', label: t('purchaseOrders.filters.allStatuses') },
+  { value: 'draft', label: t('purchaseOrders.statuses.draft') },
+  { value: 'issued', label: t('purchaseOrders.statuses.issued') },
+  { value: 'partially_received', label: t('purchaseOrders.statuses.partially_received') },
+  { value: 'received', label: t('purchaseOrders.statuses.received') },
+  { value: 'closed', label: t('purchaseOrders.statuses.closed') },
+  { value: 'cancelled', label: t('purchaseOrders.statuses.cancelled') },
+])
+
+const activeFilterCount = computed(() => (filters.status ? 1 : 0))
+
+function resetFilters(): void {
+  filters.status = ''
+}
 </script>
 
 <template>
   <div class="space-y-6">
-    <header>
-      <h1 class="text-2xl font-semibold text-foreground">
-        {{ t('purchaseOrders.title') }}
-      </h1>
-      <p class="mt-1 text-sm text-muted-foreground">
-        {{ t('purchaseOrders.subtitle') }}
-      </p>
-    </header>
+    <AppPageHeader :title="t('purchaseOrders.title')" :subtitle="t('purchaseOrders.subtitle')" />
 
-    <section class="flex flex-wrap gap-3">
-      <input
-        v-model="filters.q"
-        type="search"
-        class="rounded-md border border-border bg-background px-3 py-2 text-sm"
-        :placeholder="t('purchaseOrders.searchPlaceholder')"
-        @keyup.enter="filters.page = 1; refetch()"
-      />
-      <select v-model="filters.status" class="rounded-md border border-border bg-background px-3 py-2 text-sm">
-        <option value="">{{ t('purchaseOrders.filters.allStatuses') }}</option>
-        <option value="draft">{{ t('purchaseOrders.statuses.draft') }}</option>
-        <option value="issued">{{ t('purchaseOrders.statuses.issued') }}</option>
-        <option value="partially_received">{{ t('purchaseOrders.statuses.partially_received') }}</option>
-        <option value="received">{{ t('purchaseOrders.statuses.received') }}</option>
-        <option value="closed">{{ t('purchaseOrders.statuses.closed') }}</option>
-        <option value="cancelled">{{ t('purchaseOrders.statuses.cancelled') }}</option>
-      </select>
-      <button
-        type="button"
-        class="rounded-md border border-border px-3 py-2 text-sm"
-        @click="filters.page = 1; refetch()"
-      >
-        {{ t('purchaseOrders.search') }}
-      </button>
-    </section>
-
-    <div v-if="isLoading" class="text-sm text-muted-foreground">{{ t('purchaseOrders.loading') }}</div>
-    <div v-else-if="isError" class="text-sm text-destructive">{{ t('purchaseOrders.loadError') }}</div>
-    <div
-      v-else-if="rows.length === 0"
-      class="rounded-md border border-dashed border-border p-10 text-center text-sm text-muted-foreground"
+    <AppMobileFilters
+      v-model:search="filters.q"
+      :search-placeholder="t('purchaseOrders.searchPlaceholder')"
+      :active-count="activeFilterCount"
+      @reset="resetFilters"
     >
-      <FilePlus2 class="mx-auto mb-3 h-8 w-8 opacity-50" />
-      {{ t('purchaseOrders.empty') }}
-    </div>
-    <div v-else class="overflow-x-auto rounded-md border border-border">
-      <table class="min-w-full text-sm">
-        <thead class="bg-muted/40 text-muted-foreground">
-          <tr>
-            <th class="px-3 py-2 text-start font-medium">{{ t('purchaseOrders.columns.number') }}</th>
-            <th class="px-3 py-2 text-start font-medium">{{ t('purchaseOrders.columns.status') }}</th>
-            <th class="px-3 py-2 text-start font-medium">{{ t('purchaseOrders.columns.supplier') }}</th>
-            <th class="px-3 py-2 text-start font-medium">{{ t('purchaseOrders.columns.rfq') }}</th>
-            <th class="px-3 py-2 text-start font-medium">{{ t('purchaseOrders.columns.pr') }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="row in rows"
-            :key="row.id"
-            class="border-t border-border hover:bg-muted/20"
+      <template #desktop>
+        <div
+          class="flex flex-wrap items-center gap-3 rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)]"
+        >
+          <div class="relative min-w-48 flex-1">
+            <Search
+              class="pointer-events-none absolute inset-s-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text-muted"
+              :stroke-width="1.75"
+              aria-hidden="true"
+            />
+            <input
+              v-model="filters.q"
+              type="search"
+              class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface pe-3 ps-10 text-sm text-brand-text outline-none transition placeholder:text-brand-text-muted focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+              :placeholder="t('purchaseOrders.searchPlaceholder')"
+            />
+          </div>
+          <AppSelect v-model="filters.status" :options="statusFilterOptions" />
+        </div>
+      </template>
+      <template #filters>
+        <div class="space-y-3">
+          <AppSelect v-model="filters.status" :options="statusFilterOptions" />
+        </div>
+      </template>
+    </AppMobileFilters>
+
+    <div class="rounded-2xl border border-brand-border bg-brand-surface">
+      <div v-if="listState === 'loading'" class="p-10 text-center text-sm text-brand-text-muted">
+        {{ t('purchaseOrders.loading') }}
+      </div>
+      <div v-else-if="listState === 'error'" class="p-10 text-center">
+        <p class="text-sm text-red-700">{{ t('purchaseOrders.loadError') }}</p>
+        <button
+          type="button"
+          class="mt-3 text-sm font-semibold text-brand-primary underline"
+          @click="() => { void refetch() }"
+        >
+          {{ t('common.retry') }}
+        </button>
+      </div>
+      <div v-else-if="listState === 'empty'" class="p-10 text-center text-sm text-brand-text-muted">
+        <FilePlus2 class="mx-auto mb-3 h-8 w-8 opacity-50" />
+        {{ t('purchaseOrders.empty') }}
+      </div>
+      <div v-else class="overflow-x-auto">
+        <table class="min-w-full text-sm">
+          <thead class="border-b border-brand-border bg-brand-bg/50 text-start text-brand-text-secondary">
+            <tr>
+              <th class="px-4 py-3 font-semibold">{{ t('purchaseOrders.columns.number') }}</th>
+              <th class="px-4 py-3 font-semibold">{{ t('purchaseOrders.columns.status') }}</th>
+              <th class="px-4 py-3 font-semibold">{{ t('purchaseOrders.columns.supplier') }}</th>
+              <th class="px-4 py-3 font-semibold">{{ t('purchaseOrders.columns.rfq') }}</th>
+              <th class="px-4 py-3 font-semibold">{{ t('purchaseOrders.columns.pr') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="row in rows"
+              :key="row.id"
+              class="border-b border-brand-border/60 last:border-0 hover:bg-brand-bg/40"
+            >
+              <td class="px-4 py-3">
+                <RouterLink
+                  class="font-semibold text-brand-primary hover:underline"
+                  :to="`/app/purchase-orders/${row.id}`"
+                >
+                  {{ row.po_number }}
+                </RouterLink>
+              </td>
+              <td class="px-4 py-3">
+                <span
+                  class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                  :class="softStatusBadgeClass(row.status)"
+                >
+                  <span class="h-1.5 w-1.5 rounded-full" :class="softStatusDotClass(row.status)" />
+                  {{ t(`purchaseOrders.statuses.${row.status}`) }}
+                </span>
+              </td>
+              <td class="px-4 py-3">{{ row.supplier?.display_name ?? `#${row.supplier_id}` }}</td>
+              <td class="px-4 py-3">
+                <RouterLink
+                  class="text-brand-primary hover:underline"
+                  :to="`/app/rfqs/${row.procurement_rfq_id}`"
+                >
+                  {{ row.rfq?.rfq_number ?? `#${row.procurement_rfq_id}` }}
+                </RouterLink>
+              </td>
+              <td class="px-4 py-3">
+                <RouterLink
+                  class="text-brand-primary hover:underline"
+                  :to="`/app/purchase-requests/${row.purchase_request_id}`"
+                >
+                  {{ row.purchase_request?.pr_number ?? `#${row.purchase_request_id}` }}
+                </RouterLink>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <footer
+        v-if="meta.last_page && meta.last_page > 1"
+        class="flex items-center justify-between border-t border-brand-border px-4 py-3 text-sm"
+      >
+        <span class="text-brand-text-muted">
+          {{ t('common.pageOf', { page: meta.current_page ?? filters.page, total: meta.last_page }) }}
+        </span>
+        <div class="flex gap-2">
+          <button
+            type="button"
+            class="rounded-lg border border-brand-border px-3 py-1 disabled:opacity-50"
+            :disabled="filters.page <= 1 || isFetching"
+            @click="filters.page -= 1"
           >
-            <td class="px-3 py-2">
-              <RouterLink class="text-primary hover:underline" :to="`/app/purchase-orders/${row.id}`">
-                {{ row.po_number }}
-              </RouterLink>
-            </td>
-            <td class="px-3 py-2">{{ t(`purchaseOrders.statuses.${row.status}`) }}</td>
-            <td class="px-3 py-2">{{ row.supplier?.display_name ?? `#${row.supplier_id}` }}</td>
-            <td class="px-3 py-2">
-              <RouterLink
-                class="text-primary hover:underline"
-                :to="`/app/rfqs/${row.procurement_rfq_id}`"
-              >
-                {{ row.rfq?.rfq_number ?? `#${row.procurement_rfq_id}` }}
-              </RouterLink>
-            </td>
-            <td class="px-3 py-2">
-              <RouterLink
-                class="text-primary hover:underline"
-                :to="`/app/purchase-requests/${row.purchase_request_id}`"
-              >
-                {{ row.purchase_request?.pr_number ?? `#${row.purchase_request_id}` }}
-              </RouterLink>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+            {{ t('common.prev') }}
+          </button>
+          <button
+            type="button"
+            class="rounded-lg border border-brand-border px-3 py-1 disabled:opacity-50"
+            :disabled="filters.page >= meta.last_page || isFetching"
+            @click="filters.page += 1"
+          >
+            {{ t('common.next') }}
+          </button>
+        </div>
+      </footer>
     </div>
   </div>
 </template>
