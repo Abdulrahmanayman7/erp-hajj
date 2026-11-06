@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
 import { ChevronDown, ChevronsLeft, ChevronsRight, LogOut } from 'lucide-vue-next'
 
 import rafeeaLogo from '@/assets/brand/rafeea-logo.png'
@@ -11,13 +11,16 @@ import UserAvatar from '@/shared/components/UserAvatar.vue'
 import {
   type AppNavGroup,
   type AppNavItem,
+  resolveActiveMultiItemGroupKey,
   useAppNavigation,
 } from '@/shared/composables/useAppNavigation'
 import { useSidebarCollapse } from '@/shared/composables/useSidebarCollapse'
 
-const GROUPS_KEY = 'erp-hajj.sidebar.groups'
+/** Legacy multi-open map — discarded so it cannot override exclusive accordion. */
+const LEGACY_GROUPS_KEY = 'erp-hajj.sidebar.groups'
 
 const { t } = useI18n()
+const route = useRoute()
 const { data: user } = useCurrentUserQuery()
 const { mutate: logout, isPending: isLoggingOut } = useLogoutMutation()
 const { collapsed, toggleCollapsed } = useSidebarCollapse()
@@ -27,17 +30,8 @@ const sidebarToggleLabel = computed(() =>
   collapsed.value ? t('shell.expandSidebar') : t('shell.collapseSidebar'),
 )
 
-const openGroups = ref<Record<string, boolean>>({
-  home: true,
-  system: true,
-  hr: true,
-  'seasons-pilgrims': true,
-  governance: true,
-  inventory: true,
-  transport: true,
-  assets: true,
-  accommodation: true,
-})
+/** Exclusive accordion: at most one multi-item group key, or null when closed. */
+const expandedGroupKey = ref<string | null>(null)
 
 const displayName = computed(() => user.value?.name ?? t('auth.userFallback'))
 const roleLabel = computed(() => user.value?.roles?.[0]?.name ?? t('auth.systemManager'))
@@ -46,16 +40,17 @@ function isGroupActive(group: AppNavGroup): boolean {
   return group.items.some((item) => isItemActive(item))
 }
 
+function syncExpandedFromRoute(): void {
+  expandedGroupKey.value = resolveActiveMultiItemGroupKey(navGroups.value, route.path)
+}
+
 function toggleGroup(key: string): void {
   if (collapsed.value) return
-  openGroups.value = {
-    ...openGroups.value,
-    [key]: !openGroups.value[key],
-  }
+  expandedGroupKey.value = expandedGroupKey.value === key ? null : key
 }
 
 function isGroupOpen(key: string): boolean {
-  return openGroups.value[key] !== false
+  return expandedGroupKey.value === key
 }
 
 function navLinkClass(item: AppNavItem): string[] {
@@ -67,21 +62,22 @@ function navLinkClass(item: AppNavItem): string[] {
 }
 
 watch(
-  openGroups,
-  (value) => {
-    localStorage.setItem(GROUPS_KEY, JSON.stringify(value))
+  () => route.path,
+  () => {
+    syncExpandedFromRoute()
   },
-  { deep: true },
+  { immediate: true },
 )
 
+watch(navGroups, () => {
+  syncExpandedFromRoute()
+})
+
 onMounted(() => {
-  const savedGroups = localStorage.getItem(GROUPS_KEY)
-  if (savedGroups) {
-    try {
-      openGroups.value = { ...openGroups.value, ...JSON.parse(savedGroups) }
-    } catch {
-      // ignore invalid stored state
-    }
+  try {
+    localStorage.removeItem(LEGACY_GROUPS_KEY)
+  } catch {
+    // ignore storage failures
   }
 })
 </script>

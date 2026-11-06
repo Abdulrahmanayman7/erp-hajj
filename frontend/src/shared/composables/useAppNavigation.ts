@@ -62,6 +62,31 @@ export function isAppNavItemActive(path: string, item: AppNavItem): boolean {
   return path === item.to || path.startsWith(`${item.to}/`)
 }
 
+export function isAppNavGroupActive(path: string, group: AppNavGroup): boolean {
+  return group.items.some((item) => isAppNavItemActive(path, item))
+}
+
+/**
+ * Exclusive accordion target for the current path.
+ * Returns the first multi-item group (in sidebar order) that contains an active
+ * item. Single-item groups never expand. Matching uses existing exact/prefix
+ * precedence so approval-inbox and purchase-requests stay in the same group.
+ */
+export function resolveActiveMultiItemGroupKey(
+  groups: AppNavGroup[],
+  path: string,
+): string | null {
+  for (const group of groups) {
+    if (group.items.length <= 1) {
+      continue
+    }
+    if (isAppNavGroupActive(path, group)) {
+      return group.key
+    }
+  }
+  return null
+}
+
 /** Local menu filter only — never searches entities across the system. */
 export function filterNavGroups(
   groups: AppNavGroup[],
@@ -233,181 +258,33 @@ export function buildTenantNavGroups(can: (permission: string) => boolean): AppN
   }
   pushGroup(groups, { key: 'seasons-pilgrims', labelKey: 'nav.seasonsPilgrims', items: seasonItems })
 
-  const governanceItems: AppNavItem[] = []
-  if (can('contracts.view')) {
-    governanceItems.push({
-      key: 'contracts',
-      labelKey: 'nav.contracts',
-      to: '/app/contracts',
-      icon: FileText,
-      permission: 'contracts.view',
+  const accommodationItems: AppNavItem[] = []
+  if (
+    can('accommodation.view') ||
+    can('accommodation.manage_facilities') ||
+    can('accommodation.manage_season_allocation') ||
+    can('accommodation.draft') ||
+    can('accommodation.confirm') ||
+    can('accommodation.manage_scopes') ||
+    can('accommodation.arrive') ||
+    can('accommodation.check_in') ||
+    can('accommodation.check_out') ||
+    can('accommodation.relocate') ||
+    can('accommodation.cancel_assignment')
+  ) {
+    accommodationItems.push({
+      key: 'accommodation',
+      labelKey: 'nav.accommodation',
+      to: '/app/accommodation',
+      icon: Tent,
       match: 'prefix',
     })
   }
-  if (can('suppliers.view')) {
-    governanceItems.push({
-      key: 'suppliers',
-      labelKey: 'nav.suppliers',
-      to: '/app/suppliers',
-      icon: Building2,
-      permission: 'suppliers.view',
-      match: 'prefix',
-    })
-  }
-  if (can('supplier_evaluations.view')) {
-    governanceItems.push({
-      key: 'supplier-evaluations',
-      labelKey: 'nav.supplierEvaluations',
-      to: '/app/supplier-evaluations',
-      icon: ClipboardList,
-      permission: 'supplier_evaluations.view',
-      match: 'prefix',
-    })
-  }
-  if (can('purchase_requests.view') || can('purchase_requests.create')) {
-    governanceItems.push({
-      key: 'purchase-requests',
-      labelKey: 'nav.purchaseRequests',
-      to: '/app/purchase-requests',
-      icon: FileInput,
-      permission: 'purchase_requests.view',
-      match: 'prefix',
-    })
-  }
-  if (can('rfq.view') || can('rfq.create')) {
-    governanceItems.push({
-      key: 'rfqs',
-      labelKey: 'nav.rfqs',
-      to: '/app/rfqs',
-      icon: ClipboardList,
-      permission: 'rfq.view',
-      match: 'prefix',
-    })
-  }
-  if (can('purchase_orders.view') || can('purchase_orders.create')) {
-    governanceItems.push({
-      key: 'purchase-orders',
-      labelKey: 'nav.purchaseOrders',
-      to: '/app/purchase-orders',
-      icon: ScrollText,
-      permission: 'purchase_orders.view',
-      match: 'prefix',
-    })
-  }
-  if (can('goods_receipts.view') || can('goods_receipts.create')) {
-    governanceItems.push({
-      key: 'goods-receipts',
-      labelKey: 'nav.goodsReceipts',
-      to: '/app/goods-receipts',
-      icon: Package,
-      permission: 'goods_receipts.view',
-      match: 'prefix',
-    })
-  }
-  if (can('purchase_requests.approve')) {
-    governanceItems.push({
-      key: 'purchase-requests-approval-inbox',
-      labelKey: 'nav.purchaseApprovalInbox',
-      to: '/app/purchase-requests/approval-inbox',
-      icon: FileCheck2,
-      permission: 'purchase_requests.approve',
-      match: 'exact',
-    })
-  }
-  if (can('purchase_requests.view') || can('purchase_requests.consolidate_planning')) {
-    governanceItems.push({
-      key: 'purchase-demand-groups',
-      labelKey: 'nav.purchaseDemandGroups',
-      to: '/app/purchase-demand-groups',
-      icon: FolderKanban,
-      permission: 'purchase_requests.view',
-      match: 'prefix',
-    })
-  }
-  if (can('purchase_requests.view_control_reports')) {
-    governanceItems.push({
-      key: 'purchase-control-reports',
-      labelKey: 'nav.purchaseControlReports',
-      to: '/app/purchase-control-reports',
-      icon: FileChartColumn,
-      permission: 'purchase_requests.view_control_reports',
-      match: 'prefix',
-    })
-  }
-  if (can('purchase_requests.manage_approval_config') || can('purchase_requests.manage_delegations')) {
-    governanceItems.push({
-      key: 'purchase-approval-settings',
-      labelKey: 'nav.purchaseApprovalSettings',
-      to: '/app/purchase-approval-settings',
-      icon: SlidersHorizontal,
-      permission: 'purchase_requests.manage_approval_config',
-      match: 'prefix',
-    })
-  }
-  if (can('meetings.view')) {
-    governanceItems.push({
-      key: 'meetings',
-      labelKey: 'nav.meetings',
-      to: '/app/meetings',
-      icon: CalendarDays,
-      permission: 'meetings.view',
-      match: 'prefix',
-    })
-  }
-  if (can('decisions.view')) {
-    governanceItems.push({
-      key: 'decisions',
-      labelKey: 'nav.decisions',
-      to: '/app/decisions',
-      icon: Gavel,
-      permission: 'decisions.view',
-      match: 'prefix',
-    })
-  }
-  if (can('tasks.view')) {
-    governanceItems.push({
-      key: 'tasks',
-      labelKey: 'nav.tasks',
-      to: '/app/tasks',
-      icon: ListTodo,
-      permission: 'tasks.view',
-      match: 'prefix',
-    })
-  }
-  if (can('documents.view')) {
-    governanceItems.push({
-      key: 'documents',
-      labelKey: 'nav.documents',
-      to: '/app/documents',
-      icon: Archive,
-      permission: 'documents.view',
-      match: 'prefix',
-    })
-  }
-  pushGroup(groups, { key: 'governance', labelKey: 'nav.governance', items: governanceItems })
-
-  const inventoryItems: AppNavItem[] = []
-  if (can('warehouses.view')) {
-    inventoryItems.push({
-      key: 'warehouses',
-      labelKey: 'nav.warehouses',
-      to: '/app/warehouses',
-      icon: Warehouse,
-      permission: 'warehouses.view',
-      match: 'prefix',
-    })
-  }
-  if (can('inventory.view')) {
-    inventoryItems.push({
-      key: 'inventory',
-      labelKey: 'nav.inventory',
-      to: '/app/inventory',
-      icon: Package,
-      permission: 'inventory.view',
-      match: 'prefix',
-    })
-  }
-  pushGroup(groups, { key: 'inventory', labelKey: 'nav.inventoryWarehouses', items: inventoryItems })
+  pushGroup(groups, {
+    key: 'accommodation',
+    labelKey: 'nav.accommodationGroup',
+    items: accommodationItems,
+  })
 
   const transportItems: AppNavItem[] = []
   if (can('transportation.view')) {
@@ -464,6 +341,149 @@ export function buildTenantNavGroups(can: (permission: string) => boolean): AppN
   }
   pushGroup(groups, { key: 'transport', labelKey: 'nav.transportFleet', items: transportItems })
 
+  const procurementItems: AppNavItem[] = []
+  if (can('purchase_requests.view') || can('purchase_requests.create')) {
+    procurementItems.push({
+      key: 'purchase-requests',
+      labelKey: 'nav.purchaseRequests',
+      to: '/app/purchase-requests',
+      icon: FileInput,
+      permission: 'purchase_requests.view',
+      match: 'prefix',
+    })
+  }
+  if (can('purchase_requests.approve')) {
+    procurementItems.push({
+      key: 'purchase-requests-approval-inbox',
+      labelKey: 'nav.purchaseApprovalInbox',
+      to: '/app/purchase-requests/approval-inbox',
+      icon: FileCheck2,
+      permission: 'purchase_requests.approve',
+      match: 'exact',
+    })
+  }
+  if (can('purchase_requests.view') || can('purchase_requests.consolidate_planning')) {
+    procurementItems.push({
+      key: 'purchase-demand-groups',
+      labelKey: 'nav.purchaseDemandGroups',
+      to: '/app/purchase-demand-groups',
+      icon: FolderKanban,
+      permission: 'purchase_requests.view',
+      match: 'prefix',
+    })
+  }
+  if (can('rfq.view') || can('rfq.create')) {
+    procurementItems.push({
+      key: 'rfqs',
+      labelKey: 'nav.rfqs',
+      to: '/app/rfqs',
+      icon: ClipboardList,
+      permission: 'rfq.view',
+      match: 'prefix',
+    })
+  }
+  if (can('purchase_orders.view') || can('purchase_orders.create')) {
+    procurementItems.push({
+      key: 'purchase-orders',
+      labelKey: 'nav.purchaseOrders',
+      to: '/app/purchase-orders',
+      icon: ScrollText,
+      permission: 'purchase_orders.view',
+      match: 'prefix',
+    })
+  }
+  if (can('goods_receipts.view') || can('goods_receipts.create')) {
+    procurementItems.push({
+      key: 'goods-receipts',
+      labelKey: 'nav.goodsReceipts',
+      to: '/app/goods-receipts',
+      icon: Package,
+      permission: 'goods_receipts.view',
+      match: 'prefix',
+    })
+  }
+  if (can('purchase_requests.view_control_reports')) {
+    procurementItems.push({
+      key: 'purchase-control-reports',
+      labelKey: 'nav.purchaseControlReports',
+      to: '/app/purchase-control-reports',
+      icon: FileChartColumn,
+      permission: 'purchase_requests.view_control_reports',
+      match: 'prefix',
+    })
+  }
+  if (can('purchase_requests.manage_approval_config') || can('purchase_requests.manage_delegations')) {
+    procurementItems.push({
+      key: 'purchase-approval-settings',
+      labelKey: 'nav.purchaseApprovalSettings',
+      to: '/app/purchase-approval-settings',
+      icon: SlidersHorizontal,
+      permission: 'purchase_requests.manage_approval_config',
+      match: 'prefix',
+    })
+  }
+  pushGroup(groups, { key: 'procurement', labelKey: 'nav.procurement', items: procurementItems })
+
+  const suppliersContractsItems: AppNavItem[] = []
+  if (can('suppliers.view')) {
+    suppliersContractsItems.push({
+      key: 'suppliers',
+      labelKey: 'nav.suppliers',
+      to: '/app/suppliers',
+      icon: Building2,
+      permission: 'suppliers.view',
+      match: 'prefix',
+    })
+  }
+  if (can('supplier_evaluations.view')) {
+    suppliersContractsItems.push({
+      key: 'supplier-evaluations',
+      labelKey: 'nav.supplierEvaluations',
+      to: '/app/supplier-evaluations',
+      icon: ClipboardList,
+      permission: 'supplier_evaluations.view',
+      match: 'prefix',
+    })
+  }
+  if (can('contracts.view')) {
+    suppliersContractsItems.push({
+      key: 'contracts',
+      labelKey: 'nav.contracts',
+      to: '/app/contracts',
+      icon: FileText,
+      permission: 'contracts.view',
+      match: 'prefix',
+    })
+  }
+  pushGroup(groups, {
+    key: 'suppliers-contracts',
+    labelKey: 'nav.suppliersContracts',
+    items: suppliersContractsItems,
+  })
+
+  const inventoryItems: AppNavItem[] = []
+  if (can('warehouses.view')) {
+    inventoryItems.push({
+      key: 'warehouses',
+      labelKey: 'nav.warehouses',
+      to: '/app/warehouses',
+      icon: Warehouse,
+      permission: 'warehouses.view',
+      match: 'prefix',
+    })
+  }
+  if (can('inventory.view')) {
+    inventoryItems.push({
+      key: 'inventory',
+      labelKey: 'nav.inventory',
+      to: '/app/inventory',
+      icon: Package,
+      permission: 'inventory.view',
+      match: 'prefix',
+    })
+  }
+  pushGroup(groups, { key: 'inventory', labelKey: 'nav.inventoryWarehouses', items: inventoryItems })
+
   const assetsItems: AppNavItem[] = []
   if (can('assets.view')) {
     assetsItems.push(
@@ -487,33 +507,48 @@ export function buildTenantNavGroups(can: (permission: string) => boolean): AppN
   }
   pushGroup(groups, { key: 'assets', labelKey: 'nav.assetsCustodies', items: assetsItems })
 
-  const accommodationItems: AppNavItem[] = []
-  if (
-    can('accommodation.view') ||
-    can('accommodation.manage_facilities') ||
-    can('accommodation.manage_season_allocation') ||
-    can('accommodation.draft') ||
-    can('accommodation.confirm') ||
-    can('accommodation.manage_scopes') ||
-    can('accommodation.arrive') ||
-    can('accommodation.check_in') ||
-    can('accommodation.check_out') ||
-    can('accommodation.relocate') ||
-    can('accommodation.cancel_assignment')
-  ) {
-    accommodationItems.push({
-      key: 'accommodation',
-      labelKey: 'nav.accommodation',
-      to: '/app/accommodation',
-      icon: Tent,
+  const governanceItems: AppNavItem[] = []
+  if (can('meetings.view')) {
+    governanceItems.push({
+      key: 'meetings',
+      labelKey: 'nav.meetings',
+      to: '/app/meetings',
+      icon: CalendarDays,
+      permission: 'meetings.view',
       match: 'prefix',
     })
   }
-  pushGroup(groups, {
-    key: 'accommodation',
-    labelKey: 'nav.accommodationGroup',
-    items: accommodationItems,
-  })
+  if (can('decisions.view')) {
+    governanceItems.push({
+      key: 'decisions',
+      labelKey: 'nav.decisions',
+      to: '/app/decisions',
+      icon: Gavel,
+      permission: 'decisions.view',
+      match: 'prefix',
+    })
+  }
+  if (can('tasks.view')) {
+    governanceItems.push({
+      key: 'tasks',
+      labelKey: 'nav.tasks',
+      to: '/app/tasks',
+      icon: ListTodo,
+      permission: 'tasks.view',
+      match: 'prefix',
+    })
+  }
+  if (can('documents.view')) {
+    governanceItems.push({
+      key: 'documents',
+      labelKey: 'nav.documents',
+      to: '/app/documents',
+      icon: Archive,
+      permission: 'documents.view',
+      match: 'prefix',
+    })
+  }
+  pushGroup(groups, { key: 'governance', labelKey: 'nav.governance', items: governanceItems })
 
   return groups
 }

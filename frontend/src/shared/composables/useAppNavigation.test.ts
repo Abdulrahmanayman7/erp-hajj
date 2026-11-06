@@ -4,6 +4,7 @@ import {
   buildTenantNavGroups,
   filterNavGroups,
   isAppNavItemActive,
+  resolveActiveMultiItemGroupKey,
   type AppNavGroup,
   type AppNavItem,
 } from './useAppNavigation'
@@ -31,53 +32,46 @@ const EXPECTED_GROUP_ORDER = [
   'system',
   'hr',
   'seasons-pilgrims',
-  'governance',
-  'inventory',
-  'transport',
-  'assets',
   'accommodation',
+  'transport',
+  'procurement',
+  'suppliers-contracts',
+  'inventory',
+  'assets',
+  'governance',
 ] as const
 
-const EXPECTED_LINK_KEYS = [
-  'dashboard',
-  'users',
-  'roles',
-  'audit',
-  'settings',
-  'organization-structure',
-  'employees',
-  'seasons',
-  'pilgrims',
-  'season-groups',
-  'season-programs',
-  'season-families',
-  'contracts',
-  'suppliers',
-  'supplier-evaluations',
-  'purchase-requests',
-  'rfqs',
-  'purchase-orders',
-  'goods-receipts',
-  'purchase-requests-approval-inbox',
-  'purchase-demand-groups',
-  'purchase-control-reports',
-  'purchase-approval-settings',
-  'meetings',
-  'decisions',
-  'tasks',
-  'documents',
-  'warehouses',
-  'inventory',
-  'transport-vehicles',
-  'transport-drivers',
-  'transport-season-fleet',
-  'transport-points',
-  'transport-movements',
-  'transport-breakdowns',
-  'assets',
-  'my-custodies',
-  'accommodation',
-] as const
+const EXPECTED_GROUP_MEMBERSHIP: Record<(typeof EXPECTED_GROUP_ORDER)[number], readonly string[]> = {
+  home: ['dashboard'],
+  system: ['users', 'roles', 'audit', 'settings'],
+  hr: ['organization-structure', 'employees'],
+  'seasons-pilgrims': ['seasons', 'pilgrims', 'season-groups', 'season-programs', 'season-families'],
+  accommodation: ['accommodation'],
+  transport: [
+    'transport-vehicles',
+    'transport-drivers',
+    'transport-season-fleet',
+    'transport-points',
+    'transport-movements',
+    'transport-breakdowns',
+  ],
+  procurement: [
+    'purchase-requests',
+    'purchase-requests-approval-inbox',
+    'purchase-demand-groups',
+    'rfqs',
+    'purchase-orders',
+    'goods-receipts',
+    'purchase-control-reports',
+    'purchase-approval-settings',
+  ],
+  'suppliers-contracts': ['suppliers', 'supplier-evaluations', 'contracts'],
+  inventory: ['warehouses', 'inventory'],
+  assets: ['assets', 'my-custodies'],
+  governance: ['meetings', 'decisions', 'tasks', 'documents'],
+}
+
+const EXPECTED_LINK_KEYS = EXPECTED_GROUP_ORDER.flatMap((key) => EXPECTED_GROUP_MEMBERSHIP[key])
 
 describe('isAppNavItemActive', () => {
   it('matches exact routes only for exact items', () => {
@@ -90,6 +84,20 @@ describe('isAppNavItemActive', () => {
     expect(isAppNavItemActive('/app/tasks', tasks)).toBe(true)
     expect(isAppNavItemActive('/app/tasks/12', tasks)).toBe(true)
     expect(isAppNavItemActive('/app/meetings', tasks)).toBe(false)
+  })
+
+  it('keeps approval-inbox exact while purchase-requests remains prefix', () => {
+    const groups = buildTenantNavGroups(() => true)
+    const byKey = Object.fromEntries(
+      groups.flatMap((group) => group.items).map((item) => [item.key, item]),
+    )
+    const inbox = byKey['purchase-requests-approval-inbox']!
+    const requests = byKey['purchase-requests']!
+
+    expect(isAppNavItemActive('/app/purchase-requests/approval-inbox', inbox)).toBe(true)
+    expect(isAppNavItemActive('/app/purchase-requests/approval-inbox', requests)).toBe(true)
+    expect(isAppNavItemActive('/app/purchase-requests/99', inbox)).toBe(false)
+    expect(isAppNavItemActive('/app/purchase-requests/99', requests)).toBe(true)
   })
 })
 
@@ -139,9 +147,10 @@ describe('filterNavGroups', () => {
 describe('buildTenantNavGroups', () => {
   const allowAll = (): boolean => true
 
-  it('keeps nine functional groups in the approved order when all permissions are granted', () => {
+  it('keeps eleven functional groups in the approved order when all permissions are granted', () => {
     const groups = buildTenantNavGroups(allowAll)
     expect(groups.map((group) => group.key)).toEqual([...EXPECTED_GROUP_ORDER])
+    expect(groups).toHaveLength(11)
   })
 
   it('exposes exactly 38 sidebar links without duplication', () => {
@@ -149,6 +158,14 @@ describe('buildTenantNavGroups', () => {
     const keys = groups.flatMap((group) => group.items.map((item) => item.key))
     expect(keys).toEqual([...EXPECTED_LINK_KEYS])
     expect(new Set(keys).size).toBe(38)
+  })
+
+  it('keeps exact membership and order inside every approved group', () => {
+    const groups = buildTenantNavGroups(allowAll)
+    for (const group of groups) {
+      const expected = EXPECTED_GROUP_MEMBERSHIP[group.key as (typeof EXPECTED_GROUP_ORDER)[number]]
+      expect(group.items.map((item) => item.key)).toEqual([...expected])
+    }
   })
 
   it('preserves routes for every link', () => {
@@ -234,5 +251,51 @@ describe('buildTenantNavGroups', () => {
     const groups = buildTenantNavGroups(() => false)
     expect(groups.map((group) => group.key)).toEqual(['home'])
     expect(groups[0]?.items.map((item) => item.key)).toEqual(['dashboard'])
+  })
+
+  it('places procurement and suppliers-contracts as separate permission-gated groups', () => {
+    const procurementOnly = buildTenantNavGroups(
+      (permission) => permission === 'purchase_requests.view' || permission === 'rfq.view',
+    )
+    expect(procurementOnly.map((group) => group.key)).toEqual(['home', 'procurement'])
+    expect(procurementOnly[1]?.items.map((item) => item.key)).toEqual([
+      'purchase-requests',
+      'purchase-demand-groups',
+      'rfqs',
+    ])
+
+    const suppliersOnly = buildTenantNavGroups(
+      (permission) => permission === 'suppliers.view' || permission === 'contracts.view',
+    )
+    expect(suppliersOnly.map((group) => group.key)).toEqual(['home', 'suppliers-contracts'])
+    expect(suppliersOnly[1]?.items.map((item) => item.key)).toEqual(['suppliers', 'contracts'])
+  })
+})
+
+describe('resolveActiveMultiItemGroupKey', () => {
+  const groups = buildTenantNavGroups(() => true)
+
+  it('returns null for single-item destinations (home / accommodation)', () => {
+    expect(resolveActiveMultiItemGroupKey(groups, '/app')).toBeNull()
+    expect(resolveActiveMultiItemGroupKey(groups, '/app/accommodation')).toBeNull()
+    expect(resolveActiveMultiItemGroupKey(groups, '/app/accommodation/drafts')).toBeNull()
+  })
+
+  it('auto-selects the multi-item group for deep links', () => {
+    expect(resolveActiveMultiItemGroupKey(groups, '/app/tasks/12')).toBe('governance')
+    expect(resolveActiveMultiItemGroupKey(groups, '/app/rfqs/42')).toBe('procurement')
+    expect(resolveActiveMultiItemGroupKey(groups, '/app/purchase-requests/approval-inbox')).toBe(
+      'procurement',
+    )
+    expect(resolveActiveMultiItemGroupKey(groups, '/app/transport-vehicles')).toBe('transport')
+    expect(resolveActiveMultiItemGroupKey(groups, '/app/suppliers/9')).toBe('suppliers-contracts')
+  })
+
+  it('supports exclusive accordion selection semantics', () => {
+    const openA = resolveActiveMultiItemGroupKey(groups, '/app/users')
+    const openB = resolveActiveMultiItemGroupKey(groups, '/app/meetings')
+    expect(openA).toBe('system')
+    expect(openB).toBe('governance')
+    expect(openA).not.toBe(openB)
   })
 })
