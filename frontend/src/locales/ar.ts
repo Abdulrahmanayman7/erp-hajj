@@ -3480,7 +3480,12 @@ export const ar = {
   "SEASON_TEMPLATE_ARCHIVED": "أرشفة قالب موسم",
   "SEASON_COPY_PREVIEW_CREATED": "إنشاء معاينة نسخ موسم",
   "SEASON_COPY_EXECUTION_SUCCEEDED": "نجاح تنفيذ نسخ موسم",
-  "SEASON_COPY_EXECUTION_FAILED": "فشل تنفيذ نسخ موسم"
+  "SEASON_COPY_EXECUTION_FAILED": "فشل تنفيذ نسخ موسم",
+  "SEASON_REMINDER_RULE_CREATED": "إنشاء قاعدة تذكير موسمي",
+  "SEASON_REMINDER_RULE_UPDATED": "تعديل قاعدة تذكير موسمي",
+  "SEASON_REMINDER_RULE_ACTIVATED": "تفعيل قاعدة تذكير موسمي",
+  "SEASON_REMINDER_RULE_PAUSED": "إيقاف قاعدة تذكير موسمي مؤقتاً",
+  "SEASON_REMINDER_RULE_ARCHIVED": "أرشفة قاعدة تذكير موسمي"
 },
     entities: {
   "accommodation_supervisor_scope": "نطاق الإشراف على الإسكان",

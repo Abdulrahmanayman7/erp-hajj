@@ -32,6 +32,7 @@ final class PermissionCatalog
         'season_pilgrim_groups' => 'مجموعات الحجاج',
         'season_templates' => 'قوالب المواسم',
         'season_copy' => 'نسخ بيانات المواسم',
+        'season_reminders' => 'تذكيرات الموسم',
         'transportation' => 'النقل والأسطول',
         'accommodation' => 'الإسكان والمخيمات',
         'suppliers' => 'الموردون',
@@ -209,6 +210,8 @@ final class PermissionCatalog
             ['name' => 'season_copy.preview', 'display_name' => 'معاينة نسخ الموسم', 'module' => 'season_copy', 'description' => 'إنشاء معاينة إلزامية لنسخ بيانات مرجعية آمنة إلى موسم مسودة'],
             ['name' => 'season_copy.execute', 'display_name' => 'تنفيذ نسخ الموسم', 'module' => 'season_copy', 'description' => 'تنفيذ نسخ بيانات مرجعية آمنة بعد معاينة صالحة'],
             ['name' => 'season_copy.history', 'display_name' => 'سجل نسخ الموسم', 'module' => 'season_copy', 'description' => 'عرض سجل عمليات النسخ ونتائجها'],
+            ['name' => 'season_reminders.view', 'display_name' => 'عرض تذكيرات الموسم', 'module' => 'season_reminders', 'description' => 'عرض قواعد تذكير الموسم وحالتها'],
+            ['name' => 'season_reminders.manage', 'display_name' => 'إدارة تذكيرات الموسم', 'module' => 'season_reminders', 'description' => 'إنشاء قواعد تذكير الموسم وتعديلها وتفعيلها وإيقافها وأرشفتها'],
 
             ['name' => 'transportation.view', 'display_name' => 'عرض النقل', 'module' => 'transportation', 'description' => 'عرض نقاط النقل والمركبات والأسطول الموسمي والرحلات وكشوف الركاب والسجل التشغيلي'],
             ['name' => 'transportation.manage_registry', 'display_name' => 'إدارة سجل النقل', 'module' => 'transportation', 'description' => 'إدارة نقاط النقل والمركبات والسائقين الخارجيين وربط المركبة بأصل أو عقد'],
@@ -505,6 +508,8 @@ final class PermissionCatalog
                     'season_copy.preview',
                     'season_copy.execute',
                     'season_copy.history',
+                    'season_reminders.view',
+                    'season_reminders.manage',
                 ],
             ],
             'department_manager' => [

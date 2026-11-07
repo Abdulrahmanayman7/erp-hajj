@@ -3,6 +3,7 @@
 namespace App\Modules\SeasonalTemplates\Support;
 
 use App\Modules\SeasonalTemplates\Exceptions\SeasonalTemplatesDomainException;
+use App\Modules\SeasonalTemplates\Models\SeasonReminderRule;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Validator;
 use Throwable;
@@ -161,7 +162,7 @@ final class SnapshotNormalizer
                 $fields[$bool] = (bool) $fields[$bool];
             }
         }
-        foreach (['operational_capacity', 'sort_order', 'contract_category_id', 'organization_unit_id'] as $int) {
+        foreach (['operational_capacity', 'sort_order', 'contract_category_id', 'organization_unit_id', 'offset_days'] as $int) {
             if (array_key_exists($int, $fields) && $fields[$int] !== null) {
                 $fields[$int] = (int) $fields[$int];
             }
@@ -174,6 +175,13 @@ final class SnapshotNormalizer
 
         if ($kind === SafeCopyAllowlist::TASK_DEFINITIONS) {
             $fields['priority'] ??= 'medium';
+        }
+
+        if ($kind === SafeCopyAllowlist::SEASON_REMINDER_RULES) {
+            // Recipients are always permission holders (S08-D14); the permission must be allowlisted now.
+            $fields['recipient_mode'] = SeasonReminderRule::RECIPIENT_MODE_PERMISSION_HOLDERS;
+            SeasonReminderRecipientPermissions::assertApproved((string) $fields['recipient_permission']);
+            SeasonReminderRuleGuard::normalizeTrigger($fields);
         }
 
         ksort($fields);
@@ -283,6 +291,17 @@ final class SnapshotNormalizer
                 'start_date' => $date,
                 'due_date' => $date,
                 'organization_unit_id' => ['nullable', 'integer', 'min:1'],
+            ],
+            SafeCopyAllowlist::SEASON_REMINDER_RULES => [
+                'code' => ['required', 'string', 'max:64'],
+                'title' => ['required', 'string', 'max:255'],
+                'body' => ['nullable', 'string', 'max:1000'],
+                'severity' => ['required', 'in:info,warning,critical'],
+                'trigger_mode' => ['required', 'in:absolute_date,offset_from_season_start'],
+                'trigger_on' => $date,
+                'offset_days' => ['nullable', 'integer', 'between:-'.SeasonReminderRuleGuard::MAX_OFFSET_DAYS.','.SeasonReminderRuleGuard::MAX_OFFSET_DAYS],
+                'recipient_mode' => ['nullable', 'in:permission_holders'],
+                'recipient_permission' => ['required', 'string', 'max:64'],
             ],
             default => throw SeasonalTemplatesDomainException::kindDenied($kind),
         };

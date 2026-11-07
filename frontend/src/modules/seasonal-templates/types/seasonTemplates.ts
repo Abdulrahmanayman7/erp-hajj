@@ -51,9 +51,23 @@ export interface ListSeasonTemplatesParams {
   per_page?: number
 }
 
+/** One contract-definition snapshot row (allowlisted fields only; validated again by the server). */
+export interface ContractDefinitionSnapshotRow {
+  code?: string
+  title: string
+  contract_category_id: number
+  counterparty_kind: ContractCounterpartyKind
+  currency?: string
+  start_date: string
+  end_date?: string
+  notes?: string
+}
+
 export interface TemplateItemPayload {
   entity_kind: string
   selection?: { codes: string[] } | null
+  /** Only ever built for `contract_definitions` (rows typed in the editor); other kinds are captured by the server. */
+  snapshot?: { anchor: string; rows: ContractDefinitionSnapshotRow[] }
 }
 
 export interface CreateSeasonTemplatePayload {
@@ -66,6 +80,21 @@ export interface CreateSeasonTemplatePayload {
 
 export type UpdateSeasonTemplatePayload = Partial<CreateSeasonTemplatePayload>
 
+export type ContractCounterpartyKind = 'person' | 'organization' | 'other'
+export const CONTRACT_COUNTERPARTY_KINDS: readonly ContractCounterpartyKind[] = ['organization', 'person', 'other']
+
+/** Editable row of the contract-definitions snapshot editor (all inputs kept as strings/ids until built). */
+export interface ContractDefinitionRowForm {
+  code: string
+  title: string
+  contract_category_id: number | ''
+  counterparty_kind: ContractCounterpartyKind
+  currency: string
+  start_date: string
+  end_date: string
+  notes: string
+}
+
 export interface TemplateFormState {
   name: string
   description: string
@@ -74,4 +103,8 @@ export interface TemplateFormState {
   codes: Record<string, string>
   /** Optional season to capture snapshots from when saving. */
   capture_season_id: number | ''
+  /** Date anchor of the contract-definitions snapshot (dates are shifted relative to it on copy). */
+  contract_anchor: string
+  /** Contract-definitions snapshot rows typed in the editor (empty = no snapshot sent). */
+  contract_rows: ContractDefinitionRowForm[]
 }

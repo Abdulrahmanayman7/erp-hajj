@@ -148,7 +148,7 @@ it('separates view, manage, preview, execute and history permissions', function 
 // ---------------------------------------------------------------- allowlist
 
 it('keeps the safe-copy allowlist deny-by-default with exactly the approved kinds', function (): void {
-    expect(SafeCopyAllowlist::MATRIX_VERSION)->toBe('2026-11-08.1')
+    expect(SafeCopyAllowlist::MATRIX_VERSION)->toBe('2026-11-08.2')
         ->and(SafeCopyAllowlist::kinds())->toBe([
             'season_programs',
             'season_pilgrim_groups',
@@ -159,9 +159,10 @@ it('keeps the safe-copy allowlist deny-by-default with exactly the approved kind
             'season_projects',
             'season_project_phases',
             'task_definitions',
+            'season_reminder_rules',
         ]);
 
-    // X06: reminder rules stay disabled (no schema, no adapter) alongside the other denied kinds.
+    // The legacy reminder_rules alias and notifications stay denied alongside the other denied kinds (D16 approves only season_reminder_rules).
     foreach (['pilgrims', 'season_pilgrims', 'season_pilgrim_group_supervisors', 'operational_risks', 'operational_complaints',
         'inventory_movements', 'accommodation_assignments', 'transport_vehicle_runs', 'transport_external_drivers',
         'audit_logs', 'supplier_contacts', 'employees', '', 'SEASON_PROGRAMS',

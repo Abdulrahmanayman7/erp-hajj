@@ -1,10 +1,10 @@
 # S08 — Implementation Status
 
-> **Status:** `IMPLEMENTED ON FEATURE BRANCH` (full-scope expansion, Option A)  
+> **Status:** `IMPLEMENTED ON FEATURE BRANCH` (D11–D20: R6 + contract editor + Controls A/B/C)  
 > **Last updated:** 2026-11-08  
 > **Branch:** `feature/s08-seasonal-templates`  
-> **Coding authorization:** Owner-granted for implementation (supersedes Part 0 D10 for development); expansion decisions in [OWNER_DECISIONS_EXPANSION.md](OWNER_DECISIONS_EXPANSION.md)  
-> **Owner Accepted / merge / deploy:** **NOT** granted — wait for separate Owner acts
+> **Coding authorization:** Owner-granted (D01–D10 + D11–D20); see [OWNER_DECISIONS_D11_D20.md](OWNER_DECISIONS_D11_D20.md)  
+> **Owner Accepted / merge / push / deploy:** **NOT** granted
 
 ## Status vocabulary
 
@@ -12,60 +12,62 @@
 |---|---|
 | Implemented | Yes (BE + FE + migrations + tests on feature branch) |
 | Merged to develop | **No** |
-| Tested | Yes — Pest `--filter=SeasonalTemplates` 43/43; Vitest `src/modules/seasonal-templates` 57/57; vue-tsc 0 errors |
+| Tested | Yes — see evidence below (SQLite Pest + Vitest). MySQL 8: **deferred / unverified** |
+| Technically validated | Partial (local SQLite + frontend); MySQL FK path of prior `320002` + new `320003` composite FK need MySQL CI |
 | Owner Accepted | **No** |
+| Deployed | **No** |
 
 ## Matrix version
 
-`SafeCopyAllowlist::MATRIX_VERSION = 2026-11-08.1`
+`SafeCopyAllowlist::MATRIX_VERSION = 2026-11-08.2` — **10 APPROVED kinds**
 
-### APPROVED kinds (implemented) — nine
+| Kind | Notes |
+|---|---|
+| `season_programs` … `accommodation_season_facilities` | Unchanged foundation five |
+| `contract_definitions` | Snapshot-only; FE Arabic row editor (D18/D19); placeholder counterparty + Control C |
+| `season_projects` / `season_project_phases` / `task_definitions` | Unchanged X03/X04 |
+| `season_reminder_rules` | **NEW (D11–D16)** — copies as **draft**; scanner delivers later |
 
-| Kind | Fields | Source | Notes |
-|---|---|---|---|
-| `season_programs` | code, name, description, is_active | live / snapshot | Dedup by code |
-| `season_pilgrim_groups` | code, name, notes | live / snapshot | Empty groups only |
-| `transport_entitlements` | program_code, vehicle_class, service_level, notes | live / snapshot | Program by code |
-| `transport_season_vehicles` | plate_number, operational_capacity, service_level, is_active, notes | live / snapshot | Vehicle by plate; **no** staff FKs; missing vehicle → conflict |
-| `accommodation_season_facilities` | facility_code, audience, is_active | live / snapshot | Facility by code; missing → conflict |
-| `contract_definitions` | code, title, contract_category_id, counterparty_kind, notes, currency, start_date, end_date | **snapshot only** | `CreateContract` draft; placeholder counterparty; no value/refs/attachments |
-| `season_projects` | code, title, description | live / snapshot | `CreateSeasonProject` draft; no budget/owner/progress |
-| `season_project_phases` | code, project_code, title, sort_order, starts_on, ends_on | live / snapshot | `CreateSeasonProjectPhase` planned; project must exist in target or copy |
-| `task_definitions` | code, project_code, title, description, notes, priority, start_date, due_date, organization_unit_id | live / snapshot | `CreateTask` draft, linked via project only; no assignee |
+Legacy alias `reminder_rules` and `notifications` rows remain **DENIED**.
 
-All other kinds remain **NOT AUTHORIZED FOR COPYING** (deny-by-default). Full matrix: [SAFE_COPY_ENTITY_MATRIX.md](SAFE_COPY_ENTITY_MATRIX.md).
-
-## Expansion delivered
+## D11–D20 delivery
 
 | Decision | Delivered |
 |---|---|
-| X01 independent snapshots | `season_template_items.snapshot_json`; snapshots supplied or captured from a season (`capture_season_id`); fingerprinted into `content_hash`; `source_season_id` optional for `from_template` when every selected kind has a snapshot (`SEASON_COPY_SOURCE_REQUIRED` otherwise); editing a draft keeps stored snapshots of kept kinds |
-| X02 contract definitions | Snapshot-only kind through `CreateContract` (draft), idempotent via provenance `natural_key` |
-| X03 projects / phases | Through `CreateSeasonProject` / `CreateSeasonProjectPhase` |
-| X04 task definitions | Through `CreateTask` (draft batch, no scheduler) |
-| X05 date remap | `season_start_delta`; before/after in `summary.date_transforms`; `DATE_ANCHOR_MISSING` exclusion; invalid remapped range rejected |
-| X06 reminder rules | **DISABLED — not implemented** (see blockers) |
-
-Additional guards: per-kind module permission (`contracts.create`, `season_projects.create`, `season_projects.manage_phases`, `tasks.create`) on top of `season_copy.execute`; conflict `TARGET_LOCKED` when a target row left its draft state.
+| D11 ownership | Rules in SeasonalTemplates; delivery via Notifications |
+| D12 model/lifecycle | `season_reminder_rules`; draft/active/paused/archived; no fire ledger |
+| D13 triggers | `absolute_date` + `offset_from_season_start`; tenant TZ; date-only |
+| D14 recipients | `permission_holders` + allowlisted view permissions only |
+| D15 scanner | `NotificationType::SeasonReminderDue` + `notifications:scan-season-reminders` daily |
+| D16 safe-copy | Kind + adapter; force draft; MATRIX `2026-11-08.2` |
+| D17 counterparty | Placeholder `من القالب`; `TransitionContract` blocks draft→in_review |
+| D18–D19 editor | `ContractDefinitionRowsEditor` + `items[].snapshot` |
+| D20 RBAC | `season_reminders.view` / `season_reminders.manage` |
+| Control A | Scanner requires tenant active + season **active** + rule active |
+| Control B | Dedupe on stable `rule.id` + recipient + tenant-local date (no ledger) |
+| Control C | Placeholder blocks binding transitions; cancel still allowed |
 
 ## Migrations
 
 - `2026_11_07_320001_create_seasonal_templates_tables.php`
-- `2026_11_08_320002_s08_expand_templates_snapshots_and_optional_source.php` — `snapshot_json`, provenance `natural_key`, nullable `source_season_id` (composite FKs recreated on MySQL/MariaDB)
+- `2026_11_08_320002_s08_expand_templates_snapshots_and_optional_source.php`
+- `2026_11_08_320003_create_season_reminder_rules_table.php` — composite FK `(tenant_id, season_id)` → `seasons(tenant_id, id)`
 
-## Known limitations
+## Test evidence (local)
 
-1. **Reminder rules (R6 / X06) are DISABLED**: no `reminder_rules` schema exists and the notifications CMS is a module non-goal. An Owner-approved schema is required before any adapter.
-2. Contract definitions cannot be captured from live contracts (snapshot-only by decision); the UI offers no row editor for them, so such templates are authored through the API. The template form therefore hides the kind on create and keeps it selectable on edit so a stored snapshot is preserved.
-3. Shared masters never auto-created.
-4. MySQL-specific suite and the MySQL FK recreate path of migration `320002` were not run in this delivery (SQLite Pest used) — verify on MySQL CI before merge.
-5. No browser UAT pack yet.
-6. Role labels “Tenant Administrator” / “Operations Manager” mapped as: `general_manager` gets all five verbs; `supervisor` gets `season_templates.view` only; no new `operations_manager` template code added.
+| Suite | Result |
+|---|---|
+| Pest `--filter=SeasonalTemplates` | **85 passed** (1220 assertions) — templates + expansion + reminder API/copy + scanner |
+| Pest `ContractTest` | **18 passed** (incl. C17/C18 Control C) |
+| Pest SeasonProjects (filter) | **92 passed** (2 skipped MySQL dialect) |
+| Vitest `src/modules/seasonal-templates` | **60 passed** |
+| Vitest `useAppNavigation` | **18 passed** |
+| vue-tsc `--noEmit` | 0 errors |
+| MySQL 8 | **Not run — deferred** |
 
 ## DoD for Owner acceptance (remaining)
 
 - [ ] Owner review of feature branch
-- [ ] MySQL CI / UAT (migration `320002`)
-- [ ] Owner decision on reminder-rule schema (X06) if wanted
+- [ ] MySQL CI for migrations `320002` + `320003`
 - [ ] Explicit Owner acceptance document
 - [ ] Separate merge + deploy authorizations

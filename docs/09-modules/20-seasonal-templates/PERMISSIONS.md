@@ -1,9 +1,9 @@
 # S08 — Permissions Design
 
-> **Status:** `PROPOSED` · Not seeded in `PermissionCatalog` until coding authorization  
-> Binding matrix: [OWNER_DECISIONS.md](OWNER_DECISIONS.md) S08-D06
+> **Status:** `IMPLEMENTED` in `PermissionCatalog` on feature branch (not Owner Accepted / merged)  
+> Binding: [OWNER_DECISIONS.md](OWNER_DECISIONS.md) S08-D06 + [OWNER_DECISIONS_D11_D20.md](OWNER_DECISIONS_D11_D20.md) S08-D20
 
-## 1. Permission catalog entries (proposed)
+## 1. Permission catalog entries
 
 | name | display_name (AR) | module | description |
 |---|---|---|---|
@@ -12,8 +12,11 @@
 | `season_copy.preview` | معاينة النسخ الآمن | `season_copy` | إنشاء وقراءة معاينات النسخ |
 | `season_copy.execute` | تنفيذ النسخ الآمن | `season_copy` | تنفيذ النسخ بعد معاينة سارية |
 | `season_copy.history` | سجل عمليات النسخ | `season_copy` | عرض سجل محاولات النسخ |
+| `season_reminders.view` | عرض تذكيرات الموسم | `season_reminders` | عرض قواعد تذكير الموسم (D20) |
+| `season_reminders.manage` | إدارة تذكيرات الموسم | `season_reminders` | إنشاء/تعديل/تفعيل/إيقاف/أرشفة القواعد (D20) |
 
-All backend-enforced via Policies/Gates. Deny by default. No persona bypass (including Tenant Owner).
+All backend-enforced via Policies/Gates. Deny by default. No persona bypass (including Tenant Owner).  
+Executing `season_reminder_rules` copy also requires `season_reminders.manage` (plus `season_copy.execute`). Contract copy still requires `contracts.create`.
 
 ## 2. Owner role matrix → catalog mapping
 

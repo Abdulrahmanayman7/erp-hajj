@@ -4,6 +4,7 @@ use App\Core\Tenancy\Models\Tenant;
 use App\Modules\Audit\Models\AuditLog;
 use App\Modules\Contracts\Models\Contract;
 use App\Modules\Contracts\Models\ContractCategory;
+use App\Modules\Contracts\Support\ContractCounterparty;
 use App\Modules\SeasonalTemplates\Enums\PreviewStatus;
 use App\Modules\SeasonalTemplates\Models\SeasonCopyPreview;
 use App\Modules\SeasonalTemplates\Models\SeasonCopyRowProvenance;
@@ -22,9 +23,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Testing\TestResponse;
 
 /**
- * S08 expansion (MATRIX 2026-11-08.1): independent templates (snapshots), contract
+ * S08 expansion (MATRIX 2026-11-08.2): independent templates (snapshots), contract
  * definitions, season projects + phases, task definitions and date remapping.
- * Reminder rules (X06) stay disabled.
+ * Reminder rules are covered by SeasonReminderRulesCopyTest (D16); only the legacy reminder_rules alias and notifications stay denied here.
  */
 
 /**
@@ -137,7 +138,7 @@ it('copies from a snapshot-complete template without a live source season', func
         ->assertCreated()
         ->assertJsonPath('data.source_season_id', null)
         ->assertJsonPath('data.counts.add', 2)
-        ->assertJsonPath('data.matrix_version', '2026-11-08.1')
+        ->assertJsonPath('data.matrix_version', '2026-11-08.2')
         ->json('data');
 
     stxExecute($preview)
@@ -657,7 +658,7 @@ it('rejects a snapshot row whose end date precedes its start date at preview tim
 
 // ---------------------------------------------------------------- X06 + security
 
-it('keeps reminder rules disabled everywhere', function (): void {
+it('keeps the legacy reminder_rules alias and notifications denied everywhere', function (): void {
     actingAsTenantOwner();
     $w = stWorld();
 
@@ -742,4 +743,25 @@ it('only accepts a draft target season for snapshot executions', function (): vo
 
     // A non-draft target is refused at preview time too.
     stxPreview($template['id'], $w['source'])->assertStatus(422)->assertJsonPath('code', 'SEASON_COPY_TARGET_NOT_DRAFT');
+});
+
+it('blocks a copied contract stub from leaving draft until a real counterparty is entered (Control C / D17)', function (): void {
+    actingAsTenantOwner();
+    $w = stWorld();
+    $target = stxShiftedTarget($w['tenant']);
+    $category = stxCategory($w['tenant']);
+
+    $template = stxTemplate([['entity_kind' => 'contract_definitions', 'snapshot' => ['anchor' => '2027-05-01', 'rows' => [[
+        'code' => 'CTR-A', 'title' => 'عقد قالب', 'contract_category_id' => $category->id, 'start_date' => '2027-05-10',
+    ]]]]]);
+    stxExecute(stxPreview($template['id'], $target)->assertCreated()->json('data'))->assertCreated();
+
+    $contract = withTenant($w['tenant'], fn (): Contract => Contract::query()->sole());
+    expect($contract->counterparty_name)->toBe(ContractCounterparty::TEMPLATE_PLACEHOLDER);
+
+    spaPostJson('/api/v1/contracts/'.$contract->id.'/submit-review')
+        ->assertStatus(422)->assertJsonPath('code', 'CONTRACT_COUNTERPARTY_INCOMPLETE');
+
+    spaPatchJson('/api/v1/contracts/'.$contract->id, ['counterparty_name' => 'شركة حقيقية'])->assertOk();
+    spaPostJson('/api/v1/contracts/'.$contract->id.'/submit-review')->assertOk()->assertJsonPath('data.status', 'in_review');
 });

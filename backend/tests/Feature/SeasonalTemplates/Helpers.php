@@ -9,12 +9,15 @@ use App\Modules\Accommodation\Models\AccommodationSeasonFacility;
 use App\Modules\Authorization\Models\Permission;
 use App\Modules\Authorization\Models\Role;
 use App\Modules\Employees\Models\Employee;
+use App\Modules\SeasonalTemplates\Enums\SeasonReminderRuleStatus;
+use App\Modules\SeasonalTemplates\Models\SeasonReminderRule;
 use App\Modules\SeasonPilgrims\Models\Season;
 use App\Modules\SeasonPilgrims\Models\SeasonPilgrimGroup;
 use App\Modules\SeasonPilgrims\Models\SeasonProgram;
 use App\Modules\Transportation\Models\TransportEntitlement;
 use App\Modules\Transportation\Models\TransportSeasonVehicle;
 use App\Modules\Transportation\Models\TransportVehicle;
+use Illuminate\Testing\TestResponse;
 use Laravel\Sanctum\Sanctum;
 
 /**
@@ -158,4 +161,63 @@ function stAllApprovedKinds(): array
         'transport_season_vehicles',
         'accommodation_season_facilities',
     ];
+}
+
+// ---------------------------------------------------------------- reminder rules (D11-D16)
+
+/**
+ * @param  array<string, mixed>  $over
+ * @return array<string, mixed>
+ */
+function srPayload(array $over = []): array
+{
+    return array_merge([
+        'code' => 'REM-1',
+        'title' => 'تذكير بتجهيز المخيمات',
+        'body' => 'يرجى مراجعة جاهزية المخيمات.',
+        'severity' => 'warning',
+        'trigger_mode' => 'absolute_date',
+        'trigger_on' => '2027-04-20',
+        'recipient_permission' => 'seasons.view',
+    ], $over);
+}
+
+/**
+ * @param  array<string, mixed>  $over
+ */
+function srCreate(Season $season, array $over = []): TestResponse
+{
+    return spaPostJson('/api/v1/seasons/'.$season->id.'/reminder-rules', srPayload($over));
+}
+
+function srSeason(Tenant $tenant, string $state = 'draft'): Season
+{
+    return withTenant($tenant, fn (): Season => match ($state) {
+        'active' => Season::factory()->active()->create(),
+        'closed' => Season::factory()->closed()->create(),
+        default => Season::factory()->create(),
+    });
+}
+
+/**
+ * @param  array<string, mixed>  $over
+ */
+function srRule(Tenant $tenant, Season $season, array $over = [], ?SeasonReminderRuleStatus $status = null): SeasonReminderRule
+{
+    return withTenant($tenant, function () use ($season, $over, $status): SeasonReminderRule {
+        $factory = SeasonReminderRule::factory();
+        if ($status !== null) {
+            $factory = $factory->status($status);
+        }
+
+        return $factory->create(array_merge(['season_id' => $season->id], $over));
+    });
+}
+
+/**
+ * @return list<string>
+ */
+function srPermissions(string ...$extra): array
+{
+    return array_values(array_unique(array_merge(['season_reminders.view', 'season_reminders.manage'], $extra)));
 }

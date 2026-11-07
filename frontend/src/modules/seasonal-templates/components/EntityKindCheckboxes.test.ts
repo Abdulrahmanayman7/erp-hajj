@@ -37,12 +37,18 @@ afterEach(() => {
 })
 
 describe('EntityKindCheckboxes', () => {
-  it('renders only the nine approved kinds (reminder rules are never offered)', async () => {
+  it('renders exactly the ten approved kinds (legacy reminder_rules alias is never offered)', async () => {
     const { root: el } = mount()
     await nextTick()
     const boxes = el.querySelectorAll('input[type="checkbox"]')
-    expect(boxes).toHaveLength(9)
-    for (const kind of ['contract_definitions', 'season_projects', 'season_project_phases', 'task_definitions']) {
+    expect(boxes).toHaveLength(10)
+    for (const kind of [
+      'contract_definitions',
+      'season_projects',
+      'season_project_phases',
+      'task_definitions',
+      'season_reminder_rules',
+    ]) {
       expect(el.querySelector(`[data-testid="entity-kind-${kind}"]`)).not.toBeNull()
     }
     expect(el.querySelector('[data-testid="entity-kind-reminder_rules"]')).toBeNull()

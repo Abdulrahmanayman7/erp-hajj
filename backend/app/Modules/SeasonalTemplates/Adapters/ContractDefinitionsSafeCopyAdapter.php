@@ -8,6 +8,7 @@ use App\Modules\Contracts\Actions\UpdateContract;
 use App\Modules\Contracts\Enums\ContractStatus;
 use App\Modules\Contracts\Models\Contract;
 use App\Modules\Contracts\Models\ContractCategory;
+use App\Modules\Contracts\Support\ContractCounterparty;
 use App\Modules\SeasonalTemplates\Support\SafeCopyAllowlist;
 use App\Modules\SeasonalTemplates\Support\SafeCopyContext;
 use App\Modules\SeasonalTemplates\Support\SafeCopyProvenanceStore;
@@ -20,14 +21,12 @@ use App\Modules\SeasonPilgrims\Models\Season;
  * Contracts are not season-scoped, so there is no live source: rows come from a
  * template snapshot and target rows are the contracts a previous copy created for
  * the target season (found through provenance). Every contract is created through
- * {@see CreateContract} — always `draft`, with a placeholder counterparty name.
+ * {@see CreateContract} — always `draft`, with the placeholder counterparty ({@see ContractCounterparty::TEMPLATE_PLACEHOLDER}), which blocks any transition out of draft (except cancel) until a real name is entered (S08-D17).
  * Counterparty name, value, employee / supplier / organization unit, status,
  * numbers, signatures and attachments are never copied.
  */
 final class ContractDefinitionsSafeCopyAdapter extends AbstractSafeCopyAdapter
 {
-    public const COUNTERPARTY_PLACEHOLDER = 'من القالب';
-
     public function __construct(
         SafeCopyProvenanceStore $provenance,
         private readonly CreateContract $create,
@@ -116,7 +115,7 @@ final class ContractDefinitionsSafeCopyAdapter extends AbstractSafeCopyAdapter
         $contract = $this->create->execute($actor, [
             'title' => $fields['title'],
             'contract_category_id' => $fields['contract_category_id'],
-            'counterparty_name' => self::COUNTERPARTY_PLACEHOLDER,
+            'counterparty_name' => ContractCounterparty::TEMPLATE_PLACEHOLDER,
             'counterparty_kind' => $fields['counterparty_kind'],
             'currency' => $fields['currency'],
             'notes' => $fields['notes'],

@@ -36,6 +36,7 @@ const TYPE_LABELS_AR: Record<string, string> = {
   PURCHASE_ORDER_ISSUED: 'صدر أمر شراء',
   GOODS_RECEIPT_POSTED: 'رُحّل سند استلام',
   PURCHASE_ORDER_CLOSED: 'أُقفل أمر شراء',
+  SEASON_REMINDER_DUE: 'تذكير موسمي',
 }
 
 const SEVERITY_LABELS_AR: Record<NotificationSeverity, string> = {

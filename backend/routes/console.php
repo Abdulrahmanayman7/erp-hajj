@@ -14,6 +14,7 @@ Schedule::command('notifications:scan-contracts')->daily();
 Schedule::command('notifications:scan-tasks')->daily();
 Schedule::command('notifications:scan-custodies')->daily();
 Schedule::command('notifications:scan-low-stock')->daily();
+Schedule::command('notifications:scan-season-reminders')->daily();
 Schedule::command('notifications:scan-meetings-soon')->everyFifteenMinutes();
 
 Schedule::command('purchase-requests:reconcile-routing')->everyFiveMinutes();

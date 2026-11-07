@@ -8,6 +8,7 @@ use App\Modules\SeasonalTemplates\Adapters\SeasonPilgrimGroupsSafeCopyAdapter;
 use App\Modules\SeasonalTemplates\Adapters\SeasonProgramsSafeCopyAdapter;
 use App\Modules\SeasonalTemplates\Adapters\SeasonProjectPhasesSafeCopyAdapter;
 use App\Modules\SeasonalTemplates\Adapters\SeasonProjectsSafeCopyAdapter;
+use App\Modules\SeasonalTemplates\Adapters\SeasonReminderRulesSafeCopyAdapter;
 use App\Modules\SeasonalTemplates\Adapters\TaskDefinitionsSafeCopyAdapter;
 use App\Modules\SeasonalTemplates\Adapters\TransportEntitlementsSafeCopyAdapter;
 use App\Modules\SeasonalTemplates\Adapters\TransportSeasonVehiclesSafeCopyAdapter;
@@ -34,8 +35,9 @@ final class SafeCopyAdapterRegistry
         SeasonProjectsSafeCopyAdapter $projects,
         SeasonProjectPhasesSafeCopyAdapter $phases,
         TaskDefinitionsSafeCopyAdapter $tasks,
+        SeasonReminderRulesSafeCopyAdapter $reminders,
     ) {
-        foreach ([$programs, $groups, $entitlements, $vehicles, $facilities, $contracts, $projects, $phases, $tasks] as $adapter) {
+        foreach ([$programs, $groups, $entitlements, $vehicles, $facilities, $contracts, $projects, $phases, $tasks, $reminders] as $adapter) {
             $this->adapters[$adapter->entityKind()] = $adapter;
         }
     }

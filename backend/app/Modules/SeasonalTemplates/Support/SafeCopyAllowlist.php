@@ -16,7 +16,7 @@ use App\Modules\SeasonalTemplates\Exceptions\SeasonalTemplatesDomainException;
  */
 final class SafeCopyAllowlist
 {
-    public const MATRIX_VERSION = '2026-11-08.1';
+    public const MATRIX_VERSION = '2026-11-08.2';
 
     public const SEASON_PROGRAMS = 'season_programs';
 
@@ -36,6 +36,9 @@ final class SafeCopyAllowlist
     public const SEASON_PROJECT_PHASES = 'season_project_phases';
 
     public const TASK_DEFINITIONS = 'task_definitions';
+
+    /** S08-D16: tenant/season scoped reminder configuration; copies always land as draft. */
+    public const SEASON_REMINDER_RULES = 'season_reminder_rules';
 
     /**
      * Approved kinds in dependency order (programs before their entitlements).
@@ -86,6 +89,11 @@ final class SafeCopyAllowlist
             'key' => 'code',
             'fields' => ['code', 'project_code', 'title', 'description', 'notes', 'priority', 'start_date', 'due_date', 'organization_unit_id'],
             'dates' => ['start_date', 'due_date'],
+        ],
+        self::SEASON_REMINDER_RULES => [
+            'key' => 'code',
+            'fields' => ['code', 'title', 'body', 'severity', 'trigger_mode', 'trigger_on', 'offset_days', 'recipient_mode', 'recipient_permission'],
+            'dates' => ['trigger_on'],
         ],
     ];
 
@@ -145,6 +153,7 @@ final class SafeCopyAllowlist
             self::SEASON_PROJECTS => 'season_projects.create',
             self::SEASON_PROJECT_PHASES => 'season_projects.manage_phases',
             self::TASK_DEFINITIONS => 'tasks.create',
+            self::SEASON_REMINDER_RULES => 'season_reminders.manage',
             default => null,
         };
     }

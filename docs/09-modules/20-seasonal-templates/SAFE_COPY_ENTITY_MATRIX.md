@@ -1,6 +1,6 @@
 # S08 — Safe Copy Entity Matrix (Proposal)
 
-> **Status:** `IMPLEMENTED — MATRIX_VERSION 2026-11-08.1` (nine APPROVED kinds; expansion X01–X05 per [OWNER_DECISIONS_EXPANSION.md](OWNER_DECISIONS_EXPANSION.md); X06 reminder rules **DISABLED**)  
+> **Status:** `IMPLEMENTED — MATRIX_VERSION 2026-11-08.2` (ten APPROVED kinds; D11–D20 per [OWNER_DECISIONS_D11_D20.md](OWNER_DECISIONS_D11_D20.md); X01–X05 remain; X06 superseded by D11–D16)  
 > **Last updated:** 2026-11-08  
 > **Policy:** Deny by default (S08-D01). Unlisted / unapproved = **NOT AUTHORIZED FOR COPYING**.  
 > **Code source of truth:** `backend/app/Modules/SeasonalTemplates/Support/SafeCopyAllowlist.php`  
@@ -56,8 +56,9 @@ Conflict behavior defaults (D04): `skip_manual` \| `overwrite_if_system` \| `fai
 | Audit | `audit_logs` | Immutable audit (D01) | **DENY** |
 | S06 | `season_projects` / `season_project_phases` allowlisted fields only (see B7) | Budgets, owners, progress, PO links, expenditures remain forbidden | **APPROVED (fields only)** — superseded by X03 |
 | S06 | `season_project_budgets`, PO links, expenditures, project owner/budget/progress fields | Financial / operational | **DENY** |
-| Notifications | `notifications` rows | Delivered messages | **DENY** |
-| Notifications | `reminder_rules` (or equivalent) | No schema exists (X06) | **DISABLED** |
+| Notifications | `notifications` rows / read state | Delivered messages | **DENY** |
+| SeasonalTemplates | `season_reminder_rules` allowlisted fields only | See B8; force target **draft**; no employee/user recipient ids | **APPROVED** (D11–D16) |
+| Notifications | legacy alias `reminder_rules` | Superseded by `season_reminder_rules` | **DENY** (alias) |
 | Platform | `geo_places` | Platform catalog — never tenant-copied | **N/A-SHARED** |
 
 **Field rule:** Any `*_at` execution timestamp (`started_at`, `completed_at`, `checked_in_at`, `closed_at`, assessment times, etc.) is **never transferred**. Created/updated bookkeeping on *new* target rows is set by the target system clock at insert time — not copied from source.
@@ -129,9 +130,17 @@ All four kinds are created through the owning domain Actions (numbering, audit, 
 | `season_project_phases` | Live season or snapshot | `code` + `project_code` | `title`, `sort_order`, `starts_on`, `ends_on` (remapped) | `CreateSeasonProjectPhase` status **planned**; never progress or task links | Project present in the target or in the same copy, else `MISSING_DEPENDENCY` |
 | `task_definitions` | Live season (tasks with a project) or snapshot | `code` + `project_code` | `title`, `description`, `notes`, `priority`, `start_date`, `due_date` (remapped), `organization_unit_id` (same tenant, active; otherwise omitted) | `CreateTask` **draft**, linked only through `project_id`; never assignee, decision link, completion, delay or status history; no recurrence/scheduler | Project present in the target or in the same copy (and not closed/cancelled), else `MISSING_DEPENDENCY` |
 
-Copy order is dependency order (projects → phases → tasks). Reminder rules are **not** a kind (X06).
+Copy order is dependency order (projects → phases → tasks → reminder rules).
 
 **Snapshots (X01).** A template item may carry `snapshot_json = {anchor, rows}`. Rows are validated against the field allowlist at save time (unknown/forbidden fields are rejected, not trimmed). Snapshots can be supplied explicitly or captured from a season through the same adapters (`capture_season_id`). Editing a draft template keeps the stored snapshot of any kept kind unless it is re-captured; removing the kind removes it. The snapshot is part of the preview `content_hash`, so tampering invalidates the preview (409). `source_season_id` may be omitted in `from_template` only when every selected kind has a snapshot (otherwise `SEASON_COPY_SOURCE_REQUIRED`); `contract_definitions` always needs snapshot rows (`SEASON_COPY_SNAPSHOT_REQUIRED` / approval refused without them).
+
+### B8. Season reminder rules (MATRIX `2026-11-08.2`, S08-D11…D16)
+
+| Kind | Source | Copy key | Allowlisted fields | Forced / denied | Dependencies |
+|---|---|---|---|---|---|
+| `season_reminder_rules` | Live season or snapshot | `code` | `title`, `body`, `severity`, `trigger_mode`, `trigger_on` (remapped when absolute), `offset_days`, `recipient_mode`, `recipient_permission` | Always **draft** on target; `recipient_mode` = `permission_holders` only; never status, actor ids, employee/user lists, notification rows | `recipient_permission` must be on the approved view allowlist; season must exist |
+
+Delivery is **not** part of safe-copy: `notifications:scan-season-reminders` fires only for **active** rules on **active** seasons (Control A). Dedupe uses stable `rule.id` + recipient + tenant-local date (Control B; no fire ledger).
 
 ---
 
@@ -181,5 +190,5 @@ Default mapping algorithm for Part 0 proposal: **season-start delta (DT-01)**. A
 - [x] Date strategy: `season_start_delta` remaps the date fields of the expansion kinds (X05).
 - [x] Conflict defaults: skip / overwrite (overwrite only DUPLICATE_KEY + MANUAL_MODIFIED); `TARGET_LOCKED` is skip-only.
 - [x] Expansion (2026-11-08.1): independent snapshots (X01), contract definitions (X02), projects + phases (X03), task definitions (X04), date remap (X05).
-- [ ] Reminder rules (X06) remain **DISABLED** until the Owner approves a `reminder_rules` schema.
+- [x] Reminder rules implemented as `season_reminder_rules` (D11–D16); `notifications` rows and legacy `reminder_rules` alias remain **DENIED**.
 - [ ] Expanding any other DISABLED kind requires new Owner decision + MATRIX_VERSION bump.

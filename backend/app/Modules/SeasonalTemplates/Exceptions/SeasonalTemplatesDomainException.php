@@ -112,6 +112,41 @@ class SeasonalTemplatesDomainException extends RuntimeException
         );
     }
 
+    public static function reminderRuleInvalidTransition(): self
+    {
+        return new self('انتقال حالة قاعدة التذكير غير مسموح.', 'SEASON_REMINDER_RULE_INVALID_TRANSITION', 422);
+    }
+
+    public static function reminderRuleNotEditable(): self
+    {
+        return new self('لا يمكن تعديل قاعدة التذكير إلا وهي مسودة أو موقوفة مؤقتاً.', 'SEASON_REMINDER_RULE_NOT_EDITABLE', 422);
+    }
+
+    public static function reminderRuleCodeTaken(): self
+    {
+        return new self('رمز قاعدة التذكير مستخدم مسبقاً في هذا الموسم.', 'SEASON_REMINDER_RULE_CODE_TAKEN', 422);
+    }
+
+    public static function reminderRuleCodeImmutable(): self
+    {
+        return new self('رمز قاعدة التذكير غير قابل للتعديل بعد الإنشاء.', 'SEASON_REMINDER_RULE_CODE_IMMUTABLE', 422);
+    }
+
+    public static function reminderRecipientPermissionDenied(): self
+    {
+        return new self('صلاحية المستلمين غير مسموح بها في قواعد التذكير.', 'SEASON_REMINDER_RECIPIENT_PERMISSION_DENIED', 422);
+    }
+
+    public static function reminderTriggerInvalid(string $message = 'إعدادات موعد التذكير غير صالحة.'): self
+    {
+        return new self($message, 'SEASON_REMINDER_TRIGGER_INVALID', 422);
+    }
+
+    public static function reminderSeasonClosed(): self
+    {
+        return new self('لا يمكن إنشاء قاعدة تذكير أو تعديلها أو تفعيلها لموسم مغلق.', 'SEASON_REMINDER_SEASON_CLOSED', 422);
+    }
+
     public static function numberUnavailable(): self
     {
         return new self('تعذر إصدار الرقم المرجعي. أعد المحاولة.', 'SEASON_NUMBER_UNAVAILABLE', 409);

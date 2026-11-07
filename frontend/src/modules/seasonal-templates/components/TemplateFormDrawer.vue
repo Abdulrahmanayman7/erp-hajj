@@ -5,9 +5,10 @@ import { Loader2, X } from 'lucide-vue-next'
 
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 
-import { APPROVED_ENTITY_KINDS, SNAPSHOT_ONLY_KINDS } from '../types/seasonCopy'
-import type { TemplateFormState } from '../types/seasonTemplates'
-import { filterApprovedEntityKinds, snapshotOnlySelected } from '../validation/seasonTemplateValidation'
+import { APPROVED_ENTITY_KINDS } from '../types/seasonCopy'
+import type { ContractDefinitionRowForm, TemplateFormState } from '../types/seasonTemplates'
+import { filterApprovedEntityKinds } from '../validation/seasonTemplateValidation'
+import ContractDefinitionRowsEditor from './ContractDefinitionRowsEditor.vue'
 import EntityKindCheckboxes from './EntityKindCheckboxes.vue'
 
 const props = defineProps<{
@@ -39,14 +40,10 @@ const captureOptions = computed<AppSelectOption[]>(() => [
   ...(props.captureSeasons ?? []),
 ])
 const showCapture = computed(() => (props.captureSeasons?.length ?? 0) > 0)
-const snapshotOnlyKinds = computed(() => snapshotOnlySelected(selectedKinds.value))
-/**
- * Snapshot-only kinds cannot be captured from a season, so a brand-new template cannot offer them.
- * While editing they stay selectable so an existing stored snapshot is kept (server-side).
- */
-const availableKinds = computed<readonly string[]>(() =>
-  props.editing ? APPROVED_ENTITY_KINDS : APPROVED_ENTITY_KINDS.filter((kind) => !SNAPSHOT_ONLY_KINDS.includes(kind)),
-)
+const hasContractKind = computed(() => selectedKinds.value.includes('contract_definitions'))
+const hasReminderKind = computed(() => selectedKinds.value.includes('season_reminder_rules'))
+/** All approved kinds are selectable; contract definitions are entered as snapshot rows in the editor below. */
+const availableKinds: readonly string[] = APPROVED_ENTITY_KINDS
 
 function onCaptureSeason(value: string | number | null): void {
   patch({ capture_season_id: value === '' || value == null ? '' : Number(value) })
@@ -63,6 +60,14 @@ function fieldMessage(key: string): string {
 
 function onKinds(kinds: string[]): void {
   patch({ entity_kinds: kinds })
+}
+
+function onContractRows(rows: ContractDefinitionRowForm[]): void {
+  patch({ contract_rows: rows })
+}
+
+function onContractAnchor(anchor: string): void {
+  patch({ contract_anchor: anchor })
 }
 
 function onCodes(kind: string, value: string): void {
@@ -185,11 +190,33 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
             </div>
 
             <p
-              v-if="snapshotOnlyKinds.length"
+              v-if="hasContractKind"
               class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-start text-xs text-amber-900"
               data-testid="template-snapshot-only-hint"
             >
               {{ t('seasonalTemplates.form.snapshotOnlyHint') }}
+            </p>
+
+            <ContractDefinitionRowsEditor
+              v-if="hasContractKind"
+              :rows="form.contract_rows"
+              :anchor="form.contract_anchor"
+              :disabled="submitting"
+              :editing="editing"
+              :show-errors="!!fieldErrors.contract_rows"
+              @update:rows="onContractRows"
+              @update:anchor="onContractAnchor"
+            />
+            <p v-if="fieldMessage('contract_rows')" class="text-start text-xs text-red-600" role="alert">
+              {{ fieldMessage('contract_rows') }}
+            </p>
+
+            <p
+              v-if="hasReminderKind"
+              class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-start text-xs text-amber-900"
+              data-testid="template-reminder-hint"
+            >
+              {{ t('seasonalTemplates.form.reminderRulesHint') }}
             </p>
 
             <div v-if="selectedKinds.length" class="space-y-3 text-start">

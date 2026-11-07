@@ -56,6 +56,6 @@ Recurrence engine / cron: **out of this slice** — template produces a **batch 
 
 ## X06 — Reminder rules (R6)
 
-**DISABLED.** No reminder-rule table exists; Notifications CMS is a module non-goal.  
-Owner must approve a new `reminder_rules` (or equivalent) schema before any adapter.  
-Copying `notifications` rows remains **DENY**.
+> **Superseded (2026-11-08):** Owner approved S08-D11…D16 — implemented as `season_reminder_rules` under MATRIX `2026-11-08.2`.  
+> See [OWNER_DECISIONS_D11_D20.md](OWNER_DECISIONS_D11_D20.md).  
+> Copying `notifications` rows remains **DENY**. Legacy kind alias `reminder_rules` remains **DENIED**.

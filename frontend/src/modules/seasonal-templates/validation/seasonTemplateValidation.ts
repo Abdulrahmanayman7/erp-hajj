@@ -10,6 +10,7 @@ import type {
   TemplateItemPayload,
   TemplateStatus,
 } from '../types/seasonTemplates'
+import { buildContractSnapshotRows, hasContractRows, validateContractRows } from './contractDefinitionRows'
 
 type Can = (permission: string) => boolean
 
@@ -28,7 +29,15 @@ export function deniedEntityKinds(kinds: readonly string[]): string[] {
 }
 
 export function emptyTemplateForm(): TemplateFormState {
-  return { name: '', description: '', entity_kinds: [], codes: {}, capture_season_id: '' }
+  return {
+    name: '',
+    description: '',
+    entity_kinds: [],
+    codes: {},
+    capture_season_id: '',
+    contract_anchor: '',
+    contract_rows: [],
+  }
 }
 
 export function templateToForm(template: SeasonTemplate): TemplateFormState {
@@ -42,6 +51,9 @@ export function templateToForm(template: SeasonTemplate): TemplateFormState {
     entity_kinds: filterApprovedEntityKinds(template.items.map((item) => item.entity_kind)),
     codes,
     capture_season_id: '',
+    // Stored snapshot rows are never returned to the browser; leaving the editor empty keeps them (server-side).
+    contract_anchor: '',
+    contract_rows: [],
   }
 }
 
@@ -79,16 +91,22 @@ export function validateTemplateForm(form: TemplateFormState): Record<string, st
   if (form.entity_kinds.length === 0) errors.entity_kinds = 'required'
   else if (deniedEntityKinds(form.entity_kinds).length > 0) errors.entity_kinds = 'denied'
   else if (form.entity_kinds.length > 20) errors.entity_kinds = 'too_many'
+  if (form.entity_kinds.includes('contract_definitions') && validateContractRows(form.contract_rows, form.contract_anchor).hasErrors) {
+    errors.contract_rows = 'contract_rows_invalid'
+  }
   return errors
 }
 
-/** Builds API items from approved kinds only; unapproved kinds are dropped, never sent. */
+/** Builds API items from approved kinds only; unapproved kinds are dropped, never sent. Snapshot rows are attached for contract_definitions only. */
 export function buildTemplateItems(form: TemplateFormState): TemplateItemPayload[] {
   return filterApprovedEntityKinds(form.entity_kinds).map((kind) => {
     const codes = parseCodes(form.codes[kind])
-    return codes.length > 0
-      ? { entity_kind: kind, selection: { codes } }
-      : { entity_kind: kind }
+    const item: TemplateItemPayload = codes.length > 0 ? { entity_kind: kind, selection: { codes } } : { entity_kind: kind }
+    // Only contract definitions are typed in the browser (snapshot-only kind); every other snapshot is server-captured.
+    if (kind === 'contract_definitions' && hasContractRows(form.contract_rows)) {
+      item.snapshot = { anchor: form.contract_anchor.trim(), rows: buildContractSnapshotRows(form.contract_rows) }
+    }
+    return item
   })
 }
 

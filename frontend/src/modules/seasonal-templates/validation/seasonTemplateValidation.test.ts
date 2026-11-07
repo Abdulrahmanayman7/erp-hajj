@@ -25,7 +25,7 @@ import {
 const granted = (...permissions: string[]) => (permission: string) => permissions.includes(permission)
 
 describe('approved entity kinds', () => {
-  it('exposes exactly the nine approved kinds in dependency order', () => {
+  it('exposes exactly the ten approved kinds in dependency order (matrix 2026-11-08.2)', () => {
     expect([...APPROVED_ENTITY_KINDS]).toEqual([
       'season_programs',
       'season_pilgrim_groups',
@@ -36,10 +36,11 @@ describe('approved entity kinds', () => {
       'season_projects',
       'season_project_phases',
       'task_definitions',
+      'season_reminder_rules',
     ])
   })
 
-  it('never approves reminder rules, notifications or raw contracts/tasks', () => {
+  it('never approves the legacy reminder_rules alias, notifications or raw contracts/tasks', () => {
     for (const kind of ['reminder_rules', 'notifications', 'contracts', 'tasks']) {
       expect(isApprovedEntityKind(kind)).toBe(false)
     }
@@ -92,6 +93,8 @@ describe('validateTemplateForm', () => {
       entity_kinds: ['season_programs'],
       codes: {},
       capture_season_id: '',
+      contract_anchor: '',
+      contract_rows: [],
     })
     expect(errors).toEqual({ name: 'too_long', description: 'too_long' })
   })
@@ -135,6 +138,8 @@ describe('template items payload', () => {
       entity_kinds: ['transport_entitlements', 'pilgrims', 'season_programs'],
       codes: { season_programs: 'A, B\nA', pilgrims: 'X' },
       capture_season_id: '',
+      contract_anchor: '',
+      contract_rows: [],
     })
     expect(items).toEqual([
       { entity_kind: 'season_programs', selection: { codes: ['A', 'B'] } },

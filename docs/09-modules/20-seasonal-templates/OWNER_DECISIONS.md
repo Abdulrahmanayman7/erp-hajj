@@ -1,9 +1,9 @@
 # S08 — Owner Decisions Register (Binding)
 
-> **Status:** All **10** decisions **APPROVED / BINDING** (2026-11-07)  
+> **Status:** S08-D01…D10 **APPROVED / BINDING** (2026-11-07); **S08-D11…D20 APPROVED / BINDING** (2026-11-08) — see [OWNER_DECISIONS_D11_D20.md](OWNER_DECISIONS_D11_D20.md)  
 > **Coding authorization:** **GRANTED** for implementation on `feature/s08-seasonal-templates` (Owner act superseding Part 0 D10 for development)  
 > **Merge / deploy / Owner Accepted:** still **NOT** granted  
-> **Baseline:** `develop` @ `a21e4ca`
+> **Baseline:** `develop` @ `a21e4ca` (D01–D10); feature @ `e0c7933` before D11–D20 coding
 
 ## Summary
 
@@ -19,6 +19,7 @@
 | **S08-D08** | Not blocked by S06; no speculative project-template copy | Matrix marks S06 entities deferred |
 | **S08-D09** | Reconcile ROADMAP / MATRIX with evidence; no fabricated acceptance | Status audit doc |
 | **S08-D10** | Originally Part 0 only; **superseded for coding** by Owner implementation authorization | Merge/deploy/acceptance still require separate acts |
+| **S08-D11…D20** | R6 reminder rules + contract editor + Controls A/B/C | [OWNER_DECISIONS_D11_D20.md](OWNER_DECISIONS_D11_D20.md) — binding; matrix `2026-11-08.2` |
 
 ---
 

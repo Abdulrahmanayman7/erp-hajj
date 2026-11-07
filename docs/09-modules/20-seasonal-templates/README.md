@@ -1,11 +1,11 @@
 # Module 20 — Seasonal Templates & Safe Copy (S08)
 
-> **Status:** `IMPLEMENTED ON FEATURE BRANCH` (full-scope expansion, MATRIX `2026-11-08.1`) — see [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md)  
+> **Status:** `IMPLEMENTED ON FEATURE BRANCH` (MATRIX `2026-11-08.2`, 10 kinds) — see [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md)  
 > **Last updated:** 2026-11-08  
 > **Phase:** Phase 2 / Workflow **S08**  
 > **Product scope:** [ADR-0020](../../10-decisions/ADR-0020-FULL-PHASE2-OPERATIONAL-SCOPE.md) §S08  
-> **Branch:** `feature/s08-seasonal-templates` (from `develop` @ `a21e4ca`)  
-> **Merge / deploy / Owner Accepted:** **NOT AUTHORIZED** — separate Owner acts required
+> **Branch:** `feature/s08-seasonal-templates`  
+> **Merge / push / deploy / Owner Accepted:** **NOT AUTHORIZED** — separate Owner acts required
 
 ## Purpose
 
@@ -13,7 +13,8 @@ Enable **safe reuse** of approved seasonal templates and **safe copy** of permit
 
 ## Binding decisions
 
-All **10** Owner decisions (S08-D01…D10) — [OWNER_DECISIONS.md](OWNER_DECISIONS.md).
+- S08-D01…D10 — [OWNER_DECISIONS.md](OWNER_DECISIONS.md)  
+- S08-D11…D20 (R6 + contract editor + Controls A/B/C) — [OWNER_DECISIONS_D11_D20.md](OWNER_DECISIONS_D11_D20.md)
 
 ## Package index
 
@@ -42,11 +43,11 @@ All **10** Owner decisions (S08-D01…D10) — [OWNER_DECISIONS.md](OWNER_DECISI
 |---|---|
 | Backend | `backend/app/Modules/SeasonalTemplates/` |
 | Frontend | `frontend/src/modules/seasonal-templates/` |
-| Migrations | `backend/database/migrations/2026_11_07_320001_create_seasonal_templates_tables.php`, `2026_11_08_320002_s08_expand_templates_snapshots_and_optional_source.php` |
-| Allowlist | `SafeCopyAllowlist` MATRIX_VERSION `2026-11-08.1` — 9 kinds: `season_programs`, `season_pilgrim_groups`, `transport_entitlements`, `transport_season_vehicles`, `accommodation_season_facilities`, `contract_definitions`, `season_projects`, `season_project_phases`, `task_definitions` |
-| Expansion | [OWNER_DECISIONS_EXPANSION.md](OWNER_DECISIONS_EXPANSION.md), [S08_FULL_SCOPE_GAP_AUDIT.md](S08_FULL_SCOPE_GAP_AUDIT.md) |
-| Reminder rules (X06) | **DISABLED** — no schema; needs an Owner-approved design first |
-| API | `/api/v1/season-templates`, `/api/v1/season-copy/*` |
+| Migrations | `320001` templates; `320002` snapshots; `320003` `season_reminder_rules` |
+| Allowlist | `SafeCopyAllowlist` MATRIX_VERSION `2026-11-08.2` — **10** kinds (adds `season_reminder_rules`) |
+| Expansion | [OWNER_DECISIONS_EXPANSION.md](OWNER_DECISIONS_EXPANSION.md), [OWNER_DECISIONS_D11_D20.md](OWNER_DECISIONS_D11_D20.md) |
+| Reminder rules | Implemented as season-scoped config + `notifications:scan-season-reminders` (never copies inbox rows) |
+| API | `/api/v1/season-templates`, `/api/v1/season-copy/*`, `/api/v1/seasons/{season}/reminder-rules`, `/api/v1/season-reminder-rules/{rule}` |
 | Status | [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) |
 
 ## Out of scope (unchanged)
@@ -56,6 +57,6 @@ All **10** Owner decisions (S08-D01…D10) — [OWNER_DECISIONS.md](OWNER_DECISI
 - Risks & complaints copy.
 - Inventory movements / execution history.
 - Project budgets, PO links, expenditures and project owners (X03 DENY).
-- Reminder rules / notification copying (X06 disabled; `notifications` DENY).
+- Copying delivered `notifications` rows / fire ledgers.
 - Auto-creating shared masters (vehicles/facilities).
 - Staff/driver/supplier contact duplication.

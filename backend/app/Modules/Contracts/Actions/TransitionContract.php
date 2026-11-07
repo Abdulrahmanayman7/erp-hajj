@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Modules\Contracts\Enums\ContractStatus;
 use App\Modules\Contracts\Exceptions\ContractDomainException;
 use App\Modules\Contracts\Models\Contract;
+use App\Modules\Contracts\Support\ContractCounterparty;
 use App\Modules\Contracts\Support\ContractLifecycle;
 use App\Modules\Contracts\Support\ContractTransitionRecorder;
 use App\Modules\Notifications\Support\NotificationHooks;
@@ -42,6 +43,16 @@ final class TransitionContract
             $from = $locked->status;
 
             ContractLifecycle::assertAllowed($from, $to);
+
+            // Control C (S08-D17): a template stub cannot leave draft toward review / approval /
+            // execution (every such path starts with draft → in_review). Cancel stays allowed.
+            if (
+                $from === ContractStatus::Draft
+                && $to !== ContractStatus::Cancelled
+                && ContractCounterparty::isPlaceholder($locked->counterparty_name)
+            ) {
+                throw ContractDomainException::incompleteCounterparty();
+            }
 
             if (ContractLifecycle::requiresComment($from, $to) && ($comment === null || trim($comment) === '')) {
                 throw ContractDomainException::commentRequired();

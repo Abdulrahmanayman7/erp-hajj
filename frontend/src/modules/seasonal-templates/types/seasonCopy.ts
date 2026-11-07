@@ -1,7 +1,8 @@
 /**
  * Safe-copy matrix (S08). Approved entity kinds only — the backend allowlist
- * (`SafeCopyAllowlist`, MATRIX_VERSION 2026-11-08.1) is authoritative; this list is a UX mirror.
- * Order is dependency order (projects before phases before tasks). Reminder rules are NOT copyable (X06 disabled).
+ * (`SafeCopyAllowlist`, MATRIX_VERSION 2026-11-08.2, 10 kinds) is authoritative; this list is a UX mirror.
+ * Order is dependency order (projects before phases before tasks). `season_reminder_rules` (S08-D11..D16)
+ * copies as draft rules only; the legacy `reminder_rules` alias and notifications stay denied.
  */
 export const APPROVED_ENTITY_KINDS = [
   'season_programs',
@@ -13,6 +14,7 @@ export const APPROVED_ENTITY_KINDS = [
   'season_projects',
   'season_project_phases',
   'task_definitions',
+  'season_reminder_rules',
 ] as const
 
 export type ApprovedEntityKind = (typeof APPROVED_ENTITY_KINDS)[number]
