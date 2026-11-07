@@ -53,13 +53,26 @@ No multi-assignee pivot. No comments/attachments tables.
 
 `draft` | `assigned` | `in_progress` | `completed` | `cancelled`
 
-### Explicitly absent
+### Explicitly absent (MVP / current implemented schema)
 
 - Multi-assignee pivots / `task_assignees`
 - SoftDeletes
 - Polymorphic `related_type` (Decision FK only in MVP)
-- Blocked / overdue as stored status
+- Blocked / overdue as stored status *(S06 adds a **persisted delay indicator** alongside derived overdue — see §S06)*
 - Document FKs
+- `season_id` / `project_id` / `phase_id` *(S06 additive; nullable — see §S06)*
+
+### S06 additive columns (D01 / E-Q01 / E-Q05 — implemented in S06 migrations; MySQL 8 validation deferred)
+
+| Column | Type | Null | Notes |
+|---|---|---|---|
+| `season_id` | FK → seasons | yes | NULL for MVP tasks |
+| `project_id` | FK → season_projects | yes | NULL for MVP tasks; when set, season_id required and aligned |
+| `phase_id` | FK → season_project_phases | yes | optional |
+| `delay_state` | enum `none`\|`delayed` | no | default `none`; **projection** of calculated delay (E-Q05 = A); no sticky/manual state |
+| `delay_calculated_at` | timestamp | yes | last recalc |
+
+**Backward compatibility:** all new columns nullable or defaulted so existing rows are unchanged. Authoritative detail: [../20-season-projects/DATA_MODEL.md](../20-season-projects/DATA_MODEL.md).
 
 ### Constraints
 

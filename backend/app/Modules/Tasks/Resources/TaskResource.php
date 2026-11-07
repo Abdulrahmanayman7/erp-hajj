@@ -31,6 +31,13 @@ class TaskResource extends JsonResource
             'priority' => $task->priority->value,
             'progress_percent' => $task->progress_percent,
             'decision_id' => $task->decision_id,
+            'season_id' => $task->season_id,
+            'project_id' => $task->project_id,
+            'phase_id' => $task->phase_id,
+            'delay_state' => $task->delay_state instanceof \BackedEnum
+                ? $task->delay_state->value
+                : (string) $task->delay_state,
+            'delay_calculated_at' => $task->delay_calculated_at?->toIso8601String(),
             'organization_unit_id' => $task->organization_unit_id,
             'assigned_to_employee_id' => $task->assigned_to_employee_id,
             'start_date' => $task->start_date?->toDateString(),

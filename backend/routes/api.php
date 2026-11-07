@@ -47,6 +47,9 @@ use App\Modules\SeasonPilgrims\Controllers\SeasonFamilyGroupController;
 use App\Modules\SeasonPilgrims\Controllers\SeasonPilgrimController;
 use App\Modules\SeasonPilgrims\Controllers\SeasonPilgrimGroupController;
 use App\Modules\SeasonPilgrims\Controllers\SeasonProgramController;
+use App\Modules\SeasonProjects\Controllers\SeasonProjectBudgetController;
+use App\Modules\SeasonProjects\Controllers\SeasonProjectController;
+use App\Modules\SeasonProjects\Controllers\SeasonProjectPhaseController;
 use App\Modules\Settings\Controllers\TenantSettingsController;
 use App\Modules\SuppliersAndProcurement\Controllers\GeoPlaceController;
 use App\Modules\SuppliersAndProcurement\Controllers\GoodsReceiptController;
@@ -607,6 +610,27 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
                 Route::put('/transport-season-vehicles/{season_vehicle}/default-crew', [TransportSeasonVehicleController::class, 'defaultCrew'])->name('transport-season-vehicles.default-crew');
                 Route::post('/transport-season-vehicles/{season_vehicle}/activate', [TransportSeasonVehicleController::class, 'activate'])->name('transport-season-vehicles.activate');
                 Route::post('/transport-season-vehicles/{season_vehicle}/deactivate', [TransportSeasonVehicleController::class, 'deactivate'])->name('transport-season-vehicles.deactivate');
+
+                // S06 Part 2 — season projects (complete blocked until Part 3 E-Q10 freeze).
+                Route::get('/season-projects', [SeasonProjectController::class, 'index'])->name('season-projects.index');
+                Route::post('/season-projects', [SeasonProjectController::class, 'store'])->name('season-projects.store');
+                Route::get('/season-projects/{season_project}', [SeasonProjectController::class, 'show'])->name('season-projects.show');
+                Route::patch('/season-projects/{season_project}', [SeasonProjectController::class, 'update'])->name('season-projects.update');
+                Route::delete('/season-projects/{season_project}', [SeasonProjectController::class, 'destroy'])->name('season-projects.destroy');
+                Route::post('/season-projects/{season_project}/activate', [SeasonProjectController::class, 'activate'])->name('season-projects.activate');
+                Route::post('/season-projects/{season_project}/complete', [SeasonProjectController::class, 'complete'])->name('season-projects.complete');
+                Route::post('/season-projects/{season_project}/cancel', [SeasonProjectController::class, 'cancel'])->name('season-projects.cancel');
+                Route::post('/season-projects/{season_project}/reassign-owner', [SeasonProjectController::class, 'reassignOwner'])->name('season-projects.reassign-owner');
+
+                Route::get('/season-projects/{season_project}/phases', [SeasonProjectPhaseController::class, 'index'])->name('season-projects.phases.index');
+                Route::post('/season-projects/{season_project}/phases', [SeasonProjectPhaseController::class, 'store'])->name('season-projects.phases.store');
+                Route::patch('/season-projects/{season_project}/phases/{phase}', [SeasonProjectPhaseController::class, 'update'])->name('season-projects.phases.update');
+                Route::delete('/season-projects/{season_project}/phases/{phase}', [SeasonProjectPhaseController::class, 'destroy'])->name('season-projects.phases.destroy');
+
+                Route::get('/season-projects/{season_project}/budget', [SeasonProjectBudgetController::class, 'show'])->name('season-projects.budget.show');
+                Route::patch('/season-projects/{season_project}/budget', [SeasonProjectBudgetController::class, 'update'])->name('season-projects.budget.update');
+                Route::post('/season-projects/{season_project}/budget/po-links', [SeasonProjectBudgetController::class, 'linkPo'])->name('season-projects.budget.po-links.store');
+                Route::delete('/season-projects/{season_project}/budget/po-links/{budget_po_link}', [SeasonProjectBudgetController::class, 'unlinkPo'])->name('season-projects.budget.po-links.destroy');
 
                 Route::get('/transport-entitlements', [TransportEntitlementController::class, 'index'])->name('transport-entitlements.index');
                 Route::post('/transport-entitlements', [TransportEntitlementController::class, 'store'])->name('transport-entitlements.store');

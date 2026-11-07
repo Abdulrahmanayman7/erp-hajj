@@ -5,8 +5,16 @@ import type { ListTasksParams } from '../types/tasks'
 
 export const tasksQueryKey = ['tasks'] as const
 export const taskDetailQueryKey = (id: number) => [...tasksQueryKey, 'detail', id] as const
-export function useTasksQuery(params: MaybeRefOrGetter<ListTasksParams>) {
-  return useQuery({ queryKey: computed(() => [...tasksQueryKey, 'list', toValue(params)]), queryFn: () => listTasks(toValue(params)), placeholderData: keepPreviousData })
+export function useTasksQuery(
+  params: MaybeRefOrGetter<ListTasksParams>,
+  enabled: MaybeRefOrGetter<boolean> = true,
+) {
+  return useQuery({
+    queryKey: computed(() => [...tasksQueryKey, 'list', toValue(params)]),
+    queryFn: () => listTasks(toValue(params)),
+    enabled: computed(() => toValue(enabled)),
+    placeholderData: keepPreviousData,
+  })
 }
 export function useTaskQuery(id: MaybeRefOrGetter<number | null>) {
   return useQuery({

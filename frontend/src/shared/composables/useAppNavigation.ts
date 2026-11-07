@@ -539,6 +539,16 @@ export function buildTenantNavGroups(can: (permission: string) => boolean): AppN
       match: 'prefix',
     })
   }
+  if (can('season_projects.view')) {
+    governanceItems.push({
+      key: 'season-projects',
+      labelKey: 'nav.seasonProjects',
+      to: '/app/season-projects',
+      icon: FolderKanban,
+      permission: 'season_projects.view',
+      match: 'prefix',
+    })
+  }
   if (can('risks.view')) {
     governanceItems.push({
       key: 'risks',

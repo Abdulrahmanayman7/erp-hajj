@@ -9,6 +9,7 @@ use App\Modules\OrganizationStructure\Models\OrganizationUnit;
 use App\Modules\RisksAndComplaints\Enums\RiskStatus;
 use App\Modules\RisksAndComplaints\Models\OperationalRisk;
 use App\Modules\SeasonPilgrims\Models\Season;
+use App\Modules\SeasonProjects\Models\SeasonProject;
 use Illuminate\Support\Facades\Event;
 use Laravel\Sanctum\Sanctum;
 
@@ -252,16 +253,39 @@ it('isolates risks across tenants and seasons', function (): void {
     expect($tenantA->id)->not->toBe($ownerB->tenant_id);
 });
 
-it('rejects project_id when SeasonProjects is unavailable', function (): void {
+it('rejects unknown project_id when SeasonProjects is available', function (): void {
     actingAsTenantOwner();
     $ctx = riskBootContext();
 
     spaPostJson('/api/v1/risks', [
         'title' => 'مشروع',
-        'project_id' => 1,
+        'project_id' => 999999,
     ], $ctx['header'])
         ->assertStatus(422)
-        ->assertJsonPath('code', 'SEASON_PROJECT_LINK_UNAVAILABLE');
+        ->assertJsonPath('code', 'LINKED_ENTITY_INVALID');
+});
+
+it('links a risk to a valid season project', function (): void {
+    $owner = actingAsTenantOwner();
+    $tenant = $owner->tenant;
+    $ctx = riskBootContext();
+
+    $project = withTenant($tenant, function () use ($tenant, $ctx, $owner) {
+        return SeasonProject::factory()->create([
+            'tenant_id' => $tenant->id,
+            'season_id' => $ctx['season']['id'],
+            'created_by' => $owner->id,
+        ]);
+    });
+
+    $risk = spaPostJson('/api/v1/risks', [
+        'title' => 'مرتبط بمشروع',
+        'project_id' => $project->id,
+    ], $ctx['header'])
+        ->assertCreated()
+        ->json('data');
+
+    expect($risk['project_id'])->toBe($project->id);
 });
 
 it('rejects invalid linked entities', function (): void {

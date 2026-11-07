@@ -69,6 +69,8 @@ use App\Modules\SeasonPilgrims\Policies\SeasonPilgrimGroupPolicy;
 use App\Modules\SeasonPilgrims\Policies\SeasonPilgrimPolicy;
 use App\Modules\SeasonPilgrims\Policies\SeasonPolicy;
 use App\Modules\SeasonPilgrims\Policies\SeasonProgramPolicy;
+use App\Modules\SeasonProjects\Models\SeasonProject;
+use App\Modules\SeasonProjects\Policies\SeasonProjectPolicy;
 use App\Modules\Settings\Mail\TenantMailChannel;
 use App\Modules\Settings\Policies\TenantSettingsPolicy;
 use App\Modules\Settings\Support\TenantMailSenderResolver;
@@ -159,6 +161,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Meeting::class, MeetingPolicy::class);
         Gate::policy(Decision::class, DecisionPolicy::class);
         Gate::policy(Task::class, TaskPolicy::class);
+        Gate::policy(SeasonProject::class, SeasonProjectPolicy::class);
         Gate::policy(OperationalRisk::class, OperationalRiskPolicy::class);
         Gate::policy(OperationalComplaint::class, OperationalComplaintPolicy::class);
         Gate::policy(Document::class, DocumentPolicy::class);

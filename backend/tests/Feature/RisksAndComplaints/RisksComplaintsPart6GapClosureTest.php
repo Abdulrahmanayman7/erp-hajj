@@ -7,10 +7,14 @@ use App\Modules\Notifications\Models\Notification;
 use App\Modules\Notifications\Support\NotificationHooks;
 use App\Modules\OrganizationStructure\Models\OrganizationUnit;
 use App\Modules\RisksAndComplaints\Enums\RiskStatus;
+use App\Modules\RisksAndComplaints\Exceptions\RisksAndComplaintsDomainException;
 use App\Modules\RisksAndComplaints\Models\OperationalNotificationOccurrence;
 use App\Modules\RisksAndComplaints\Models\OperationalRisk;
 use App\Modules\RisksAndComplaints\Support\OperationalNotificationOccurrenceRecorder;
+use App\Modules\RisksAndComplaints\Support\RiskReferenceValidator;
+use App\Modules\SeasonPilgrims\Models\Season;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Laravel\Sanctum\Sanctum;
 
 it('maps risk and complaint audit entities to operational_* types', function (): void {
@@ -71,7 +75,7 @@ it('denies timeline without risks.view', function (): void {
     spaGetJson('/api/v1/risks/'.$risk['id'].'/timeline', $ctx['header'])->assertForbidden();
 });
 
-it('reports season projects unavailable when S06 API is absent', function (): void {
+it('reports season projects available when S06 is present', function (): void {
     actingAsTenantOwner();
     $ctx = riskBootContext();
 
@@ -79,18 +83,28 @@ it('reports season projects unavailable when S06 API is absent', function (): vo
         ->assertOk()
         ->json('data');
 
-    expect($caps['season_projects_available'])->toBeFalse()
-        ->and($caps['season_projects_reason'])->toBe('season_projects_api_unavailable');
+    expect($caps['season_projects_available'])->toBeTrue()
+        ->and($caps['season_projects_reason'])->toBeNull();
 });
 
 it('rejects project_id when SeasonProjects table is unavailable', function (): void {
-    actingAsTenantOwner();
-    $ctx = riskBootContext();
+    $owner = actingAsTenantOwner();
+    $tenant = $owner->tenant;
 
-    spaPostJson('/api/v1/risks', [
-        'title' => 'مشروع',
-        'project_id' => 1,
-    ], $ctx['header'])->assertStatus(422);
+    withTenant($tenant, function () use ($tenant): void {
+        $season = Season::factory()->active()->create([
+            'tenant_id' => $tenant->id,
+        ]);
+
+        Schema::shouldReceive('hasTable')
+            ->once()
+            ->with('season_projects')
+            ->andReturn(false);
+
+        expect(fn () => app(RiskReferenceValidator::class)
+            ->resolveProject($season, 1))
+            ->toThrow(RisksAndComplaintsDomainException::class, 'ربط المشروع الموسمي غير متاح حالياً.');
+    });
 });
 
 it('allows escalate via assignee path and escalate permission path', function (): void {

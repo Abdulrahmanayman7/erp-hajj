@@ -26,6 +26,7 @@ class UpdateTaskRequest extends FormRequest
             'organization_unit_id' => ['nullable', 'integer', new TenantExists('organization_units')],
             'start_date' => ['nullable', 'date'],
             'due_date' => ['nullable', 'date'],
+            'phase_id' => ['nullable', 'integer', new TenantExists('season_project_phases')],
         ];
     }
 }

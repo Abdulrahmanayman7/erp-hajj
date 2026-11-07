@@ -92,10 +92,12 @@ Generic AuditTrail alone is insufficient for operational assignment timelines �
 2. When both set: `due_date >= start_date` (`TASK_INVALID_DATE_RANGE`).
 3. `completed_at` is server-generated **datetime** on complete.
 4. Tenant timezone applies to “today” / overdue comparisons; storage remains calendar dates for due/start.
-5. **Overdue (derived, never a status):**  
-   `due_date < today(tenant tz)` **AND** status ∈ {`draft`,`assigned`,`in_progress`}.  
+5. **Overdue (derived, never a status) — MVP rule remains:**
+   `due_date < today(tenant tz)` **AND** status ∈ {`draft`,`assigned`,`in_progress`}.
    Terminal `completed` / `cancelled` are never overdue.
 6. Due-soon / overdue **detection** remains derived on Tasks; **notification delivery jobs** owned by Sprint 016 (ADR-0013).
+7. **S06 (D03 / E-Q05 = A — implemented in S06 Parts 3/6):** calculated delay is authoritative; persisted `delay_state` is a synchronized projection (`none`|`delayed`) with **no** sticky manual override. Recalc on writes + scheduled command `tasks:recompute-delay` (production cron activation **NOT DEPLOYED**). Complete/cancel → `none`. See [../20-season-projects/](../20-season-projects/README.md).
+8. **S06 (D04 / E-Q10 = A — implemented):** if the parent season project is `completed`, open project tasks remain open but may only transition to `completed` or `cancelled`; other mutations are rejected.
 
 ## 9. Priority
 

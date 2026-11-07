@@ -8,6 +8,7 @@ use App\Modules\OrganizationStructure\Models\OrganizationUnit;
 use App\Modules\RisksAndComplaints\Enums\ComplaintStatus;
 use App\Modules\RisksAndComplaints\Models\OperationalComplaint;
 use App\Modules\SeasonPilgrims\Models\Season;
+use App\Modules\SeasonProjects\Models\SeasonProject;
 use Illuminate\Support\Facades\Event;
 use Laravel\Sanctum\Sanctum;
 
@@ -334,7 +335,7 @@ it('isolates complaints across tenants and seasons', function (): void {
     expect($tenantA->id)->not->toBe($ownerB->tenant_id);
 });
 
-it('rejects project_id and invalid linked entities for complaints', function (): void {
+it('rejects unknown project_id and invalid linked entities for complaints', function (): void {
     actingAsTenantOwner();
     $ctx = riskBootContext();
 
@@ -342,10 +343,10 @@ it('rejects project_id and invalid linked entities for complaints', function ():
         'title' => 'مشروع',
         'body' => 'نص',
         'category_code' => 'other',
-        'project_id' => 1,
+        'project_id' => 999999,
     ], $ctx['header'])
         ->assertStatus(422)
-        ->assertJsonPath('code', 'SEASON_PROJECT_LINK_UNAVAILABLE');
+        ->assertJsonPath('code', 'LINKED_ENTITY_INVALID');
 
     spaPostJson('/api/v1/complaints', [
         'title' => 'رابط',
@@ -355,6 +356,31 @@ it('rejects project_id and invalid linked entities for complaints', function ():
     ], $ctx['header'])
         ->assertStatus(422)
         ->assertJsonPath('code', 'LINKED_ENTITY_INVALID');
+});
+
+it('links a complaint to a valid season project', function (): void {
+    $owner = actingAsTenantOwner();
+    $tenant = $owner->tenant;
+    $ctx = riskBootContext();
+
+    $project = withTenant($tenant, function () use ($tenant, $ctx, $owner) {
+        return SeasonProject::factory()->create([
+            'tenant_id' => $tenant->id,
+            'season_id' => $ctx['season']['id'],
+            'created_by' => $owner->id,
+        ]);
+    });
+
+    $complaint = spaPostJson('/api/v1/complaints', [
+        'title' => 'مرتبط بمشروع',
+        'body' => 'نص',
+        'category_code' => 'other',
+        'project_id' => $project->id,
+    ], $ctx['header'])
+        ->assertCreated()
+        ->json('data');
+
+    expect($complaint['project_id'])->toBe($project->id);
 });
 
 it('blocks soft-delete after review or assignment', function (): void {

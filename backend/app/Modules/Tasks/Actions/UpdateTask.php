@@ -6,8 +6,11 @@ use App\Core\Authorization\Events\AuthorizationSecurityEvent;
 use App\Core\Authorization\Support\AuthorizationSecurity;
 use App\Core\Tenancy\TenantContext;
 use App\Models\User;
+use App\Modules\SeasonProjects\Support\SeasonProjectProgressRollup;
+use App\Modules\SeasonProjects\Support\SeasonProjectTaskGuard;
 use App\Modules\Tasks\Enums\TaskPriority;
 use App\Modules\Tasks\Models\Task;
+use App\Modules\Tasks\Support\TaskDelaySynchronizer;
 use App\Modules\Tasks\Support\TaskReferenceValidator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -18,6 +21,9 @@ final class UpdateTask
         private readonly TenantContext $tenantContext,
         private readonly TaskReferenceValidator $references,
         private readonly AuthorizationSecurity $security,
+        private readonly SeasonProjectTaskGuard $projectGuard,
+        private readonly TaskDelaySynchronizer $delay,
+        private readonly SeasonProjectProgressRollup $progress,
     ) {}
 
     /**
@@ -29,6 +35,7 @@ final class UpdateTask
 
         return DB::transaction(function () use ($actor, $task, $data, $request, $tenant): Task {
             $locked = Task::query()->whereKey($task->id)->lockForUpdate()->firstOrFail();
+            $this->projectGuard->assertNotFrozenForMutation($locked);
             $this->references->assertContentEditable($locked);
 
             $start = array_key_exists('start_date', $data) ? $data['start_date'] : $locked->start_date?->toDateString();
@@ -62,13 +69,34 @@ final class UpdateTask
                 $locked->due_date = $data['due_date'];
             }
 
+            if (array_key_exists('phase_id', $data)) {
+                if ($locked->project_id === null) {
+                    if ($data['phase_id'] !== null) {
+                        $this->projectGuard->resolveLinkage(null, (int) $data['phase_id']);
+                    }
+                    $locked->phase_id = null;
+                } elseif ($data['phase_id'] === null) {
+                    $locked->phase_id = null;
+                } else {
+                    $project = $locked->project()->lockForUpdate()->firstOrFail();
+                    $phase = $this->projectGuard->resolvePhaseForProject($project, (int) $data['phase_id']);
+                    $locked->phase_id = $phase->id;
+                }
+            }
+
             $locked->save();
+            $this->delay->sync($locked, $request, $actor->id);
+
+            if ($locked->project_id !== null) {
+                $this->progress->refresh((int) $locked->project_id);
+            }
 
             $this->security->record(AuthorizationSecurityEvent::TASK_UPDATED, [
                 'tenant_id' => $tenant->id,
                 'actor_id' => $actor->id,
                 'task_id' => $locked->id,
                 'task_number' => $locked->task_number,
+                'project_id' => $locked->project_id,
             ], $request);
 
             return $this->loadRelations($locked);
@@ -82,6 +110,8 @@ final class UpdateTask
             'organizationUnit',
             'assignee',
             'createdBy',
+            'project',
+            'phase',
             'statusTransitions.performer',
             'assignmentHistory.performer',
             'assignmentHistory.fromEmployee',

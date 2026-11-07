@@ -8,6 +8,8 @@ use App\Core\Tenancy\TenantContext;
 use App\Models\User;
 use App\Modules\Documents\Enums\DocumentLinkableType;
 use App\Modules\Documents\Support\DocumentReferenceValidator;
+use App\Modules\SeasonProjects\Support\SeasonProjectProgressRollup;
+use App\Modules\SeasonProjects\Support\SeasonProjectTaskGuard;
 use App\Modules\Tasks\Models\Task;
 use App\Modules\Tasks\Support\TaskReferenceValidator;
 use Illuminate\Http\Request;
@@ -20,6 +22,8 @@ final class DeleteTask
         private readonly TaskReferenceValidator $references,
         private readonly DocumentReferenceValidator $documents,
         private readonly AuthorizationSecurity $security,
+        private readonly SeasonProjectTaskGuard $projectGuard,
+        private readonly SeasonProjectProgressRollup $progress,
     ) {}
 
     public function execute(User $actor, Task $task, Request $request): void
@@ -28,6 +32,7 @@ final class DeleteTask
 
         DB::transaction(function () use ($actor, $task, $request, $tenant): void {
             $locked = Task::query()->whereKey($task->id)->lockForUpdate()->firstOrFail();
+            $this->projectGuard->assertNotFrozenForMutation($locked);
             $this->references->assertDeletableDraft($locked);
             $this->documents->assertNoDocumentsLinked(DocumentLinkableType::Task, (int) $locked->id);
 
@@ -36,8 +41,13 @@ final class DeleteTask
                 'task_number' => $locked->task_number,
                 'title' => $locked->title,
             ];
+            $projectId = $locked->project_id !== null ? (int) $locked->project_id : null;
 
             $locked->delete();
+
+            if ($projectId !== null) {
+                $this->progress->refresh($projectId);
+            }
 
             $this->security->record(AuthorizationSecurityEvent::TASK_DELETED, [
                 'tenant_id' => $tenant->id,
