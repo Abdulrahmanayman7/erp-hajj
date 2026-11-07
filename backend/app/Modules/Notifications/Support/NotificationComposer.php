@@ -218,7 +218,41 @@ final class NotificationComposer
                 'title' => 'مخزون دون الحد الأدنى',
                 'body' => $this->clip($this->stockLine($item, $warehouse)),
             ],
+            NotificationType::RiskAssigned => [
+                'title' => 'تم تعيين خطر لك',
+                'body' => $this->clip($number !== '' ? "تم تعيين الخطر {$number} إليك للمتابعة." : 'تم تعيين خطر تشغيلي إليك.'),
+            ],
+            NotificationType::ComplaintAssigned => [
+                'title' => 'تم تعيين شكوى لك',
+                'body' => $this->clip($number !== '' ? "تم تعيين الشكوى {$number} إليك للمعالجة." : 'تم تعيين شكوى إليك للمعالجة.'),
+            ],
+            NotificationType::ComplaintEscalated => [
+                'title' => 'تم تصعيد شكوى إليك',
+                'body' => $this->clip($number !== '' ? "تم تصعيد الشكوى {$number} إليك." : 'تم تصعيد شكوى إليك.'),
+            ],
+            NotificationType::RiskSeverityAlert => [
+                'title' => 'تنبيه خطورة خطر تشغيلي',
+                'body' => $this->clip($this->riskSeverityLine($number, $this->str($context['severity'] ?? null))),
+            ],
+            NotificationType::ComplaintResolved => [
+                'title' => 'تم اقتراح حل لشكوى',
+                'body' => $this->clip($number !== '' ? "الشكوى {$number} بانتظار الإغلاق بعد الحل." : 'شكوى بانتظار الإغلاق بعد الحل.'),
+            ],
+            NotificationType::ComplaintReopened => [
+                'title' => 'أُعيد فتح شكوى',
+                'body' => $this->clip($number !== '' ? "أُعيد فتح الشكوى {$number}." : 'أُعيد فتح إحدى الشكاوى.'),
+            ],
         };
+    }
+
+    private function riskSeverityLine(string $number, string $severity): string
+    {
+        $band = $severity !== '' ? $severity : 'مرتفعة';
+        if ($number !== '') {
+            return "الخطر {$number} بمستوى خطورة {$band}.";
+        }
+
+        return "خطر تشغيلي بمستوى خطورة {$band}.";
     }
 
     private function taskLine(string $number, string $title): string

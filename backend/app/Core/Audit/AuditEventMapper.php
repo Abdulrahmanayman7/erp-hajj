@@ -35,6 +35,9 @@ final class AuditEventMapper
      * @var list<array{type: string, id: string, number: string|null, label: string|null}>
      */
     private const ENTITY_HINTS = [
+        // S07: prefer risk/complaint over season_id (always present on those events).
+        ['type' => 'operational_risk', 'id' => 'risk_id', 'number' => 'risk_number', 'label' => null],
+        ['type' => 'operational_complaint', 'id' => 'complaint_id', 'number' => 'complaint_number', 'label' => null],
         ['type' => 'pilgrim_group_supervisor', 'id' => 'pilgrim_group_supervisor_id', 'number' => null, 'label' => 'employee_name'],
         ['type' => 'pilgrim_identity_document', 'id' => 'pilgrim_identity_document_id', 'number' => null, 'label' => 'pilgrim_name'],
         ['type' => 'season_pilgrim', 'id' => 'season_pilgrim_id', 'number' => 'reference_number', 'label' => 'pilgrim_name'],

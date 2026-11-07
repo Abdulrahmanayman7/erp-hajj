@@ -385,6 +385,40 @@ final class AuthorizationSecurityEvent
 
     public const TASK_DELETED = 'TASK_DELETED';
 
+    public const RISK_CREATED = 'RISK_CREATED';
+
+    public const RISK_UPDATED = 'RISK_UPDATED';
+
+    public const RISK_ASSESSED = 'RISK_ASSESSED';
+
+    public const RISK_ASSESSMENT_APPROVED = 'RISK_ASSESSMENT_APPROVED';
+
+    public const RISK_TREATMENT_UPSERTED = 'RISK_TREATMENT_UPSERTED';
+
+    public const RISK_ASSIGNED = 'RISK_ASSIGNED';
+
+    public const RISK_CLOSED = 'RISK_CLOSED';
+
+    public const RISK_DELETED = 'RISK_DELETED';
+
+    public const COMPLAINT_CREATED = 'COMPLAINT_CREATED';
+
+    public const COMPLAINT_UPDATED = 'COMPLAINT_UPDATED';
+
+    public const COMPLAINT_ASSIGNED = 'COMPLAINT_ASSIGNED';
+
+    public const COMPLAINT_ESCALATED = 'COMPLAINT_ESCALATED';
+
+    public const COMPLAINT_RESOLVED = 'COMPLAINT_RESOLVED';
+
+    public const COMPLAINT_CLOSED = 'COMPLAINT_CLOSED';
+
+    public const COMPLAINT_REOPENED = 'COMPLAINT_REOPENED';
+
+    public const COMPLAINT_NOTE_ADDED = 'COMPLAINT_NOTE_ADDED';
+
+    public const COMPLAINT_DELETED = 'COMPLAINT_DELETED';
+
     public const DOCUMENT_UPLOADED = 'DOCUMENT_UPLOADED';
 
     public const DOCUMENT_UPDATED = 'DOCUMENT_UPDATED';

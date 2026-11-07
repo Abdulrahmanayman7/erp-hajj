@@ -35,6 +35,7 @@ import {
   MapPinned,
   Route,
   TriangleAlert,
+  MessageSquare,
   type LucideIcon,
 } from 'lucide-vue-next'
 
@@ -545,6 +546,26 @@ export function buildTenantNavGroups(can: (permission: string) => boolean): AppN
       to: '/app/season-projects',
       icon: FolderKanban,
       permission: 'season_projects.view',
+      match: 'prefix',
+    })
+  }
+  if (can('risks.view')) {
+    governanceItems.push({
+      key: 'risks',
+      labelKey: 'nav.risks',
+      to: '/app/risks',
+      icon: TriangleAlert,
+      permission: 'risks.view',
+      match: 'prefix',
+    })
+  }
+  if (can('complaints.view')) {
+    governanceItems.push({
+      key: 'complaints',
+      labelKey: 'nav.complaints',
+      to: '/app/complaints',
+      icon: MessageSquare,
+      permission: 'complaints.view',
       match: 'prefix',
     })
   }

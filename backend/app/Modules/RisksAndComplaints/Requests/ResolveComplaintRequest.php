@@ -1,0 +1,23 @@
+<?php
+
+namespace App\Modules\RisksAndComplaints\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+class ResolveComplaintRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function rules(): array
+    {
+        return [
+            'resolution_text' => ['required', 'string'],
+        ];
+    }
+}

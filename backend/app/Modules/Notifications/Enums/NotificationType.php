@@ -49,6 +49,14 @@ enum NotificationType: string
     case GoodsReceiptPosted = 'GOODS_RECEIPT_POSTED';
     case PurchaseOrderClosed = 'PURCHASE_ORDER_CLOSED';
 
+    /** S07 Risks & Complaints (N01). */
+    case RiskAssigned = 'RISK_ASSIGNED';
+    case ComplaintAssigned = 'COMPLAINT_ASSIGNED';
+    case ComplaintEscalated = 'COMPLAINT_ESCALATED';
+    case RiskSeverityAlert = 'RISK_SEVERITY_ALERT';
+    case ComplaintResolved = 'COMPLAINT_RESOLVED';
+    case ComplaintReopened = 'COMPLAINT_REOPENED';
+
     public function defaultSeverity(): NotificationSeverity
     {
         return match ($this) {
@@ -65,7 +73,9 @@ enum NotificationType: string
             self::PurchaseApprovalRoutingBlocked,
             self::PurchaseApprovalNoEligibleFinal,
             self::PurchaseRequestRejected,
-            self::PurchaseRequestReturned => NotificationSeverity::Warning,
+            self::PurchaseRequestReturned,
+            self::RiskSeverityAlert,
+            self::ComplaintEscalated => NotificationSeverity::Warning,
 
             self::ContractExpired,
             self::MeetingCancelled,
