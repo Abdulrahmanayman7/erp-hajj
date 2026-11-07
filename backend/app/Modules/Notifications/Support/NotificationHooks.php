@@ -14,9 +14,15 @@ use App\Modules\Inventory\Models\InventoryItem;
 use App\Modules\Inventory\Models\Warehouse;
 use App\Modules\Inventory\Support\StockStateResolver;
 use App\Modules\Meetings\Models\Meeting;
+use App\Modules\Notifications\Enums\NotificationSeverity;
 use App\Modules\Notifications\Enums\NotificationType;
+use App\Modules\RisksAndComplaints\Enums\RiskSeverity;
+use App\Modules\RisksAndComplaints\Models\OperationalComplaint;
+use App\Modules\RisksAndComplaints\Models\OperationalRisk;
+use App\Modules\RisksAndComplaints\Support\OperationalNotificationOccurrenceRecorder;
 use App\Modules\Tasks\Models\Task;
 use App\Modules\Tasks\Models\TaskAssignmentHistory;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Thin domain bridges — Actions call these after successful writes.
@@ -257,6 +263,181 @@ final class NotificationHooks
                 'warehouse' => $warehouse->warehouse_number,
             ],
         );
+    }
+
+    public function riskAssigned(OperationalRisk $risk, int $occurrenceId): void
+    {
+        $user = $this->recipients->resolveUserFromEmployeeId($risk->owner_employee_id);
+        if ($user === null) {
+            $this->skipUnresolvedRecipient('RISK_ASSIGNED', 'operational_risk', (int) $risk->id, $risk->owner_employee_id);
+
+            return;
+        }
+
+        $this->dispatcher->notify(
+            type: NotificationType::RiskAssigned,
+            recipientUsers: [$user],
+            entityType: 'operational_risk',
+            entityId: (int) $risk->id,
+            occurrenceKey: OperationalNotificationOccurrenceRecorder::occurrenceKey($occurrenceId),
+            context: ['number' => $risk->risk_number],
+        );
+    }
+
+    /**
+     * High/critical severity alert on approval or meaningful reassessment (N01).
+     * Caller supplies a durable $occurrenceId only when an alert should fire.
+     */
+    public function riskSeverityAlert(
+        OperationalRisk $risk,
+        int $occurrenceId,
+        ?RiskSeverity $previousSeverity = null,
+        string $mode = 'approve',
+    ): void {
+        $severity = $risk->severity_level;
+        if ($severity === null || ! $severity->isAlertBand()) {
+            return;
+        }
+
+        $enteredOrCrossed = $previousSeverity === null
+            || ! $previousSeverity->isAlertBand()
+            || $previousSeverity !== $severity;
+
+        if ($mode === 'assess' && ! $enteredOrCrossed) {
+            return;
+        }
+
+        $recipients = $this->recipients->usersWithPermission('risks.approve_assessment');
+        if ($recipients === []) {
+            $this->skipUnresolvedRecipient('RISK_SEVERITY_ALERT', 'operational_risk', (int) $risk->id, null);
+
+            return;
+        }
+
+        $this->dispatcher->notify(
+            type: NotificationType::RiskSeverityAlert,
+            recipientUsers: $recipients,
+            severity: $severity === RiskSeverity::Critical
+                ? NotificationSeverity::Critical
+                : NotificationSeverity::Warning,
+            entityType: 'operational_risk',
+            entityId: (int) $risk->id,
+            occurrenceKey: OperationalNotificationOccurrenceRecorder::occurrenceKey($occurrenceId),
+            context: [
+                'number' => $risk->risk_number,
+                'severity' => $severity->value,
+            ],
+        );
+    }
+
+    public function complaintAssigned(OperationalComplaint $complaint, int $occurrenceId): void
+    {
+        $user = $this->recipients->resolveUserFromEmployeeId($complaint->assignee_employee_id);
+        if ($user === null) {
+            $this->skipUnresolvedRecipient(
+                'COMPLAINT_ASSIGNED',
+                'operational_complaint',
+                (int) $complaint->id,
+                $complaint->assignee_employee_id,
+            );
+
+            return;
+        }
+
+        $this->dispatcher->notify(
+            type: NotificationType::ComplaintAssigned,
+            recipientUsers: [$user],
+            entityType: 'operational_complaint',
+            entityId: (int) $complaint->id,
+            occurrenceKey: OperationalNotificationOccurrenceRecorder::occurrenceKey($occurrenceId),
+            context: ['number' => $complaint->complaint_number],
+        );
+    }
+
+    public function complaintEscalated(OperationalComplaint $complaint, int $occurrenceId): void
+    {
+        $user = $this->recipients->resolveUserFromEmployeeId($complaint->escalated_to_employee_id);
+        if ($user === null) {
+            $this->skipUnresolvedRecipient(
+                'COMPLAINT_ESCALATED',
+                'operational_complaint',
+                (int) $complaint->id,
+                $complaint->escalated_to_employee_id,
+            );
+
+            return;
+        }
+
+        $this->dispatcher->notify(
+            type: NotificationType::ComplaintEscalated,
+            recipientUsers: [$user],
+            entityType: 'operational_complaint',
+            entityId: (int) $complaint->id,
+            occurrenceKey: OperationalNotificationOccurrenceRecorder::occurrenceKey($occurrenceId),
+            context: ['number' => $complaint->complaint_number],
+        );
+    }
+
+    public function complaintResolved(OperationalComplaint $complaint, User $actor, int $occurrenceId): void
+    {
+        $closers = array_values(array_filter(
+            $this->recipients->usersWithPermission('complaints.close'),
+            static fn (User $user): bool => (int) $user->id !== (int) $actor->id,
+        ));
+
+        if ($closers === []) {
+            $this->skipUnresolvedRecipient('COMPLAINT_RESOLVED', 'operational_complaint', (int) $complaint->id, null);
+
+            return;
+        }
+
+        $this->dispatcher->notify(
+            type: NotificationType::ComplaintResolved,
+            recipientUsers: $closers,
+            entityType: 'operational_complaint',
+            entityId: (int) $complaint->id,
+            occurrenceKey: OperationalNotificationOccurrenceRecorder::occurrenceKey($occurrenceId),
+            context: ['number' => $complaint->complaint_number],
+        );
+    }
+
+    public function complaintReopened(OperationalComplaint $complaint, int $occurrenceId): void
+    {
+        $user = $this->recipients->resolveUserFromEmployeeId($complaint->assignee_employee_id);
+        if ($user === null) {
+            $this->skipUnresolvedRecipient(
+                'COMPLAINT_REOPENED',
+                'operational_complaint',
+                (int) $complaint->id,
+                $complaint->assignee_employee_id,
+            );
+
+            return;
+        }
+
+        $this->dispatcher->notify(
+            type: NotificationType::ComplaintReopened,
+            recipientUsers: [$user],
+            entityType: 'operational_complaint',
+            entityId: (int) $complaint->id,
+            occurrenceKey: OperationalNotificationOccurrenceRecorder::occurrenceKey($occurrenceId),
+            context: ['number' => $complaint->complaint_number],
+        );
+    }
+
+    private function skipUnresolvedRecipient(
+        string $type,
+        string $entityType,
+        int $entityId,
+        ?int $employeeId,
+    ): void {
+        Log::info('Notification recipient skipped.', [
+            'type' => $type,
+            'entity_type' => $entityType,
+            'entity_id' => $entityId,
+            'employee_id' => $employeeId,
+            'reason' => 'unresolved_or_inactive_user',
+        ]);
     }
 
     /**
