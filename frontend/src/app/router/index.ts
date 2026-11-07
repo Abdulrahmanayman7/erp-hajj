@@ -367,6 +367,30 @@ export const router = createRouter({
       meta: { requiresAuth: true, layout: 'app', permission: 'tasks.view' },
     },
     {
+      path: '/app/risks',
+      name: 'risks',
+      component: () => import('@/modules/risks-complaints/pages/SeasonRisksPage.vue'),
+      meta: { requiresAuth: true, layout: 'app', permission: 'risks.view' },
+    },
+    {
+      path: '/app/risks/:id',
+      name: 'risk-details',
+      component: () => import('@/modules/risks-complaints/pages/RiskDetailsPage.vue'),
+      meta: { requiresAuth: true, layout: 'app', permission: 'risks.view' },
+    },
+    {
+      path: '/app/complaints',
+      name: 'complaints',
+      component: () => import('@/modules/risks-complaints/pages/SeasonComplaintsPage.vue'),
+      meta: { requiresAuth: true, layout: 'app', permission: 'complaints.view' },
+    },
+    {
+      path: '/app/complaints/:id',
+      name: 'complaint-details',
+      component: () => import('@/modules/risks-complaints/pages/ComplaintDetailsPage.vue'),
+      meta: { requiresAuth: true, layout: 'app', permission: 'complaints.view' },
+    },
+    {
       path: '/app/documents',
       name: 'documents',
       component: () => import('@/modules/documents/pages/DocumentsListPage.vue'),

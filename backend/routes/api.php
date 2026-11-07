@@ -37,6 +37,9 @@ use App\Modules\OrganizationStructure\Controllers\OrganizationTreeController;
 use App\Modules\OrganizationStructure\Controllers\OrganizationUnitController;
 use App\Modules\Platform\Controllers\PlatformSetupController;
 use App\Modules\Platform\Controllers\PlatformTenantController;
+use App\Modules\RisksAndComplaints\Controllers\ComplaintController;
+use App\Modules\RisksAndComplaints\Controllers\OperationalLinksCapabilitiesController;
+use App\Modules\RisksAndComplaints\Controllers\RiskController;
 use App\Modules\SeasonPilgrims\Controllers\PilgrimController;
 use App\Modules\SeasonPilgrims\Controllers\SeasonContextController;
 use App\Modules\SeasonPilgrims\Controllers\SeasonController;
@@ -530,6 +533,34 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
             // (X-Season-Id header, default = Active season), never from payloads.
             Route::middleware('season.context')->group(function (): void {
                 Route::get('/season-context', [SeasonContextController::class, 'show'])->name('season-context.show');
+
+                Route::get('/operational-links/capabilities', OperationalLinksCapabilitiesController::class)
+                    ->name('operational-links.capabilities');
+
+                Route::get('/risks', [RiskController::class, 'index'])->name('risks.index');
+                Route::post('/risks', [RiskController::class, 'store'])->name('risks.store');
+                Route::get('/risks/{risk}', [RiskController::class, 'show'])->name('risks.show');
+                Route::patch('/risks/{risk}', [RiskController::class, 'update'])->name('risks.update');
+                Route::get('/risks/{risk}/timeline', [RiskController::class, 'timeline'])->name('risks.timeline');
+                Route::post('/risks/{risk}/assess', [RiskController::class, 'assess'])->name('risks.assess');
+                Route::post('/risks/{risk}/approve-assessment', [RiskController::class, 'approveAssessment'])->name('risks.approve-assessment');
+                Route::put('/risks/{risk}/treatment', [RiskController::class, 'upsertTreatment'])->name('risks.treatment');
+                Route::post('/risks/{risk}/assign', [RiskController::class, 'assign'])->name('risks.assign');
+                Route::post('/risks/{risk}/close', [RiskController::class, 'close'])->name('risks.close');
+                Route::delete('/risks/{risk}', [RiskController::class, 'destroy'])->name('risks.destroy');
+
+                Route::get('/complaints', [ComplaintController::class, 'index'])->name('complaints.index');
+                Route::post('/complaints', [ComplaintController::class, 'store'])->name('complaints.store');
+                Route::get('/complaints/{complaint}', [ComplaintController::class, 'show'])->name('complaints.show');
+                Route::patch('/complaints/{complaint}', [ComplaintController::class, 'update'])->name('complaints.update');
+                Route::get('/complaints/{complaint}/timeline', [ComplaintController::class, 'timeline'])->name('complaints.timeline');
+                Route::post('/complaints/{complaint}/assign', [ComplaintController::class, 'assign'])->name('complaints.assign');
+                Route::post('/complaints/{complaint}/escalate', [ComplaintController::class, 'escalate'])->name('complaints.escalate');
+                Route::post('/complaints/{complaint}/resolve', [ComplaintController::class, 'resolve'])->name('complaints.resolve');
+                Route::post('/complaints/{complaint}/close', [ComplaintController::class, 'close'])->name('complaints.close');
+                Route::post('/complaints/{complaint}/reopen', [ComplaintController::class, 'reopen'])->name('complaints.reopen');
+                Route::post('/complaints/{complaint}/notes', [ComplaintController::class, 'addNote'])->name('complaints.notes.store');
+                Route::delete('/complaints/{complaint}', [ComplaintController::class, 'destroy'])->name('complaints.destroy');
 
                 Route::get('/season-pilgrims', [SeasonPilgrimController::class, 'index'])->name('season-pilgrims.index');
                 Route::post('/season-pilgrims', [SeasonPilgrimController::class, 'store'])->name('season-pilgrims.store');
