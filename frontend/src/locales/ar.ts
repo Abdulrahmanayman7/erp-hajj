@@ -3459,7 +3459,13 @@ export const ar = {
   "COMPLAINT_CLOSED": "إغلاق شكوى",
   "COMPLAINT_REOPENED": "إعادة فتح شكوى",
   "COMPLAINT_NOTE_ADDED": "إضافة ملاحظة على شكوى",
-  "COMPLAINT_DELETED": "حذف شكوى"
+  "COMPLAINT_DELETED": "حذف شكوى",
+  "SEASON_TEMPLATE_CREATED": "إنشاء قالب موسم",
+  "SEASON_TEMPLATE_APPROVED": "اعتماد قالب موسم",
+  "SEASON_TEMPLATE_ARCHIVED": "أرشفة قالب موسم",
+  "SEASON_COPY_PREVIEW_CREATED": "إنشاء معاينة نسخ موسم",
+  "SEASON_COPY_EXECUTION_SUCCEEDED": "نجاح تنفيذ نسخ موسم",
+  "SEASON_COPY_EXECUTION_FAILED": "فشل تنفيذ نسخ موسم"
 },
     entities: {
   "accommodation_supervisor_scope": "نطاق الإشراف على الإسكان",
@@ -3520,6 +3526,9 @@ export const ar = {
   "tenant": "الشركة",
   "operational_risk": "خطر تشغيلي",
   "operational_complaint": "شكوى تشغيلية",
+  "season_template": "قالب موسم",
+  "season_copy_preview": "معاينة نسخ موسم",
+  "season_copy_run": "عملية نسخ موسم",
   "platform_admin": "مدير المنصة",
   "user_roles": "أدوار المستخدم",
   "role_permissions": "صلاحيات الدور",

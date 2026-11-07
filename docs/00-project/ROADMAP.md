@@ -1,8 +1,9 @@
 # Roadmap
 
 > **Status:** Draft (delivery order aligned to completed / next sprints)
-> **Last updated:** 2026-11-02
+> **Last updated:** 2026-11-07 (S08-D09 reconciliation on `develop` @ `a21e4ca`)
 > **Phase 2 product scope:** [ADR-0020](../10-decisions/ADR-0020-FULL-PHASE2-OPERATIONAL-SCOPE.md) (Full Phase 2 Operational Scope Adoption). Matrix: [PHASE2_SCOPE_MATRIX.md](PHASE2_SCOPE_MATRIX.md). Reconciliation: [PHASE2_SCOPE_RECONCILIATION.md](PHASE2_SCOPE_RECONCILIATION.md).
+> **Status vocabulary (S08-D09):** distinguish **Implemented** / **Merged** / **Tested** / **Owner Accepted** — merge ≠ automatic Owner acceptance.
 
 ## Purpose
 
@@ -76,10 +77,10 @@ Adopted by Project Owner via [ADR-0020](../10-decisions/ADR-0020-FULL-PHASE2-OPE
 
 | Accommodation & camps | S03 | In scope; **COMPLETE — ACCEPTED** (Owner **2026-10-31**). Evidence (unchanged from 2026-10-30 pack): UAT on `erp_hajj_s03_uat`; Pest Feature/Unit 63 PASS; MySQL concurrency 14 PASS; Vitest 46 PASS — `docs/audits/s03-accommodation-browser-uat/REPORT.md` / `S03_ACCEPTANCE_STATUS.md`. ADR-0019 still **PROPOSED / NOT ACCEPTED** |
 | Suppliers & purchase requests | S04 | **In Phase 2 product scope;** **FINAL FUNCTIONAL CLOSURE — OWNER GRANTED (2026-11-02)** on baseline `develop` @ `2d128a7` — [S04-FINAL-FUNCTIONAL-CLOSURE-2026-11-02.md](../10-decisions/S04-FINAL-FUNCTIONAL-CLOSURE-2026-11-02.md). Phases I–V Owner-accepted; residual follow-ups preserved (`fr_count=2`; MariaDB 1213 3/112). Commit/push/merge/deploy **NOT AUTHORIZED** by closure act |
-| Procurement cycle (RFQ/PO/receive) | S05 | **In Phase 2; Part 0 docs COMPLETE** (2026-11-02) inside module 19 — [PHASE_S05_PROCUREMENT_CYCLE_DESIGN.md](../09-modules/19-suppliers-and-procurement/PHASE_S05_PROCUREMENT_CYCLE_DESIGN.md); **implementation NOT_STARTED**; Parts 1–6 coding **NOT AUTHORIZED** |
-| Seasonal projects & tasks | S06 | **In Phase 2; NOT_STARTED** (MVP Tasks ≠ Phase 2 projects) |
-| Risks & complaints | S07 | **In Phase 2; NOT_STARTED** |
-| Seasonal templates (safe copy) | S08 | **In Phase 2; NOT_STARTED** |
+| Procurement cycle (RFQ/PO/receive) | S05 | **In Phase 2.** Part 0 docs exist in module 19. **Implemented + Merged** on `develop` (PR #41 history; RFQ/PO/GRN code present @ `a21e4ca`). **Owner Accepted:** no dedicated S05 final-acceptance certificate located in `docs/` as of 2026-11-07 — do not invent. Prior “implementation NOT_STARTED” wording was **stale** relative to the merge |
+| Seasonal projects & tasks | S06 | **In Phase 2; UNDER VERIFICATION** — no `season_projects` / Projects module evidence on `develop` @ `a21e4ca` (MVP Tasks ≠ Phase 2 projects). Not marked complete |
+| Risks & complaints | S07 | **In Phase 2.** **Implemented + Merged** via [PR #44](https://github.com/Abdulrahmanayman7/erp-hajj/pull/44) @ `a21e4ca` (`Modules/RisksAndComplaints` + FE + `docs/09-modules/21-risks-and-complaints/`). **Tested:** module Pest/Vitest + [S07_PART6_UAT_REPORT.md](../09-modules/21-risks-and-complaints/S07_PART6_UAT_REPORT.md). **Owner Accepted:** merge alone ≠ final Owner acceptance — not assumed |
+| Seasonal templates (safe copy) | S08 | **In Phase 2.** **Implemented** on `feature/s08-seasonal-templates` (BE+FE+migration+tests; matrix `2026-11-07.1`) — [20-seasonal-templates](../09-modules/20-seasonal-templates/). **Merged:** No. **Owner Accepted:** No. Merge/deploy require separate Owner acts |
 | Operational KPIs | S09 | **In Phase 2; NOT_STARTED** |
 | Executive ops dashboard | S10 | **In Phase 2; NOT_STARTED**; live ops map **in product scope** (ADR-0021) — not complete without real GPS/source |
 

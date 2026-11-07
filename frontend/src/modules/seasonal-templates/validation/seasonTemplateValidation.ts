@@ -1,0 +1,145 @@
+import {
+  APPROVED_ENTITY_KINDS,
+  type ApprovedEntityKind,
+  type ListViewState,
+} from '../types/seasonCopy'
+import type {
+  SeasonTemplate,
+  TemplateFormState,
+  TemplateItemPayload,
+  TemplateStatus,
+} from '../types/seasonTemplates'
+
+type Can = (permission: string) => boolean
+
+export function isApprovedEntityKind(kind: string): kind is ApprovedEntityKind {
+  return (APPROVED_ENTITY_KINDS as readonly string[]).includes(kind)
+}
+
+/** Keeps approved kinds only, in canonical (dependency) order, without duplicates. */
+export function filterApprovedEntityKinds(kinds: readonly string[]): ApprovedEntityKind[] {
+  return APPROVED_ENTITY_KINDS.filter((kind) => kinds.includes(kind))
+}
+
+/** Kinds that are not on the approved list (must never be sent). */
+export function deniedEntityKinds(kinds: readonly string[]): string[] {
+  return kinds.filter((kind) => !isApprovedEntityKind(kind))
+}
+
+export function emptyTemplateForm(): TemplateFormState {
+  return { name: '', description: '', entity_kinds: [], codes: {} }
+}
+
+export function templateToForm(template: SeasonTemplate): TemplateFormState {
+  const codes: Record<string, string> = {}
+  template.items.forEach((item) => {
+    if (item.selection?.codes?.length) codes[item.entity_kind] = item.selection.codes.join('\n')
+  })
+  return {
+    name: template.name,
+    description: template.description ?? '',
+    entity_kinds: filterApprovedEntityKinds(template.items.map((item) => item.entity_kind)),
+    codes,
+  }
+}
+
+export function parseCodes(raw: string | undefined): string[] {
+  if (!raw) return []
+  return [
+    ...new Set(
+      raw
+        .split(/[\n,،]/)
+        .map((code) => code.trim())
+        .filter((code) => code !== ''),
+    ),
+  ]
+}
+
+export function validateTemplateForm(form: TemplateFormState): Record<string, string> {
+  const errors: Record<string, string> = {}
+  const name = form.name.trim()
+  if (!name) errors.name = 'required'
+  else if (name.length > 200) errors.name = 'too_long'
+  if (form.description.trim().length > 5000) errors.description = 'too_long'
+  if (form.entity_kinds.length === 0) errors.entity_kinds = 'required'
+  else if (deniedEntityKinds(form.entity_kinds).length > 0) errors.entity_kinds = 'denied'
+  else if (form.entity_kinds.length > 20) errors.entity_kinds = 'too_many'
+  return errors
+}
+
+/** Builds API items from approved kinds only; unapproved kinds are dropped, never sent. */
+export function buildTemplateItems(form: TemplateFormState): TemplateItemPayload[] {
+  return filterApprovedEntityKinds(form.entity_kinds).map((kind) => {
+    const codes = parseCodes(form.codes[kind])
+    return codes.length > 0
+      ? { entity_kind: kind, selection: { codes } }
+      : { entity_kind: kind }
+  })
+}
+
+/* ---------------------------------------------------------------- permissions (UX only) */
+
+export function canViewTemplates(can: Can): boolean {
+  return can('season_templates.view')
+}
+
+export function canShowCreateTemplate(can: Can): boolean {
+  return can('season_templates.manage')
+}
+
+export function canEditTemplate(status: TemplateStatus, can: Can): boolean {
+  return can('season_templates.manage') && status === 'draft'
+}
+
+export function canApproveTemplate(template: Pick<SeasonTemplate, 'status' | 'items'>, can: Can): boolean {
+  return can('season_templates.manage') && template.status === 'draft' && template.items.length > 0
+}
+
+export function canArchiveTemplate(status: TemplateStatus, can: Can): boolean {
+  return can('season_templates.manage') && (status === 'draft' || status === 'approved')
+}
+
+export function canShowTemplateSource(can: Can): boolean {
+  return can('season_templates.view')
+}
+
+/* ---------------------------------------------------------------- display helpers */
+
+export function templateStatusBadgeClass(status: TemplateStatus): string {
+  switch (status) {
+    case 'draft':
+      return 'bg-amber-100 text-amber-950 ring-1 ring-inset ring-amber-300/80'
+    case 'approved':
+      return 'bg-emerald-100 text-emerald-950 ring-1 ring-inset ring-emerald-300/80'
+    case 'archived':
+    default:
+      return 'bg-neutral-100 text-neutral-700 ring-1 ring-inset ring-neutral-300/80'
+  }
+}
+
+export function resolveListState(options: {
+  isLoading: boolean
+  isError: boolean
+  count: number
+}): ListViewState {
+  if (options.isLoading) return 'loading'
+  if (options.isError) return 'error'
+  return options.count === 0 ? 'empty' : 'ready'
+}
+
+const KNOWN_ERROR_CODES = [
+  'SEASON_COPY_TARGET_NOT_DRAFT',
+  'SEASON_COPY_SOURCE_INVALID',
+  'SEASON_COPY_PREVIEW_STALE',
+  'SEASON_COPY_KIND_DENIED',
+  'SEASON_COPY_CONFLICT_UNRESOLVED',
+  'SEASON_COPY_PREVIEW_REQUIRED',
+  'SEASON_TEMPLATE_INVALID_TRANSITION',
+  'SEASON_NUMBER_UNAVAILABLE',
+  'VALIDATION_ERROR',
+] as const
+
+/** Maps a backend `code` to a locale key suffix; unknown codes fall back to `generic`. */
+export function mapSeasonalTemplatesErrorCode(code: string | undefined): string {
+  return (KNOWN_ERROR_CODES as readonly string[]).includes(code ?? '') ? code! : 'generic'
+}

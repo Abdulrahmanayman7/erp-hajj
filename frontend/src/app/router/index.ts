@@ -165,6 +165,30 @@ export const router = createRouter({
       meta: { requiresAuth: true, layout: 'app', permission: 'season_family_groups.view' },
     },
     {
+      path: '/app/season-templates',
+      name: 'season-templates',
+      component: () => import('@/modules/seasonal-templates/pages/SeasonTemplatesPage.vue'),
+      meta: { requiresAuth: true, layout: 'app', permission: 'season_templates.view' },
+    },
+    {
+      path: '/app/season-templates/:id',
+      name: 'season-template-details',
+      component: () => import('@/modules/seasonal-templates/pages/SeasonTemplateDetailsPage.vue'),
+      meta: { requiresAuth: true, layout: 'app', permission: 'season_templates.view' },
+    },
+    {
+      path: '/app/season-safe-copy',
+      name: 'season-safe-copy',
+      component: () => import('@/modules/seasonal-templates/pages/SeasonSafeCopyWizardPage.vue'),
+      meta: { requiresAuth: true, layout: 'app', permission: 'season_copy.preview' },
+    },
+    {
+      path: '/app/season-copy-runs',
+      name: 'season-copy-runs',
+      component: () => import('@/modules/seasonal-templates/pages/SeasonCopyRunsPage.vue'),
+      meta: { requiresAuth: true, layout: 'app', permission: 'season_copy.history' },
+    },
+    {
       path: '/app/contracts',
       name: 'contracts',
       component: () => import('@/modules/contracts/pages/ContractsPage.vue'),

@@ -30,6 +30,8 @@ final class PermissionCatalog
         'season_programs' => 'برامج الموسم',
         'season_family_groups' => 'مجموعات العائلات',
         'season_pilgrim_groups' => 'مجموعات الحجاج',
+        'season_templates' => 'قوالب المواسم',
+        'season_copy' => 'نسخ بيانات المواسم',
         'transportation' => 'النقل والأسطول',
         'accommodation' => 'الإسكان والمخيمات',
         'suppliers' => 'الموردون',
@@ -200,6 +202,12 @@ final class PermissionCatalog
             ['name' => 'season_pilgrim_groups.manage', 'display_name' => 'إدارة مجموعات الحجاج', 'module' => 'season_pilgrim_groups', 'description' => 'إنشاء وتعديل وحذف مجموعات الحجاج'],
             ['name' => 'season_pilgrim_groups.assign_members', 'display_name' => 'تعيين مجموعة الحاج', 'module' => 'season_pilgrim_groups', 'description' => 'تعيين مجموعة الحاج قبل تفعيل المشاركة'],
             ['name' => 'season_pilgrim_groups.manage_supervisors', 'display_name' => 'إدارة فريق الإشراف', 'module' => 'season_pilgrim_groups', 'description' => 'تعيين المشرف الرئيسي والمساعدين وإنهاء تكليفهم'],
+
+            ['name' => 'season_templates.view', 'display_name' => 'عرض قوالب المواسم', 'module' => 'season_templates', 'description' => 'عرض مكتبة قوالب المواسم وتفاصيلها'],
+            ['name' => 'season_templates.manage', 'display_name' => 'إدارة قوالب المواسم', 'module' => 'season_templates', 'description' => 'إنشاء قوالب المواسم وتعديلها واعتمادها وأرشفتها'],
+            ['name' => 'season_copy.preview', 'display_name' => 'معاينة نسخ الموسم', 'module' => 'season_copy', 'description' => 'إنشاء معاينة إلزامية لنسخ بيانات مرجعية آمنة إلى موسم مسودة'],
+            ['name' => 'season_copy.execute', 'display_name' => 'تنفيذ نسخ الموسم', 'module' => 'season_copy', 'description' => 'تنفيذ نسخ بيانات مرجعية آمنة بعد معاينة صالحة'],
+            ['name' => 'season_copy.history', 'display_name' => 'سجل نسخ الموسم', 'module' => 'season_copy', 'description' => 'عرض سجل عمليات النسخ ونتائجها'],
 
             ['name' => 'transportation.view', 'display_name' => 'عرض النقل', 'module' => 'transportation', 'description' => 'عرض نقاط النقل والمركبات والأسطول الموسمي والرحلات وكشوف الركاب والسجل التشغيلي'],
             ['name' => 'transportation.manage_registry', 'display_name' => 'إدارة سجل النقل', 'module' => 'transportation', 'description' => 'إدارة نقاط النقل والمركبات والسائقين الخارجيين وربط المركبة بأصل أو عقد'],
@@ -480,6 +488,11 @@ final class PermissionCatalog
                     'assets.assign',
                     'assets.return',
                     'assets.retire',
+                    'season_templates.view',
+                    'season_templates.manage',
+                    'season_copy.preview',
+                    'season_copy.execute',
+                    'season_copy.history',
                 ],
             ],
             'department_manager' => [
@@ -553,6 +566,7 @@ final class PermissionCatalog
                     'warehouses.view',
                     'inventory.view',
                     'assets.view',
+                    'season_templates.view',
                 ],
             ],
             'employee' => [
