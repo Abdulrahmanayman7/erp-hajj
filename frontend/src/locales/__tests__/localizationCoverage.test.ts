@@ -4,6 +4,7 @@ import { resolve, join } from 'node:path'
 import { ar } from '../ar'
 import { accommodationAr } from '../accommodationAr'
 import { seasonPilgrimsAr } from '../seasonPilgrimsAr'
+import { seasonProjectsAr } from '../seasonProjectsAr'
 import { risksComplaintsAr } from '../risksComplaintsAr'
 import { seasonalTemplatesAr } from '../seasonalTemplatesAr'
 import { transportationAr } from '../transportationAr'
@@ -15,6 +16,7 @@ const messages = {
     ...accommodationAr.nav,
     ...seasonPilgrimsAr.nav,
     ...transportationAr.nav,
+    ...seasonProjectsAr.nav,
     ...risksComplaintsAr.nav,
     ...seasonalTemplatesAr.nav,
   },
@@ -23,6 +25,7 @@ const messages = {
   seasons: seasonPilgrimsAr.seasons,
   seasonOps: seasonPilgrimsAr.seasonOps,
   transportation: transportationAr.transportation,
+  seasonProjects: seasonProjectsAr.seasonProjects,
   risks: risksComplaintsAr.risks,
   complaints: risksComplaintsAr.complaints,
   seasonalTemplates: seasonalTemplatesAr.seasonalTemplates,

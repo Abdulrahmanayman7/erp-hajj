@@ -7,11 +7,14 @@ use App\Core\Authorization\Support\AuthorizationSecurity;
 use App\Core\Tenancy\TenantContext;
 use App\Models\User;
 use App\Modules\Notifications\Support\NotificationHooks;
+use App\Modules\SeasonProjects\Support\SeasonProjectProgressRollup;
+use App\Modules\SeasonProjects\Support\SeasonProjectTaskGuard;
 use App\Modules\Tasks\Enums\TaskPriority;
 use App\Modules\Tasks\Enums\TaskStatus;
 use App\Modules\Tasks\Exceptions\TaskDomainException;
 use App\Modules\Tasks\Models\Task;
 use App\Modules\Tasks\Support\TaskAssignmentRecorder;
+use App\Modules\Tasks\Support\TaskDelaySynchronizer;
 use App\Modules\Tasks\Support\TaskNumberGenerator;
 use App\Modules\Tasks\Support\TaskReferenceValidator;
 use App\Modules\Tasks\Support\TaskTransitionRecorder;
@@ -29,6 +32,9 @@ final class CreateTask
         private readonly TaskAssignmentRecorder $assignments,
         private readonly AuthorizationSecurity $security,
         private readonly NotificationHooks $notifications,
+        private readonly SeasonProjectTaskGuard $projectGuard,
+        private readonly TaskDelaySynchronizer $delay,
+        private readonly SeasonProjectProgressRollup $progress,
     ) {}
 
     /**
@@ -60,6 +66,18 @@ final class CreateTask
                     : null;
                 $assignee = $this->references->resolveAssignableEmployee($assigneeId);
 
+                $projectId = array_key_exists('project_id', $data) && $data['project_id'] !== null
+                    ? (int) $data['project_id']
+                    : null;
+                $phaseId = array_key_exists('phase_id', $data) && $data['phase_id'] !== null
+                    ? (int) $data['phase_id']
+                    : null;
+                $explicitSeasonId = array_key_exists('season_id', $data) && $data['season_id'] !== null
+                    ? (int) $data['season_id']
+                    : null;
+
+                $linkage = $this->projectGuard->resolveLinkage($projectId, $phaseId, $explicitSeasonId);
+
                 $priority = TaskPriority::Medium;
                 if (isset($data['priority']) && is_string($data['priority']) && $data['priority'] !== '') {
                     $priority = TaskPriority::from($data['priority']);
@@ -81,8 +99,15 @@ final class CreateTask
                     'due_date' => $data['due_date'] ?? null,
                     'created_by' => $actor->id,
                 ]);
+                $task->forceFill([
+                    'season_id' => $linkage['season_id'],
+                    'project_id' => $linkage['project']?->id,
+                    'phase_id' => $linkage['phase']?->id,
+                ]);
                 $task->task_number = $this->numbers->next();
                 $task->save();
+
+                $this->delay->sync($task, $request, $actor->id);
 
                 if ($assignee !== null) {
                     $this->transitions->record(
@@ -103,6 +128,10 @@ final class CreateTask
                     );
                 }
 
+                if ($linkage['project'] !== null) {
+                    $this->progress->refresh($linkage['project']);
+                }
+
                 $this->security->record(AuthorizationSecurityEvent::TASK_CREATED, [
                     'tenant_id' => $tenant->id,
                     'actor_id' => $actor->id,
@@ -110,6 +139,9 @@ final class CreateTask
                     'task_number' => $task->task_number,
                     'status' => $task->status->value,
                     'decision_id' => $task->decision_id,
+                    'project_id' => $task->project_id,
+                    'phase_id' => $task->phase_id,
+                    'season_id' => $task->season_id,
                 ], $request);
 
                 if ($assignee !== null) {
@@ -141,6 +173,8 @@ final class CreateTask
             'organizationUnit',
             'assignee',
             'createdBy',
+            'project',
+            'phase',
             'statusTransitions.performer',
             'assignmentHistory.performer',
             'assignmentHistory.fromEmployee',

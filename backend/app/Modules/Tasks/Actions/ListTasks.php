@@ -76,6 +76,22 @@ final class ListTasks
             $query->where('priority', (string) $filters['priority']);
         }
 
+        if (! empty($filters['project_id'])) {
+            $query->where('project_id', (int) $filters['project_id']);
+        }
+
+        if (! empty($filters['season_id'])) {
+            $query->where('season_id', (int) $filters['season_id']);
+        }
+
+        if (! empty($filters['phase_id'])) {
+            $query->where('phase_id', (int) $filters['phase_id']);
+        }
+
+        if (! empty($filters['delay_state'])) {
+            $query->where('delay_state', (string) $filters['delay_state']);
+        }
+
         if (! empty($filters['due_date_from'])) {
             $query->where('due_date', '>=', (string) $filters['due_date_from']);
         }

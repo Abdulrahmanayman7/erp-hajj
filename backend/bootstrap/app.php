@@ -20,6 +20,7 @@ use App\Modules\OrganizationStructure\Exceptions\OrganizationDomainException;
 use App\Modules\Platform\Exceptions\PlatformDomainException;
 use App\Modules\SeasonPilgrims\Context\ResolveSeasonContext;
 use App\Modules\SeasonPilgrims\Exceptions\SeasonPilgrimDomainException;
+use App\Modules\SeasonProjects\Exceptions\SeasonProjectDomainException;
 use App\Modules\Settings\Exceptions\SettingsDomainException;
 use App\Modules\SuppliersAndProcurement\Exceptions\SupplierDomainException;
 use App\Modules\Tasks\Exceptions\TaskDomainException;
@@ -50,6 +51,7 @@ return Application::configure(basePath: dirname(__DIR__))
         __DIR__.'/../app/Modules/Contracts/Console',
         __DIR__.'/../app/Modules/Notifications/Console',
         __DIR__.'/../app/Modules/SuppliersAndProcurement/Console',
+        __DIR__.'/../app/Modules/Tasks/Console',
     ])
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->statefulApi();
@@ -104,6 +106,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(fn (AuthorizationDomainException $e): JsonResponse => $e->render());
         $exceptions->render(fn (AccommodationDomainException $e): JsonResponse => $e->render());
         $exceptions->render(fn (SeasonPilgrimDomainException $e): JsonResponse => $e->render());
+        $exceptions->render(fn (SeasonProjectDomainException $e): JsonResponse => $e->render());
         $exceptions->render(fn (TransportationDomainException $e): JsonResponse => $e->render());
         $exceptions->render(fn (OrganizationDomainException $e): JsonResponse => $e->render());
         $exceptions->render(fn (EmployeeDomainException $e): JsonResponse => $e->render());

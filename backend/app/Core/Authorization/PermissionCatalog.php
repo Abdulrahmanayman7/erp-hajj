@@ -36,6 +36,7 @@ final class PermissionCatalog
         'accommodation' => 'الإسكان والمخيمات',
         'suppliers' => 'الموردون',
         'geo_places' => 'الأماكن الجغرافية',
+        'season_projects' => 'مشاريع الموسم',
         'audit_logs' => 'سجل التدقيق',
         'dashboard' => 'لوحة التحكم',
         'tenant_settings' => 'إعدادات المنشأة',
@@ -288,6 +289,17 @@ final class PermissionCatalog
             ['name' => 'goods_receipts.post', 'display_name' => 'ترحيل سند استلام', 'module' => 'goods_receipts', 'description' => 'ترحيل سند الاستلام وتحديث الكميات وترحيل المخزون (صلاحية حساسة — تُمنح صراحةً فقط)'],
 
             ['name' => 'geo_places.view', 'display_name' => 'عرض الأماكن الجغرافية', 'module' => 'geo_places', 'description' => 'قراءة دليل الأماكن الجغرافية الأساسي'],
+
+            ['name' => 'season_projects.view', 'display_name' => 'عرض مشاريع الموسم', 'module' => 'season_projects', 'description' => 'عرض قائمة وتفاصيل مشاريع الموسم'],
+            ['name' => 'season_projects.create', 'display_name' => 'إنشاء مشروع موسم', 'module' => 'season_projects', 'description' => 'إنشاء مسودة مشروع موسم'],
+            ['name' => 'season_projects.update', 'display_name' => 'تعديل مشروع موسم', 'module' => 'season_projects', 'description' => 'تعديل بيانات المشروع وحذف المسودات'],
+            ['name' => 'season_projects.activate', 'display_name' => 'تفعيل مشروع موسم', 'module' => 'season_projects', 'description' => 'تفعيل مسودة مشروع الموسم'],
+            ['name' => 'season_projects.complete', 'display_name' => 'إكمال مشروع موسم', 'module' => 'season_projects', 'description' => 'إكمال مشروع نشط (صلاحية حساسة — تُمنح صراحةً فقط)'],
+            ['name' => 'season_projects.cancel', 'display_name' => 'إلغاء مشروع موسم', 'module' => 'season_projects', 'description' => 'إلغاء مشروع موسم (صلاحية حساسة — تُمنح صراحةً فقط)'],
+            ['name' => 'season_projects.manage_phases', 'display_name' => 'إدارة مراحل مشروع الموسم', 'module' => 'season_projects', 'description' => 'إدارة مراحل المشروع'],
+            ['name' => 'season_projects.manage_budget', 'display_name' => 'إدارة ميزانية مشروع الموسم', 'module' => 'season_projects', 'description' => 'تعيين ميزانية المشروع (E-Q13 — صريحة؛ ليست على قوالب تشغيلية عامة)'],
+            ['name' => 'season_projects.link_po', 'display_name' => 'ربط أوامر شراء بمشروع الموسم', 'module' => 'season_projects', 'description' => 'ربط وفك ربط أوامر الشراء (E-Q13 — صريحة؛ ليست على قوالب تشغيلية عامة)'],
+            ['name' => 'season_projects.reassign_owner', 'display_name' => 'إعادة تعيين مالك مشروع الموسم', 'module' => 'season_projects', 'description' => 'تغيير مالك المشروع النشط'],
 
             ['name' => 'audit_logs.view', 'display_name' => 'عرض سجل التدقيق', 'module' => 'audit_logs', 'description' => 'عرض سجلات تدقيق المنشأة'],
 
@@ -677,6 +689,11 @@ final class PermissionCatalog
             'purchase_orders.cancel',
             'purchase_orders.close',
             'goods_receipts.post',
+            // S06 — complete/cancel remain explicit-only.
+            // F-Q03 = A: manage_budget + link_po granted to tenant_owner via non-sensitive catalog path.
+            'season_projects.complete',
+            'season_projects.cancel',
+            // S07 — sensitive explicit-only.
             'risks.approve_assessment',
             'complaints.close',
             'complaints.reopen',

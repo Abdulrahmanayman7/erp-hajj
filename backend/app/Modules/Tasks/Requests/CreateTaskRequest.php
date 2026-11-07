@@ -28,6 +28,9 @@ class CreateTaskRequest extends FormRequest
             'assigned_to_employee_id' => ['nullable', 'integer', new TenantExists('employees')],
             'start_date' => ['nullable', 'date'],
             'due_date' => ['nullable', 'date'],
+            'project_id' => ['nullable', 'integer', new TenantExists('season_projects')],
+            'phase_id' => ['nullable', 'integer', new TenantExists('season_project_phases')],
+            'season_id' => ['nullable', 'integer', new TenantExists('seasons')],
         ];
     }
 }

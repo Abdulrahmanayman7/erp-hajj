@@ -391,6 +391,18 @@ export const router = createRouter({
       meta: { requiresAuth: true, layout: 'app', permission: 'tasks.view' },
     },
     {
+      path: '/app/season-projects',
+      name: 'season-projects',
+      component: () => import('@/modules/season-projects/pages/SeasonProjectsPage.vue'),
+      meta: { requiresAuth: true, layout: 'app', permission: 'season_projects.view' },
+    },
+    {
+      path: '/app/season-projects/:id',
+      name: 'season-project-details',
+      component: () => import('@/modules/season-projects/pages/SeasonProjectDetailPage.vue'),
+      meta: { requiresAuth: true, layout: 'app', permission: 'season_projects.view' },
+    },
+    {
       path: '/app/risks',
       name: 'risks',
       component: () => import('@/modules/risks-complaints/pages/SeasonRisksPage.vue'),

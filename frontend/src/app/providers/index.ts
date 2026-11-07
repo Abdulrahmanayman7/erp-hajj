@@ -9,6 +9,7 @@ import { ar } from '@/locales/ar'
 import { risksComplaintsAr } from '@/locales/risksComplaintsAr'
 import { seasonalTemplatesAr } from '@/locales/seasonalTemplatesAr'
 import { seasonPilgrimsAr } from '@/locales/seasonPilgrimsAr'
+import { seasonProjectsAr } from '@/locales/seasonProjectsAr'
 import { transportationAr } from '@/locales/transportationAr'
 import { autofocusWhen } from '@/shared/directives/autofocusWhen'
 
@@ -21,6 +22,7 @@ const arMessages = {
     ...accommodationAr.nav,
     ...seasonPilgrimsAr.nav,
     ...transportationAr.nav,
+    ...seasonProjectsAr.nav,
     ...risksComplaintsAr.nav,
     ...seasonalTemplatesAr.nav,
   },
@@ -29,6 +31,7 @@ const arMessages = {
   seasons: seasonPilgrimsAr.seasons,
   seasonOps: seasonPilgrimsAr.seasonOps,
   transportation: transportationAr.transportation,
+  seasonProjects: seasonProjectsAr.seasonProjects,
   risks: risksComplaintsAr.risks,
   complaints: risksComplaintsAr.complaints,
   seasonalTemplates: seasonalTemplatesAr.seasonalTemplates,

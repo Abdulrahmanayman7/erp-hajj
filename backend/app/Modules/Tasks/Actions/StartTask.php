@@ -6,9 +6,11 @@ use App\Core\Authorization\Events\AuthorizationSecurityEvent;
 use App\Core\Authorization\Support\AuthorizationSecurity;
 use App\Core\Tenancy\TenantContext;
 use App\Models\User;
+use App\Modules\SeasonProjects\Support\SeasonProjectTaskGuard;
 use App\Modules\Tasks\Enums\TaskStatus;
 use App\Modules\Tasks\Exceptions\TaskDomainException;
 use App\Modules\Tasks\Models\Task;
+use App\Modules\Tasks\Support\TaskDelaySynchronizer;
 use App\Modules\Tasks\Support\TaskLifecycle;
 use App\Modules\Tasks\Support\TaskTransitionRecorder;
 use Illuminate\Http\Request;
@@ -20,6 +22,8 @@ final class StartTask
         private readonly TenantContext $tenantContext,
         private readonly TaskTransitionRecorder $transitions,
         private readonly AuthorizationSecurity $security,
+        private readonly SeasonProjectTaskGuard $projectGuard,
+        private readonly TaskDelaySynchronizer $delay,
     ) {}
 
     public function execute(User $actor, Task $task, ?string $comment, Request $request): Task
@@ -28,6 +32,7 @@ final class StartTask
 
         return DB::transaction(function () use ($actor, $task, $comment, $request, $tenant): Task {
             $locked = Task::query()->whereKey($task->id)->lockForUpdate()->firstOrFail();
+            $this->projectGuard->assertNotFrozenForMutation($locked);
             $from = $locked->status;
             $to = TaskStatus::InProgress;
 
@@ -39,6 +44,7 @@ final class StartTask
 
             $locked->status = $to;
             $locked->save();
+            $this->delay->sync($locked, $request, $actor->id);
 
             $this->transitions->record(
                 $locked,
