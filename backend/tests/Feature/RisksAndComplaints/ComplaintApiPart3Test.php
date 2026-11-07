@@ -2,7 +2,6 @@
 
 use App\Core\Authorization\Events\AuthorizationSecurityEvent;
 use App\Core\Authorization\PermissionCatalog;
-use App\Core\Tenancy\Models\Tenant;
 use App\Modules\Audit\Models\AuditLog;
 use App\Modules\Employees\Models\Employee;
 use App\Modules\OrganizationStructure\Models\OrganizationUnit;

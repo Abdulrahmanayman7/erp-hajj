@@ -1,9 +1,15 @@
 <?php
 
 use App\Modules\Audit\Models\AuditLog;
+use App\Modules\Employees\Models\Employee;
 use App\Modules\Notifications\Enums\NotificationType;
 use App\Modules\Notifications\Models\Notification;
+use App\Modules\Notifications\Support\NotificationHooks;
+use App\Modules\OrganizationStructure\Models\OrganizationUnit;
+use App\Modules\RisksAndComplaints\Enums\RiskStatus;
 use App\Modules\RisksAndComplaints\Models\OperationalNotificationOccurrence;
+use App\Modules\RisksAndComplaints\Models\OperationalRisk;
+use App\Modules\RisksAndComplaints\Support\OperationalNotificationOccurrenceRecorder;
 use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\Sanctum;
 
@@ -99,11 +105,11 @@ it('allows escalate via assignee path and escalate permission path', function ()
         $tenant,
     );
     $linked = withTenant($tenant, function () use ($tenant, $assigneeUser) {
-        $unit = \App\Modules\OrganizationStructure\Models\OrganizationUnit::factory()->create([
+        $unit = OrganizationUnit::factory()->create([
             'tenant_id' => $tenant->id,
         ]);
 
-        return \App\Modules\Employees\Models\Employee::factory()->create([
+        return Employee::factory()->create([
             'organization_unit_id' => $unit->id,
             'status' => 'active',
             'user_id' => $assigneeUser->id,
@@ -162,11 +168,11 @@ it('UAT: full risk lifecycle with timeline and notifications', function (): void
     $approver = actingAsRiskUserWith(['risks.view', 'risks.approve_assessment', 'risks.assign', 'risks.close'], $tenant);
     $assignee = actingAsRiskUserWith(['risks.view'], $tenant);
     $linked = withTenant($tenant, function () use ($tenant, $assignee) {
-        $unit = \App\Modules\OrganizationStructure\Models\OrganizationUnit::factory()->create([
+        $unit = OrganizationUnit::factory()->create([
             'tenant_id' => $tenant->id,
         ]);
 
-        return \App\Modules\Employees\Models\Employee::factory()->create([
+        return Employee::factory()->create([
             'organization_unit_id' => $unit->id,
             'status' => 'active',
             'user_id' => $assignee->id,
@@ -220,11 +226,11 @@ it('UAT: complaint reopen with reason and distinct resolve notifications', funct
 
     $assigneeUser = actingAsRiskUserWith(complaintNonSensitivePermissions(), $tenant);
     $linked = withTenant($tenant, function () use ($tenant, $assigneeUser) {
-        $unit = \App\Modules\OrganizationStructure\Models\OrganizationUnit::factory()->create([
+        $unit = OrganizationUnit::factory()->create([
             'tenant_id' => $tenant->id,
         ]);
 
-        return \App\Modules\Employees\Models\Employee::factory()->create([
+        return Employee::factory()->create([
             'organization_unit_id' => $unit->id,
             'status' => 'active',
             'user_id' => $assigneeUser->id,
@@ -293,11 +299,11 @@ it('UAT: rolled-back assign produces zero notification and occurrence', function
     $ctx = riskBootContext();
     $assignee = actingAsRiskUserWith(['risks.view'], $tenant);
     $linked = withTenant($tenant, function () use ($tenant, $assignee) {
-        $unit = \App\Modules\OrganizationStructure\Models\OrganizationUnit::factory()->create([
+        $unit = OrganizationUnit::factory()->create([
             'tenant_id' => $tenant->id,
         ]);
 
-        return \App\Modules\Employees\Models\Employee::factory()->create([
+        return Employee::factory()->create([
             'organization_unit_id' => $unit->id,
             'status' => 'active',
             'user_id' => $assignee->id,
@@ -321,18 +327,18 @@ it('UAT: rolled-back assign produces zero notification and occurrence', function
     try {
         withTenant($tenant, function () use ($risk, $linked): void {
             DB::transaction(function () use ($risk, $linked): void {
-                $model = \App\Modules\RisksAndComplaints\Models\OperationalRisk::query()
+                $model = OperationalRisk::query()
                     ->lockForUpdate()
                     ->findOrFail($risk['id']);
                 $model->forceFill([
-                    'status' => \App\Modules\RisksAndComplaints\Enums\RiskStatus::Treating->value,
+                    'status' => RiskStatus::Treating->value,
                     'owner_employee_id' => $linked->id,
                     'assigned_at' => now(),
                     'assigned_by' => auth()->id(),
                 ])->save();
-                $occ = app(\App\Modules\RisksAndComplaints\Support\OperationalNotificationOccurrenceRecorder::class)
+                $occ = app(OperationalNotificationOccurrenceRecorder::class)
                     ->record('operational_risk', (int) $model->id, 'assign');
-                app(\App\Modules\Notifications\Support\NotificationHooks::class)
+                app(NotificationHooks::class)
                     ->riskAssigned($model->fresh(['ownerEmployee']), $occ);
                 throw new RuntimeException('force rollback');
             });
