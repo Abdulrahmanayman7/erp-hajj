@@ -3,7 +3,7 @@
 > **Date:** 2026-11-08  
 > **Branch:** `feature/s08-seasonal-templates`  
 > **Baseline commit (start):** `3515658`  
-> **Post-gate fix commit:** _(see git after commit)_  
+> **Post-gate fix commit:** `2e3e360`  
 > **Matrix:** `SafeCopyAllowlist::MATRIX_VERSION = 2026-11-08.2` (10 kinds)  
 > **Owner Accepted / merged / pushed / deployed:** **No**
 
