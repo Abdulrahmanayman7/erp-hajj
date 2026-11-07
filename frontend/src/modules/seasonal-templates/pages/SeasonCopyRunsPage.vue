@@ -148,7 +148,7 @@ function formatWhen(iso: string | null): string {
               <td class="px-5 py-3.5 text-start">{{ seasonName(row.target_season_id) }}</td>
               <td class="px-5 py-3.5 text-start text-xs text-brand-text-secondary">
                 <template v-if="row.counts">
-                  {{ t('seasonalTemplates.runs.countsSummary', row.counts) }}
+                  {{ t('seasonalTemplates.runs.countsSummary', { ...row.counts }) }}
                 </template>
                 <template v-else>—</template>
               </td>
