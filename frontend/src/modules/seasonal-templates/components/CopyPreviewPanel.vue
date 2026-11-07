@@ -8,6 +8,7 @@ import type { CopyDecision, SeasonCopyPreview, SeasonCopyPreviewLine } from '../
 import {
   allowedDecisions,
   conflictKey,
+  dateTransformRows,
   formatSummaryValue,
   lineActionBadgeClass,
   unresolvedConflicts,
@@ -146,6 +147,14 @@ function summaryEntries(line: SeasonCopyPreviewLine): string[] {
               <ul v-if="summaryEntries(line).length" class="space-y-0.5" dir="ltr">
                 <li v-for="entry in summaryEntries(line)" :key="entry" class="text-start">{{ entry }}</li>
               </ul>
+              <div v-if="dateTransformRows(line).length" class="mt-2" data-testid="preview-date-transforms">
+                <p class="font-semibold text-brand-text">{{ t('seasonalTemplates.copy.dateTransforms') }}</p>
+                <ul class="space-y-0.5" dir="ltr">
+                  <li v-for="row in dateTransformRows(line)" :key="row.field" class="text-start">
+                    {{ row.field }}: {{ row.before }} → {{ row.after }}
+                  </li>
+                </ul>
+              </div>
             </td>
             <td class="min-w-44 px-4 py-3 text-start">
               <template v-if="line.action === 'conflict'">

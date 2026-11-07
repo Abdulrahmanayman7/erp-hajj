@@ -11,9 +11,13 @@ use App\Modules\SeasonalTemplates\Models\SeasonTemplateItem;
  */
 final class TemplateItemWriter
 {
+    public function __construct(
+        private readonly SnapshotNormalizer $snapshots,
+    ) {}
+
     /**
      * @param  array<int, mixed>  $items
-     * @return list<array{entity_kind: string, selection: array<string, mixed>|null}>
+     * @return list<array{entity_kind: string, selection: array<string, mixed>|null, snapshot: array{anchor: string|null, rows: array<string, array<string, mixed>>}|null}>
      */
     public function normalize(array $items): array
     {
@@ -36,6 +40,7 @@ final class TemplateItemWriter
             $normalized[] = [
                 'entity_kind' => $kind,
                 'selection' => $codes === [] ? null : ['codes' => $codes],
+                'snapshot' => $this->snapshots->normalize($kind, $item['snapshot'] ?? null),
             ];
         }
 
@@ -46,7 +51,24 @@ final class TemplateItemWriter
     }
 
     /**
-     * @param  list<array{entity_kind: string, selection: array<string, mixed>|null}>  $items
+     * Snapshot-only kinds (contract definitions) have no live source, so an item
+     * without snapshot rows would be unusable.
+     *
+     * @param  list<array{entity_kind: string, snapshot: array<string, mixed>|null}>  $items
+     */
+    public function assertSnapshotRequirements(array $items): void
+    {
+        foreach ($items as $item) {
+            if (SafeCopyAllowlist::isSnapshotOnly($item['entity_kind']) && $item['snapshot'] === null) {
+                throw SeasonalTemplatesDomainException::snapshotInvalid(
+                    'هذا النوع يتطلب صفوف لقطة داخل القالب: '.$item['entity_kind'],
+                );
+            }
+        }
+    }
+
+    /**
+     * @param  list<array{entity_kind: string, selection: array<string, mixed>|null, snapshot: array<string, mixed>|null}>  $items
      */
     public function replace(SeasonTemplate $template, array $items): void
     {
@@ -58,6 +80,7 @@ final class TemplateItemWriter
                 'entity_kind' => $item['entity_kind'],
                 'sort_order' => $index,
                 'selection_json' => $item['selection'],
+                'snapshot_json' => $item['snapshot'],
             ]))->save();
         }
     }
@@ -70,6 +93,10 @@ final class TemplateItemWriter
 
         foreach ($template->items as $item) {
             SafeCopyAllowlist::assertApproved($item->entity_kind);
+
+            if (SafeCopyAllowlist::isSnapshotOnly($item->entity_kind) && ($item->snapshot_json['rows'] ?? []) === []) {
+                throw SeasonalTemplatesDomainException::invalidTransition('لا يمكن اعتماد قالب بنوع يتطلب لقطة دون صفوف.');
+            }
         }
     }
 }

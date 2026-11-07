@@ -8,11 +8,6 @@ use App\Core\Shared\CorrelationId;
 use App\Core\Tenancy\TenantContext;
 use App\Models\User;
 use App\Modules\SeasonalTemplates\Adapters\AbstractSafeCopyAdapter;
-use App\Modules\SeasonalTemplates\Adapters\AccommodationSeasonFacilitiesSafeCopyAdapter;
-use App\Modules\SeasonalTemplates\Adapters\SeasonPilgrimGroupsSafeCopyAdapter;
-use App\Modules\SeasonalTemplates\Adapters\SeasonProgramsSafeCopyAdapter;
-use App\Modules\SeasonalTemplates\Adapters\TransportEntitlementsSafeCopyAdapter;
-use App\Modules\SeasonalTemplates\Adapters\TransportSeasonVehiclesSafeCopyAdapter;
 use App\Modules\SeasonalTemplates\Enums\CopyMode;
 use App\Modules\SeasonalTemplates\Enums\CopyRunStatus;
 use App\Modules\SeasonalTemplates\Enums\PreviewStatus;
@@ -25,6 +20,7 @@ use App\Modules\SeasonalTemplates\Models\SeasonCopyRunLine;
 use App\Modules\SeasonalTemplates\Models\SeasonTemplate;
 use App\Modules\SeasonPilgrims\Enums\SeasonStatus;
 use App\Modules\SeasonPilgrims\Models\Season;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -47,30 +43,17 @@ final class SafeCopyOrchestrator
     /** Conflict codes for which an explicit `overwrite` decision is allowed. */
     private const OVERWRITABLE_CONFLICTS = ['DUPLICATE_KEY', 'MANUAL_MODIFIED'];
 
-    /**
-     * @var array<string, SafeCopyAdapter>
-     */
-    private array $adapters = [];
-
     public function __construct(
         private readonly TenantContext $tenantContext,
         private readonly AuthorizationSecurity $security,
         private readonly CorrelationId $correlationId,
         private readonly SeasonCopyRunNumberGenerator $runNumbers,
         private readonly SafeCopyProvenanceStore $provenance,
-        SeasonProgramsSafeCopyAdapter $programs,
-        SeasonPilgrimGroupsSafeCopyAdapter $groups,
-        TransportEntitlementsSafeCopyAdapter $entitlements,
-        TransportSeasonVehiclesSafeCopyAdapter $vehicles,
-        AccommodationSeasonFacilitiesSafeCopyAdapter $facilities,
-    ) {
-        foreach ([$programs, $groups, $entitlements, $vehicles, $facilities] as $adapter) {
-            $this->adapters[$adapter->entityKind()] = $adapter;
-        }
-    }
+        private readonly SafeCopyAdapterRegistry $adapters,
+    ) {}
 
     /**
-     * @param  array<string, mixed>  $input  mode, source_season_id, target_season_id, source_template_id?,
+     * @param  array<string, mixed>  $input  mode, source_season_id?, target_season_id, source_template_id?,
      *                                       selection{entity_kinds?, codes?}, date_mapping{strategy?}
      */
     public function createPreview(User $actor, array $input, Request $request): SeasonCopyPreview
@@ -78,7 +61,9 @@ final class SafeCopyOrchestrator
         $tenant = $this->tenantContext->require();
 
         $mode = CopyMode::from((string) $input['mode']);
-        $source = Season::query()->findOrFail((int) $input['source_season_id']);
+        $source = ($input['source_season_id'] ?? null) !== null
+            ? Season::query()->findOrFail((int) $input['source_season_id'])
+            : null;
         $target = Season::query()->findOrFail((int) $input['target_season_id']);
         $this->assertSeasons($source, $target);
 
@@ -87,29 +72,33 @@ final class SafeCopyOrchestrator
             : null;
 
         $selection = $this->buildSelection($mode, $template, $input);
-        $dateMapping = $this->dateMapping($source, $target);
-        $built = $this->buildPlan($source, $target, $selection);
+        $this->assertActorMayCopy($actor, $selection);
+
+        $context = $this->buildContext($mode, $source, $target, $template, $selection, $request);
+        $built = $this->buildPlan($context);
+        $dateMapping = $this->dateMapping($context, $built['lines']);
 
         $contentHash = $this->contentHash(
             $mode,
-            $source->id,
+            $context->source?->id,
             $target->id,
             $template?->id,
             $selection,
             $dateMapping,
             $built['lines'],
+            $context->snapshots,
         );
 
-        return DB::transaction(function () use ($actor, $request, $tenant, $mode, $source, $target, $template, $selection, $dateMapping, $built, $contentHash): SeasonCopyPreview {
+        return DB::transaction(function () use ($actor, $request, $tenant, $mode, $context, $target, $template, $selection, $dateMapping, $built, $contentHash): SeasonCopyPreview {
             $preview = new SeasonCopyPreview([
                 'preview_token' => (string) Str::uuid(),
                 'mode' => $mode,
-                'source_season_id' => $source->id,
+                'source_season_id' => $context->source?->id,
                 'source_template_id' => $template?->id,
                 'target_season_id' => $target->id,
                 'matrix_version' => SafeCopyAllowlist::MATRIX_VERSION,
                 'content_hash' => $contentHash,
-                'source_fingerprint' => $this->seasonFingerprint($source),
+                'source_fingerprint' => $this->seasonFingerprint($context->source),
                 'target_fingerprint' => $this->seasonFingerprint($target),
                 'adapter_fingerprints_json' => $built['fingerprints'],
                 'date_mapping_json' => $dateMapping,
@@ -144,11 +133,12 @@ final class SafeCopyOrchestrator
                 'entity_type' => 'season_copy_preview',
                 'entity_id' => $preview->id,
                 'mode' => $mode->value,
-                'source_season_id' => $source->id,
+                'source_season_id' => $context->source?->id,
                 'target_season_id' => $target->id,
                 'source_template_id' => $template?->id,
                 'matrix_version' => SafeCopyAllowlist::MATRIX_VERSION,
                 'entity_kinds' => $selection['entity_kinds'],
+                'snapshot_kinds' => array_keys($context->snapshots),
                 'counts' => $built['counts'],
             ], $request);
 
@@ -172,6 +162,9 @@ final class SafeCopyOrchestrator
         $preview = SeasonCopyPreview::query()->where('preview_token', $token)->firstOrFail();
         $startedAt = now();
 
+        // The executing actor needs the create permission of every module a kind writes to.
+        $this->assertActorMayCopy($actor, (array) $preview->selection_json);
+
         try {
             return DB::transaction(
                 fn (): SeasonCopyRun => $this->runExecution($actor, $preview, $input, $request, $startedAt),
@@ -193,7 +186,9 @@ final class SafeCopyOrchestrator
         // Serialize executions of the same preview and target season.
         $preview = SeasonCopyPreview::query()->whereKey($stored->id)->lockForUpdate()->firstOrFail();
         $target = Season::query()->whereKey($preview->target_season_id)->lockForUpdate()->firstOrFail();
-        $source = Season::query()->findOrFail($preview->source_season_id);
+        $source = $preview->source_season_id !== null
+            ? Season::query()->findOrFail($preview->source_season_id)
+            : null;
 
         $provided = (string) ($input['content_hash'] ?? '');
         if ($provided === '' || ! hash_equals($preview->content_hash, $provided)) {
@@ -225,21 +220,24 @@ final class SafeCopyOrchestrator
 
         /** @var array{entity_kinds: list<string>, codes: array<string, list<string>>} $selection */
         $selection = $preview->selection_json;
-        $built = $this->buildPlan($source, $target, $selection);
+        $context = $this->buildContext($preview->mode, $source, $target, $template, $selection, $request);
+        $built = $this->buildPlan($context);
+        $dateMapping = $this->dateMapping($context, $built['lines']);
 
         $hash = $this->contentHash(
             $preview->mode,
-            $source->id,
+            $context->source?->id,
             $target->id,
             $preview->source_template_id,
             $selection,
-            $preview->date_mapping_json ?? [],
+            $dateMapping,
             $built['lines'],
+            $context->snapshots,
         );
 
         if (
             ! hash_equals($preview->content_hash, $hash)
-            || ! hash_equals($preview->source_fingerprint, $this->seasonFingerprint($source))
+            || ! hash_equals($preview->source_fingerprint, $this->seasonFingerprint($context->source))
             || ! hash_equals($preview->target_fingerprint, $this->seasonFingerprint($target))
             || $preview->adapter_fingerprints_json !== $built['fingerprints']
         ) {
@@ -252,7 +250,7 @@ final class SafeCopyOrchestrator
             'run_number' => $this->runNumbers->next(),
             'preview_id' => $preview->id,
             'mode' => $preview->mode,
-            'source_season_id' => $source->id,
+            'source_season_id' => $context->source?->id,
             'source_template_id' => $preview->source_template_id,
             'target_season_id' => $target->id,
             'status' => CopyRunStatus::Succeeded,
@@ -276,7 +274,7 @@ final class SafeCopyOrchestrator
                 continue;
             }
 
-            $results = $this->adapter($kind)->apply($source, $target, $directives[$kind], $run->id, $actor);
+            $results = $this->adapters->get($kind)->apply($context, $directives[$kind], $run->id, $actor);
 
             foreach ($results as $result) {
                 $this->recordRunLine(
@@ -300,11 +298,12 @@ final class SafeCopyOrchestrator
                         $kind,
                         $target->id,
                         $result['target_id'],
-                        $source->id,
+                        $context->snapshotFor($kind) !== null ? null : $context->source?->id,
                         $preview->source_template_id,
                         $result['source_id'],
                         $run->id,
                         $result['copied_hash'],
+                        $result['natural_key'],
                     );
                 }
             }
@@ -321,11 +320,12 @@ final class SafeCopyOrchestrator
             'entity_number' => $run->run_number,
             'preview_id' => $preview->id,
             'mode' => $preview->mode->value,
-            'source_season_id' => $source->id,
+            'source_season_id' => $context->source?->id,
             'target_season_id' => $target->id,
             'source_template_id' => $preview->source_template_id,
             'matrix_version' => SafeCopyAllowlist::MATRIX_VERSION,
             'entity_kinds' => $selection['entity_kinds'],
+            'snapshot_kinds' => array_keys($context->snapshots),
             'counts' => $counts,
         ], $request);
 
@@ -393,19 +393,79 @@ final class SafeCopyOrchestrator
      * Source: draft|active|closed. Target: draft only. Distinct seasons.
      * Both seasons were loaded through the tenant scope, so they share the tenant.
      */
-    private function assertSeasons(Season $source, Season $target): void
+    private function assertSeasons(?Season $source, Season $target): void
     {
-        if ($source->id === $target->id) {
-            throw SeasonalTemplatesDomainException::sourceInvalid('الموسم المصدر والهدف يجب أن يختلفا.');
-        }
+        if ($source !== null) {
+            if ($source->id === $target->id) {
+                throw SeasonalTemplatesDomainException::sourceInvalid('الموسم المصدر والهدف يجب أن يختلفا.');
+            }
 
-        if (! in_array($source->status, [SeasonStatus::Draft, SeasonStatus::Active, SeasonStatus::Closed], true)) {
-            throw SeasonalTemplatesDomainException::sourceInvalid();
+            if (! in_array($source->status, [SeasonStatus::Draft, SeasonStatus::Active, SeasonStatus::Closed], true)) {
+                throw SeasonalTemplatesDomainException::sourceInvalid();
+            }
         }
 
         if ($target->status !== SeasonStatus::Draft) {
             throw SeasonalTemplatesDomainException::targetNotDraft();
         }
+    }
+
+    /**
+     * Kinds that write into another module also need that module's create permission.
+     *
+     * @param  array<string, mixed>  $selection
+     */
+    private function assertActorMayCopy(User $actor, array $selection): void
+    {
+        foreach ((array) ($selection['entity_kinds'] ?? []) as $kind) {
+            $permission = SafeCopyAllowlist::requiredPermission((string) $kind);
+            if ($permission !== null && ! $actor->hasPermission($permission)) {
+                throw new AuthorizationException;
+            }
+        }
+    }
+
+    /**
+     * Resolve where each selected kind reads its rows from (X01):
+     * a template snapshot when present, otherwise the live source season.
+     *
+     * @param  array{entity_kinds: list<string>, codes: array<string, list<string>>}  $selection
+     */
+    private function buildContext(CopyMode $mode, ?Season $source, Season $target, ?SeasonTemplate $template, array $selection, Request $request): SafeCopyContext
+    {
+        $snapshots = [];
+        if ($mode === CopyMode::FromTemplate && $template !== null) {
+            foreach ($template->items as $item) {
+                $rows = $item->snapshot_json['rows'] ?? [];
+                if (in_array($item->entity_kind, $selection['entity_kinds'], true) && $rows !== []) {
+                    $snapshots[$item->entity_kind] = [
+                        'anchor' => $item->snapshot_json['anchor'] ?? null,
+                        'rows' => $rows,
+                    ];
+                }
+            }
+        }
+
+        $needsLiveSource = false;
+        foreach ($selection['entity_kinds'] as $kind) {
+            if (isset($snapshots[$kind])) {
+                continue;
+            }
+
+            if (SafeCopyAllowlist::isSnapshotOnly($kind)) {
+                throw $mode === CopyMode::FromSeason
+                    ? SeasonalTemplatesDomainException::kindDenied($kind)
+                    : SeasonalTemplatesDomainException::snapshotRequired($kind);
+            }
+
+            $needsLiveSource = true;
+        }
+
+        if ($needsLiveSource && $source === null) {
+            throw SeasonalTemplatesDomainException::sourceRequired();
+        }
+
+        return new SafeCopyContext($needsLiveSource ? $source : null, $target, $selection, $snapshots, $request);
     }
 
     private function loadUsableTemplate(int $templateId): SeasonTemplate
@@ -478,41 +538,67 @@ final class SafeCopyOrchestrator
     }
 
     /**
-     * Date mapping (DT-01): none of the approved kinds carries a date field, so no
-     * field is transformed; the anchors are recorded so a later season-date change
-     * is visible to stale-preview detection.
+     * Date mapping (X05, `season_start_delta`): the anchors per kind (live source or
+     * template snapshot) and the planning fields that the plan actually remapped.
+     * Recorded in the preview so anchor changes are visible to stale detection and the
+     * UI can explain every before/after (`summary.date_transforms` on each line).
      *
+     * @param  list<array<string, mixed>>  $lines
      * @return array<string, mixed>
      */
-    private function dateMapping(Season $source, Season $target): array
+    private function dateMapping(SafeCopyContext $context, array $lines): array
     {
+        $kinds = [];
+        foreach ($context->selection['entity_kinds'] as $kind) {
+            $mapping = $context->mappingFor($kind);
+            $kinds[$kind] = [
+                'origin' => $context->snapshotFor($kind) !== null ? 'snapshot' : 'live',
+                'source_anchor' => $mapping['source_anchor'],
+                'delta_days' => $mapping['delta_days'],
+            ];
+        }
+
+        $transformed = [];
+        foreach ($lines as $line) {
+            foreach (array_keys((array) ($line['summary']['date_transforms'] ?? [])) as $field) {
+                $transformed[$line['entity_kind'].'.'.$field] = true;
+            }
+        }
+        $transformed = array_keys($transformed);
+        sort($transformed);
+
+        $source = $context->source;
+        $target = $context->target;
+
         return [
             'strategy' => self::DATE_STRATEGY,
-            'source_anchor' => $source->operational_starts_on->toDateString(),
+            'source_anchor' => $source?->operational_starts_on->toDateString(),
             'target_anchor' => $target->operational_starts_on->toDateString(),
-            'delta_days' => (int) $source->operational_starts_on->diffInDays($target->operational_starts_on, false),
-            'transformed_fields' => [],
+            'delta_days' => $source === null
+                ? null
+                : (int) $source->operational_starts_on->diffInDays($target->operational_starts_on, false),
+            'kinds' => $kinds,
+            'transformed_fields' => $transformed,
         ];
     }
 
     /**
-     * @param  array{entity_kinds: list<string>, codes: array<string, list<string>>}  $selection
      * @return array{
      *   lines: list<array{entity_kind: string, action: string, natural_key: string, source_id: int|null, target_id: int|null, conflict_code: string|null, reason_code: string|null, summary: array<string, mixed>}>,
      *   counts: array<string, int>,
      *   fingerprints: array<string, string>
      * }
      */
-    private function buildPlan(Season $source, Season $target, array $selection): array
+    private function buildPlan(SafeCopyContext $context): array
     {
         $lines = [];
         $counts = ['add' => 0, 'change' => 0, 'exclude' => 0, 'conflict' => 0];
         $fingerprints = [];
 
-        foreach ($selection['entity_kinds'] as $kind) {
-            $adapter = $this->adapter($kind);
-            $plan = $adapter->plan($source, $target, $selection);
-            $fingerprints[$kind] = $adapter->fingerprint($source, $target);
+        foreach ($context->selection['entity_kinds'] as $kind) {
+            $adapter = $this->adapters->get($kind);
+            $plan = $adapter->plan($context);
+            $fingerprints[$kind] = $adapter->fingerprint($context);
 
             $kindLines = [];
             foreach ([['adds', 'add'], ['changes', 'change'], ['excludes', 'exclude'], ['conflicts', 'conflict']] as [$bucket, $action]) {
@@ -542,8 +628,9 @@ final class SafeCopyOrchestrator
      * @param  array{entity_kinds: list<string>, codes: array<string, list<string>>}  $selection
      * @param  array<string, mixed>  $dateMapping
      * @param  list<array<string, mixed>>  $lines
+     * @param  array<string, array<string, mixed>>  $snapshots  fingerprinted so a snapshot change invalidates the preview
      */
-    private function contentHash(CopyMode $mode, int $sourceId, int $targetId, ?int $templateId, array $selection, array $dateMapping, array $lines): string
+    private function contentHash(CopyMode $mode, ?int $sourceId, int $targetId, ?int $templateId, array $selection, array $dateMapping, array $lines, array $snapshots): string
     {
         return CanonicalJson::hash([
             'matrix_version' => SafeCopyAllowlist::MATRIX_VERSION,
@@ -553,12 +640,17 @@ final class SafeCopyOrchestrator
             'source_template_id' => $templateId,
             'selection' => $selection,
             'date_mapping' => $dateMapping,
+            'snapshots' => array_map(static fn (array $snapshot): string => CanonicalJson::hash($snapshot), $snapshots),
             'lines' => $lines,
         ]);
     }
 
-    private function seasonFingerprint(Season $season): string
+    private function seasonFingerprint(?Season $season): string
     {
+        if ($season === null) {
+            return CanonicalJson::hash(['source' => null]);
+        }
+
         return CanonicalJson::hash([
             'id' => $season->id,
             'status' => $season->status->value,
@@ -628,12 +720,5 @@ final class SafeCopyOrchestrator
             'source_row_id' => $sourceId,
             'target_row_id' => $targetId,
         ]))->save();
-    }
-
-    private function adapter(string $kind): SafeCopyAdapter
-    {
-        SafeCopyAllowlist::assertApproved($kind);
-
-        return $this->adapters[$kind] ?? throw SeasonalTemplatesDomainException::kindDenied($kind);
     }
 }

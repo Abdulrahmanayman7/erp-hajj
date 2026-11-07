@@ -1,6 +1,7 @@
 # S08 — Safe Copy Entity Matrix (Proposal)
 
-> **Status:** `IMPLEMENTED — MATRIX_VERSION 2026-11-07.1` (coding Owner-authorized 2026-11-07)  
+> **Status:** `IMPLEMENTED — MATRIX_VERSION 2026-11-08.1` (nine APPROVED kinds; expansion X01–X05 per [OWNER_DECISIONS_EXPANSION.md](OWNER_DECISIONS_EXPANSION.md); X06 reminder rules **DISABLED**)  
+> **Last updated:** 2026-11-08  
 > **Policy:** Deny by default (S08-D01). Unlisted / unapproved = **NOT AUTHORIZED FOR COPYING**.  
 > **Code source of truth:** `backend/app/Modules/SeasonalTemplates/Support/SafeCopyAllowlist.php`  
 > **Baseline tables:** verified present on `develop` @ `a21e4ca` unless marked absent.  
@@ -53,7 +54,10 @@ Conflict behavior defaults (D04): `skip_manual` \| `overwrite_if_system` \| `fai
 | Risks/Complaints (S07) | `operational_complaints`, `operational_complaint_notes` | Ops register (D01) | **DENY** |
 | Risks/Complaints (S07) | `operational_*_number_sequences`, notification occurrences | Runtime/history | **DENY** |
 | Audit | `audit_logs` | Immutable audit (D01) | **DENY** |
-| S06 | Any `season_projects*` | Missing / D08 | **DEFER** |
+| S06 | `season_projects` / `season_project_phases` allowlisted fields only (see B7) | Budgets, owners, progress, PO links, expenditures remain forbidden | **APPROVED (fields only)** — superseded by X03 |
+| S06 | `season_project_budgets`, PO links, expenditures, project owner/budget/progress fields | Financial / operational | **DENY** |
+| Notifications | `notifications` rows | Delivered messages | **DENY** |
+| Notifications | `reminder_rules` (or equivalent) | No schema exists (X06) | **DISABLED** |
 | Platform | `geo_places` | Platform catalog — never tenant-copied | **N/A-SHARED** |
 
 **Field rule:** Any `*_at` execution timestamp (`started_at`, `completed_at`, `checked_in_at`, `closed_at`, assessment times, etc.) is **never transferred**. Created/updated bookkeeping on *new* target rows is set by the target system clock at insert time — not copied from source.
@@ -111,7 +115,23 @@ Exact column lists must be taken from live migrations at coding time and re-appr
 
 | Entity | Approval |
 |---|---|
-| Seasonal projects, budgets, project templates | **DEFER** (S08-D08) |
+| Project budgets, PO links, expenditures | **DENY** (X03) |
+| Project templates as a separate entity | Not introduced — projects/phases/tasks travel as template snapshots or live season rows (B7) |
+
+### B7. Expansion kinds (MATRIX `2026-11-08.1`)
+
+All four kinds are created through the owning domain Actions (numbering, audit, guards), always in **draft** state, in a **draft** target season, and are refused when the actor lacks the module permission (`contracts.create`, `season_projects.create`, `season_projects.manage_phases`, `tasks.create`). Rows that left their draft state in the target become conflict `TARGET_LOCKED` (skip only).
+
+| Kind | Source | Copy key | Allowlisted fields | Forced / denied | Dependencies |
+|---|---|---|---|---|---|
+| `contract_definitions` | **Template snapshot only** (no live source) | `code` (template-local; idempotency via provenance `natural_key`) | `title`, `contract_category_id`, `counterparty_kind`, `notes`, `currency`, `start_date`, `end_date` (dates remapped; `start_date` required) | Created via `CreateContract` as **draft**; `counterparty_name` = `من القالب`; **never** value, employee/supplier/unit refs, status, numbers, signatures, attachments | Category must exist and be active in the tenant, else `MISSING_DEPENDENCY` |
+| `season_projects` | Live season or snapshot | `code` | `title`, `description` | `CreateSeasonProject` draft; never owner, budget, currency, progress/delay, lifecycle timestamps, number (regenerated) | none |
+| `season_project_phases` | Live season or snapshot | `code` + `project_code` | `title`, `sort_order`, `starts_on`, `ends_on` (remapped) | `CreateSeasonProjectPhase` status **planned**; never progress or task links | Project present in the target or in the same copy, else `MISSING_DEPENDENCY` |
+| `task_definitions` | Live season (tasks with a project) or snapshot | `code` + `project_code` | `title`, `description`, `notes`, `priority`, `start_date`, `due_date` (remapped), `organization_unit_id` (same tenant, active; otherwise omitted) | `CreateTask` **draft**, linked only through `project_id`; never assignee, decision link, completion, delay or status history; no recurrence/scheduler | Project present in the target or in the same copy (and not closed/cancelled), else `MISSING_DEPENDENCY` |
+
+Copy order is dependency order (projects → phases → tasks). Reminder rules are **not** a kind (X06).
+
+**Snapshots (X01).** A template item may carry `snapshot_json = {anchor, rows}`. Rows are validated against the field allowlist at save time (unknown/forbidden fields are rejected, not trimmed). Snapshots can be supplied explicitly or captured from a season through the same adapters (`capture_season_id`). Editing a draft template keeps the stored snapshot of any kept kind unless it is re-captured; removing the kind removes it. The snapshot is part of the preview `content_hash`, so tampering invalidates the preview (409). `source_season_id` may be omitted in `from_template` only when every selected kind has a snapshot (otherwise `SEASON_COPY_SOURCE_REQUIRED`); `contract_definitions` always needs snapshot rows (`SEASON_COPY_SNAPSHOT_REQUIRED` / approval refused without them).
 
 ---
 
@@ -125,6 +145,8 @@ Exact column lists must be taken from live migrations at coding time and re-appr
 | **DT-04** | Preview must show before/after for every transformed field |
 
 Default mapping algorithm for Part 0 proposal: **season-start delta (DT-01)**. Alternatives remain **OPEN-Q** until coding authorization.
+
+**Implemented (X05).** `season_start_delta` uses `Season.operational_starts_on` of the source (live source season, or the anchor stored in the template snapshot) and of the target. Delta in days is applied to every date field listed in the matrix (`contract_definitions`: start/end; `season_project_phases`: starts_on/ends_on; `task_definitions`: start_date/due_date). Every line carries `summary.date_transforms = {field: {before, after}}` and the mapping (source anchor, target anchor, delta) is stored on the preview. A missing anchor excludes the date fields with `DATE_ANCHOR_MISSING`; a remapped range whose end precedes its start is rejected at preview time. Execution timestamps are never mapped.
 
 ---
 
@@ -156,6 +178,8 @@ Default mapping algorithm for Part 0 proposal: **season-start delta (DT-01)**. A
 - [x] Five kinds **APPROVED** and implemented (see Allowlist).
 - [x] Shared masters: link-by-stable-key only; missing → conflict (never materialize).
 - [x] Staff/driver/supplier contacts: **DENY** / not copied.
-- [x] Date strategy: `season_start_delta` available on preview payload (kinds in v1 have no planning date fields to map).
-- [x] Conflict defaults: skip / overwrite (overwrite only DUPLICATE_KEY + MANUAL_MODIFIED).
-- [ ] Expanding DISABLED kinds requires new Owner decision + MATRIX_VERSION bump.
+- [x] Date strategy: `season_start_delta` remaps the date fields of the expansion kinds (X05).
+- [x] Conflict defaults: skip / overwrite (overwrite only DUPLICATE_KEY + MANUAL_MODIFIED); `TARGET_LOCKED` is skip-only.
+- [x] Expansion (2026-11-08.1): independent snapshots (X01), contract definitions (X02), projects + phases (X03), task definitions (X04), date remap (X05).
+- [ ] Reminder rules (X06) remain **DISABLED** until the Owner approves a `reminder_rules` schema.
+- [ ] Expanding any other DISABLED kind requires new Owner decision + MATRIX_VERSION bump.

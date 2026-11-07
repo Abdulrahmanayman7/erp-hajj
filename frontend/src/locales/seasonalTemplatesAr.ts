@@ -45,6 +45,14 @@ export const seasonalTemplatesAr = {
       codesPlaceholder: 'مثال: CODE-1',
       saveCta: 'حفظ التعديلات',
       createCta: 'إنشاء القالب',
+      captureSeason: 'التقاط لقطة مستقلة من موسم (اختياري)',
+      captureNone: 'بدون التقاط',
+      captureHint:
+        'تُحفظ نسخة مستقلة من الحقول المسموحة للأنواع المحددة داخل القالب، فيبقى صالحًا للنسخ حتى لو تغيّر الموسم أو حُذف لاحقًا.',
+      captureHintEdit:
+        'عند اختيار موسم تُستبدل اللقطات الحالية للأنواع المحددة. وإلا تبقى اللقطات المحفوظة كما هي.',
+      snapshotOnlyHint:
+        'تعريفات العقود تُحفظ كلقطة داخل القالب فقط ولا تُلتقط من موسم؛ يجب أن يحتوي القالب على صفوفها قبل الاعتماد.',
     },
     validation: {
       required: 'هذا الحقل مطلوب',
@@ -74,12 +82,30 @@ export const seasonalTemplatesAr = {
         label: 'منشآت الإسكان للموسم',
         hint: 'رمز المنشأة والفئة المستهدفة وحالة التفعيل',
       },
+      contract_definitions: {
+        label: 'تعريفات العقود',
+        hint: 'مسودات عقود بالعنوان والتصنيف والتواريخ فقط، دون قيمة أو طرف مقابل أو مراجع أو مرفقات (من لقطة القالب)',
+      },
+      season_projects: {
+        label: 'مشاريع الموسم',
+        hint: 'الرمز والعنوان والوصف كمسودات، دون ميزانية أو مسؤول أو تقدم',
+      },
+      season_project_phases: {
+        label: 'مراحل مشاريع الموسم',
+        hint: 'الرمز والمشروع والعنوان والترتيب والتواريخ بحالة مخططة',
+      },
+      task_definitions: {
+        label: 'تعريفات المهام',
+        hint: 'مسودات مهام مرتبطة بمشروع بالعنوان والأولوية والتواريخ، دون مكلّف أو حالة أو تقدم',
+      },
     },
     details: {
       title: 'تفاصيل القالب',
       backToList: 'العودة للقائمة',
       items: 'عناصر القالب',
       unapprovedKind: 'نوع غير معتمد',
+      snapshot: 'لقطة مستقلة: {count} سجل (مرجع التواريخ: {anchor})',
+      liveSource: 'يُقرأ من الموسم المصدر عند النسخ',
       allCodes: 'كل السجلات من هذا النوع',
       matrixVersion: 'إصدار المصفوفة',
       createdBy: 'أنشأه',
@@ -126,6 +152,9 @@ export const seasonalTemplatesAr = {
       selectTemplate: 'اختر قالبًا معتمدًا',
       templatesNeedView: 'اختيار القالب يتطلب صلاحية عرض قوالب المواسم.',
       sourceSeasonTemplateHint: 'تُقرأ سجلات القالب من هذا الموسم',
+      sourceSeasonOptionalHint: 'اختياري: القالب يحتوي لقطة لكل الأنواع المحددة فلا حاجة لموسم مصدر',
+      noSourceSeason: 'بدون موسم مصدر',
+      dateTransforms: 'تحويل التواريخ (قبل ← بعد)',
       targetHint: 'يجب أن يكون الموسم الهدف في حالة مسودة',
       seasonsLoadError: 'تعذر تحميل قائمة المواسم. تحقق من صلاحية عرض المواسم.',
       entityKinds: 'أنواع البيانات المراد نسخها',
@@ -177,11 +206,14 @@ export const seasonalTemplatesAr = {
       ALREADY_PRESENT_UNCHANGED: 'موجود ومطابق',
       CONFLICT_SKIPPED: 'تم التخطي بقرار المستخدم',
       MISSING_DEPENDENCY: 'تبعية مفقودة في الموسم الهدف',
+      DATE_ANCHOR_MISSING: 'لا يوجد تاريخ مرجعي في اللقطة، فاستُبعدت حقول التواريخ',
+      TARGET_LOCKED: 'السجل في الموسم الهدف لم يعد قابلًا للتعديل',
     },
     conflictCodes: {
       DUPLICATE_KEY: 'سجل بنفس المفتاح موجود في الموسم الهدف',
       MANUAL_MODIFIED: 'السجل المنسوخ سابقًا عُدّل يدويًا',
       MISSING_DEPENDENCY: 'تبعية مفقودة في الموسم الهدف',
+      TARGET_LOCKED: 'السجل في الموسم الهدف خرج من حالة المسودة ولا يمكن استبداله',
     },
     runs: {
       title: 'سجل نسخ المواسم',
@@ -236,6 +268,9 @@ export const seasonalTemplatesAr = {
       SEASON_COPY_KIND_DENIED: 'نوع البيانات غير معتمد للنسخ.',
       SEASON_COPY_CONFLICT_UNRESOLVED: 'توجد تعارضات غير محسومة. حدد قرارًا لكل تعارض.',
       SEASON_COPY_PREVIEW_REQUIRED: 'المعاينة مطلوبة قبل تنفيذ النسخ.',
+      SEASON_COPY_SOURCE_REQUIRED: 'الموسم المصدر مطلوب لأن القالب لا يحتوي لقطة كاملة لكل الأنواع المحددة.',
+      SEASON_COPY_SNAPSHOT_REQUIRED: 'القالب لا يحتوي لقطة صالحة لأحد الأنواع المحددة.',
+      SEASON_TEMPLATE_SNAPSHOT_INVALID: 'لقطة القالب تحتوي حقولًا أو قيمًا غير مسموحة.',
       SEASON_TEMPLATE_INVALID_TRANSITION: 'هذا الإجراء غير مسموح لحالة القالب الحالية.',
       SEASON_NUMBER_UNAVAILABLE: 'تعذر إصدار الرقم المرجعي. أعد المحاولة.',
     },

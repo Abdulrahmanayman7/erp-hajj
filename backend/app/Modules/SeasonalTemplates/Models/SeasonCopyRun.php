@@ -18,7 +18,7 @@ use Illuminate\Support\Carbon;
  * @property string $run_number
  * @property int $preview_id
  * @property CopyMode $mode
- * @property int $source_season_id
+ * @property int|null $source_season_id
  * @property int|null $source_template_id
  * @property int $target_season_id
  * @property CopyRunStatus $status

@@ -25,7 +25,9 @@ class CreateSeasonCopyPreviewRequest extends FormRequest
     {
         return [
             'mode' => ['required', Rule::in(CopyMode::values())],
-            'source_season_id' => ['required', 'integer', 'min:1'],
+            // Optional only for from_template: a snapshot-complete template needs no live
+            // source (X01). The orchestrator enforces it for kinds without a snapshot.
+            'source_season_id' => ['required_unless:mode,'.CopyMode::FromTemplate->value, 'nullable', 'integer', 'min:1'],
             'target_season_id' => ['required', 'integer', 'min:1'],
             'source_template_id' => [
                 Rule::requiredIf(fn (): bool => $this->input('mode') === CopyMode::FromTemplate->value),

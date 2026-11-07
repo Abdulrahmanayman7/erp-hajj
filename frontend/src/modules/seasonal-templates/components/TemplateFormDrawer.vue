@@ -3,8 +3,11 @@ import { computed, nextTick, onUnmounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Loader2, X } from 'lucide-vue-next'
 
+import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
+
+import { APPROVED_ENTITY_KINDS, SNAPSHOT_ONLY_KINDS } from '../types/seasonCopy'
 import type { TemplateFormState } from '../types/seasonTemplates'
-import { filterApprovedEntityKinds } from '../validation/seasonTemplateValidation'
+import { filterApprovedEntityKinds, snapshotOnlySelected } from '../validation/seasonTemplateValidation'
 import EntityKindCheckboxes from './EntityKindCheckboxes.vue'
 
 const props = defineProps<{
@@ -14,6 +17,8 @@ const props = defineProps<{
   formError: string
   fieldErrors: Record<string, string>
   submitting: boolean
+  /** Seasons the user may capture snapshots from (loaded by the page; empty hides the picker). */
+  captureSeasons?: AppSelectOption[]
 }>()
 
 const emit = defineEmits<{
@@ -28,6 +33,24 @@ const title = computed(() =>
   props.editing ? t('seasonalTemplates.form.editTitle') : t('seasonalTemplates.form.createTitle'),
 )
 const selectedKinds = computed(() => filterApprovedEntityKinds(props.form.entity_kinds))
+
+const captureOptions = computed<AppSelectOption[]>(() => [
+  { value: '', label: t('seasonalTemplates.form.captureNone') },
+  ...(props.captureSeasons ?? []),
+])
+const showCapture = computed(() => (props.captureSeasons?.length ?? 0) > 0)
+const snapshotOnlyKinds = computed(() => snapshotOnlySelected(selectedKinds.value))
+/**
+ * Snapshot-only kinds cannot be captured from a season, so a brand-new template cannot offer them.
+ * While editing they stay selectable so an existing stored snapshot is kept (server-side).
+ */
+const availableKinds = computed<readonly string[]>(() =>
+  props.editing ? APPROVED_ENTITY_KINDS : APPROVED_ENTITY_KINDS.filter((kind) => !SNAPSHOT_ONLY_KINDS.includes(kind)),
+)
+
+function onCaptureSeason(value: string | number | null): void {
+  patch({ capture_season_id: value === '' || value == null ? '' : Number(value) })
+}
 
 function patch(partial: Partial<TemplateFormState>): void {
   emit('update:form', { ...props.form, ...partial })
@@ -140,11 +163,34 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
               <p class="text-xs text-brand-text-muted">{{ t('seasonalTemplates.form.entityKindsHint') }}</p>
               <EntityKindCheckboxes
                 :model-value="form.entity_kinds"
+                :available="availableKinds"
                 :disabled="submitting"
                 :error-message="fieldMessage('entity_kinds')"
                 @update:model-value="onKinds"
               />
             </div>
+
+            <div v-if="showCapture" class="space-y-1.5 text-start" data-testid="template-capture">
+              <p class="text-sm font-semibold text-brand-text">{{ t('seasonalTemplates.form.captureSeason') }}</p>
+              <p class="text-xs text-brand-text-muted">
+                {{ editing ? t('seasonalTemplates.form.captureHintEdit') : t('seasonalTemplates.form.captureHint') }}
+              </p>
+              <AppSelect
+                :model-value="form.capture_season_id"
+                :options="captureOptions"
+                searchable
+                :disabled="submitting"
+                @update:model-value="onCaptureSeason"
+              />
+            </div>
+
+            <p
+              v-if="snapshotOnlyKinds.length"
+              class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-start text-xs text-amber-900"
+              data-testid="template-snapshot-only-hint"
+            >
+              {{ t('seasonalTemplates.form.snapshotOnlyHint') }}
+            </p>
 
             <div v-if="selectedKinds.length" class="space-y-3 text-start">
               <p class="text-sm font-semibold text-brand-text">{{ t('seasonalTemplates.form.codes') }}</p>

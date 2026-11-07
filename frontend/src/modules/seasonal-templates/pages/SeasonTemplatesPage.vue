@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { ChevronLeft, ChevronRight, Plus, Search } from 'lucide-vue-next'
 
+import { useSeasonsQuery } from '@/modules/season-pilgrims/queries/useSeasonsQuery'
 import { ApiError } from '@/shared/api/http'
 import AppMobileFilters from '@/shared/components/AppMobileFilters.vue'
 import AppPageHeader from '@/shared/components/AppPageHeader.vue'
@@ -20,6 +21,7 @@ import { useSeasonTemplatesQuery } from '../queries/useSeasonTemplatesQuery'
 import type { ListSeasonTemplatesParams, TemplateFormState, TemplateStatus } from '../types/seasonTemplates'
 import { TEMPLATE_STATUSES } from '../types/seasonTemplates'
 import {
+  buildCaptureSeason,
   buildTemplateItems,
   canShowCreateTemplate,
   emptyTemplateForm,
@@ -77,6 +79,11 @@ const fieldErrors = reactive<Record<string, string>>({})
 const createMutation = useCreateSeasonTemplateMutation()
 const submitting = computed(() => createMutation.isPending.value)
 
+const seasonsQuery = useSeasonsQuery({ per_page: 100 })
+const captureSeasons = computed<AppSelectOption[]>(() =>
+  (seasonsQuery.data.value?.data ?? []).map((s) => ({ value: s.id, label: `${s.name} (${s.code})` })),
+)
+
 function openCreate(): void {
   Object.assign(form, emptyTemplateForm())
   formError.value = ''
@@ -102,6 +109,7 @@ async function submit(): Promise<void> {
       name: form.name.trim(),
       description: form.description.trim() || null,
       items: buildTemplateItems(form),
+      ...buildCaptureSeason(form),
     })
     toast.success(t('seasonalTemplates.toasts.created'))
     drawerOpen.value = false
@@ -227,6 +235,7 @@ function formatWhen(iso: string | null): string {
       :form-error="formError"
       :field-errors="fieldErrors"
       :submitting="submitting"
+      :capture-seasons="captureSeasons"
       @close="drawerOpen = false"
       @submit="submit"
       @update:form="Object.assign(form, $event)"

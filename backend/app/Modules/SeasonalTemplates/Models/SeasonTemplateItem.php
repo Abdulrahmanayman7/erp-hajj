@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $entity_kind
  * @property int $sort_order
  * @property array<string, mixed>|null $selection_json
+ * @property array{anchor: string|null, rows: array<string, array<string, mixed>>}|null $snapshot_json
  */
 class SeasonTemplateItem extends Model implements TenantOwned
 {
@@ -24,6 +25,7 @@ class SeasonTemplateItem extends Model implements TenantOwned
         'entity_kind',
         'sort_order',
         'selection_json',
+        'snapshot_json',
     ];
 
     /**
@@ -34,6 +36,7 @@ class SeasonTemplateItem extends Model implements TenantOwned
         return [
             'sort_order' => 'integer',
             'selection_json' => 'array',
+            'snapshot_json' => 'array',
         ];
     }
 

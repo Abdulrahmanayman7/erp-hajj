@@ -24,9 +24,30 @@ export function emptyWizardForm(): SeasonCopyWizardForm {
   }
 }
 
-export function validateWizardForm(form: SeasonCopyWizardForm): Record<string, string> {
+/** Minimal template shape needed to decide whether a live source season is still required. */
+export interface SnapshotCoverageTemplate {
+  items: ReadonlyArray<{ entity_kind: string; has_snapshot?: boolean }>
+}
+
+/**
+ * UX hint mirroring the backend rule: a live source season is optional in `from_template` mode
+ * only when the template carries a snapshot for every selected kind. The server stays authoritative.
+ */
+export function sourceSeasonRequired(
+  form: Pick<SeasonCopyWizardForm, 'mode' | 'entity_kinds'>,
+  template?: SnapshotCoverageTemplate | null,
+): boolean {
+  if (form.mode !== 'from_template' || !template) return true
+  const snapshotKinds = new Set(template.items.filter((item) => item.has_snapshot).map((item) => item.entity_kind))
+  return form.entity_kinds.length === 0 || form.entity_kinds.some((kind) => !snapshotKinds.has(kind))
+}
+
+export function validateWizardForm(
+  form: SeasonCopyWizardForm,
+  template?: SnapshotCoverageTemplate | null,
+): Record<string, string> {
   const errors: Record<string, string> = {}
-  if (form.source_season_id === '') errors.source_season_id = 'required'
+  if (form.source_season_id === '' && sourceSeasonRequired(form, template)) errors.source_season_id = 'required'
   if (form.target_season_id === '') errors.target_season_id = 'required'
   if (
     form.source_season_id !== '' &&
@@ -44,17 +65,17 @@ export function validateWizardForm(form: SeasonCopyWizardForm): Record<string, s
 }
 
 /**
- * Backend contract: `selection.entity_kinds`, `source_season_id` in both modes,
- * `source_template_id` only for from_template. Unapproved kinds are never sent.
+ * Backend contract: `selection.entity_kinds`, `source_season_id` when chosen (required in
+ * from_season), `source_template_id` only for from_template. Unapproved kinds are never sent.
  */
 export function buildPreviewPayload(form: SeasonCopyWizardForm): CreateSeasonCopyPreviewPayload {
   const payload: CreateSeasonCopyPreviewPayload = {
     mode: form.mode,
-    source_season_id: Number(form.source_season_id),
     target_season_id: Number(form.target_season_id),
     selection: { entity_kinds: filterApprovedEntityKinds(form.entity_kinds) },
     date_mapping: { strategy: 'season_start_delta' },
   }
+  if (form.source_season_id !== '') payload.source_season_id = Number(form.source_season_id)
   if (form.mode === 'from_template') payload.source_template_id = Number(form.source_template_id)
   return payload
 }
@@ -155,6 +176,19 @@ export function lineActionBadgeClass(action: SeasonCopyPreviewLine['action']): s
     default:
       return 'bg-neutral-100 text-neutral-700 ring-1 ring-inset ring-neutral-300/80'
   }
+}
+
+/** Date remap rows (field, before, after) the preview shows for `season_start_delta`. */
+export function dateTransformRows(
+  line: Pick<SeasonCopyPreviewLine, 'summary'>,
+): Array<{ field: string; before: string; after: string }> {
+  const transforms = line.summary?.date_transforms
+  if (!transforms) return []
+  return Object.entries(transforms).map(([field, change]) => ({
+    field,
+    before: formatSummaryValue(change.before),
+    after: formatSummaryValue(change.after),
+  }))
 }
 
 export function formatSummaryValue(value: unknown): string {

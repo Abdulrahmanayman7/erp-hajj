@@ -31,6 +31,7 @@ import {
   emptyWizardForm,
   hasApplicableChanges,
   isPreviewExpired,
+  sourceSeasonRequired,
   unresolvedConflicts,
   validateWizardForm,
 } from '../validation/seasonCopyValidation'
@@ -76,7 +77,10 @@ function seasonOption(season: { id: number; name: string; code: string }): AppSe
 }
 
 const sourceOptions = computed<AppSelectOption[]>(() => [
-  { value: '', label: t('seasonalTemplates.copy.selectSeason') },
+  {
+    value: '',
+    label: sourceSeasonOptional.value ? t('seasonalTemplates.copy.noSourceSeason') : t('seasonalTemplates.copy.selectSeason'),
+  },
   ...seasons.value.filter((s) => s.id !== form.target_season_id).map(seasonOption),
 ])
 
@@ -104,6 +108,11 @@ const availableKinds = computed<readonly string[] | undefined>(() =>
   form.mode === 'from_template' && selectedTemplate.value
     ? filterApprovedEntityKinds(selectedTemplate.value.items.map((item) => item.entity_kind))
     : undefined,
+)
+
+/** Hint only: the server decides whether a live source season is needed. */
+const sourceSeasonOptional = computed(
+  () => form.mode === 'from_template' && !sourceSeasonRequired(form, selectedTemplate.value),
 )
 
 const modeOptions = computed<AppSelectOption[]>(() =>
@@ -185,7 +194,7 @@ async function createPreview(): Promise<void> {
   runResult.value = null
   staleNotice.value = false
   Object.keys(fieldErrors).forEach((k) => delete fieldErrors[k])
-  const local = validateWizardForm(form)
+  const local = validateWizardForm(form, selectedTemplate.value)
   Object.assign(fieldErrors, local)
   if (Object.keys(local).length || !canPreviewCopy(can)) return
   try {
@@ -302,7 +311,14 @@ function formatWhen(iso: string | null | undefined): string {
             :loading="seasonsQuery.isLoading.value"
             @update:model-value="setNumber('source_season_id', $event)"
           />
-          <p v-if="form.mode === 'from_template'" class="text-xs text-brand-text-muted">{{ t('seasonalTemplates.copy.sourceSeasonTemplateHint') }}</p>
+          <p
+            v-if="sourceSeasonOptional"
+            class="text-xs text-emerald-800"
+            data-testid="copy-source-optional"
+          >
+            {{ t('seasonalTemplates.copy.sourceSeasonOptionalHint') }}
+          </p>
+          <p v-else-if="form.mode === 'from_template'" class="text-xs text-brand-text-muted">{{ t('seasonalTemplates.copy.sourceSeasonTemplateHint') }}</p>
           <p v-if="fieldErrors.source_season_id" class="text-xs text-red-600">{{ t(`seasonalTemplates.validation.${fieldErrors.source_season_id}`) }}</p>
         </div>
 

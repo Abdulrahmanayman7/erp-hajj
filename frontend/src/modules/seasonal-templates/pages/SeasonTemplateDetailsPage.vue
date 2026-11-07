@@ -4,8 +4,10 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { ArrowRight, Copy, Loader2, Pencil } from 'lucide-vue-next'
 
+import { useSeasonsQuery } from '@/modules/season-pilgrims/queries/useSeasonsQuery'
 import { ApiError } from '@/shared/api/http'
 import AppPageHeader from '@/shared/components/AppPageHeader.vue'
+import type { AppSelectOption } from '@/shared/components/AppSelect.vue'
 import { useConfirm } from '@/shared/composables/useConfirm'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import { useToast } from '@/shared/composables/useToast'
@@ -21,6 +23,7 @@ import { useSeasonTemplateQuery } from '../queries/useSeasonTemplatesQuery'
 import type { TemplateFormState } from '../types/seasonTemplates'
 import { canPreviewCopy } from '../validation/seasonCopyValidation'
 import {
+  buildCaptureSeason,
   buildTemplateItems,
   canApproveTemplate,
   canArchiveTemplate,
@@ -84,6 +87,11 @@ const form = reactive<TemplateFormState>(emptyTemplateForm())
 const formError = ref('')
 const fieldErrors = reactive<Record<string, string>>({})
 
+const seasonsQuery = useSeasonsQuery({ per_page: 100 })
+const captureSeasons = computed<AppSelectOption[]>(() =>
+  (seasonsQuery.data.value?.data ?? []).map((s) => ({ value: s.id, label: `${s.name} (${s.code})` })),
+)
+
 function openEdit(): void {
   if (!template.value) return
   Object.assign(form, templateToForm(template.value))
@@ -105,6 +113,7 @@ async function submitEdit(): Promise<void> {
         name: form.name.trim(),
         description: form.description.trim() || null,
         items: buildTemplateItems(form),
+        ...buildCaptureSeason(form),
       },
     })
     toast.success(t('seasonalTemplates.toasts.updated'))
@@ -225,6 +234,14 @@ function useInCopy(): void {
                   {{ t('seasonalTemplates.details.unapprovedKind') }}
                 </span>
               </div>
+              <p
+                v-if="item.has_snapshot"
+                class="mt-2 text-xs text-brand-text-secondary"
+                data-testid="template-item-snapshot"
+              >
+                {{ t('seasonalTemplates.details.snapshot', { count: item.snapshot_row_count ?? 0, anchor: item.snapshot_anchor ?? '—' }) }}
+              </p>
+              <p v-else class="mt-2 text-xs text-brand-text-muted">{{ t('seasonalTemplates.details.liveSource') }}</p>
               <p v-if="item.selection?.codes?.length" class="mt-2 break-words font-mono text-xs text-brand-text-secondary" dir="ltr">
                 {{ item.selection.codes.join(', ') }}
               </p>
@@ -300,6 +317,7 @@ function useInCopy(): void {
       :form-error="formError"
       :field-errors="fieldErrors"
       :submitting="updateMutation.isPending.value"
+      :capture-seasons="captureSeasons"
       @close="drawerOpen = false"
       @submit="submitEdit"
       @update:form="Object.assign(form, $event)"

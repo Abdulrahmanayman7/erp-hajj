@@ -1,6 +1,7 @@
 # Module 20 — Seasonal Templates & Safe Copy (S08)
 
-> **Status:** `IMPLEMENTED ON FEATURE BRANCH` (2026-11-07) — see [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md)  
+> **Status:** `IMPLEMENTED ON FEATURE BRANCH` (full-scope expansion, MATRIX `2026-11-08.1`) — see [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md)  
+> **Last updated:** 2026-11-08  
 > **Phase:** Phase 2 / Workflow **S08**  
 > **Product scope:** [ADR-0020](../../10-decisions/ADR-0020-FULL-PHASE2-OPERATIONAL-SCOPE.md) §S08  
 > **Branch:** `feature/s08-seasonal-templates` (from `develop` @ `a21e4ca`)  
@@ -41,8 +42,10 @@ All **10** Owner decisions (S08-D01…D10) — [OWNER_DECISIONS.md](OWNER_DECISI
 |---|---|
 | Backend | `backend/app/Modules/SeasonalTemplates/` |
 | Frontend | `frontend/src/modules/seasonal-templates/` |
-| Migration | `backend/database/migrations/2026_11_07_320001_create_seasonal_templates_tables.php` |
-| Allowlist | `SafeCopyAllowlist` MATRIX_VERSION `2026-11-07.1` |
+| Migrations | `backend/database/migrations/2026_11_07_320001_create_seasonal_templates_tables.php`, `2026_11_08_320002_s08_expand_templates_snapshots_and_optional_source.php` |
+| Allowlist | `SafeCopyAllowlist` MATRIX_VERSION `2026-11-08.1` — 9 kinds: `season_programs`, `season_pilgrim_groups`, `transport_entitlements`, `transport_season_vehicles`, `accommodation_season_facilities`, `contract_definitions`, `season_projects`, `season_project_phases`, `task_definitions` |
+| Expansion | [OWNER_DECISIONS_EXPANSION.md](OWNER_DECISIONS_EXPANSION.md), [S08_FULL_SCOPE_GAP_AUDIT.md](S08_FULL_SCOPE_GAP_AUDIT.md) |
+| Reminder rules (X06) | **DISABLED** — no schema; needs an Owner-approved design first |
 | API | `/api/v1/season-templates`, `/api/v1/season-copy/*` |
 | Status | [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) |
 
@@ -52,6 +55,7 @@ All **10** Owner decisions (S08-D01…D10) — [OWNER_DECISIONS.md](OWNER_DECISI
 - Pilgrim / identity copy.
 - Risks & complaints copy.
 - Inventory movements / execution history.
-- Speculative S06 project-template integration (D08).
+- Project budgets, PO links, expenditures and project owners (X03 DENY).
+- Reminder rules / notification copying (X06 disabled; `notifications` DENY).
 - Auto-creating shared masters (vehicles/facilities).
 - Staff/driver/supplier contact duplication.

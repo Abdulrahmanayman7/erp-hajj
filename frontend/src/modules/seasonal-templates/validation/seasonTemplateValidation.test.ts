@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
-import { APPROVED_ENTITY_KINDS } from '../types/seasonCopy'
+import { APPROVED_ENTITY_KINDS, SNAPSHOT_ONLY_KINDS } from '../types/seasonCopy'
 import {
+  buildCaptureSeason,
   buildTemplateItems,
   canApproveTemplate,
   canArchiveTemplate,
@@ -16,6 +17,7 @@ import {
   mapSeasonalTemplatesErrorCode,
   parseCodes,
   resolveListState,
+  snapshotOnlySelected,
   templateToForm,
   validateTemplateForm,
 } from './seasonTemplateValidation'
@@ -23,14 +25,29 @@ import {
 const granted = (...permissions: string[]) => (permission: string) => permissions.includes(permission)
 
 describe('approved entity kinds', () => {
-  it('exposes exactly the five approved kinds', () => {
+  it('exposes exactly the nine approved kinds in dependency order', () => {
     expect([...APPROVED_ENTITY_KINDS]).toEqual([
       'season_programs',
       'season_pilgrim_groups',
       'transport_entitlements',
       'transport_season_vehicles',
       'accommodation_season_facilities',
+      'contract_definitions',
+      'season_projects',
+      'season_project_phases',
+      'task_definitions',
     ])
+  })
+
+  it('never approves reminder rules, notifications or raw contracts/tasks', () => {
+    for (const kind of ['reminder_rules', 'notifications', 'contracts', 'tasks']) {
+      expect(isApprovedEntityKind(kind)).toBe(false)
+    }
+  })
+
+  it('marks contract definitions as snapshot-only', () => {
+    expect(SNAPSHOT_ONLY_KINDS).toEqual(['contract_definitions'])
+    expect(snapshotOnlySelected(['season_programs', 'contract_definitions'])).toEqual(['contract_definitions'])
   })
 
   it('denies unapproved kinds', () => {
@@ -74,8 +91,39 @@ describe('validateTemplateForm', () => {
       description: 'ب'.repeat(5001),
       entity_kinds: ['season_programs'],
       codes: {},
+      capture_season_id: '',
     })
     expect(errors).toEqual({ name: 'too_long', description: 'too_long' })
+  })
+})
+
+describe('snapshot capture payload', () => {
+  it('sends only the season id, never snapshot rows built in the browser', () => {
+    expect(buildCaptureSeason({ capture_season_id: '' })).toEqual({})
+    expect(buildCaptureSeason({ capture_season_id: 7 })).toEqual({ capture_season_id: 7 })
+    const items = buildTemplateItems({ ...emptyTemplateForm(), entity_kinds: ['season_projects', 'task_definitions'] })
+    expect(items).toEqual([{ entity_kind: 'season_projects' }, { entity_kind: 'task_definitions' }])
+    for (const item of items) expect(item).not.toHaveProperty('snapshot')
+  })
+
+  it('starts a new form without a capture season', () => {
+    expect(emptyTemplateForm().capture_season_id).toBe('')
+  })
+
+  it('accepts the new kinds in a valid form', () => {
+    expect(
+      validateTemplateForm({
+        ...emptyTemplateForm(),
+        name: 'قالب',
+        entity_kinds: ['season_projects', 'season_project_phases', 'task_definitions'],
+      }),
+    ).toEqual({})
+  })
+
+  it('maps the snapshot error codes to locale keys', () => {
+    for (const code of ['SEASON_COPY_SOURCE_REQUIRED', 'SEASON_COPY_SNAPSHOT_REQUIRED', 'SEASON_TEMPLATE_SNAPSHOT_INVALID']) {
+      expect(mapSeasonalTemplatesErrorCode(code)).toBe(code)
+    }
   })
 })
 
@@ -86,6 +134,7 @@ describe('template items payload', () => {
       description: '',
       entity_kinds: ['transport_entitlements', 'pilgrims', 'season_programs'],
       codes: { season_programs: 'A, B\nA', pilgrims: 'X' },
+      capture_season_id: '',
     })
     expect(items).toEqual([
       { entity_kind: 'season_programs', selection: { codes: ['A', 'B'] } },

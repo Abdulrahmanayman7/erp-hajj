@@ -10,8 +10,10 @@ import {
   canShowExecuteButton,
   canViewCopyHistory,
   conflictKey,
+  dateTransformRows,
   emptyWizardForm,
   isPreviewExpired,
+  sourceSeasonRequired,
   unresolvedConflicts,
   validateWizardForm,
 } from './seasonCopyValidation'
@@ -100,6 +102,76 @@ describe('validateWizardForm', () => {
         entity_kinds: ['season_programs', 'transport_entitlements'],
       }),
     ).toEqual({})
+  })
+})
+
+describe('optional source season for snapshot-complete templates', () => {
+  const snapshotTemplate = {
+    items: [
+      { entity_kind: 'season_programs', has_snapshot: true },
+      { entity_kind: 'contract_definitions', has_snapshot: true },
+      { entity_kind: 'season_projects', has_snapshot: false },
+    ],
+  }
+
+  it('does not require a source season when every selected kind has a snapshot', () => {
+    const form = {
+      ...emptyWizardForm(),
+      mode: 'from_template' as const,
+      source_template_id: 5,
+      target_season_id: 2,
+      entity_kinds: ['season_programs', 'contract_definitions'],
+    }
+    expect(sourceSeasonRequired(form, snapshotTemplate)).toBe(false)
+    expect(validateWizardForm(form, snapshotTemplate)).toEqual({})
+  })
+
+  it('still requires a source season when a selected kind has no snapshot', () => {
+    const form = {
+      ...emptyWizardForm(),
+      mode: 'from_template' as const,
+      source_template_id: 5,
+      target_season_id: 2,
+      entity_kinds: ['season_programs', 'season_projects'],
+    }
+    expect(sourceSeasonRequired(form, snapshotTemplate)).toBe(true)
+    expect(validateWizardForm(form, snapshotTemplate)).toEqual({ source_season_id: 'required' })
+  })
+
+  it('always requires a source season in from_season mode or without template data', () => {
+    expect(sourceSeasonRequired({ mode: 'from_season', entity_kinds: ['season_programs'] }, snapshotTemplate)).toBe(true)
+    expect(sourceSeasonRequired({ mode: 'from_template', entity_kinds: ['season_programs'] }, null)).toBe(true)
+    expect(sourceSeasonRequired({ mode: 'from_template', entity_kinds: [] }, snapshotTemplate)).toBe(true)
+  })
+
+  it('omits source_season_id from the payload when none is chosen', () => {
+    const payload = buildPreviewPayload({
+      mode: 'from_template',
+      source_season_id: '',
+      source_template_id: 5,
+      target_season_id: 2,
+      entity_kinds: ['season_programs', 'contract_definitions', 'reminder_rules'],
+    })
+    expect(payload).not.toHaveProperty('source_season_id')
+    expect(payload.selection.entity_kinds).toEqual(['season_programs', 'contract_definitions'])
+  })
+})
+
+describe('date transform rows', () => {
+  it('lists before/after per date field and nothing for lines without dates', () => {
+    expect(
+      dateTransformRows(
+        line({
+          action: 'add',
+          summary: { date_transforms: { start_date: { before: '2027-05-01', after: '2027-06-01' } } },
+        }),
+      ),
+    ).toEqual([{ field: 'start_date', before: '2027-05-01', after: '2027-06-01' }])
+    expect(dateTransformRows(line({ action: 'add' }))).toEqual([])
+  })
+
+  it('treats TARGET_LOCKED as a skip-only conflict', () => {
+    expect(allowedDecisions({ conflict_code: 'TARGET_LOCKED' })).toEqual(['skip'])
   })
 })
 

@@ -37,11 +37,15 @@ afterEach(() => {
 })
 
 describe('EntityKindCheckboxes', () => {
-  it('renders only the five approved kinds', async () => {
+  it('renders only the nine approved kinds (reminder rules are never offered)', async () => {
     const { root: el } = mount()
     await nextTick()
     const boxes = el.querySelectorAll('input[type="checkbox"]')
-    expect(boxes).toHaveLength(5)
+    expect(boxes).toHaveLength(9)
+    for (const kind of ['contract_definitions', 'season_projects', 'season_project_phases', 'task_definitions']) {
+      expect(el.querySelector(`[data-testid="entity-kind-${kind}"]`)).not.toBeNull()
+    }
+    expect(el.querySelector('[data-testid="entity-kind-reminder_rules"]')).toBeNull()
   })
 
   it('never renders an unapproved kind even if offered', async () => {

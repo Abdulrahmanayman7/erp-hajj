@@ -33,6 +33,10 @@ class SeasonTemplateResource extends JsonResource
                     'entity_kind' => $item->entity_kind,
                     'sort_order' => $item->sort_order,
                     'selection' => $item->selection_json,
+                    'has_snapshot' => ($item->snapshot_json['rows'] ?? []) !== [],
+                    'snapshot_row_count' => count($item->snapshot_json['rows'] ?? []),
+                    'snapshot_anchor' => $item->snapshot_json['anchor'] ?? null,
+                    'snapshot_codes' => array_map('strval', array_keys($item->snapshot_json['rows'] ?? [])),
                 ])->values()->all()
                 : [],
             'approved_at' => $template->approved_at?->toIso8601String(),

@@ -18,7 +18,7 @@ use Illuminate\Support\Carbon;
  * @property int $tenant_id
  * @property string $preview_token
  * @property CopyMode $mode
- * @property int $source_season_id
+ * @property int|null $source_season_id
  * @property int|null $source_template_id
  * @property int $target_season_id
  * @property string $matrix_version

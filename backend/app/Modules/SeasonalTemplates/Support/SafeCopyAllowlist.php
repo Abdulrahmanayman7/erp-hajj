@@ -16,7 +16,7 @@ use App\Modules\SeasonalTemplates\Exceptions\SeasonalTemplatesDomainException;
  */
 final class SafeCopyAllowlist
 {
-    public const MATRIX_VERSION = '2026-11-07.1';
+    public const MATRIX_VERSION = '2026-11-08.1';
 
     public const SEASON_PROGRAMS = 'season_programs';
 
@@ -28,11 +28,24 @@ final class SafeCopyAllowlist
 
     public const ACCOMMODATION_SEASON_FACILITIES = 'accommodation_season_facilities';
 
+    /** Snapshot-only: contracts are not season-scoped, so there is no live source (X02). */
+    public const CONTRACT_DEFINITIONS = 'contract_definitions';
+
+    public const SEASON_PROJECTS = 'season_projects';
+
+    public const SEASON_PROJECT_PHASES = 'season_project_phases';
+
+    public const TASK_DEFINITIONS = 'task_definitions';
+
     /**
      * Approved kinds in dependency order (programs before their entitlements).
-     * Each entry: natural-key field + the only fields an adapter may carry.
+     * Each entry: natural-key field + the only fields an adapter may carry
+     * (+ the subset of those fields remapped by the season date strategy).
      *
-     * @var array<string, array{key: string, fields: list<string>}>
+     * For the S08 expansion kinds code is a template-local copy key (never a business
+     * field) and project_code is the structural link to a season_projects row.
+     *
+     * @var array<string, array{key: string, fields: list<string>, dates?: list<string>}>
      */
     private const MATRIX = [
         self::SEASON_PROGRAMS => [
@@ -54,6 +67,25 @@ final class SafeCopyAllowlist
         self::ACCOMMODATION_SEASON_FACILITIES => [
             'key' => 'facility_code',
             'fields' => ['facility_code', 'audience', 'is_active'],
+        ],
+        self::CONTRACT_DEFINITIONS => [
+            'key' => 'code',
+            'fields' => ['code', 'title', 'contract_category_id', 'counterparty_kind', 'notes', 'currency', 'start_date', 'end_date'],
+            'dates' => ['start_date', 'end_date'],
+        ],
+        self::SEASON_PROJECTS => [
+            'key' => 'code',
+            'fields' => ['code', 'title', 'description'],
+        ],
+        self::SEASON_PROJECT_PHASES => [
+            'key' => 'code',
+            'fields' => ['code', 'project_code', 'title', 'sort_order', 'starts_on', 'ends_on'],
+            'dates' => ['starts_on', 'ends_on'],
+        ],
+        self::TASK_DEFINITIONS => [
+            'key' => 'code',
+            'fields' => ['code', 'project_code', 'title', 'description', 'notes', 'priority', 'start_date', 'due_date', 'organization_unit_id'],
+            'dates' => ['start_date', 'due_date'],
         ],
     ];
 
@@ -78,6 +110,43 @@ final class SafeCopyAllowlist
         self::assertApproved($kind);
 
         return self::MATRIX[$kind]['fields'];
+    }
+
+    /**
+     * @return list<string> fields remapped by the date strategy (empty when none)
+     */
+    public static function dateFieldsFor(string $kind): array
+    {
+        self::assertApproved($kind);
+
+        return self::MATRIX[$kind]['dates'] ?? [];
+    }
+
+    /**
+     * Kinds with no live season source: they exist only as template snapshots.
+     */
+    public static function isSnapshotOnly(string $kind): bool
+    {
+        self::assertApproved($kind);
+
+        return $kind === self::CONTRACT_DEFINITIONS;
+    }
+
+    /**
+     * Kinds that create records owned by another module also require that module's
+     * create permission (no escalation through `season_copy.execute`).
+     */
+    public static function requiredPermission(string $kind): ?string
+    {
+        self::assertApproved($kind);
+
+        return match ($kind) {
+            self::CONTRACT_DEFINITIONS => 'contracts.create',
+            self::SEASON_PROJECTS => 'season_projects.create',
+            self::SEASON_PROJECT_PHASES => 'season_projects.manage_phases',
+            self::TASK_DEFINITIONS => 'tasks.create',
+            default => null,
+        };
     }
 
     public static function keyFieldFor(string $kind): string

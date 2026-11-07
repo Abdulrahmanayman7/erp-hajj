@@ -16,7 +16,8 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $target_season_id
  * @property string $entity_kind
  * @property int $target_row_id
- * @property int $source_season_id
+ * @property string|null $natural_key
+ * @property int|null $source_season_id
  * @property int|null $source_template_id
  * @property int|null $source_row_id
  * @property int $copy_run_id
@@ -33,6 +34,7 @@ class SeasonCopyRowProvenance extends Model implements TenantOwned
         'target_season_id',
         'entity_kind',
         'target_row_id',
+        'natural_key',
         'source_season_id',
         'source_template_id',
         'source_row_id',

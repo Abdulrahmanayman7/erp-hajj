@@ -9,6 +9,11 @@ export interface SeasonTemplateItem {
   entity_kind: string
   sort_order: number
   selection: TemplateItemSelection | null
+  /** Independent snapshot captured with the template (S08 expansion). */
+  has_snapshot?: boolean
+  snapshot_row_count?: number
+  snapshot_anchor?: string | null
+  snapshot_codes?: string[]
 }
 
 export interface TemplateUserSummary {
@@ -55,6 +60,8 @@ export interface CreateSeasonTemplatePayload {
   name: string
   description?: string | null
   items: TemplateItemPayload[]
+  /** Capture independent snapshots of the selected kinds from this (tenant) season while saving. */
+  capture_season_id?: number
 }
 
 export type UpdateSeasonTemplatePayload = Partial<CreateSeasonTemplatePayload>
@@ -65,4 +72,6 @@ export interface TemplateFormState {
   entity_kinds: string[]
   /** Optional natural-key codes per entity kind, newline/comma separated. */
   codes: Record<string, string>
+  /** Optional season to capture snapshots from when saving. */
+  capture_season_id: number | ''
 }

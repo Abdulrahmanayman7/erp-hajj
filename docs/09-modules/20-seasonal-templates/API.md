@@ -1,6 +1,7 @@
 # S08 — API Design Proposal
 
-> **Status:** `PROPOSED` · Coding **NOT AUTHORIZED**  
+> **Status:** `IMPLEMENTED ON FEATURE BRANCH` (proposal text below; expansion in §2.1)  
+> **Last updated:** 2026-11-08  
 > Base path: `/api/v1` (Sanctum + tenant middleware + season middleware where required)  
 > Envelope: existing API error/resource conventions.
 
@@ -45,7 +46,20 @@ Validation: name required; each `entity_kind` must be **APPROVED** in current ma
 
 Only `draft` → `approved`; pins `matrix_version`.
 
+### 2.1 Expansion (MATRIX `2026-11-08.1`)
+
+`POST`/`PATCH /season-templates` additionally accept:
+
+- `capture_season_id` — capture independent snapshots of the selected kinds from this tenant season through the allowlisted adapters (foreign season → **404**; source status must be draft/active/closed). Snapshot-only kinds (`contract_definitions`) are not captured.
+- `items[].snapshot` — `{anchor?: date, rows: [...]}` of allowlisted fields only. Any field outside the allowlist, non-scalar value, bad date or duplicate key → **422** `SEASON_TEMPLATE_SNAPSHOT_INVALID` (never silently trimmed).
+
+On `PATCH`, an item that stays in the template without a new or re-captured snapshot keeps its stored snapshot. Template responses expose `has_snapshot`, `snapshot_row_count`, `snapshot_anchor`, `snapshot_codes` per item — never the rows.
+
+New stable codes: `SEASON_TEMPLATE_SNAPSHOT_INVALID`, `SEASON_COPY_SOURCE_REQUIRED`, `SEASON_COPY_SNAPSHOT_REQUIRED` (all 422). Preview lines add conflict `TARGET_LOCKED` and exclusion `DATE_ANCHOR_MISSING`; `summary.date_transforms` carries before/after per date field. Executing a kind additionally requires its module permission (`contracts.create`, `season_projects.create`, `season_projects.manage_phases`, `tasks.create`) → **403** otherwise.
+
 ## 3. Preview
+
+> `source_season_id` is **required** for `from_season`; for `from_template` it is optional when every selected kind has a snapshot in the template (`source_season_id` is then `null` on the preview and run).
 
 ### POST `/season-copy/previews`
 

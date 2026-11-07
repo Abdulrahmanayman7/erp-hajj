@@ -6,8 +6,10 @@ use App\Models\User;
 use App\Modules\SeasonalTemplates\Exceptions\SeasonalTemplatesDomainException;
 use App\Modules\SeasonalTemplates\Models\SeasonCopyRowProvenance;
 use App\Modules\SeasonalTemplates\Support\CanonicalJson;
+use App\Modules\SeasonalTemplates\Support\DateRemap;
 use App\Modules\SeasonalTemplates\Support\SafeCopyAdapter;
 use App\Modules\SeasonalTemplates\Support\SafeCopyAllowlist;
+use App\Modules\SeasonalTemplates\Support\SafeCopyContext;
 use App\Modules\SeasonalTemplates\Support\SafeCopyProvenanceStore;
 use App\Modules\SeasonPilgrims\Models\Season;
 use LogicException;
@@ -15,13 +17,15 @@ use LogicException;
 /**
  * Shared classification / idempotency / manual-protection algorithm.
  *
- * A concrete adapter only reads source rows, reads target rows, and inserts or
- * updates allowlisted fields — it can never carry a field outside
- * {@see SafeCopyAllowlist::fieldsFor()}.
+ * A concrete adapter only reads source rows (live season or template snapshot),
+ * reads target rows, and inserts or updates allowlisted fields — it can never carry
+ * a field outside {@see SafeCopyAllowlist::fieldsFor()}.
  *
  * Per source row (matched to the target by natural key):
+ *  - date field cannot be remapped (anchor missing / range invalid) → exclude
  *  - no target row                         → add
  *  - target equals source (copied fields)  → exclude (ALREADY_PRESENT_UNCHANGED)
+ *  - differs, target is locked             → conflict TARGET_LOCKED
  *  - differs, no provenance                → conflict DUPLICATE_KEY
  *  - differs, system-owned and unmodified  → change
  *  - differs, modified since copy          → conflict MANUAL_MODIFIED
@@ -38,13 +42,18 @@ abstract class AbstractSafeCopyAdapter implements SafeCopyAdapter
         protected readonly SafeCopyProvenanceStore $provenance,
     ) {}
 
+    public function supportsLiveSource(): bool
+    {
+        return true;
+    }
+
     /**
      * @return array<string, array{source_id: int, fields: array<string, mixed>}> keyed by natural key
      */
     abstract protected function sourceCandidates(Season $source): array;
 
     /**
-     * @return array<string, array{id: int, fields: array<string, mixed>}> keyed by natural key
+     * @return array<string, array{id: int, fields: array<string, mixed>, locked?: bool}> keyed by natural key
      */
     abstract protected function targetRows(Season $target): array;
 
@@ -52,12 +61,37 @@ abstract class AbstractSafeCopyAdapter implements SafeCopyAdapter
      * @param  array<string, mixed>  $fields
      * @return int|null new target row id, or null when a referenced master is missing
      */
-    abstract protected function insertTarget(Season $target, array $fields, User $actor): ?int;
+    protected function insertTarget(Season $target, array $fields, User $actor): ?int
+    {
+        throw new LogicException(static::class.' must override insertRow().');
+    }
 
     /**
      * @param  array<string, mixed>  $fields  allowlisted non-key fields only
      */
-    abstract protected function updateTarget(int $targetId, array $fields): void;
+    protected function updateTarget(int $targetId, array $fields): void
+    {
+        throw new LogicException(static::class.' must override updateRow().');
+    }
+
+    /**
+     * Insert hook. Adapters that delegate to a domain Action override this
+     * (they need the actor and the request for numbering and audit).
+     *
+     * @param  array<string, mixed>  $fields
+     */
+    protected function insertRow(SafeCopyContext $context, array $fields, User $actor): ?int
+    {
+        return $this->insertTarget($context->target, $fields, $actor);
+    }
+
+    /**
+     * @param  array<string, mixed>  $fields  allowlisted non-key fields only
+     */
+    protected function updateRow(SafeCopyContext $context, int $targetId, array $fields, User $actor): void
+    {
+        $this->updateTarget($targetId, $fields);
+    }
 
     /**
      * @param  array{entity_kinds: list<string>, codes: array<string, list<string>>}  $selection
@@ -69,9 +103,51 @@ abstract class AbstractSafeCopyAdapter implements SafeCopyAdapter
         return null;
     }
 
-    public function fingerprint(Season $source, Season $target): string
+    /**
+     * Sanitize a candidate after date remapping (e.g. drop a reference that does
+     * not resolve in this tenant). Must be deterministic for a given tenant state.
+     *
+     * @param  array<string, mixed>  $fields
+     * @return array<string, mixed>
+     */
+    protected function sanitizeCandidate(array $fields): array
     {
-        $targets = $this->targetRows($target);
+        return $fields;
+    }
+
+    /**
+     * Date fields that must stay present after remapping (else the row is excluded).
+     *
+     * @return list<string>
+     */
+    protected function requiredDateFields(): array
+    {
+        return [];
+    }
+
+    /**
+     * [start, end] date fields that must satisfy end >= start after remapping.
+     *
+     * @return array{0: string, 1: string}|null
+     */
+    protected function dateRangeFields(): ?array
+    {
+        return null;
+    }
+
+    public function capture(Season $source): array
+    {
+        $rows = [];
+        foreach ($this->sourceCandidates($source) as $key => $candidate) {
+            $rows[$key] = $candidate['fields'];
+        }
+
+        return $rows;
+    }
+
+    public function fingerprint(SafeCopyContext $context): string
+    {
+        $targets = $this->targetRows($context->target);
         $provenance = $this->provenance->forTargets(
             $this->entityKind(),
             array_values(array_map(static fn (array $row): int => $row['id'], $targets)),
@@ -79,7 +155,7 @@ abstract class AbstractSafeCopyAdapter implements SafeCopyAdapter
 
         return CanonicalJson::hash([
             'kind' => $this->entityKind(),
-            'source' => $this->sourceCandidates($source),
+            'source' => $this->candidates($context),
             'target' => $targets,
             'provenance' => array_map(
                 static fn (SeasonCopyRowProvenance $row): array => [
@@ -91,29 +167,37 @@ abstract class AbstractSafeCopyAdapter implements SafeCopyAdapter
         ]);
     }
 
-    public function plan(Season $source, Season $target, array $selection): array
+    public function plan(SafeCopyContext $context): array
     {
         $plan = ['adds' => [], 'changes' => [], 'excludes' => [], 'conflicts' => []];
+        $selection = $context->selection;
 
-        $targets = $this->targetRows($target);
+        $targets = $this->targetRows($context->target);
         $provenance = $this->provenance->forTargets(
             $this->entityKind(),
             array_values(array_map(static fn (array $row): int => $row['id'], $targets)),
         );
 
-        foreach ($this->selected($this->sourceCandidates($source), $selection) as $key => $candidate) {
+        foreach ($this->selected($this->candidates($context), $selection) as $key => $candidate) {
+            $dates = $this->dateSummary($candidate);
             $line = [
                 'natural_key' => (string) $key,
                 'source_id' => $candidate['source_id'],
-                'summary' => [],
+                'summary' => $dates,
             ];
 
-            $missing = $this->dependencyConflict($target, $key, $candidate['fields'], $selection);
+            if ($candidate['excluded'] !== null) {
+                $plan['excludes'][] = [...$line, 'reason_code' => $candidate['excluded']];
+
+                continue;
+            }
+
+            $missing = $this->dependencyConflict($context->target, $key, $candidate['fields'], $selection);
             if ($missing !== null) {
                 $plan['conflicts'][] = [
                     ...$line,
                     'conflict_code' => 'MISSING_DEPENDENCY',
-                    'summary' => ['detail' => $missing],
+                    'summary' => [...$dates, 'detail' => $missing],
                 ];
 
                 continue;
@@ -128,13 +212,13 @@ abstract class AbstractSafeCopyAdapter implements SafeCopyAdapter
 
             switch ($classification['action']) {
                 case 'add':
-                    $plan['adds'][] = [...$line, 'summary' => ['fields' => $candidate['fields']]];
+                    $plan['adds'][] = [...$line, 'summary' => [...$dates, 'fields' => $candidate['fields']]];
                     break;
                 case 'change':
                     $plan['changes'][] = [
                         ...$line,
                         'target_id' => $targetRow['id'] ?? null,
-                        'summary' => ['diff' => $classification['diff']],
+                        'summary' => [...$dates, 'diff' => $classification['diff']],
                     ];
                     break;
                 case 'exclude':
@@ -149,7 +233,7 @@ abstract class AbstractSafeCopyAdapter implements SafeCopyAdapter
                         ...$line,
                         'target_id' => $targetRow['id'] ?? null,
                         'conflict_code' => $classification['conflict_code'],
-                        'summary' => ['diff' => $classification['diff']],
+                        'summary' => [...$dates, 'diff' => $classification['diff']],
                     ];
             }
         }
@@ -157,17 +241,17 @@ abstract class AbstractSafeCopyAdapter implements SafeCopyAdapter
         return $plan;
     }
 
-    public function apply(Season $source, Season $target, array $resolutions, int $runId, User $actor): array
+    public function apply(SafeCopyContext $context, array $resolutions, int $runId, User $actor): array
     {
         $results = [];
 
-        $targets = $this->targetRows($target);
+        $targets = $this->targetRows($context->target);
         $provenance = $this->provenance->forTargets(
             $this->entityKind(),
             array_values(array_map(static fn (array $row): int => $row['id'], $targets)),
         );
 
-        foreach ($this->sourceCandidates($source) as $key => $candidate) {
+        foreach ($this->candidates($context) as $key => $candidate) {
             if (! array_key_exists($key, $resolutions)) {
                 continue;
             }
@@ -181,6 +265,10 @@ abstract class AbstractSafeCopyAdapter implements SafeCopyAdapter
                 continue;
             }
 
+            if ($candidate['excluded'] !== null) {
+                throw SeasonalTemplatesDomainException::previewStale();
+            }
+
             $targetRow = $targets[$key] ?? null;
             $classification = $this->classify(
                 $candidate['fields'],
@@ -192,7 +280,7 @@ abstract class AbstractSafeCopyAdapter implements SafeCopyAdapter
             $updateFields = $this->withoutKey($candidate['fields']);
 
             if ($directive === self::RESOLUTION_APPLY && $classification['action'] === 'add') {
-                $targetId = $this->insertTarget($target, $candidate['fields'], $actor);
+                $targetId = $this->insertRow($context, $candidate['fields'], $actor);
                 $results[] = $targetId === null
                     ? $this->result($key, 'skipped', 'MISSING_DEPENDENCY', $sourceId, null)
                     : $this->result($key, 'added', null, $sourceId, $targetId, $copiedHash);
@@ -201,7 +289,7 @@ abstract class AbstractSafeCopyAdapter implements SafeCopyAdapter
             }
 
             if ($directive === self::RESOLUTION_APPLY && $classification['action'] === 'change') {
-                $this->updateTarget((int) $targetRow['id'], $updateFields);
+                $this->updateRow($context, (int) $targetRow['id'], $updateFields, $actor);
                 $results[] = $this->result($key, 'changed', null, $sourceId, (int) $targetRow['id'], $copiedHash);
 
                 continue;
@@ -212,7 +300,7 @@ abstract class AbstractSafeCopyAdapter implements SafeCopyAdapter
                 && $classification['action'] === 'conflict'
                 && in_array($classification['conflict_code'], ['DUPLICATE_KEY', 'MANUAL_MODIFIED'], true)
             ) {
-                $this->updateTarget((int) $targetRow['id'], $updateFields);
+                $this->updateRow($context, (int) $targetRow['id'], $updateFields, $actor);
                 $results[] = $this->result($key, 'overwritten', null, $sourceId, (int) $targetRow['id'], $copiedHash);
 
                 continue;
@@ -227,8 +315,104 @@ abstract class AbstractSafeCopyAdapter implements SafeCopyAdapter
     }
 
     /**
+     * Candidate rows from the template snapshot (when present) or the live source,
+     * with approved date fields remapped.
+     *
+     * @return array<string, array{source_id: int|null, fields: array<string, mixed>, transforms: array<string, array{before: string, after: string}>, date_issues: array<string, string>, excluded: string|null}>
+     */
+    private function candidates(SafeCopyContext $context): array
+    {
+        $kind = $this->entityKind();
+        $snapshot = $context->snapshotFor($kind);
+
+        if ($snapshot !== null) {
+            $raw = [];
+            foreach ($snapshot['rows'] as $key => $fields) {
+                $raw[(string) $key] = ['source_id' => null, 'fields' => $this->allowlisted($fields)];
+            }
+            ksort($raw);
+        } else {
+            $raw = $this->sourceCandidates($context->liveSource());
+        }
+
+        $dateFields = SafeCopyAllowlist::dateFieldsFor($kind);
+        $mapping = $context->mappingFor($kind);
+        $candidates = [];
+
+        foreach ($raw as $key => $candidate) {
+            $fields = $candidate['fields'];
+            $transforms = [];
+            $issues = [];
+            $excluded = null;
+
+            if ($dateFields !== []) {
+                $remapped = DateRemap::transformDates($fields, $mapping, $dateFields);
+                $fields = $remapped['fields'];
+                $transforms = $remapped['transforms'];
+                foreach ($remapped['missing'] as $field) {
+                    $issues[$field] = DateRemap::REASON_ANCHOR_MISSING;
+                }
+                $excluded = $this->dateExclusion($fields, $issues);
+            }
+
+            $fields = $this->sanitizeCandidate($fields);
+            ksort($fields);
+
+            $candidates[(string) $key] = [
+                'source_id' => $candidate['source_id'],
+                'fields' => $fields,
+                'transforms' => $transforms,
+                'date_issues' => $issues,
+                'excluded' => $excluded,
+            ];
+        }
+
+        return $candidates;
+    }
+
+    /**
      * @param  array<string, mixed>  $fields
-     * @param  array{id: int, fields: array<string, mixed>}|null  $target
+     * @param  array<string, string>  $issues
+     */
+    private function dateExclusion(array $fields, array $issues): ?string
+    {
+        foreach ($this->requiredDateFields() as $field) {
+            if (isset($issues[$field])) {
+                return DateRemap::REASON_ANCHOR_MISSING;
+            }
+        }
+
+        $range = $this->dateRangeFields();
+        if ($range !== null) {
+            [$start, $end] = $range;
+            if (($fields[$start] ?? null) !== null && ($fields[$end] ?? null) !== null && $fields[$end] < $fields[$start]) {
+                return DateRemap::REASON_RANGE_INVALID;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  array{transforms: array<string, array{before: string, after: string}>, date_issues: array<string, string>}  $candidate
+     * @return array<string, mixed>
+     */
+    private function dateSummary(array $candidate): array
+    {
+        $summary = [];
+        if ($candidate['transforms'] !== []) {
+            $summary['date_transforms'] = $candidate['transforms'];
+        }
+        if ($candidate['date_issues'] !== []) {
+            $summary['date_issues'] = $candidate['date_issues'];
+        }
+
+        return $summary;
+    }
+
+    /**
+     * @param  array<string, mixed>  $fields
+     * @param  array{id: int, fields: array<string, mixed>, locked?: bool}|null  $target
      * @return array{action: string, conflict_code?: string, diff: array<string, array{before: mixed, after: mixed}>}
      */
     private function classify(array $fields, ?array $target, ?SeasonCopyRowProvenance $provenance): array
@@ -249,6 +433,10 @@ abstract class AbstractSafeCopyAdapter implements SafeCopyAdapter
             return ['action' => 'exclude', 'diff' => []];
         }
 
+        if ($target['locked'] ?? false) {
+            return ['action' => 'conflict', 'conflict_code' => 'TARGET_LOCKED', 'diff' => $diff];
+        }
+
         if ($provenance === null) {
             return ['action' => 'conflict', 'conflict_code' => 'DUPLICATE_KEY', 'diff' => $diff];
         }
@@ -264,9 +452,9 @@ abstract class AbstractSafeCopyAdapter implements SafeCopyAdapter
     }
 
     /**
-     * @param  array<string, array{source_id: int, fields: array<string, mixed>}>  $candidates
+     * @param  array<string, array{source_id: int|null, fields: array<string, mixed>, transforms: array<string, array{before: string, after: string}>, date_issues: array<string, string>, excluded: string|null}>  $candidates
      * @param  array{entity_kinds: list<string>, codes: array<string, list<string>>}  $selection
-     * @return array<string, array{source_id: int, fields: array<string, mixed>}>
+     * @return array<string, array{source_id: int|null, fields: array<string, mixed>, transforms: array<string, array{before: string, after: string}>, date_issues: array<string, string>, excluded: string|null}>
      */
     private function selected(array $candidates, array $selection): array
     {

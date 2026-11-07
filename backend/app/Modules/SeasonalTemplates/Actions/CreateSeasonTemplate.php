@@ -18,20 +18,26 @@ final class CreateSeasonTemplate
     public function __construct(
         private readonly TenantContext $tenantContext,
         private readonly TemplateItemWriter $items,
+        private readonly CaptureTemplateSnapshotsFromSeason $capture,
         private readonly AuthorizationSecurity $security,
     ) {}
 
     /**
-     * @param  array<string, mixed>  $data  name, description?, items[]{entity_kind, selection?}
+     * @param  array<string, mixed>  $data  name, description?, capture_season_id?, items[]{entity_kind, selection?, snapshot?}
      */
     public function execute(User $actor, array $data, Request $request): SeasonTemplate
     {
         $tenant = $this->tenantContext->require();
 
-        /** @var list<array{entity_kind: string, selection: array<string, mixed>|null}> $items */
         $items = $this->items->normalize((array) ($data['items'] ?? []));
 
-        return DB::transaction(function () use ($actor, $data, $request, $tenant, $items): SeasonTemplate {
+        $captureSeasonId = isset($data['capture_season_id']) ? (int) $data['capture_season_id'] : null;
+        if ($captureSeasonId !== null) {
+            $items = $this->capture->execute($items, $captureSeasonId);
+        }
+        $this->items->assertSnapshotRequirements($items);
+
+        return DB::transaction(function () use ($actor, $data, $request, $tenant, $items, $captureSeasonId): SeasonTemplate {
             $template = new SeasonTemplate([
                 'name' => trim((string) $data['name']),
                 'description' => $data['description'] ?? null,
@@ -53,6 +59,11 @@ final class CreateSeasonTemplate
                 'status' => $template->status->value,
                 'matrix_version' => $template->matrix_version,
                 'entity_kinds' => array_column($items, 'entity_kind'),
+                'snapshot_kinds' => array_column(
+                    array_filter($items, static fn (array $item): bool => $item['snapshot'] !== null),
+                    'entity_kind',
+                ),
+                'captured_from_season_id' => $captureSeasonId,
             ], $request);
 
             return $template->load(['items', 'createdBy', 'approvedBy']);

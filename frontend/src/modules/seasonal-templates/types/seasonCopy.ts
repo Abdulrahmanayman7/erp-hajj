@@ -1,6 +1,7 @@
 /**
  * Safe-copy matrix (S08). Approved entity kinds only — the backend allowlist
- * (`SafeCopyAllowlist`, MATRIX_VERSION 2026-11-07.1) is authoritative; this list is a UX mirror.
+ * (`SafeCopyAllowlist`, MATRIX_VERSION 2026-11-08.1) is authoritative; this list is a UX mirror.
+ * Order is dependency order (projects before phases before tasks). Reminder rules are NOT copyable (X06 disabled).
  */
 export const APPROVED_ENTITY_KINDS = [
   'season_programs',
@@ -8,9 +9,16 @@ export const APPROVED_ENTITY_KINDS = [
   'transport_entitlements',
   'transport_season_vehicles',
   'accommodation_season_facilities',
+  'contract_definitions',
+  'season_projects',
+  'season_project_phases',
+  'task_definitions',
 ] as const
 
 export type ApprovedEntityKind = (typeof APPROVED_ENTITY_KINDS)[number]
+
+/** Kinds that exist only as template snapshots (no live source rows to copy from). UX mirror of the backend rule. */
+export const SNAPSHOT_ONLY_KINDS: readonly string[] = ['contract_definitions']
 
 export type CopyMode = 'from_season' | 'from_template'
 export const COPY_MODES: readonly CopyMode[] = ['from_season', 'from_template']
@@ -19,7 +27,7 @@ export type PreviewStatus = 'valid' | 'invalidated' | 'consumed' | 'expired'
 export type CopyRunStatus = 'succeeded' | 'failed'
 
 export type PreviewLineAction = 'add' | 'change' | 'exclude' | 'conflict'
-export type ConflictCode = 'DUPLICATE_KEY' | 'MANUAL_MODIFIED' | 'MISSING_DEPENDENCY' | string
+export type ConflictCode = 'DUPLICATE_KEY' | 'MANUAL_MODIFIED' | 'MISSING_DEPENDENCY' | 'TARGET_LOCKED' | string
 
 export type CopyDecision = 'skip' | 'overwrite'
 
@@ -33,6 +41,8 @@ export interface PreviewLineSummary {
   diff?: Record<string, { before: unknown; after: unknown }>
   detail?: Record<string, unknown>
   reason_code?: string
+  /** Date remap result per field (season_start_delta), present when a line carries dates. */
+  date_transforms?: Record<string, { before: unknown; after: unknown }>
   [key: string]: unknown
 }
 
@@ -56,7 +66,8 @@ export interface SeasonCopyPreview {
   id: number
   preview_token: string
   mode: CopyMode
-  source_season_id: number
+  /** Null when copying from a snapshot-complete template without a live source season. */
+  source_season_id: number | null
   source_template_id: number | null
   target_season_id: number
   matrix_version: string
@@ -74,12 +85,13 @@ export interface SeasonCopyPreview {
 /**
  * Body of POST /season-copy/previews.
  * NOTE: the backend takes `selection.entity_kinds` (not a top-level `entity_kinds`),
- * requires `source_season_id` in BOTH modes, and does not accept `resolutions` here
+ * requires `source_season_id` in `from_season` mode (optional in `from_template` when the template
+ * snapshots cover every selected kind), and does not accept `resolutions` here
  * (resolutions belong to the execute call).
  */
 export interface CreateSeasonCopyPreviewPayload {
   mode: CopyMode
-  source_season_id: number
+  source_season_id?: number
   target_season_id: number
   source_template_id?: number
   selection: { entity_kinds: string[] }
@@ -119,7 +131,7 @@ export interface SeasonCopyRun {
   run_number: string
   preview_id: number
   mode: CopyMode
-  source_season_id: number
+  source_season_id: number | null
   source_template_id: number | null
   target_season_id: number
   status: CopyRunStatus

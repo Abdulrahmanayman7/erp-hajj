@@ -1,6 +1,7 @@
 # S08 — Database Design Proposal
 
-> **Status:** `IMPLEMENTED` — migration `2026_11_07_320001_create_seasonal_templates_tables.php` on feature branch  
+> **Status:** `IMPLEMENTED` — migrations `2026_11_07_320001_create_seasonal_templates_tables.php` and `2026_11_08_320002_s08_expand_templates_snapshots_and_optional_source.php` on feature branch  
+> **Last updated:** 2026-11-08  
 > Do **not** run against production/staging without separate Owner authorization.  
 > Principles: [DATABASE_PRINCIPLES.md](../../03-database/DATABASE_PRINCIPLES.md), ADR-0003.
 
@@ -132,6 +133,14 @@ Per-entity outcomes for auditability (entity_kind, natural_key, result, reason).
 UNIQUE `(tenant_id, entity_kind, target_row_id)`.
 
 ---
+
+### 2.9 Expansion (migration `2026_11_08_320002`, MATRIX `2026-11-08.1`)
+
+| Change | Notes |
+|---|---|
+| `season_template_items.snapshot_json` | json null — `{anchor, rows}` of allowlisted fields; validated by `SnapshotNormalizer`; part of `content_hash` |
+| `season_copy_row_provenance.natural_key` | string(255) null — idempotency key for rows that are not season-scoped (contracts created from `contract_definitions`) |
+| `source_season_id` nullable | on `season_copy_previews`, `season_copy_runs`, `season_copy_row_provenance` — set only when a live source season was used. Composite FKs are dropped/recreated around the change on MySQL/MariaDB |
 
 ## 3. Lifecycle states
 

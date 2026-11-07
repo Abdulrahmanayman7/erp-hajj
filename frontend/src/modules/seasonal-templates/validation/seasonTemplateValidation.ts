@@ -1,5 +1,6 @@
 import {
   APPROVED_ENTITY_KINDS,
+  SNAPSHOT_ONLY_KINDS,
   type ApprovedEntityKind,
   type ListViewState,
 } from '../types/seasonCopy'
@@ -27,7 +28,7 @@ export function deniedEntityKinds(kinds: readonly string[]): string[] {
 }
 
 export function emptyTemplateForm(): TemplateFormState {
-  return { name: '', description: '', entity_kinds: [], codes: {} }
+  return { name: '', description: '', entity_kinds: [], codes: {}, capture_season_id: '' }
 }
 
 export function templateToForm(template: SeasonTemplate): TemplateFormState {
@@ -40,7 +41,21 @@ export function templateToForm(template: SeasonTemplate): TemplateFormState {
     description: template.description ?? '',
     entity_kinds: filterApprovedEntityKinds(template.items.map((item) => item.entity_kind)),
     codes,
+    capture_season_id: '',
   }
+}
+
+/**
+ * Optional capture of independent snapshots from a season while saving. Only the season id is
+ * sent — snapshot rows are produced and validated by the server, never assembled in the browser.
+ */
+export function buildCaptureSeason(form: Pick<TemplateFormState, 'capture_season_id'>): { capture_season_id?: number } {
+  return form.capture_season_id === '' ? {} : { capture_season_id: Number(form.capture_season_id) }
+}
+
+/** Selected kinds that exist only as snapshots and therefore need a captured/stored snapshot to be usable. */
+export function snapshotOnlySelected(kinds: readonly string[]): string[] {
+  return kinds.filter((kind) => SNAPSHOT_ONLY_KINDS.includes(kind))
 }
 
 export function parseCodes(raw: string | undefined): string[] {
@@ -134,6 +149,9 @@ const KNOWN_ERROR_CODES = [
   'SEASON_COPY_KIND_DENIED',
   'SEASON_COPY_CONFLICT_UNRESOLVED',
   'SEASON_COPY_PREVIEW_REQUIRED',
+  'SEASON_COPY_SOURCE_REQUIRED',
+  'SEASON_COPY_SNAPSHOT_REQUIRED',
+  'SEASON_TEMPLATE_SNAPSHOT_INVALID',
   'SEASON_TEMPLATE_INVALID_TRANSITION',
   'SEASON_NUMBER_UNAVAILABLE',
   'VALIDATION_ERROR',

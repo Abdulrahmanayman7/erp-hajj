@@ -87,6 +87,31 @@ class SeasonalTemplatesDomainException extends RuntimeException
         return new self($message, 'SEASON_TEMPLATE_INVALID_TRANSITION', 422);
     }
 
+    public static function snapshotInvalid(string $message): self
+    {
+        return new self($message, 'SEASON_TEMPLATE_SNAPSHOT_INVALID', 422);
+    }
+
+    /**
+     * A kind without a template snapshot needs a live source season (hybrid fallback).
+     */
+    public static function sourceRequired(): self
+    {
+        return new self('الموسم المصدر مطلوب لأن القالب لا يحتوي لقطة كاملة لكل الأنواع المحددة.', 'SEASON_COPY_SOURCE_REQUIRED', 422);
+    }
+
+    /**
+     * Snapshot-only kinds (e.g. contract definitions) cannot be copied without a snapshot.
+     */
+    public static function snapshotRequired(string $kind): self
+    {
+        return new self(
+            'هذا النوع يتطلب لقطة في القالب ولا يُنسخ من موسم: '.mb_substr($kind, 0, 64),
+            'SEASON_COPY_SNAPSHOT_REQUIRED',
+            422,
+        );
+    }
+
     public static function numberUnavailable(): self
     {
         return new self('تعذر إصدار الرقم المرجعي. أعد المحاولة.', 'SEASON_NUMBER_UNAVAILABLE', 409);
