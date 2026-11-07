@@ -7,6 +7,7 @@ import { createI18n } from 'vue-i18n'
 import { accommodationAr } from '@/locales/accommodationAr'
 import { ar } from '@/locales/ar'
 import { seasonPilgrimsAr } from '@/locales/seasonPilgrimsAr'
+import { seasonProjectsAr } from '@/locales/seasonProjectsAr'
 import { transportationAr } from '@/locales/transportationAr'
 import { autofocusWhen } from '@/shared/directives/autofocusWhen'
 
@@ -19,12 +20,14 @@ const arMessages = {
     ...accommodationAr.nav,
     ...seasonPilgrimsAr.nav,
     ...transportationAr.nav,
+    ...seasonProjectsAr.nav,
   },
   accommodation: accommodationAr.accommodation,
   pilgrims: seasonPilgrimsAr.pilgrims,
   seasons: seasonPilgrimsAr.seasons,
   seasonOps: seasonPilgrimsAr.seasonOps,
   transportation: transportationAr.transportation,
+  seasonProjects: seasonProjectsAr.seasonProjects,
 }
 
 export const i18n = createI18n({

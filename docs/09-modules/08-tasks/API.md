@@ -1,7 +1,7 @@
 # Tasks — API
 
 > **Status:** Implemented (Sprint 012)
-> **Last updated:** 2026-08-10  
+> **Last updated:** 2026-08-10
 > Base: `/api/v1` · Auth: Sanctum SPA · Envelope: [API_STANDARDS.md](../../04-api/API_STANDARDS.md)
 
 All routes: authenticated + tenant-active. Authorization via `TaskPolicy`. Cross-tenant → **404**.
@@ -23,7 +23,7 @@ All routes: authenticated + tenant-active. Authorization via `TaskPolicy`. Cross
 | POST | `/tasks/{task}/complete` | `tasks.complete` **or** self-service | → `completed` |
 | POST | `/tasks/{task}/cancel` | `tasks.change_status` | → `cancelled` (comment required) |
 
-**No** generic `PATCH …/status`.  
+**No** generic `PATCH …/status`.
 **No** nested `/decisions/{id}/tasks` write API (list Decision’s tasks via `GET /tasks?decision_id=`).
 
 ---
@@ -226,3 +226,9 @@ Decisions `POST /decisions/{id}/close` (existing) must, once Tasks ships, reject
   "updated_at": "…"
 }
 ```
+
+---
+
+## S06 extensions (implemented — functionally accepted; technical validation deferred)
+
+Additive filters/body: `project_id`, `season_id`, `phase_id`, `delay_state`. MVP task endpoints/permissions unchanged for non-project tasks. After parent project complete: only complete/cancel on open project tasks (**E-Q10 = A**). Permission composition for project tasks: **E-Q12 = A** (existing `tasks.*` + project policy). Contract: [../20-season-projects/API.md](../20-season-projects/API.md) §4.

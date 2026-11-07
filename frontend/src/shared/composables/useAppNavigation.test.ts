@@ -68,7 +68,7 @@ const EXPECTED_GROUP_MEMBERSHIP: Record<(typeof EXPECTED_GROUP_ORDER)[number], r
   'suppliers-contracts': ['suppliers', 'supplier-evaluations', 'contracts'],
   inventory: ['warehouses', 'inventory'],
   assets: ['assets', 'my-custodies'],
-  governance: ['meetings', 'decisions', 'tasks', 'documents'],
+  governance: ['meetings', 'decisions', 'tasks', 'season-projects', 'documents'],
 }
 
 const EXPECTED_LINK_KEYS = EXPECTED_GROUP_ORDER.flatMap((key) => EXPECTED_GROUP_MEMBERSHIP[key])
@@ -153,11 +153,11 @@ describe('buildTenantNavGroups', () => {
     expect(groups).toHaveLength(11)
   })
 
-  it('exposes exactly 38 sidebar links without duplication', () => {
+  it('exposes exactly 39 sidebar links without duplication', () => {
     const groups = buildTenantNavGroups(allowAll)
     const keys = groups.flatMap((group) => group.items.map((item) => item.key))
     expect(keys).toEqual([...EXPECTED_LINK_KEYS])
-    expect(new Set(keys).size).toBe(38)
+    expect(new Set(keys).size).toBe(39)
   })
 
   it('keeps exact membership and order inside every approved group', () => {

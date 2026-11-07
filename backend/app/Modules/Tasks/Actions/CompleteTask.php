@@ -7,9 +7,11 @@ use App\Core\Authorization\Support\AuthorizationSecurity;
 use App\Core\Tenancy\TenantContext;
 use App\Models\User;
 use App\Modules\Notifications\Support\NotificationHooks;
+use App\Modules\SeasonProjects\Support\SeasonProjectProgressRollup;
 use App\Modules\Tasks\Enums\TaskStatus;
 use App\Modules\Tasks\Exceptions\TaskDomainException;
 use App\Modules\Tasks\Models\Task;
+use App\Modules\Tasks\Support\TaskDelaySynchronizer;
 use App\Modules\Tasks\Support\TaskLifecycle;
 use App\Modules\Tasks\Support\TaskTransitionRecorder;
 use Illuminate\Http\Request;
@@ -22,6 +24,8 @@ final class CompleteTask
         private readonly TaskTransitionRecorder $transitions,
         private readonly AuthorizationSecurity $security,
         private readonly NotificationHooks $notifications,
+        private readonly TaskDelaySynchronizer $delay,
+        private readonly SeasonProjectProgressRollup $progress,
     ) {}
 
     public function execute(User $actor, Task $task, string $completionNotes, Request $request): Task
@@ -45,6 +49,11 @@ final class CompleteTask
             $locked->completed_at = now();
             $locked->completion_notes = $notes;
             $locked->save();
+            $this->delay->sync($locked, $request, $actor->id);
+
+            if ($locked->project_id !== null) {
+                $this->progress->refresh((int) $locked->project_id);
+            }
 
             $this->transitions->record($locked, $from, $to, $actor, null, $request);
 

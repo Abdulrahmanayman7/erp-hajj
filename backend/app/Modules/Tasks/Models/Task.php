@@ -9,6 +9,10 @@ use App\Models\User;
 use App\Modules\Decisions\Models\Decision;
 use App\Modules\Employees\Models\Employee;
 use App\Modules\OrganizationStructure\Models\OrganizationUnit;
+use App\Modules\SeasonPilgrims\Models\Season;
+use App\Modules\SeasonProjects\Models\SeasonProject;
+use App\Modules\SeasonProjects\Models\SeasonProjectPhase;
+use App\Modules\Tasks\Enums\TaskDelayState;
 use App\Modules\Tasks\Enums\TaskPriority;
 use App\Modules\Tasks\Enums\TaskStatus;
 use App\Modules\Tasks\Support\TaskNumberGenerator;
@@ -32,6 +36,11 @@ use Illuminate\Support\Carbon;
  * @property TaskStatus $status
  * @property TaskPriority $priority
  * @property int|null $decision_id
+ * @property int|null $season_id
+ * @property int|null $project_id
+ * @property int|null $phase_id
+ * @property TaskDelayState $delay_state
+ * @property Carbon|null $delay_calculated_at
  * @property int|null $organization_unit_id
  * @property int|null $assigned_to_employee_id
  * @property int $progress_percent
@@ -47,6 +56,13 @@ class Task extends Model implements TenantOwned
     use HasFactory;
 
     use UsesTenantScope;
+
+    /**
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'delay_state' => 'none',
+    ];
 
     protected $fillable = [
         'title',
@@ -73,10 +89,12 @@ class Task extends Model implements TenantOwned
         return [
             'status' => TaskStatus::class,
             'priority' => TaskPriority::class,
+            'delay_state' => TaskDelayState::class,
             'progress_percent' => 'integer',
             'start_date' => 'date',
             'due_date' => 'date',
             'completed_at' => 'datetime',
+            'delay_calculated_at' => 'datetime',
         ];
     }
 
@@ -129,6 +147,21 @@ class Task extends Model implements TenantOwned
     public function decision(): BelongsTo
     {
         return $this->belongsTo(Decision::class);
+    }
+
+    public function season(): BelongsTo
+    {
+        return $this->belongsTo(Season::class);
+    }
+
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(SeasonProject::class, 'project_id');
+    }
+
+    public function phase(): BelongsTo
+    {
+        return $this->belongsTo(SeasonProjectPhase::class, 'phase_id');
     }
 
     public function organizationUnit(): BelongsTo

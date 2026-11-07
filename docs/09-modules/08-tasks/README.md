@@ -79,9 +79,20 @@ Exact default role grants: [PERMISSIONS.md](PERMISSIONS.md).
 | Decision close gate | Block `approved → closed` while open linked Tasks exist | [ADR-0009](../../10-decisions/ADR-0009-TASK-ASSIGNEE-AND-DECISION-GATE.md) |
 | Delete | Hard delete **draft-only** (never left draft) | [BUSINESS_RULES.md](BUSINESS_RULES.md) |
 
+## Phase 2 / S06 extension (implemented — functionally accepted; technical validation deferred)
+
+Owner **D01** + engineering **E-Q01 = A**: separate `season_projects` aggregate; **extend** this module with nullable `season_id` / `project_id` / `phase_id` while **preserving** MVP Tasks permissions, behavior, and data.
+
+- Design/closure pack: [../20-season-projects/](../20-season-projects/README.md) · [S06_FINAL_CLOSURE_REPORT.md](../20-season-projects/S06_FINAL_CLOSURE_REPORT.md)
+- **E-Q05 = A:** calculated delay authoritative; `delay_state` synchronized projection; `tasks:recompute-delay` registered (production cron **NOT DEPLOYED**).
+- **E-Q10 = A:** when parent project completes, open project tasks stay open but may only complete or cancel.
+- MVP rows remain `project_id` NULL; Decision→Task chain unchanged.
+- S06 status: **FUNCTIONALLY_ACCEPTED / TECHNICAL_VALIDATION_DEFERRED** — not merge/deploy ready.
+
 ## References
 
 - [CORE_WORKFLOWS.md](../../01-business/CORE_WORKFLOWS.md) Workflow 1 · [BUSINESS_RULES.md](../../01-business/BUSINESS_RULES.md)
 - [07-decisions/](../07-decisions/) · [04-employees-and-supervisors/](../04-employees-and-supervisors/) · [09-documents/](../09-documents/)
 - [ADR-0008](../../10-decisions/ADR-0008-DECISION-RECOMMENDATION-AND-APPROVAL.md) · [ADR-0009](../../10-decisions/ADR-0009-TASK-ASSIGNEE-AND-DECISION-GATE.md)
 - [MODULE_TEMPLATE.md](../../02-architecture/MODULE_TEMPLATE.md)
+- [20-season-projects](../20-season-projects/README.md) (S06)

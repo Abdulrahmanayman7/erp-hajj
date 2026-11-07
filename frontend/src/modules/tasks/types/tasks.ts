@@ -23,10 +23,13 @@ export interface TaskAssignmentHistoryEntry {
   correlation_id: string | null
   created_at: string | null
 }
+export type TaskDelayState = 'none' | 'delayed'
 export interface Task {
   id: number; task_number: string; title: string; description: string | null; notes: string | null
   status: TaskStatus; priority: TaskPriority; progress_percent: number
   decision_id: number | null; organization_unit_id: number | null; assigned_to_employee_id: number | null
+  season_id?: number | null; project_id?: number | null; phase_id?: number | null
+  delay_state?: TaskDelayState | string; delay_calculated_at?: string | null
   start_date: string | null; due_date: string | null; completed_at: string | null; completion_notes: string | null
   is_overdue: boolean
   decision: TaskDecisionSummary | null; organization_unit: TaskOrgUnitSummary | null
@@ -39,11 +42,13 @@ export interface ListTasksParams {
   search?: string; status?: TaskStatus | 'all' | ''; decision_id?: number | ''
   organization_unit_id?: number | ''; assigned_to_employee_id?: number | ''; assigned_to_me?: boolean | ''
   priority?: TaskPriority | 'all' | ''; due_date_from?: string; due_date_to?: string; overdue?: boolean | ''
+  project_id?: number | ''; season_id?: number | ''; phase_id?: number | ''
   page?: number; per_page?: number; sort?: string
 }
 export interface TaskPayload {
   title?: string; description?: string | null; notes?: string | null; priority?: TaskPriority | null
   decision_id?: number | null; organization_unit_id?: number | null; assigned_to_employee_id?: number | null
+  season_id?: number | null; project_id?: number | null; phase_id?: number | null
   start_date?: string | null; due_date?: string | null
 }
 export interface TaskFormState {

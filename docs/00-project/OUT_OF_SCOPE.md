@@ -77,7 +77,7 @@ The following were historically listed as outside the **Foundation delivery** Ph
 |---|---|---|
 | Suppliers & purchase requests | S04 | **FINAL FUNCTIONAL CLOSURE — OWNER GRANTED (2026-11-02)** — [S04-FINAL-FUNCTIONAL-CLOSURE-2026-11-02.md](../10-decisions/S04-FINAL-FUNCTIONAL-CLOSURE-2026-11-02.md); residual follow-ups preserved (`fr_count=2`; MariaDB 1213 3/112); commit/push/merge/deploy **NOT AUTHORIZED** by closure |
 | Procurement cycle (RFQ / PO / receive) | S05 | NOT_STARTED (implementation); design readiness [S05_DESIGN_READINESS_AUDIT.md](S05_DESIGN_READINESS_AUDIT.md); coding **NOT AUTHORIZED** |
-| Seasonal projects & advanced tasking | S06 | NOT_STARTED (MVP Tasks ≠ Phase 2 projects) |
+| Seasonal projects & advanced tasking | S06 | Phase 2 stream **FUNCTIONALLY_ACCEPTED / TECHNICAL_VALIDATION_DEFERRED** (2026-11-07) — not MVP module; not merge/deploy ready — see [20-season-projects](../09-modules/20-season-projects/README.md) |
 | Risks & complaints | S07 | NOT_STARTED |
 | Seasonal templates (safe reference copy only) | S08 | NOT_STARTED; unsafe pilgrim/ops cloning remains forbidden |
 | Operational KPI engine (Phase 2 formulas) | S09 | NOT_STARTED (MVP dashboard counts are not Phase 2 KPIs) |

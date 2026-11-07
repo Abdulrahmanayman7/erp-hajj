@@ -7,10 +7,12 @@ use App\Core\Authorization\Support\AuthorizationSecurity;
 use App\Core\Tenancy\TenantContext;
 use App\Models\User;
 use App\Modules\Notifications\Support\NotificationHooks;
+use App\Modules\SeasonProjects\Support\SeasonProjectTaskGuard;
 use App\Modules\Tasks\Enums\TaskStatus;
 use App\Modules\Tasks\Exceptions\TaskDomainException;
 use App\Modules\Tasks\Models\Task;
 use App\Modules\Tasks\Support\TaskAssignmentRecorder;
+use App\Modules\Tasks\Support\TaskDelaySynchronizer;
 use App\Modules\Tasks\Support\TaskLifecycle;
 use App\Modules\Tasks\Support\TaskReferenceValidator;
 use App\Modules\Tasks\Support\TaskTransitionRecorder;
@@ -26,6 +28,8 @@ final class AssignTask
         private readonly TaskAssignmentRecorder $assignments,
         private readonly AuthorizationSecurity $security,
         private readonly NotificationHooks $notifications,
+        private readonly SeasonProjectTaskGuard $projectGuard,
+        private readonly TaskDelaySynchronizer $delay,
     ) {}
 
     public function execute(
@@ -39,6 +43,7 @@ final class AssignTask
 
         return DB::transaction(function () use ($actor, $task, $employeeId, $comment, $request, $tenant): Task {
             $locked = Task::query()->whereKey($task->id)->lockForUpdate()->firstOrFail();
+            $this->projectGuard->assertNotFrozenForMutation($locked);
 
             if ($locked->status->isTerminal()) {
                 throw TaskDomainException::immutable();
@@ -68,6 +73,7 @@ final class AssignTask
 
             $locked->assigned_to_employee_id = $employee->id;
             $locked->save();
+            $this->delay->sync($locked, $request, $actor->id);
 
             if ($wasDraft) {
                 $this->transitions->record(
