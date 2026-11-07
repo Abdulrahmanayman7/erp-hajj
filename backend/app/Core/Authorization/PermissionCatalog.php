@@ -114,6 +114,27 @@ final class PermissionCatalog
             ['name' => 'tasks.complete', 'display_name' => 'إكمال مهمة', 'module' => 'tasks', 'description' => 'إكمال المهام مع ملاحظات الإكمال'],
             ['name' => 'tasks.delete', 'display_name' => 'حذف مهمة', 'module' => 'tasks', 'description' => 'حذف نهائي لمهام المسودة غير المستخدمة'],
 
+            ['name' => 'risks.view', 'display_name' => 'عرض المخاطر', 'module' => 'risks', 'description' => 'عرض قائمة المخاطر وتفاصيلها وخطط المعالجة'],
+            ['name' => 'risks.create', 'display_name' => 'إنشاء خطر', 'module' => 'risks', 'description' => 'إنشاء خطر تشغيلي في حالة محددة'],
+            ['name' => 'risks.update', 'display_name' => 'تحديث خطر', 'module' => 'risks', 'description' => 'تعديل بيانات الخطر غير المغلقة'],
+            ['name' => 'risks.assess', 'display_name' => 'تقييم خطر', 'module' => 'risks', 'description' => 'تسجيل أو تحديث تقييم الاحتمال والأثر'],
+            ['name' => 'risks.approve_assessment', 'display_name' => 'اعتماد تقييم خطر', 'module' => 'risks', 'description' => 'اعتماد تقييم الخطر وخطة المعالجة (صلاحية حساسة — تُمنح صراحةً فقط)'],
+            ['name' => 'risks.manage_treatment', 'display_name' => 'إدارة خطة معالجة خطر', 'module' => 'risks', 'description' => 'إنشاء أو استبدال خطة معالجة الخطر'],
+            ['name' => 'risks.assign', 'display_name' => 'تعيين مسؤول خطر', 'module' => 'risks', 'description' => 'تعيين مالك المعالجة وبدء التنفيذ'],
+            ['name' => 'risks.close', 'display_name' => 'إغلاق خطر', 'module' => 'risks', 'description' => 'إغلاق الخطر بنتيجة معتمدة'],
+            ['name' => 'risks.delete', 'display_name' => 'حذف خطر', 'module' => 'risks', 'description' => 'حذف ناعم للأخطار في حالة محددة فقط'],
+
+            ['name' => 'complaints.view', 'display_name' => 'عرض الشكاوى', 'module' => 'complaints', 'description' => 'عرض قائمة الشكاوى وتفاصيلها والملاحظات'],
+            ['name' => 'complaints.create', 'display_name' => 'إنشاء شكوى', 'module' => 'complaints', 'description' => 'تسجيل شكوى تشغيلية جديدة (استقبال موظفين)'],
+            ['name' => 'complaints.update', 'display_name' => 'تحديث شكوى', 'module' => 'complaints', 'description' => 'تعديل محتوى الشكوى وبدء المراجعة'],
+            ['name' => 'complaints.assign', 'display_name' => 'تعيين شكوى', 'module' => 'complaints', 'description' => 'تعيين موظف مسؤول وبدء المعالجة'],
+            ['name' => 'complaints.escalate', 'display_name' => 'تصعيد شكوى', 'module' => 'complaints', 'description' => 'تصعيد الشكوى إلى موظف آخر مع سبب'],
+            ['name' => 'complaints.resolve', 'display_name' => 'حل شكوى', 'module' => 'complaints', 'description' => 'اقتراح حل الشكوى من الموظف المعيَّن'],
+            ['name' => 'complaints.close', 'display_name' => 'إغلاق شكوى', 'module' => 'complaints', 'description' => 'إغلاق الشكوى المحلولة مع سبب (صلاحية حساسة — تُمنح صراحةً فقط)'],
+            ['name' => 'complaints.reopen', 'display_name' => 'إعادة فتح شكوى', 'module' => 'complaints', 'description' => 'إعادة فتح شكوى مغلقة مع سبب (صلاحية حساسة — تُمنح صراحةً فقط)'],
+            ['name' => 'complaints.add_note', 'display_name' => 'إضافة ملاحظة شكوى', 'module' => 'complaints', 'description' => 'إضافة ملاحظات متابعة غير قابلة للتعديل'],
+            ['name' => 'complaints.delete', 'display_name' => 'حذف شكوى', 'module' => 'complaints', 'description' => 'حذف ناعم للشكاوى الجديدة غير المعينة فقط'],
+
             ['name' => 'documents.view', 'display_name' => 'عرض الوثائق', 'module' => 'documents', 'description' => 'عرض بيانات الوثائق الوصفية'],
             ['name' => 'documents.upload', 'display_name' => 'رفع مستند', 'module' => 'documents', 'description' => 'رفع الوثائق وربط اختياري أولي'],
             ['name' => 'documents.download', 'display_name' => 'تنزيل مستند', 'module' => 'documents', 'description' => 'تنزيل ملف المستند'],
@@ -642,6 +663,9 @@ final class PermissionCatalog
             'purchase_orders.cancel',
             'purchase_orders.close',
             'goods_receipts.post',
+            'risks.approve_assessment',
+            'complaints.close',
+            'complaints.reopen',
         ];
     }
 

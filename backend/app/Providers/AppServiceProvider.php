@@ -52,6 +52,10 @@ use App\Modules\Notifications\Models\Notification;
 use App\Modules\Notifications\Policies\NotificationPolicy;
 use App\Modules\OrganizationStructure\Models\OrganizationUnit;
 use App\Modules\OrganizationStructure\Policies\OrganizationUnitPolicy;
+use App\Modules\RisksAndComplaints\Models\OperationalComplaint;
+use App\Modules\RisksAndComplaints\Models\OperationalRisk;
+use App\Modules\RisksAndComplaints\Policies\OperationalComplaintPolicy;
+use App\Modules\RisksAndComplaints\Policies\OperationalRiskPolicy;
 use App\Modules\Platform\Policies\PlatformTenantPolicy;
 use App\Modules\SeasonPilgrims\Models\Pilgrim;
 use App\Modules\SeasonPilgrims\Models\Season;
@@ -155,6 +159,8 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Meeting::class, MeetingPolicy::class);
         Gate::policy(Decision::class, DecisionPolicy::class);
         Gate::policy(Task::class, TaskPolicy::class);
+        Gate::policy(OperationalRisk::class, OperationalRiskPolicy::class);
+        Gate::policy(OperationalComplaint::class, OperationalComplaintPolicy::class);
         Gate::policy(Document::class, DocumentPolicy::class);
         Gate::policy(DocumentCategory::class, DocumentCategoryPolicy::class);
         Gate::policy(Warehouse::class, WarehousePolicy::class);
@@ -191,6 +197,8 @@ class AppServiceProvider extends ServiceProvider
             'supplier' => Supplier::class,
             'supplier_evaluation' => SupplierEvaluation::class,
             'purchase_request' => PurchaseRequest::class,
+            'operational_risk' => OperationalRisk::class,
+            'operational_complaint' => OperationalComplaint::class,
         ]);
 
         Route::bind('user', function (string $value): User {
