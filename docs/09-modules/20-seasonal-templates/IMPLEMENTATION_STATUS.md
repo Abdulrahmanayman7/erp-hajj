@@ -1,10 +1,12 @@
 # S08 — Implementation Status
 
-> **Status:** `IMPLEMENTED ON FEATURE BRANCH` (D11–D20: R6 + contract editor + Controls A/B/C)  
+> **Status:** `OWNER_ACCEPTED / NOT_MERGED / NOT_DEPLOYED` (D11–D20: R6 + contract editor + Controls A/B/C)  
 > **Last updated:** 2026-11-08  
-> **Branch:** `feature/s08-seasonal-templates`  
+> **Branch:** `feature/s08-seasonal-templates` @ `707ca33`  
+> **Verified MySQL implementation SHA:** `e0743b3`  
 > **Coding authorization:** Owner-granted (D01–D10 + D11–D20); see [OWNER_DECISIONS_D11_D20.md](OWNER_DECISIONS_D11_D20.md)  
-> **Owner Accepted / merge / push / deploy:** **NOT** granted
+> **Owner Accepted:** **YES** — [S08-OWNER-ACCEPTANCE-2026-11-08.md](../../10-decisions/S08-OWNER-ACCEPTANCE-2026-11-08.md) (2026-11-08)  
+> **Merged / deploy:** **NOT** granted
 
 ## Status vocabulary
 
@@ -12,9 +14,9 @@
 |---|---|
 | Implemented | Yes (BE + FE + migrations + tests on feature branch) |
 | Merged to develop | **No** |
-| Tested | Yes — see evidence below (SQLite Pest + Vitest). MySQL 8: **deferred / unverified** |
-| Technically validated | Partial (local SQLite + frontend); MySQL FK path of prior `320002` + new `320003` composite FK need MySQL CI |
-| Owner Accepted | **No** |
+| Tested | Yes — SQLite Pest + Vitest + **MySQL 8.0.46 CI** @ `e0743b3` |
+| Technically validated | Yes for S08 MySQL migrations/FK/JSON + SeasonalTemplates + Control C on CI |
+| Owner Accepted | **Yes** (2026-11-08) |
 | Deployed | **No** |
 
 ## Matrix version
@@ -53,21 +55,22 @@ Legacy alias `reminder_rules` and `notifications` rows remain **DENIED**.
 - `2026_11_08_320002_s08_expand_templates_snapshots_and_optional_source.php`
 - `2026_11_08_320003_create_season_reminder_rules_table.php` — composite FK `(tenant_id, season_id)` → `seasons(tenant_id, id)`
 
-## Test evidence (local)
+## Test evidence
 
 | Suite | Result |
 |---|---|
-| Pest `--filter=SeasonalTemplates` | **85 passed** (1220 assertions) — templates + expansion + reminder API/copy + scanner |
-| Pest `ContractTest` | **18 passed** (incl. C17/C18 Control C) |
-| Pest SeasonProjects (filter) | **92 passed** (2 skipped MySQL dialect) |
-| Vitest `src/modules/seasonal-templates` | **60 passed** |
-| Vitest `useAppNavigation` | **18 passed** |
-| vue-tsc `--noEmit` | 0 errors |
-| MySQL 8 | **Not run — deferred** |
+| MySQL 8 SeasonalTemplates (CI @ `e0743b3`) | **85 passed** — run [42437115976](https://github.com/Abdulrahmanayman7/erp-hajj/actions/runs/42437115976) |
+| MySQL 8 Control C `C17\|C18` | **2 passed** |
+| Pest `--filter=SeasonalTemplates` (local SQLite) | **85 passed** |
+| Vitest seasonal-templates + navigation | **115 passed** |
+| Frontend production build | **PASS** |
+| Browser UAT-09 / UAT-10 | **PASS** |
+| UAT-04 / UAT-08 | Owner-accepted Pest/API/CLI exceptions |
 
-## DoD for Owner acceptance (remaining)
+## DoD after Owner acceptance (remaining)
 
-- [ ] Owner review of feature branch
-- [ ] MySQL CI for migrations `320002` + `320003`
-- [ ] Explicit Owner acceptance document
-- [ ] Separate merge + deploy authorizations
+- [x] Owner review of feature branch
+- [x] MySQL CI for migrations `320002` + `320003`
+- [x] Explicit Owner acceptance document
+- [ ] Separate merge authorization (+ PR open)
+- [ ] Separate deploy authorization

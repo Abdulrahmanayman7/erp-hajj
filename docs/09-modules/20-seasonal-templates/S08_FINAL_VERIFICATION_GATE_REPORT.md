@@ -8,9 +8,10 @@
 > **CI enable commit:** `15658f1`  
 > **Schema-assert fix:** `80695b1`  
 > **MySQL JSON fingerprint fix (final verified SHA):** `e0743b3`  
+> **Latest reported branch SHA:** `707ca33`  
 > **Matrix:** `SafeCopyAllowlist::MATRIX_VERSION = 2026-11-08.2` (10 kinds)  
-> **Recommendation:** **READY_FOR_OWNER_ACCEPTANCE**  
-> **Owner Accepted / merged / deployed:** **No**
+> **Owner Acceptance:** **OWNER_ACCEPTED** (2026-11-08) — [S08-OWNER-ACCEPTANCE-2026-11-08.md](../../10-decisions/S08-OWNER-ACCEPTANCE-2026-11-08.md)  
+> **Merged / deployed:** **No**
 
 ## Status vocabulary
 
@@ -200,27 +201,27 @@ No high-severity security defects confirmed in this closure window.
 
 ## 9. Documentation / ROADMAP updates
 
-ROADMAP / PHASE2 matrix: **Implemented + Tested** on feature branch; MySQL 8 **PASS** via CI; browser security UAT **PASS**; recommendation **READY_FOR_OWNER_ACCEPTANCE**. **Owner Accepted = No**; no PR/merge/deploy.
+ROADMAP / PHASE2 matrix / acceptance status: **OWNER_ACCEPTED / NOT_MERGED / NOT_DEPLOYED** (Owner 2026-11-08). MySQL 8 **PASS** via CI; browser security UAT **PASS**. No PR/merge/deploy authorized by acceptance.
 
 ---
 
 ## 10. GO / NO-GO
 
-### Recommendation: **READY_FOR_OWNER_ACCEPTANCE**
+### Post-acceptance posture: **OWNER_ACCEPTED** — merge/deploy still **NO-GO** without separate acts
 
-Hard blockers from prior NO-GO are cleared:
+Hard verification blockers from prior NO-GO remain cleared:
 
 1. **MySQL 8** migration/FK + SeasonalTemplates Pest + Control C — **PASS** on CI `mysql:8.0` (`VERSION=8.0.46`) at SHA `e0743b3`
 2. **UAT-09 / UAT-10** real-browser permission + tenant isolation — **PASS**
 3. Required S08 regressions (filtered Pest, Vitest, build, CI) — **PASS**
 4. No blocking security defects remaining in this window
+5. **Owner Accepted** recorded 2026-11-08 with UAT-04/08 verification exceptions accepted
 
 ### Explicitly still **not** done (Owner acts required)
 
-- Mark **Owner Accepted**
 - Open / merge PR to `develop` or `main`
 - Deploy / production DB / secrets / infra
 
 ### Suggested Owner next act
 
-Authorize acceptance review and, if accepted, separately authorize PR/merge (and later deploy). This report does **not** grant those acts.
+Authorize opening a Pull Request to `develop` after reviewing [S08_MERGE_READINESS_AUDIT.md](S08_MERGE_READINESS_AUDIT.md) / [S08_PROPOSED_PR.md](S08_PROPOSED_PR.md). Merge and deploy remain later separate acts.

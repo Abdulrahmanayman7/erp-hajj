@@ -1,11 +1,12 @@
 # Module 20 — Seasonal Templates & Safe Copy (S08)
 
-> **Status:** `IMPLEMENTED ON FEATURE BRANCH` (MATRIX `2026-11-08.2`, 10 kinds) — see [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md)  
+> **Status:** `OWNER_ACCEPTED / NOT_MERGED / NOT_DEPLOYED` (MATRIX `2026-11-08.2`, 10 kinds) — see [S08_ACCEPTANCE_STATUS.md](../../00-project/S08_ACCEPTANCE_STATUS.md)  
 > **Last updated:** 2026-11-08  
 > **Phase:** Phase 2 / Workflow **S08**  
 > **Product scope:** [ADR-0020](../../10-decisions/ADR-0020-FULL-PHASE2-OPERATIONAL-SCOPE.md) §S08  
-> **Branch:** `feature/s08-seasonal-templates`  
-> **Merge / push / deploy / Owner Accepted:** **NOT AUTHORIZED** — separate Owner acts required
+> **Branch:** `feature/s08-seasonal-templates` @ `707ca33`  
+> **Owner Acceptance:** [S08-OWNER-ACCEPTANCE-2026-11-08.md](../../10-decisions/S08-OWNER-ACCEPTANCE-2026-11-08.md) (2026-11-08)  
+> **Merge / PR / deploy:** **NOT AUTHORIZED** by acceptance — separate Owner acts required
 
 ## Purpose
 
@@ -35,7 +36,12 @@ Enable **safe reuse** of approved seasonal templates and **safe copy** of permit
 | [ACCEPTANCE_CRITERIA.md](ACCEPTANCE_CRITERIA.md) | Deliverable 9 — ACs |
 | [S08_IMPLEMENTATION_PLAN.md](S08_IMPLEMENTATION_PLAN.md) | Deliverable 10 — roadmap |
 | [S08_PART0_READINESS_REPORT.md](S08_PART0_READINESS_REPORT.md) | Part 0 closure report |
-| [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) | Feature-branch implementation status (not Owner Accepted) |
+| [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) | Feature-branch implementation status |
+| [S08_FINAL_VERIFICATION_GATE_REPORT.md](S08_FINAL_VERIFICATION_GATE_REPORT.md) | Verification evidence |
+| [S08_MERGE_READINESS_AUDIT.md](S08_MERGE_READINESS_AUDIT.md) | Merge-readiness inspection + PR checklist |
+| [S08_PROPOSED_PR.md](S08_PROPOSED_PR.md) | Proposed PR title/body (unpublished) |
+| [S08_ACCEPTANCE_STATUS.md](../../00-project/S08_ACCEPTANCE_STATUS.md) | Living Owner Acceptance status |
+| [S08-OWNER-ACCEPTANCE-2026-11-08.md](../../10-decisions/S08-OWNER-ACCEPTANCE-2026-11-08.md) | Owner Acceptance decision record |
 
 ## Code placement (implemented)
 

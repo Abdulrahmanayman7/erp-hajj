@@ -1,7 +1,7 @@
 # Roadmap
 
 > **Status:** Draft (delivery order aligned to completed / next sprints)
-> **Last updated:** 2026-11-08 (S08 verification READY_FOR_OWNER_ACCEPTANCE @ `e0743b3`; not Owner Accepted / merged / deployed)
+> **Last updated:** 2026-11-08 (S08 OWNER_ACCEPTED / NOT_MERGED / NOT_DEPLOYED @ `707ca33`; verified MySQL SHA `e0743b3`)
 > **Phase 2 product scope:** [ADR-0020](../10-decisions/ADR-0020-FULL-PHASE2-OPERATIONAL-SCOPE.md) (Full Phase 2 Operational Scope Adoption). Matrix: [PHASE2_SCOPE_MATRIX.md](PHASE2_SCOPE_MATRIX.md). Reconciliation: [PHASE2_SCOPE_RECONCILIATION.md](PHASE2_SCOPE_RECONCILIATION.md).
 > **Status vocabulary (S08-D09):** distinguish **Implemented** / **Merged** / **Tested** / **Owner Accepted** — merge ≠ automatic Owner acceptance.
 
@@ -80,7 +80,7 @@ Adopted by Project Owner via [ADR-0020](../10-decisions/ADR-0020-FULL-PHASE2-OPE
 | Procurement cycle (RFQ/PO/receive) | S05 | **In Phase 2.** **Implemented + Merged** on `develop` (PR #41 + UI PR #42). **Owner Accepted:** no dedicated S05 final-acceptance certificate located — do not invent |
 | Seasonal projects & tasks | S06 | **In Phase 2.** **Implemented + Merged** via [PR #45](https://github.com/Abdulrahmanayman7/erp-hajj/pull/45) @ `e25dc8f` (`Modules/SeasonProjects` + FE + [20-season-projects](../09-modules/20-season-projects/README.md)). Stream label **FUNCTIONALLY_ACCEPTED / TECHNICAL_VALIDATION_DEFERRED** (2026-11-07); MySQL 8 **DEFERRED**; Browser E2E **NOT RUN**. **Not** marked Owner Accepted / COMPLETE / deploy-ready — [S06_FINAL_CLOSURE_REPORT.md](../09-modules/20-season-projects/S06_FINAL_CLOSURE_REPORT.md) |
 | Risks & complaints | S07 | **In Phase 2.** **Implemented + Merged** via [PR #44](https://github.com/Abdulrahmanayman7/erp-hajj/pull/44) @ `a21e4ca`. **Tested:** module Pest/Vitest + [S07_PART6_UAT_REPORT.md](../09-modules/21-risks-and-complaints/S07_PART6_UAT_REPORT.md). **Owner Accepted:** merge alone ≠ final Owner acceptance — not assumed |
-| Seasonal templates (safe copy) | S08 | **In Phase 2.** **Implemented + Tested** on `feature/s08-seasonal-templates` @ `e0743b3` (matrix `2026-11-08.2`, 10 kinds). **Final verification gate:** **READY_FOR_OWNER_ACCEPTANCE** — MySQL 8.0.46 CI PASS (run [42437115976](https://github.com/Abdulrahmanayman7/erp-hajj/actions/runs/42437115976)); browser UAT-09/10 PASS on `erp_hajj_s08_demo`; VG-02/03/04 closed — [S08_FINAL_VERIFICATION_GATE_REPORT.md](../09-modules/20-seasonal-templates/S08_FINAL_VERIFICATION_GATE_REPORT.md). **Merged:** No. **Owner Accepted:** No. Deploy: No |
+| Seasonal templates (safe copy) | S08 | **In Phase 2.** **OWNER_ACCEPTED / NOT_MERGED / NOT_DEPLOYED** (Owner 2026-11-08) on `feature/s08-seasonal-templates` @ `707ca33` (matrix `2026-11-08.2`, 10 kinds; MySQL verified SHA `e0743b3`). Evidence: MySQL 8.0.46 CI PASS (run [42437115976](https://github.com/Abdulrahmanayman7/erp-hajj/actions/runs/42437115976)); browser UAT-09/10 PASS; UAT-04/08 Owner-accepted Pest/API exceptions — [S08-OWNER-ACCEPTANCE-2026-11-08.md](../10-decisions/S08-OWNER-ACCEPTANCE-2026-11-08.md) · [S08_ACCEPTANCE_STATUS.md](S08_ACCEPTANCE_STATUS.md). **Merged:** No. **Deploy:** No. Merge/PR not authorized by acceptance |
 | Operational KPIs | S09 | **In Phase 2; NOT_STARTED** |
 | Executive ops dashboard | S10 | **In Phase 2; NOT_STARTED**; live ops map **in product scope** (ADR-0021) — not complete without real GPS/source |
 

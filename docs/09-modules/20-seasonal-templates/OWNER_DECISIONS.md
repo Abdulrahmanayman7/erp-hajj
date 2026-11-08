@@ -1,9 +1,10 @@
 # S08 — Owner Decisions Register (Binding)
 
 > **Status:** S08-D01…D10 **APPROVED / BINDING** (2026-11-07); **S08-D11…D20 APPROVED / BINDING** (2026-11-08) — see [OWNER_DECISIONS_D11_D20.md](OWNER_DECISIONS_D11_D20.md)  
-> **Coding authorization:** **GRANTED** for implementation on `feature/s08-seasonal-templates` (Owner act superseding Part 0 D10 for development)  
-> **Merge / deploy / Owner Accepted:** still **NOT** granted  
-> **Baseline:** `develop` @ `a21e4ca` (D01–D10); feature @ `e0c7933` before D11–D20 coding
+> **Coding authorization:** **GRANTED** for implementation on `feature/s08-seasonal-templates`  
+> **Owner Accepted:** **YES** (2026-11-08) — [S08-OWNER-ACCEPTANCE-2026-11-08.md](../../10-decisions/S08-OWNER-ACCEPTANCE-2026-11-08.md)  
+> **Merge / deploy:** still **NOT** granted  
+> **Baseline:** `develop` @ `a21e4ca` (D01–D10); feature tip at acceptance recording `707ca33`
 
 ## Summary
 
