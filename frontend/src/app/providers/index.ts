@@ -7,6 +7,7 @@ import { createI18n } from 'vue-i18n'
 import { accommodationAr } from '@/locales/accommodationAr'
 import { ar } from '@/locales/ar'
 import { risksComplaintsAr } from '@/locales/risksComplaintsAr'
+import { seasonalTemplatesAr } from '@/locales/seasonalTemplatesAr'
 import { seasonPilgrimsAr } from '@/locales/seasonPilgrimsAr'
 import { seasonProjectsAr } from '@/locales/seasonProjectsAr'
 import { transportationAr } from '@/locales/transportationAr'
@@ -23,6 +24,7 @@ const arMessages = {
     ...transportationAr.nav,
     ...seasonProjectsAr.nav,
     ...risksComplaintsAr.nav,
+    ...seasonalTemplatesAr.nav,
   },
   accommodation: accommodationAr.accommodation,
   pilgrims: seasonPilgrimsAr.pilgrims,
@@ -32,6 +34,7 @@ const arMessages = {
   seasonProjects: seasonProjectsAr.seasonProjects,
   risks: risksComplaintsAr.risks,
   complaints: risksComplaintsAr.complaints,
+  seasonalTemplates: seasonalTemplatesAr.seasonalTemplates,
 }
 
 export const i18n = createI18n({

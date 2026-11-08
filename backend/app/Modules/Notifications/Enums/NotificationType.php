@@ -57,6 +57,9 @@ enum NotificationType: string
     case ComplaintResolved = 'COMPLAINT_RESOLVED';
     case ComplaintReopened = 'COMPLAINT_REOPENED';
 
+    /** S08 season reminder rules (D15): tenant-configured, fired by the daily scanner only. */
+    case SeasonReminderDue = 'SEASON_REMINDER_DUE';
+
     public function defaultSeverity(): NotificationSeverity
     {
         return match ($this) {
@@ -75,6 +78,7 @@ enum NotificationType: string
             self::PurchaseRequestRejected,
             self::PurchaseRequestReturned,
             self::RiskSeverityAlert,
+            self::SeasonReminderDue,
             self::ComplaintEscalated => NotificationSeverity::Warning,
 
             self::ContractExpired,

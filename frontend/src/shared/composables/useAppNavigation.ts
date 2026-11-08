@@ -36,6 +36,10 @@ import {
   Route,
   TriangleAlert,
   MessageSquare,
+  LayoutTemplate,
+  CopyPlus,
+  History,
+  BellRing,
   type LucideIcon,
 } from 'lucide-vue-next'
 
@@ -254,6 +258,46 @@ export function buildTenantNavGroups(can: (permission: string) => boolean): AppN
       to: '/app/season-families',
       icon: HeartHandshake,
       permission: 'season_family_groups.view',
+      match: 'prefix',
+    })
+  }
+  if (can('season_templates.view')) {
+    seasonItems.push({
+      key: 'season-templates',
+      labelKey: 'nav.seasonTemplates',
+      to: '/app/season-templates',
+      icon: LayoutTemplate,
+      permission: 'season_templates.view',
+      match: 'prefix',
+    })
+  }
+  if (can('season_copy.preview')) {
+    seasonItems.push({
+      key: 'season-safe-copy',
+      labelKey: 'nav.seasonSafeCopy',
+      to: '/app/season-safe-copy',
+      icon: CopyPlus,
+      permission: 'season_copy.preview',
+      match: 'prefix',
+    })
+  }
+  if (can('season_copy.history')) {
+    seasonItems.push({
+      key: 'season-copy-runs',
+      labelKey: 'nav.seasonCopyRuns',
+      to: '/app/season-copy-runs',
+      icon: History,
+      permission: 'season_copy.history',
+      match: 'prefix',
+    })
+  }
+  if (can('season_reminders.view')) {
+    seasonItems.push({
+      key: 'season-reminder-rules',
+      labelKey: 'nav.seasonReminderRules',
+      to: '/app/season-reminder-rules',
+      icon: BellRing,
+      permission: 'season_reminders.view',
       match: 'prefix',
     })
   }

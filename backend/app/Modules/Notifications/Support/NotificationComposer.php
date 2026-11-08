@@ -242,6 +242,10 @@ final class NotificationComposer
                 'title' => 'أُعيد فتح شكوى',
                 'body' => $this->clip($number !== '' ? "أُعيد فتح الشكوى {$number}." : 'أُعيد فتح إحدى الشكاوى.'),
             ],
+            NotificationType::SeasonReminderDue => [
+                'title' => $title !== '' ? mb_substr($title, 0, 255) : 'تذكير موسمي',
+                'body' => $this->clip($this->str($context['body'] ?? null) !== '' ? $this->str($context['body'] ?? null) : 'حان موعد تذكير موسمي مُعدّ في المنشأة.'),
+            ],
         };
     }
 

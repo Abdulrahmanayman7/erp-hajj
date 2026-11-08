@@ -6,6 +6,7 @@ import { accommodationAr } from '../accommodationAr'
 import { seasonPilgrimsAr } from '../seasonPilgrimsAr'
 import { seasonProjectsAr } from '../seasonProjectsAr'
 import { risksComplaintsAr } from '../risksComplaintsAr'
+import { seasonalTemplatesAr } from '../seasonalTemplatesAr'
 import { transportationAr } from '../transportationAr'
 import { auditEventLabel, auditEntityDisplay, formatAuditValue } from '@/modules/audit/utils/auditDisplay'
 const messages = {
@@ -17,6 +18,7 @@ const messages = {
     ...transportationAr.nav,
     ...seasonProjectsAr.nav,
     ...risksComplaintsAr.nav,
+    ...seasonalTemplatesAr.nav,
   },
   accommodation: accommodationAr.accommodation,
   pilgrims: seasonPilgrimsAr.pilgrims,
@@ -26,6 +28,7 @@ const messages = {
   seasonProjects: seasonProjectsAr.seasonProjects,
   risks: risksComplaintsAr.risks,
   complaints: risksComplaintsAr.complaints,
+  seasonalTemplates: seasonalTemplatesAr.seasonalTemplates,
 }
 function files(directory: string): string[] { return readdirSync(directory, { withFileTypes: true }).flatMap(entry => entry.isDirectory() ? files(join(directory, entry.name)) : [join(directory, entry.name)]) }
 const lookup = (key: string) => key.split('.').reduce<unknown>((value, part) => (value as Record<string, unknown> | undefined)?.[part], messages)

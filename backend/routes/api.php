@@ -40,6 +40,9 @@ use App\Modules\Platform\Controllers\PlatformTenantController;
 use App\Modules\RisksAndComplaints\Controllers\ComplaintController;
 use App\Modules\RisksAndComplaints\Controllers\OperationalLinksCapabilitiesController;
 use App\Modules\RisksAndComplaints\Controllers\RiskController;
+use App\Modules\SeasonalTemplates\Controllers\SeasonCopyController;
+use App\Modules\SeasonalTemplates\Controllers\SeasonReminderRuleController;
+use App\Modules\SeasonalTemplates\Controllers\SeasonTemplateController;
 use App\Modules\SeasonPilgrims\Controllers\PilgrimController;
 use App\Modules\SeasonPilgrims\Controllers\SeasonContextController;
 use App\Modules\SeasonPilgrims\Controllers\SeasonController;
@@ -531,6 +534,30 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
             Route::delete('/transport-external-drivers/{external_driver}', [TransportExternalDriverController::class, 'destroy'])->name('transport-external-drivers.destroy');
             Route::post('/transport-external-drivers/{external_driver}/activate', [TransportExternalDriverController::class, 'activate'])->name('transport-external-drivers.activate');
             Route::post('/transport-external-drivers/{external_driver}/deactivate', [TransportExternalDriverController::class, 'deactivate'])->name('transport-external-drivers.deactivate');
+
+            // S08 Seasonal Templates & Safe Copy — tenant-level (outside season.context):
+            // source/target season ids are body fields, resolved through the tenant scope (404 cross-tenant).
+            Route::get('/season-templates', [SeasonTemplateController::class, 'index'])->name('season-templates.index');
+            Route::post('/season-templates', [SeasonTemplateController::class, 'store'])->name('season-templates.store');
+            Route::get('/season-templates/{template}', [SeasonTemplateController::class, 'show'])->name('season-templates.show');
+            Route::patch('/season-templates/{template}', [SeasonTemplateController::class, 'update'])->name('season-templates.update');
+            Route::post('/season-templates/{template}/approve', [SeasonTemplateController::class, 'approve'])->name('season-templates.approve');
+            Route::post('/season-templates/{template}/archive', [SeasonTemplateController::class, 'archive'])->name('season-templates.archive');
+
+            Route::post('/season-copy/previews', [SeasonCopyController::class, 'storePreview'])->name('season-copy.previews.store');
+            Route::get('/season-copy/previews/{preview}', [SeasonCopyController::class, 'showPreview'])->name('season-copy.previews.show');
+            Route::post('/season-copy/executions', [SeasonCopyController::class, 'execute'])->name('season-copy.executions.store');
+            Route::get('/season-copy/runs', [SeasonCopyController::class, 'indexRuns'])->name('season-copy.runs.index');
+            Route::get('/season-copy/runs/{run}', [SeasonCopyController::class, 'showRun'])->name('season-copy.runs.show');
+
+            // S08 season reminder rules (D11-D16): season is a route parameter resolved through the tenant scope.
+            Route::get('/seasons/{season}/reminder-rules', [SeasonReminderRuleController::class, 'index'])->name('seasons.reminder-rules.index');
+            Route::post('/seasons/{season}/reminder-rules', [SeasonReminderRuleController::class, 'store'])->name('seasons.reminder-rules.store');
+            Route::get('/season-reminder-rules/{rule}', [SeasonReminderRuleController::class, 'show'])->name('season-reminder-rules.show');
+            Route::patch('/season-reminder-rules/{rule}', [SeasonReminderRuleController::class, 'update'])->name('season-reminder-rules.update');
+            Route::post('/season-reminder-rules/{rule}/activate', [SeasonReminderRuleController::class, 'activate'])->name('season-reminder-rules.activate');
+            Route::post('/season-reminder-rules/{rule}/pause', [SeasonReminderRuleController::class, 'pause'])->name('season-reminder-rules.pause');
+            Route::post('/season-reminder-rules/{rule}/archive', [SeasonReminderRuleController::class, 'archive'])->name('season-reminder-rules.archive');
 
             // Season-scoped resources: the season comes from the Season Context
             // (X-Season-Id header, default = Active season), never from payloads.

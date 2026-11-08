@@ -76,10 +76,10 @@ The following were historically listed as outside the **Foundation delivery** Ph
 | Theme | Workflow | Note |
 |---|---|---|
 | Suppliers & purchase requests | S04 | **FINAL FUNCTIONAL CLOSURE — OWNER GRANTED (2026-11-02)** — [S04-FINAL-FUNCTIONAL-CLOSURE-2026-11-02.md](../10-decisions/S04-FINAL-FUNCTIONAL-CLOSURE-2026-11-02.md); residual follow-ups preserved (`fr_count=2`; MariaDB 1213 3/112); commit/push/merge/deploy **NOT AUTHORIZED** by closure |
-| Procurement cycle (RFQ / PO / receive) | S05 | NOT_STARTED (implementation); design readiness [S05_DESIGN_READINESS_AUDIT.md](S05_DESIGN_READINESS_AUDIT.md); coding **NOT AUTHORIZED** |
-| Seasonal projects & advanced tasking | S06 | Phase 2 stream **FUNCTIONALLY_ACCEPTED / TECHNICAL_VALIDATION_DEFERRED** (2026-11-07) — not MVP module; not merge/deploy ready — see [20-season-projects](../09-modules/20-season-projects/README.md) |
-| Risks & complaints | S07 | NOT_STARTED |
-| Seasonal templates (safe reference copy only) | S08 | NOT_STARTED; unsafe pilgrim/ops cloning remains forbidden |
+| Procurement cycle (RFQ / PO / receive) | S05 | **Implemented + Merged** on `develop` (PR #41 ancestry; evidence retained); Owner-acceptance certificate not located — do not invent |
+| Seasonal projects & advanced tasking | S06 | **Implemented + Merged** via PR #45 @ `e25dc8f` ([20-season-projects](../09-modules/20-season-projects/README.md)). Stream status **FUNCTIONALLY_ACCEPTED / TECHNICAL_VALIDATION_DEFERRED** (2026-11-07) — **not** marked Owner Accepted / COMPLETE; MySQL 8 deferred; unsafe pilgrim/ops cloning remains forbidden elsewhere |
+| Risks & complaints | S07 | **Implemented + Merged** (PR #44 @ `a21e4ca`); Owner final acceptance not assumed from merge |
+| Seasonal templates (safe reference copy only) | S08 | **OWNER_ACCEPTED / NOT_MERGED / NOT_DEPLOYED** (Owner 2026-11-08) on `feature/s08-seasonal-templates` @ `707ca33` ([20-seasonal-templates](../09-modules/20-seasonal-templates/); [S08-OWNER-ACCEPTANCE-2026-11-08.md](../10-decisions/S08-OWNER-ACCEPTANCE-2026-11-08.md)); unsafe pilgrim/ops cloning remains forbidden |
 | Operational KPI engine (Phase 2 formulas) | S09 | NOT_STARTED (MVP dashboard counts are not Phase 2 KPIs) |
 | Executive operations dashboard widgets | S10 | NOT_STARTED; maps/live per GPS special case |
 

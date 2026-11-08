@@ -9,6 +9,7 @@ use App\Modules\Contracts\Enums\ContractStatus;
 use App\Modules\Contracts\Models\Contract;
 use App\Modules\Contracts\Models\ContractCategory;
 use App\Modules\Contracts\Models\ContractStatusTransition;
+use App\Modules\Contracts\Support\ContractCounterparty;
 use App\Modules\Employees\Models\Employee;
 use App\Modules\OrganizationStructure\Models\OrganizationUnit;
 use Illuminate\Support\Facades\Artisan;
@@ -598,4 +599,51 @@ test('C16 list filters status expiring_soon and search', function (): void {
         ->assertOk()
         ->assertJsonCount(1, 'data')
         ->assertJsonPath('data.0.id', $expiring['id']);
+});
+
+test('C17 template placeholder counterparty blocks leaving draft until a real name is set (Control C)', function (): void {
+    actingAsTenantOwner();
+    $placeholder = ContractCounterparty::TEMPLATE_PLACEHOLDER;
+
+    $stub = createContractViaApi(['counterparty_name' => $placeholder]);
+    expect($stub['status'])->toBe('draft');
+
+    // Leaving draft toward review is blocked with the stable code and nothing changes.
+    spaPostJson("/api/v1/contracts/{$stub['id']}/submit-review")
+        ->assertStatus(422)
+        ->assertJsonPath('code', 'CONTRACT_COUNTERPARTY_INCOMPLETE');
+    spaGetJson("/api/v1/contracts/{$stub['id']}")->assertOk()->assertJsonPath('data.status', 'draft');
+
+    // Surrounding whitespace does not bypass the guard.
+    spaPatchJson("/api/v1/contracts/{$stub['id']}", ['counterparty_name' => "  {$placeholder}  "])->assertOk();
+    spaPostJson("/api/v1/contracts/{$stub['id']}/submit-review")
+        ->assertStatus(422)
+        ->assertJsonPath('code', 'CONTRACT_COUNTERPARTY_INCOMPLETE');
+
+    // Approve / sign / execute are unreachable without passing review first.
+    spaPostJson("/api/v1/contracts/{$stub['id']}/approve")
+        ->assertStatus(422)
+        ->assertJsonPath('code', 'CONTRACT_INVALID_STATUS_TRANSITION');
+
+    // The real counterparty unlocks the normal lifecycle.
+    spaPatchJson("/api/v1/contracts/{$stub['id']}", ['counterparty_name' => 'شركة النقل الفعلية'])->assertOk();
+    advanceContractTo($stub['id'], ContractStatus::Executing->value);
+    spaGetJson("/api/v1/contracts/{$stub['id']}")->assertOk()->assertJsonPath('data.status', 'executing');
+});
+
+test('C18 placeholder contract can still be cancelled from draft and unrelated contracts are unaffected', function (): void {
+    actingAsTenantOwner();
+
+    $stub = createContractViaApi(['counterparty_name' => ContractCounterparty::TEMPLATE_PLACEHOLDER]);
+    spaPostJson("/api/v1/contracts/{$stub['id']}/cancel", ['comment' => 'إلغاء قالب غير مكتمل'])
+        ->assertOk()
+        ->assertJsonPath('data.status', 'cancelled');
+
+    // A contract with a real counterparty (even one merely containing the words) is not affected.
+    $near = createContractViaApi(['counterparty_name' => 'من القالب الذهبي للنقل']);
+    advanceContractTo($near['id'], ContractStatus::InReview->value);
+
+    $normal = createContractViaApi();
+    advanceContractTo($normal['id'], ContractStatus::Executing->value);
+    spaGetJson("/api/v1/contracts/{$normal['id']}")->assertOk()->assertJsonPath('data.status', 'executing');
 });

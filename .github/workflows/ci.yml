@@ -2,9 +2,13 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
+    # feature/s08-seasonal-templates: Owner-authorized limited push so MySQL 8
+    # backend-mysql (incl. S08 steps) can run without opening a PR or merging.
+    branches: [main, develop, feature/s08-seasonal-templates]
   pull_request:
     branches: [main, develop]
+  # Safe manual re-run on the checked-out branch (no deploy jobs in this file).
+  workflow_dispatch:
 
 jobs:
   backend:
@@ -129,6 +133,18 @@ jobs:
           test "${DB_DATABASE}" = "erp_hajj_testing"
           php -r 'exit(getenv("DB_DATABASE") === "erp_hajj_testing" ? 0 : 1);'
 
+      - name: Assert MySQL 8.x engine (not MariaDB)
+        run: |
+          php -r '
+            $pdo = new PDO("mysql:host=".getenv("DB_HOST").";port=".getenv("DB_PORT"), getenv("DB_USERNAME"), getenv("DB_PASSWORD"));
+            $v = (string) $pdo->query("SELECT VERSION()")->fetchColumn();
+            echo "VERSION={$v}\n";
+            if (stripos($v, "mariadb") !== false || !preg_match("/^8\\./", $v)) {
+              fwrite(STDERR, "Expected MySQL 8.x disposable service, got [{$v}]\n");
+              exit(1);
+            }
+          '
+
       - name: Assert S04 MySQL suite paths exist
         run: |
           test -d tests/Feature/SuppliersAndProcurement
@@ -180,6 +196,65 @@ jobs:
             tests/Concurrency/PurchaseOrderCreateConcurrencyTest.php \
             tests/Concurrency/GoodsReceiptPostConcurrencyTest.php \
             tests/Concurrency/PurchaseOrderCloseConcurrencyTest.php
+
+      # S08 Seasonal Templates — MySQL 8 FK/JSON/nullable source_season + reminder rules.
+      # migrate:fresh already applied 320002/320003 above; this step only asserts + tests.
+      - name: Assert S08 MySQL migrations present
+        run: |
+          test -f database/migrations/2026_11_08_320002_s08_expand_templates_snapshots_and_optional_source.php
+          test -f database/migrations/2026_11_08_320003_create_season_reminder_rules_table.php
+          # Avoid tinker exit()/BreakException — assert schema via PDO against disposable MySQL 8.
+          php -r '
+            $pdo = new PDO(
+              "mysql:host=".getenv("DB_HOST").";port=".getenv("DB_PORT").";dbname=".getenv("DB_DATABASE"),
+              getenv("DB_USERNAME"),
+              getenv("DB_PASSWORD")
+            );
+            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $need = [
+              ["season_reminder_rules", null],
+              ["season_template_items", "snapshot_json"],
+              ["season_copy_previews", "source_season_id"],
+              ["season_copy_runs", "source_season_id"],
+              ["season_copy_row_provenance", "source_season_id"],
+              ["season_copy_row_provenance", "natural_key"],
+            ];
+            foreach ($need as [$table, $col]) {
+              if ($col === null) {
+                $ok = (bool) $pdo->query("SHOW TABLES LIKE ".$pdo->quote($table))->fetch();
+                if (!$ok) { fwrite(STDERR, "Missing table {$table}\n"); exit(1); }
+                echo "table={$table} ok\n";
+                continue;
+              }
+              $stmt = $pdo->prepare("SHOW COLUMNS FROM `{$table}` LIKE ?");
+              $stmt->execute([$col]);
+              if (!$stmt->fetch()) { fwrite(STDERR, "Missing {$table}.{$col}\n"); exit(1); }
+              echo "{$table}.{$col} ok\n";
+            }
+            $ddl = (string) $pdo->query("SHOW CREATE TABLE season_reminder_rules")->fetch(PDO::FETCH_ASSOC)["Create Table"];
+            echo $ddl, "\n";
+            if (stripos($ddl, "sea_rem_season_fk") === false) {
+              fwrite(STDERR, "Expected composite FK sea_rem_season_fk on season_reminder_rules\n");
+              exit(1);
+            }
+            // Nullable source_season evidence on copy previews.
+            $col = $pdo->query("SHOW COLUMNS FROM season_copy_previews LIKE \"source_season_id\"")->fetch(PDO::FETCH_ASSOC);
+            if (!$col || strtoupper((string) $col["Null"]) !== "YES") {
+              fwrite(STDERR, "Expected nullable season_copy_previews.source_season_id\n");
+              exit(1);
+            }
+            echo "nullable source_season_id ok\n";
+          '
+
+      - name: S08 SeasonalTemplates Feature tests (MySQL 8)
+        # phpunit.mysql.xml forces APP_ENV=testing, DB_CONNECTION=mysql, DB_DATABASE=erp_hajj_testing
+        run: php vendor/bin/pest -c phpunit.mysql.xml --filter=SeasonalTemplates
+
+      - name: S08 Contract placeholder Control C (MySQL 8)
+        run: |
+          php vendor/bin/pest -c phpunit.mysql.xml \
+            tests/Feature/Contracts/ContractTest.php \
+            --filter="C17|C18"
 
   frontend:
     name: Frontend (Vue)

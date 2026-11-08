@@ -57,6 +57,13 @@ use App\Modules\RisksAndComplaints\Models\OperationalComplaint;
 use App\Modules\RisksAndComplaints\Models\OperationalRisk;
 use App\Modules\RisksAndComplaints\Policies\OperationalComplaintPolicy;
 use App\Modules\RisksAndComplaints\Policies\OperationalRiskPolicy;
+use App\Modules\SeasonalTemplates\Models\SeasonCopyPreview;
+use App\Modules\SeasonalTemplates\Models\SeasonCopyRun;
+use App\Modules\SeasonalTemplates\Models\SeasonReminderRule;
+use App\Modules\SeasonalTemplates\Models\SeasonTemplate;
+use App\Modules\SeasonalTemplates\Policies\SeasonCopyPolicy;
+use App\Modules\SeasonalTemplates\Policies\SeasonReminderRulePolicy;
+use App\Modules\SeasonalTemplates\Policies\SeasonTemplatePolicy;
 use App\Modules\SeasonPilgrims\Models\Pilgrim;
 use App\Modules\SeasonPilgrims\Models\Season;
 use App\Modules\SeasonPilgrims\Models\SeasonFamilyGroup;
@@ -181,6 +188,10 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(SeasonProgram::class, SeasonProgramPolicy::class);
         Gate::policy(SeasonFamilyGroup::class, SeasonFamilyGroupPolicy::class);
         Gate::policy(SeasonPilgrimGroup::class, SeasonPilgrimGroupPolicy::class);
+        Gate::policy(SeasonTemplate::class, SeasonTemplatePolicy::class);
+        Gate::policy(SeasonCopyPreview::class, SeasonCopyPolicy::class);
+        Gate::policy(SeasonCopyRun::class, SeasonCopyPolicy::class);
+        Gate::policy(SeasonReminderRule::class, SeasonReminderRulePolicy::class);
 
         Gate::define('viewDashboard', [DashboardPolicy::class, 'view']);
         Gate::define('viewTenantSettings', [TenantSettingsPolicy::class, 'view']);

@@ -50,6 +50,11 @@ class ContractDomainException extends RuntimeException
         return new self('انتقال حالة العقد غير مسموح.', 'CONTRACT_INVALID_STATUS_TRANSITION', 422);
     }
 
+    public static function incompleteCounterparty(): self
+    {
+        return new self('اسم الطرف الآخر ما زال قيمة القالب المؤقتة. أدخل اسماً فعلياً قبل إحالة العقد للمراجعة.', 'CONTRACT_COUNTERPARTY_INCOMPLETE', 422);
+    }
+
     public static function commentRequired(): self
     {
         return new self('التعليق مطلوب لهذا الإجراء.', 'CONTRACT_COMMENT_REQUIRED', 422);

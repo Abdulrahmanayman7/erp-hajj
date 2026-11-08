@@ -45,7 +45,17 @@ const EXPECTED_GROUP_MEMBERSHIP: Record<(typeof EXPECTED_GROUP_ORDER)[number], r
   home: ['dashboard'],
   system: ['users', 'roles', 'audit', 'settings'],
   hr: ['organization-structure', 'employees'],
-  'seasons-pilgrims': ['seasons', 'pilgrims', 'season-groups', 'season-programs', 'season-families'],
+  'seasons-pilgrims': [
+    'seasons',
+    'pilgrims',
+    'season-groups',
+    'season-programs',
+    'season-families',
+    'season-templates',
+    'season-safe-copy',
+    'season-copy-runs',
+    'season-reminder-rules',
+  ],
   accommodation: ['accommodation'],
   transport: [
     'transport-vehicles',
@@ -153,11 +163,11 @@ describe('buildTenantNavGroups', () => {
     expect(groups).toHaveLength(11)
   })
 
-  it('exposes exactly 41 sidebar links without duplication', () => {
+  it('exposes exactly 45 sidebar links without duplication', () => {
     const groups = buildTenantNavGroups(allowAll)
     const keys = groups.flatMap((group) => group.items.map((item) => item.key))
     expect(keys).toEqual([...EXPECTED_LINK_KEYS])
-    expect(new Set(keys).size).toBe(41)
+    expect(new Set(keys).size).toBe(45)
   })
 
   it('keeps exact membership and order inside every approved group', () => {
@@ -186,6 +196,10 @@ describe('buildTenantNavGroups', () => {
     expect(byKey['season-groups']).toBe('/app/season-groups')
     expect(byKey['season-programs']).toBe('/app/season-programs')
     expect(byKey['season-families']).toBe('/app/season-families')
+    expect(byKey['season-templates']).toBe('/app/season-templates')
+    expect(byKey['season-safe-copy']).toBe('/app/season-safe-copy')
+    expect(byKey['season-copy-runs']).toBe('/app/season-copy-runs')
+    expect(byKey['season-reminder-rules']).toBe('/app/season-reminder-rules')
     expect(byKey.contracts).toBe('/app/contracts')
     expect(byKey.suppliers).toBe('/app/suppliers')
     expect(byKey['supplier-evaluations']).toBe('/app/supplier-evaluations')
@@ -200,6 +214,9 @@ describe('buildTenantNavGroups', () => {
     expect(byKey.meetings).toBe('/app/meetings')
     expect(byKey.decisions).toBe('/app/decisions')
     expect(byKey.tasks).toBe('/app/tasks')
+    expect(byKey['season-projects']).toBe('/app/season-projects')
+    expect(byKey.risks).toBe('/app/risks')
+    expect(byKey.complaints).toBe('/app/complaints')
     expect(byKey.documents).toBe('/app/documents')
     expect(byKey.warehouses).toBe('/app/warehouses')
     expect(byKey.inventory).toBe('/app/inventory')
@@ -231,6 +248,29 @@ describe('buildTenantNavGroups', () => {
       'season-programs',
       'season-families',
     ])
+  })
+
+  it('gates each seasonal templates / safe copy link by its own permission', () => {
+    const only = (permission: string) =>
+      buildTenantNavGroups((p) => p === permission)
+        .flatMap((group) => group.items)
+        .map((item) => item.key)
+        .filter((key) => key !== 'dashboard')
+
+    expect(only('season_templates.view')).toEqual(['season-templates'])
+    expect(only('season_copy.preview')).toEqual(['season-safe-copy'])
+    expect(only('season_copy.history')).toEqual(['season-copy-runs'])
+    expect(only('season_reminders.view')).toEqual(['season-reminder-rules'])
+    expect(only('season_reminders.manage')).toEqual([])
+    expect(only('season_templates.manage')).toEqual([])
+    expect(only('season_copy.execute')).toEqual([])
+  })
+
+  it('gates season-projects by season_projects.view', () => {
+    const groups = buildTenantNavGroups((permission) => permission === 'season_projects.view')
+    expect(groups.map((group) => group.key)).toEqual(['home', 'governance'])
+    expect(groups[1]?.items.map((item) => item.key)).toEqual(['season-projects'])
+    expect(groups[1]?.items[0]?.to).toBe('/app/season-projects')
   })
 
   it('shows only transport links when transportation.view alone is granted', () => {
