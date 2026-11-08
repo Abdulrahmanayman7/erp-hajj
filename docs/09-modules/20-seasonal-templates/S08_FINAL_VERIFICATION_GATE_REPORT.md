@@ -4,7 +4,7 @@
 > **Branch:** `feature/s08-seasonal-templates`  
 > **Baseline commit (start):** `3515658`  
 > **Post-gate fix commit:** `2e3e360`  
-> **Blocker-closure work:** uncommitted at report write (VG-04 FE + CI MySQL 8 prep + UAT evidence)  
+> **Blocker-closure commit:** `6bed139` (VG-04 FE + CI MySQL 8 prep + UAT evidence docs)  
 > **Matrix:** `SafeCopyAllowlist::MATRIX_VERSION = 2026-11-08.2` (10 kinds)  
 > **Owner Accepted / merged / pushed / deployed:** **No**
 
