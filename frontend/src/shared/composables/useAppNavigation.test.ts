@@ -54,6 +54,7 @@ const EXPECTED_GROUP_MEMBERSHIP: Record<(typeof EXPECTED_GROUP_ORDER)[number], r
     'season-templates',
     'season-safe-copy',
     'season-copy-runs',
+    'season-reminder-rules',
   ],
   accommodation: ['accommodation'],
   transport: [
@@ -162,11 +163,11 @@ describe('buildTenantNavGroups', () => {
     expect(groups).toHaveLength(11)
   })
 
-  it('exposes exactly 44 sidebar links without duplication', () => {
+  it('exposes exactly 45 sidebar links without duplication', () => {
     const groups = buildTenantNavGroups(allowAll)
     const keys = groups.flatMap((group) => group.items.map((item) => item.key))
     expect(keys).toEqual([...EXPECTED_LINK_KEYS])
-    expect(new Set(keys).size).toBe(44)
+    expect(new Set(keys).size).toBe(45)
   })
 
   it('keeps exact membership and order inside every approved group', () => {
@@ -198,6 +199,7 @@ describe('buildTenantNavGroups', () => {
     expect(byKey['season-templates']).toBe('/app/season-templates')
     expect(byKey['season-safe-copy']).toBe('/app/season-safe-copy')
     expect(byKey['season-copy-runs']).toBe('/app/season-copy-runs')
+    expect(byKey['season-reminder-rules']).toBe('/app/season-reminder-rules')
     expect(byKey.contracts).toBe('/app/contracts')
     expect(byKey.suppliers).toBe('/app/suppliers')
     expect(byKey['supplier-evaluations']).toBe('/app/supplier-evaluations')
@@ -258,6 +260,8 @@ describe('buildTenantNavGroups', () => {
     expect(only('season_templates.view')).toEqual(['season-templates'])
     expect(only('season_copy.preview')).toEqual(['season-safe-copy'])
     expect(only('season_copy.history')).toEqual(['season-copy-runs'])
+    expect(only('season_reminders.view')).toEqual(['season-reminder-rules'])
+    expect(only('season_reminders.manage')).toEqual([])
     expect(only('season_templates.manage')).toEqual([])
     expect(only('season_copy.execute')).toEqual([])
   })

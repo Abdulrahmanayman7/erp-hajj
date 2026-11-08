@@ -189,6 +189,12 @@ export const router = createRouter({
       meta: { requiresAuth: true, layout: 'app', permission: 'season_copy.history' },
     },
     {
+      path: '/app/season-reminder-rules',
+      name: 'season-reminder-rules',
+      component: () => import('@/modules/seasonal-templates/pages/SeasonReminderRulesPage.vue'),
+      meta: { requiresAuth: true, layout: 'app', permission: 'season_reminders.view' },
+    },
+    {
       path: '/app/contracts',
       name: 'contracts',
       component: () => import('@/modules/contracts/pages/ContractsPage.vue'),

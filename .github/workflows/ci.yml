@@ -181,6 +181,23 @@ jobs:
             tests/Concurrency/GoodsReceiptPostConcurrencyTest.php \
             tests/Concurrency/PurchaseOrderCloseConcurrencyTest.php
 
+      # S08 Seasonal Templates — MySQL 8 FK/JSON/nullable source_season + reminder rules.
+      # migrate:fresh already applied 320002/320003 above; this step only asserts + tests.
+      - name: Assert S08 MySQL migrations present
+        run: |
+          test -f database/migrations/2026_11_08_320002_s08_expand_templates_snapshots_and_optional_source.php
+          test -f database/migrations/2026_11_08_320003_create_season_reminder_rules_table.php
+          php artisan tinker --execute="echo Schema::hasTable('season_reminder_rules') ? 'ok' : exit(1);"
+
+      - name: S08 SeasonalTemplates Feature tests (MySQL 8)
+        run: php vendor/bin/pest -c phpunit.mysql.xml --filter=SeasonalTemplates
+
+      - name: S08 Contract placeholder Control C (MySQL 8)
+        run: |
+          php vendor/bin/pest -c phpunit.mysql.xml \
+            tests/Feature/Contracts/ContractTest.php \
+            --filter="C17|C18"
+
   frontend:
     name: Frontend (Vue)
     runs-on: ubuntu-latest

@@ -39,6 +39,7 @@ import {
   LayoutTemplate,
   CopyPlus,
   History,
+  BellRing,
   type LucideIcon,
 } from 'lucide-vue-next'
 
@@ -287,6 +288,16 @@ export function buildTenantNavGroups(can: (permission: string) => boolean): AppN
       to: '/app/season-copy-runs',
       icon: History,
       permission: 'season_copy.history',
+      match: 'prefix',
+    })
+  }
+  if (can('season_reminders.view')) {
+    seasonItems.push({
+      key: 'season-reminder-rules',
+      labelKey: 'nav.seasonReminderRules',
+      to: '/app/season-reminder-rules',
+      icon: BellRing,
+      permission: 'season_reminders.view',
       match: 'prefix',
     })
   }

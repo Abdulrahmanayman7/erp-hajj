@@ -1,7 +1,7 @@
 # Roadmap
 
 > **Status:** Draft (delivery order aligned to completed / next sprints)
-> **Last updated:** 2026-11-07 (S08-D09 reconciliation on `develop` @ `a21e4ca`)
+> **Last updated:** 2026-11-08 (S08 blocker closure VG-03/04; MySQL 8 still open)
 > **Phase 2 product scope:** [ADR-0020](../10-decisions/ADR-0020-FULL-PHASE2-OPERATIONAL-SCOPE.md) (Full Phase 2 Operational Scope Adoption). Matrix: [PHASE2_SCOPE_MATRIX.md](PHASE2_SCOPE_MATRIX.md). Reconciliation: [PHASE2_SCOPE_RECONCILIATION.md](PHASE2_SCOPE_RECONCILIATION.md).
 > **Status vocabulary (S08-D09):** distinguish **Implemented** / **Merged** / **Tested** / **Owner Accepted** — merge ≠ automatic Owner acceptance.
 
@@ -80,7 +80,7 @@ Adopted by Project Owner via [ADR-0020](../10-decisions/ADR-0020-FULL-PHASE2-OPE
 | Procurement cycle (RFQ/PO/receive) | S05 | **In Phase 2.** **Implemented + Merged** on `develop` (PR #41 + UI PR #42). **Owner Accepted:** no dedicated S05 final-acceptance certificate located — do not invent |
 | Seasonal projects & tasks | S06 | **In Phase 2.** **Implemented + Merged** via [PR #45](https://github.com/Abdulrahmanayman7/erp-hajj/pull/45) @ `e25dc8f` (`Modules/SeasonProjects` + FE + [20-season-projects](../09-modules/20-season-projects/README.md)). Stream label **FUNCTIONALLY_ACCEPTED / TECHNICAL_VALIDATION_DEFERRED** (2026-11-07); MySQL 8 **DEFERRED**; Browser E2E **NOT RUN**. **Not** marked Owner Accepted / COMPLETE / deploy-ready — [S06_FINAL_CLOSURE_REPORT.md](../09-modules/20-season-projects/S06_FINAL_CLOSURE_REPORT.md) |
 | Risks & complaints | S07 | **In Phase 2.** **Implemented + Merged** via [PR #44](https://github.com/Abdulrahmanayman7/erp-hajj/pull/44) @ `a21e4ca`. **Tested:** module Pest/Vitest + [S07_PART6_UAT_REPORT.md](../09-modules/21-risks-and-complaints/S07_PART6_UAT_REPORT.md). **Owner Accepted:** merge alone ≠ final Owner acceptance — not assumed |
-| Seasonal templates (safe copy) | S08 | **In Phase 2.** **Implemented** on `feature/s08-seasonal-templates` (matrix `2026-11-08.2`, 10 kinds). **Final verification gate:** NO-GO — MySQL 8 **BLOCKED** (local MariaDB 10.4 only); Browser UAT **BLOCKED** — [S08_FINAL_VERIFICATION_GATE_REPORT.md](../09-modules/20-seasonal-templates/S08_FINAL_VERIFICATION_GATE_REPORT.md). **Merged:** No. **Owner Accepted:** No. Deploy: No |
+| Seasonal templates (safe copy) | S08 | **In Phase 2.** **Implemented** on `feature/s08-seasonal-templates` (matrix `2026-11-08.2`, 10 kinds). **Final verification gate:** NO-GO — MySQL 8 still **BLOCKED/UNVERIFIED** (local MariaDB 10.4; CI MySQL 8 steps prepared, not run). Browser UAT **PARTIAL** on disposable `erp_hajj_s08_demo` (Chrome); reminder UI (VG-04) **closed** — [S08_FINAL_VERIFICATION_GATE_REPORT.md](../09-modules/20-seasonal-templates/S08_FINAL_VERIFICATION_GATE_REPORT.md). **Merged:** No. **Owner Accepted:** No. Deploy: No |
 | Operational KPIs | S09 | **In Phase 2; NOT_STARTED** |
 | Executive ops dashboard | S10 | **In Phase 2; NOT_STARTED**; live ops map **in product scope** (ADR-0021) — not complete without real GPS/source |
 
