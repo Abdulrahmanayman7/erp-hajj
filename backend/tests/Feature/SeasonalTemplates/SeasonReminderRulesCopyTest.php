@@ -122,7 +122,7 @@ it('copies live rules into a draft season as drafts, remaps absolute dates, keep
         ->json('data');
 
     $abs = collect($preview['lines'])->firstWhere('natural_key', 'ABS');
-    expect($abs['summary']['date_transforms']['trigger_on'])->toBe(['before' => '2027-05-10', 'after' => '2027-06-10'])
+    expect($abs['summary']['date_transforms']['trigger_on'])->toMatchArray(['before' => '2027-05-10', 'after' => '2027-06-10'])
         ->and(collect($preview['lines'])->pluck('natural_key')->sort()->values()->all())->toBe(['ABS', 'DRF', 'OFF'])
         ->and($preview['date_mapping']['delta_days'])->toBe(31);
 

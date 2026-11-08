@@ -327,10 +327,10 @@ it('creates draft contracts from contract definitions without copying value, cou
 
     // Date remap is part of the preview (before/after) and in the date mapping.
     $line = stxLine($preview, 'contract_definitions', 'CTR-A');
-    expect($line['summary']['date_transforms']['start_date'])->toBe(['before' => '2027-05-10', 'after' => '2027-06-10'])
-        ->and($line['summary']['date_transforms']['end_date'])->toBe(['before' => '2027-06-10', 'after' => '2027-07-11'])
-        ->and($preview['date_mapping']['kinds']['contract_definitions'])->toBe(['origin' => 'snapshot', 'source_anchor' => '2027-05-01', 'delta_days' => 31])
-        ->and($preview['date_mapping']['transformed_fields'])->toBe(['contract_definitions.end_date', 'contract_definitions.start_date']);
+    expect($line['summary']['date_transforms']['start_date'])->toMatchArray(['before' => '2027-05-10', 'after' => '2027-06-10'])
+        ->and($line['summary']['date_transforms']['end_date'])->toMatchArray(['before' => '2027-06-10', 'after' => '2027-07-11'])
+        ->and($preview['date_mapping']['kinds']['contract_definitions'])->toMatchArray(['origin' => 'snapshot', 'source_anchor' => '2027-05-01', 'delta_days' => 31])
+        ->and($preview['date_mapping']['transformed_fields'])->toEqualCanonicalizing(['contract_definitions.end_date', 'contract_definitions.start_date']);
 
     $run = stxExecute($preview)->assertCreated()->assertJsonPath('data.counts.added', 1)->json('data');
 
@@ -443,9 +443,9 @@ it('copies live season projects, phases and task definitions as drafts without b
         ->json('data');
 
     expect(stxLine($preview, 'season_project_phases', 'مشروع النقل::0')['summary']['date_transforms']['starts_on'])
-        ->toBe(['before' => '2027-05-05', 'after' => '2027-06-05'])
+        ->toMatchArray(['before' => '2027-05-05', 'after' => '2027-06-05'])
         ->and(stxLine($preview, 'task_definitions', 'مشروع النقل::مهمة منسوخة')['summary']['date_transforms']['due_date'])
-        ->toBe(['before' => '2027-05-12', 'after' => '2027-06-12'])
+        ->toMatchArray(['before' => '2027-05-12', 'after' => '2027-06-12'])
         ->and($preview['date_mapping']['delta_days'])->toBe(31);
 
     $run = stxExecute($preview)->assertCreated()->assertJsonPath('data.counts.added', 3)->json('data');
@@ -514,9 +514,9 @@ it('creates tasks under the project created in the same run from a snapshot temp
 
     // Date remap before/after on phases and tasks.
     expect(stxLine($preview, 'season_project_phases', 'مشروع التجهيز::1')['summary']['date_transforms']['ends_on'])
-        ->toBe(['before' => '2027-06-10', 'after' => '2027-07-11'])
+        ->toMatchArray(['before' => '2027-06-10', 'after' => '2027-07-11'])
         ->and(stxLine($preview, 'task_definitions', 'مشروع التجهيز::مهمة حجز')['summary']['date_transforms']['start_date'])
-        ->toBe(['before' => '2027-05-02', 'after' => '2027-06-02']);
+        ->toMatchArray(['before' => '2027-05-02', 'after' => '2027-06-02']);
 
     stxExecute($preview)->assertCreated()->assertJsonPath('data.counts.added', 5);
 
@@ -624,7 +624,7 @@ it('excludes date fields when the template snapshot has no anchor (DATE_ANCHOR_M
     expect($phase['action'])->toBe('add')
         ->and($phase['summary']['fields']['starts_on'])->toBeNull()
         ->and($phase['summary']['fields']['ends_on'])->toBeNull()
-        ->and(array_keys($phase['summary']['date_issues']))->toBe(['starts_on', 'ends_on'])
+        ->and(array_keys($phase['summary']['date_issues']))->toEqualCanonicalizing(['starts_on', 'ends_on'])
         ->and($preview['date_mapping']['kinds']['season_project_phases']['delta_days'])->toBeNull();
 
     $run = stxExecute($preview)->assertCreated()->json('data');

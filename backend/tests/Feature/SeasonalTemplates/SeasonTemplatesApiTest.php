@@ -594,7 +594,7 @@ it('updates system-owned rows on rerun but protects manually modified rows', fun
         ->json('data');
     $changeLine = collect($second['lines'])->firstWhere('action', 'change');
     expect($changeLine['natural_key'])->toBe('VIP')
-        ->and($changeLine['summary']['diff']['name'])->toBe(['before' => 'برنامج VIP', 'after' => 'VIP محدث']);
+        ->and($changeLine['summary']['diff']['name'])->toMatchArray(['before' => 'برنامج VIP', 'after' => 'VIP محدث']);
 
     stExecute($second)->assertCreated()->assertJsonPath('data.counts.changed', 1);
     expect(stTargetPrograms($w['tenant'], $w['target'])['VIP']['name'])->toBe('VIP محدث');

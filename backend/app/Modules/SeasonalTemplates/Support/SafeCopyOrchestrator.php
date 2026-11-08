@@ -235,11 +235,16 @@ final class SafeCopyOrchestrator
             $context->snapshots,
         );
 
+        // Compare fingerprints via CanonicalJson: MySQL JSON columns may reorder object
+        // keys on read, so raw PHP `!==` on arrays is not stable across engines.
         if (
             ! hash_equals($preview->content_hash, $hash)
             || ! hash_equals($preview->source_fingerprint, $this->seasonFingerprint($context->source))
             || ! hash_equals($preview->target_fingerprint, $this->seasonFingerprint($target))
-            || $preview->adapter_fingerprints_json !== $built['fingerprints']
+            || ! hash_equals(
+                CanonicalJson::hash($preview->adapter_fingerprints_json ?? []),
+                CanonicalJson::hash($built['fingerprints']),
+            )
         ) {
             throw SeasonalTemplatesDomainException::previewStale('CONTENT_CHANGED');
         }
