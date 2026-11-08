@@ -4,9 +4,13 @@
 > **Branch:** `feature/s08-seasonal-templates`  
 > **Baseline commit (start):** `3515658`  
 > **Post-gate fix commit:** `2e3e360`  
-> **Blocker-closure commit:** `6bed139` (VG-04 FE + CI MySQL 8 prep + UAT evidence docs)  
+> **Blocker-closure commit (VG-03/04):** `6bed139`  
+> **CI enable commit:** `15658f1`  
+> **Schema-assert fix:** `80695b1`  
+> **MySQL JSON fingerprint fix (final verified SHA):** `e0743b3`  
 > **Matrix:** `SafeCopyAllowlist::MATRIX_VERSION = 2026-11-08.2` (10 kinds)  
-> **Owner Accepted / merged / pushed / deployed:** **No**
+> **Recommendation:** **READY_FOR_OWNER_ACCEPTANCE**  
+> **Owner Accepted / merged / deployed:** **No**
 
 ## Status vocabulary
 
@@ -24,45 +28,36 @@
 
 | Item | Value |
 |---|---|
-| OS | Windows 10 (local workstation) |
-| PHP | 8.x (Laravel 12 Pest) |
-| Local DB service | XAMPP `mysqld` — **MariaDB 10.4.27** (not MySQL 8) |
+| OS | Windows 10 (local workstation) + GitHub Actions `ubuntu-latest` |
+| PHP | 8.x local / 8.3 CI |
+| Local DB service | XAMPP `mysqld` — **MariaDB 10.4.27** (not MySQL 8; used for disposable browser UAT only) |
+| CI DB service | `mysql:8.0` — **VERSION=8.0.46** (Gate A evidence) |
 | Disposable UAT schema | `erp_hajj_s08_demo` (demo seed + platform bootstrap) |
-| Dev API | `http://127.0.0.1:8000` — up during blocker closure (demo DB) |
+| Dev API | `http://127.0.0.1:8000` — demo DB during UAT |
 | Vite | `http://127.0.0.1:5174` — ERP Hajj (port 5173 was a different app) |
-| Docker | Not installed / not available |
-| Browser automation | Playwright via system **Chrome** channel (Chromium download blocked by disk ENOSPC on C:) |
+| Docker | Not installed locally; MySQL 8 validated via CI |
+| Browser automation | Playwright via system **Chrome** channel |
 | Stash | `stash@{0}: local-package-lock-before-s07-sync` preserved |
 
-Sanitized connection probe (read-only): `host=127.0.0.1 port=3306 user=root password=[empty]`.
+Sanitized local probe (read-only): `host=127.0.0.1 port=3306 user=root password=[empty]`.
 
 ---
 
 ## 2. Gate A — MySQL 8 Migration Validation (S08-VG-02)
 
-### Result: **BLOCKED / UNVERIFIED locally** — CI prep only
+### Result: **PASS** on CI MySQL 8.0.46 — SHA `e0743b3`
 
-### Why still blocked for acceptance
+| Evidence | Value |
+|---|---|
+| CI run | https://github.com/Abdulrahmanayman7/erp-hajj/actions/runs/42437115976 |
+| Run conclusion | **success** |
+| Job | `Backend (MySQL 8 — Transport + S04)` |
+| Assert MySQL 8.x | **PASS** — `VERSION=8.0.46` (not MariaDB) |
+| Assert S08 migrations | **PASS** — `table=season_reminder_rules ok`; `season_template_items.snapshot_json ok`; nullable `source_season_id` on copy tables; `sea_rem_season_fk` present |
+| S08 SeasonalTemplates Pest | **PASS** — **85 passed** (1249 assertions), ~79s |
+| Control C (C17\|C18) | **PASS** — **2 passed** (52 assertions) |
 
-Gate requires **MySQL major version 8**. Local engine reports:
-
-```text
-VERSION=10.4.27-MariaDB
-MAJOR=10
-```
-
-Per gate rules: conditions not met → **do not claim MySQL 8 PASS**.  
-Disposable MariaDB runs on `erp_hajj_s08_demo` are **not** MySQL 8 evidence.
-
-### CI preparation (code present; **not executed** — no push/CI trigger authorized)
-
-`.github/workflows/ci.yml` job `backend-mysql` (`mysql:8.0`) additive steps:
-
-1. Assert migrations `320002` / `320003` + `Schema::hasTable('season_reminder_rules')`
-2. `php vendor/bin/pest -c phpunit.mysql.xml --filter=SeasonalTemplates`
-3. Contract Control C: `phpunit.mysql.xml` filter `C17|C18`
-
-**S08-VG-02 remains open** until those steps actually run on MySQL 8.0 and pass.
+Local MariaDB remains **not** MySQL 8 evidence; Gate A is closed by the CI disposable MySQL 8.0 service above.
 
 ### Migrations of interest
 
@@ -71,7 +66,12 @@ Disposable MariaDB runs on `erp_hajj_s08_demo` are **not** MySQL 8 evidence.
 | `2026_11_08_320002_s08_expand_templates_snapshots_and_optional_source` | `snapshot_json`; nullable `source_season_id`; MySQL/MariaDB drops/recreates composite FKs |
 | `2026_11_08_320003_create_season_reminder_rules_table` | `season_reminder_rules` + composite FK `(tenant_id, season_id)` → `seasons(tenant_id, id)` |
 
-SQLite Pest green **does not** count as MySQL validation.
+### Prior CI failures on this branch (resolved before final SHA)
+
+| Run / SHA | Failure | Fix |
+|---|---|---|
+| Prior run on `15658f1`/`80695b1` path | Schema assert looked for wrong `snapshot_json` column / tinker `exit(1)` | PDO asserts on `season_template_items.snapshot_json` + nullable `source_season_id` (`80695b1`) |
+| Run before `e0743b3` | MySQL JSON key-order made fingerprint/array identity fail | `CanonicalJson::hash` + canonical Pest matchers (`e0743b3`) |
 
 ---
 
@@ -93,10 +93,9 @@ php -d memory_limit=512M vendor/bin/pest --filter="SeasonalTemplates|SeasonProje
 | Skipped | **2** (S05 MySQL-dialect E2E requires `phpunit.mysql.xml`) |
 | Failed | **0** |
 | Assertions | 4121 |
-| Duration | ~84s |
 | Log | `backend/storage/logs/s08_gate_b_pest.txt` |
 
-**SeasonalTemplates alone:** `85 passed` (reconfirmed during blocker closure).
+**SeasonalTemplates on MySQL 8 CI:** `85 passed` (see Gate A).
 
 **API companion (MariaDB demo, not MySQL 8):** `backend/storage/logs/s08_uat/api_companion_results.json` — UAT-06 / UAT-07 / UAT-08 **PASS** (`engine: 10.4.27-MariaDB`).
 
@@ -104,7 +103,7 @@ php -d memory_limit=512M vendor/bin/pest --filter="SeasonalTemplates|SeasonProje
 
 ## 4. Gate C — Frontend Regression + Reminder UI (S08-VG-04)
 
-### Result: **PASS** (blocker closure)
+### Result: **PASS**
 
 | Check | Result |
 |---|---|
@@ -114,7 +113,7 @@ php -d memory_limit=512M vendor/bin/pest --filter="SeasonalTemplates|SeasonProje
 | ContractDefinitionRowsEditor | Present in `TemplateFormDrawer` |
 | Template / copy wizard / history pages | Present |
 
-Owner authorized VG-04 closure with tested UI. Screenshots: `backend/storage/logs/s08_uat/screenshots/07-reminder-rules.png`.
+Screenshots: `backend/storage/logs/s08_uat/screenshots/07-reminder-rules.png`.
 
 **Prior defect (still fixed):**
 
@@ -126,40 +125,53 @@ Owner authorized VG-04 closure with tested UI. Screenshots: `backend/storage/log
 
 ## 5. Gate D — Browser UAT (S08-VG-03)
 
-### Result: **PARTIAL → largely PASS on disposable demo** (blocker closure)
+### Result: **PASS (security UAT-09/10 closed); functional UAT largely PASS**
 
-**Harness:** `backend/storage/logs/s08_uat/browser_uat.mjs` (Playwright + Chrome channel)  
-**Results:** `backend/storage/logs/s08_uat/browser_uat_results.json`  
+**Harnesses:**  
+- `backend/storage/logs/s08_uat/browser_uat.mjs`  
+- `backend/storage/logs/s08_uat/browser_uat_security.mjs`  
+
+**Results:**  
+- `backend/storage/logs/s08_uat/browser_uat_results.json`  
+- `backend/storage/logs/s08_uat/browser_uat_security_results.json`  
+
 **App:** Vite `127.0.0.1:5174` + API `127.0.0.1:8000` / DB `erp_hajj_s08_demo`  
-**Login:** `owner@rafee.demo.local` after one-time `POST /api/v1/platform/setup` (without bootstrap, FE redirects guests to `/setup`).
+**Login:** `owner@rafee.demo.local` after one-time `POST /api/v1/platform/setup`.
 
 | Case | Status | Notes |
 |---|---|---|
-| LOGIN | **PASS** | Dashboard reached; screenshot `00-after-login.png` |
+| LOGIN | **PASS** | Dashboard reached |
 | UAT-01 Independent template | **PASS** | Create drawer usable |
 | UAT-02 Contract row editor | **PASS** | Contract definitions kind + row editor visible |
 | UAT-03 Safe-copy wizard | **PASS** | Page loaded |
-| UAT-04 Safe-copy execution | **BLOCKED** in browser; **PASS** via Pest + API companion path | Multi-step season selection not driven in this script |
+| UAT-04 Safe-copy execution | **BLOCKED** in browser; **PASS** via Pest + API companion | Multi-step season selection not driven in browser script |
 | UAT-05 Copy history | **PASS** | Page loaded (idempotency detail remains Pest) |
 | UAT-06 Contract lifecycle guard | **PASS** (API companion) + contracts page opened in browser | Control C `CONTRACT_COUNTERPARTY_INCOMPLETE` |
 | UAT-07 Reminder lifecycle | **PASS** browser page + API create/activate | Screenshot `07-reminder-rules.png` |
 | UAT-08 Reminder delivery | **PASS** (API companion scanner dedupe) | Not driven from browser UI |
-| UAT-09 Permission boundaries | **BLOCKED** in browser | Second unauthorized user not configured; Pest policies cover |
-| UAT-10 Tenant isolation | **BLOCKED** in browser | Second tenant session not configured; Pest cross-tenant covers |
+| UAT-09 Permission boundaries | **PASS** (real browser) | Viewer / manager / unauthorized — see Gate E |
+| UAT-10 Tenant isolation | **PASS** (real browser) | Tenants `rafee` + `s08uatb` — see Gate E |
 | UAT-11 S06 integration | **PASS** | `/app/season-projects` opened |
 | UAT-12 Operational regression | **PASS** | notifications + risks pages opened |
-
-**S08-VG-03:** closed for “real browser evidence on isolated env” for the cases that were runnable; UAT-09/10 remain browser-BLOCKED (automated Pest still green). Not claimed as full 12/12 browser PASS.
 
 ---
 
 ## 6. Gate E — Security Audit
 
-### Result: **PASS (automated evidence) / PARTIAL (no live second-tenant browser probes)**
+### Result: **PASS** (automated + live browser second-user / second-tenant)
 
-Automated Pest evidence supports cross-tenant 404, forbidden snapshot fields, reminder allowlist, unauthorized activate/manage, scanner skips, Control B/C, preview replay/stale/expiry, no notifications/PII copy.
+| Check | Result | Evidence |
+|---|---|---|
+| UAT-09-viewer | **PASS** | List OK; create disabled/hidden; create API **403** — `uat09-viewer-list.png` |
+| UAT-09-manager | **PASS** | Create UI; create **201** + activate **200** — `uat09-manager-list.png` |
+| UAT-09-unauthorized | **PASS** | UI → `/app/403`; API **403** — `uat09-unauthorized.png` |
+| UAT-10-tenant-a | **PASS** | No Tenant B leak; cross-tenant API **404** — `uat10-tenant-a.png` |
+| UAT-10-tenant-b | **PASS** | Own data only; cross-tenant rule **404** — `uat10-tenant-b.png` |
+| Pest cross-tenant / policies | **PASS** | Included in MySQL 8 SeasonalTemplates suite |
+| Forbidden snapshot fields / allowlist | **PASS** | Pest |
+| Control B/C, preview replay/stale | **PASS** | Pest + C17/C18 on MySQL 8 |
 
-Live concurrent-scanner under **MySQL 8** still **not** executed (Gate A blocked).
+No high-severity security defects confirmed in this closure window.
 
 ---
 
@@ -167,11 +179,11 @@ Live concurrent-scanner under **MySQL 8** still **not** executed (Gate A blocked
 
 | Check | Result |
 |---|---|
-| Laravel Pint `--test` | **PASS** (prior gate) |
+| Laravel Pint `--test` | **PASS** (CI backend job) |
 | Conflict markers | None found in S08 paths |
 | Schedule registration | `notifications:scan-season-reminders` daily — listed |
 | Permission catalog | `season_reminders.view` / `.manage` present |
-| Frontend production build | **PASS** (incl. reminder page chunk) |
+| Frontend production build | **PASS** (CI frontend job + local) |
 
 ---
 
@@ -180,41 +192,35 @@ Live concurrent-scanner under **MySQL 8** still **not** executed (Gate A blocked
 | ID | Severity | Status | Notes |
 |---|---|---|---|
 | S08-VG-01 | Medium | **Closed** | FE production typecheck/build |
-| S08-VG-02 | High (acceptance) | **Open** | MySQL 8 not executed — CI steps prepared only; local MariaDB ≠ MySQL 8 |
-| S08-VG-03 | High (acceptance) | **Closed (PARTIAL browser)** | Real Chrome UAT on disposable demo; UAT-09/10 browser still BLOCKED |
+| S08-VG-02 | High (acceptance) | **Closed** | MySQL 8.0.46 CI PASS on `e0743b3` (run 42437115976) |
+| S08-VG-03 | High (acceptance) | **Closed** | Real Chrome UAT incl. UAT-09/10 |
 | S08-VG-04 | Medium | **Closed** | Arabic reminder rules staff UI + Vitest + browser screenshot |
 
 ---
 
 ## 9. Documentation / ROADMAP updates
 
-ROADMAP / PHASE2 matrix: **Implemented** on feature branch; **MySQL 8 still deferred/unverified**; browser UAT **partial evidence recorded**; **Owner Accepted = No**; no push/PR/merge/deploy.
+ROADMAP / PHASE2 matrix: **Implemented + Tested** on feature branch; MySQL 8 **PASS** via CI; browser security UAT **PASS**; recommendation **READY_FOR_OWNER_ACCEPTANCE**. **Owner Accepted = No**; no PR/merge/deploy.
 
 ---
 
 ## 10. GO / NO-GO
 
-### Recommendation: **NO-GO for Owner Acceptance**
+### Recommendation: **READY_FOR_OWNER_ACCEPTANCE**
 
-Remaining hard blocker:
+Hard blockers from prior NO-GO are cleared:
 
-1. **MySQL 8 migration/FK + SeasonalTemplates Pest not executed on MySQL 8.0** (local MariaDB only; CI prepared but not run without push authorization).
+1. **MySQL 8** migration/FK + SeasonalTemplates Pest + Control C — **PASS** on CI `mysql:8.0` (`VERSION=8.0.46`) at SHA `e0743b3`
+2. **UAT-09 / UAT-10** real-browser permission + tenant isolation — **PASS**
+3. Required S08 regressions (filtered Pest, Vitest, build, CI) — **PASS**
+4. No blocking security defects remaining in this window
 
-Cleared since prior gate report:
+### Explicitly still **not** done (Owner acts required)
 
-- Reminder staff UI (VG-04) implemented and tested  
-- Browser UAT evidence on isolated demo (VG-03 partial)  
+- Mark **Owner Accepted**
+- Open / merge PR to `develop` or `main`
+- Deploy / production DB / secrets / infra
 
-What is ready for a *future* acceptance attempt after MySQL 8 clears:
+### Suggested Owner next act
 
-- Filtered backend regression green  
-- Frontend Vitest 115 + production build green  
-- Security automated suites green  
-- Matrix `2026-11-08.2` / 10 kinds intact  
-- Disposable demo browser walkthrough artifacts under `backend/storage/logs/s08_uat/`
-
-### Suggested Owner next acts
-
-1. Authorize push so `backend-mysql` CI runs S08 steps on MySQL 8.0 — or provide a local MySQL 8 disposable — then re-run Gate A.  
-2. Optionally extend browser UAT with second user/tenant for UAT-09/10.  
-3. Only after MySQL 8 PASS consider Owner Accepted / merge authorization.
+Authorize acceptance review and, if accepted, separately authorize PR/merge (and later deploy). This report does **not** grant those acts.

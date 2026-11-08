@@ -79,7 +79,7 @@ The following were historically listed as outside the **Foundation delivery** Ph
 | Procurement cycle (RFQ / PO / receive) | S05 | **Implemented + Merged** on `develop` (PR #41 ancestry; evidence retained); Owner-acceptance certificate not located — do not invent |
 | Seasonal projects & advanced tasking | S06 | **Implemented + Merged** via PR #45 @ `e25dc8f` ([20-season-projects](../09-modules/20-season-projects/README.md)). Stream status **FUNCTIONALLY_ACCEPTED / TECHNICAL_VALIDATION_DEFERRED** (2026-11-07) — **not** marked Owner Accepted / COMPLETE; MySQL 8 deferred; unsafe pilgrim/ops cloning remains forbidden elsewhere |
 | Risks & complaints | S07 | **Implemented + Merged** (PR #44 @ `a21e4ca`); Owner final acceptance not assumed from merge |
-| Seasonal templates (safe reference copy only) | S08 | **Implemented** on `feature/s08-seasonal-templates` ([20-seasonal-templates](../09-modules/20-seasonal-templates/)); **not** Owner Accepted / merged / deployed; unsafe pilgrim/ops cloning remains forbidden |
+| Seasonal templates (safe reference copy only) | S08 | **Implemented + Tested** on `feature/s08-seasonal-templates` @ `e0743b3` ([20-seasonal-templates](../09-modules/20-seasonal-templates/)); verification **READY_FOR_OWNER_ACCEPTANCE**; **not** Owner Accepted / merged / deployed; unsafe pilgrim/ops cloning remains forbidden |
 | Operational KPI engine (Phase 2 formulas) | S09 | NOT_STARTED (MVP dashboard counts are not Phase 2 KPIs) |
 | Executive operations dashboard widgets | S10 | NOT_STARTED; maps/live per GPS special case |
 
