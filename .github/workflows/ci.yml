@@ -203,17 +203,47 @@ jobs:
         run: |
           test -f database/migrations/2026_11_08_320002_s08_expand_templates_snapshots_and_optional_source.php
           test -f database/migrations/2026_11_08_320003_create_season_reminder_rules_table.php
-          php artisan tinker --execute="echo Schema::hasTable('season_reminder_rules') ? 'ok' : exit(1);"
-          php artisan tinker --execute="echo Schema::hasColumn('season_templates', 'snapshot_json') ? 'ok' : exit(1);"
-          php artisan tinker --execute="echo Schema::hasColumn('season_templates', 'source_season_id') ? 'ok' : exit(1);"
+          # Avoid tinker exit()/BreakException — assert schema via PDO against disposable MySQL 8.
           php -r '
-            $pdo = new PDO("mysql:host=".getenv("DB_HOST").";port=".getenv("DB_PORT").";dbname=".getenv("DB_DATABASE"), getenv("DB_USERNAME"), getenv("DB_PASSWORD"));
+            $pdo = new PDO(
+              "mysql:host=".getenv("DB_HOST").";port=".getenv("DB_PORT").";dbname=".getenv("DB_DATABASE"),
+              getenv("DB_USERNAME"),
+              getenv("DB_PASSWORD")
+            );
+            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $need = [
+              ["season_reminder_rules", null],
+              ["season_template_items", "snapshot_json"],
+              ["season_copy_previews", "source_season_id"],
+              ["season_copy_runs", "source_season_id"],
+              ["season_copy_row_provenance", "source_season_id"],
+              ["season_copy_row_provenance", "natural_key"],
+            ];
+            foreach ($need as [$table, $col]) {
+              if ($col === null) {
+                $ok = (bool) $pdo->query("SHOW TABLES LIKE ".$pdo->quote($table))->fetch();
+                if (!$ok) { fwrite(STDERR, "Missing table {$table}\n"); exit(1); }
+                echo "table={$table} ok\n";
+                continue;
+              }
+              $stmt = $pdo->prepare("SHOW COLUMNS FROM `{$table}` LIKE ?");
+              $stmt->execute([$col]);
+              if (!$stmt->fetch()) { fwrite(STDERR, "Missing {$table}.{$col}\n"); exit(1); }
+              echo "{$table}.{$col} ok\n";
+            }
             $ddl = (string) $pdo->query("SHOW CREATE TABLE season_reminder_rules")->fetch(PDO::FETCH_ASSOC)["Create Table"];
             echo $ddl, "\n";
             if (stripos($ddl, "sea_rem_season_fk") === false) {
               fwrite(STDERR, "Expected composite FK sea_rem_season_fk on season_reminder_rules\n");
               exit(1);
             }
+            // Nullable source_season evidence on copy previews.
+            $col = $pdo->query("SHOW COLUMNS FROM season_copy_previews LIKE \"source_season_id\"")->fetch(PDO::FETCH_ASSOC);
+            if (!$col || strtoupper((string) $col["Null"]) !== "YES") {
+              fwrite(STDERR, "Expected nullable season_copy_previews.source_season_id\n");
+              exit(1);
+            }
+            echo "nullable source_season_id ok\n";
           '
 
       - name: S08 SeasonalTemplates Feature tests (MySQL 8)
