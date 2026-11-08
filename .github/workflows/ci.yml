@@ -2,9 +2,13 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
+    # feature/s08-seasonal-templates: Owner-authorized limited push so MySQL 8
+    # backend-mysql (incl. S08 steps) can run without opening a PR or merging.
+    branches: [main, develop, feature/s08-seasonal-templates]
   pull_request:
     branches: [main, develop]
+  # Safe manual re-run on the checked-out branch (no deploy jobs in this file).
+  workflow_dispatch:
 
 jobs:
   backend:
@@ -129,6 +133,18 @@ jobs:
           test "${DB_DATABASE}" = "erp_hajj_testing"
           php -r 'exit(getenv("DB_DATABASE") === "erp_hajj_testing" ? 0 : 1);'
 
+      - name: Assert MySQL 8.x engine (not MariaDB)
+        run: |
+          php -r '
+            $pdo = new PDO("mysql:host=".getenv("DB_HOST").";port=".getenv("DB_PORT"), getenv("DB_USERNAME"), getenv("DB_PASSWORD"));
+            $v = (string) $pdo->query("SELECT VERSION()")->fetchColumn();
+            echo "VERSION={$v}\n";
+            if (stripos($v, "mariadb") !== false || !preg_match("/^8\\./", $v)) {
+              fwrite(STDERR, "Expected MySQL 8.x disposable service, got [{$v}]\n");
+              exit(1);
+            }
+          '
+
       - name: Assert S04 MySQL suite paths exist
         run: |
           test -d tests/Feature/SuppliersAndProcurement
@@ -188,8 +204,20 @@ jobs:
           test -f database/migrations/2026_11_08_320002_s08_expand_templates_snapshots_and_optional_source.php
           test -f database/migrations/2026_11_08_320003_create_season_reminder_rules_table.php
           php artisan tinker --execute="echo Schema::hasTable('season_reminder_rules') ? 'ok' : exit(1);"
+          php artisan tinker --execute="echo Schema::hasColumn('season_templates', 'snapshot_json') ? 'ok' : exit(1);"
+          php artisan tinker --execute="echo Schema::hasColumn('season_templates', 'source_season_id') ? 'ok' : exit(1);"
+          php -r '
+            $pdo = new PDO("mysql:host=".getenv("DB_HOST").";port=".getenv("DB_PORT").";dbname=".getenv("DB_DATABASE"), getenv("DB_USERNAME"), getenv("DB_PASSWORD"));
+            $ddl = (string) $pdo->query("SHOW CREATE TABLE season_reminder_rules")->fetch(PDO::FETCH_ASSOC)["Create Table"];
+            echo $ddl, "\n";
+            if (stripos($ddl, "sea_rem_season_fk") === false) {
+              fwrite(STDERR, "Expected composite FK sea_rem_season_fk on season_reminder_rules\n");
+              exit(1);
+            }
+          '
 
       - name: S08 SeasonalTemplates Feature tests (MySQL 8)
+        # phpunit.mysql.xml forces APP_ENV=testing, DB_CONNECTION=mysql, DB_DATABASE=erp_hajj_testing
         run: php vendor/bin/pest -c phpunit.mysql.xml --filter=SeasonalTemplates
 
       - name: S08 Contract placeholder Control C (MySQL 8)
