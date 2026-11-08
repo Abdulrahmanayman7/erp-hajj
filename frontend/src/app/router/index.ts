@@ -93,6 +93,12 @@ export const router = createRouter({
       redirect: '/app',
     },
     {
+      path: '/app/operational-kpis',
+      name: 'operational-kpis',
+      component: () => import('@/modules/operational-kpis/pages/OperationalKpisPage.vue'),
+      meta: { requiresAuth: true, layout: 'app', permission: 'operational_kpis.view' },
+    },
+    {
       path: '/app/403',
       name: 'app-forbidden',
       component: () => import('@/modules/auth/pages/ForbiddenPage.vue'),

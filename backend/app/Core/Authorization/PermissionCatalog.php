@@ -40,6 +40,7 @@ final class PermissionCatalog
         'season_projects' => 'مشاريع الموسم',
         'audit_logs' => 'سجل التدقيق',
         'dashboard' => 'لوحة التحكم',
+        'operational_kpis' => 'المؤشرات التشغيلية',
         'tenant_settings' => 'إعدادات المنشأة',
         'platform_tenants' => 'إدارة المنشآت (المنصة)',
     ];
@@ -307,6 +308,7 @@ final class PermissionCatalog
             ['name' => 'audit_logs.view', 'display_name' => 'عرض سجل التدقيق', 'module' => 'audit_logs', 'description' => 'عرض سجلات تدقيق المنشأة'],
 
             ['name' => 'dashboard.view', 'display_name' => 'عرض لوحة التحكم', 'module' => 'dashboard', 'description' => 'الوصول إلى الصفحة الرئيسية بعد تسجيل الدخول'],
+            ['name' => 'operational_kpis.view', 'display_name' => 'عرض المؤشرات التشغيلية', 'module' => 'operational_kpis', 'description' => 'الوصول إلى صفحة المؤشرات التشغيلية للموسم؛ تُعرض بطاقات كل مجال وفق صلاحية عرض ذلك المجال'],
             ['name' => 'tenant_settings.view', 'display_name' => 'عرض إعدادات المنشأة', 'module' => 'tenant_settings', 'description' => 'عرض إعدادات المنشأة'],
             ['name' => 'tenant_settings.update', 'display_name' => 'تحديث إعدادات المنشأة', 'module' => 'tenant_settings', 'description' => 'تحديث إعدادات المنشأة'],
         ];
@@ -401,6 +403,7 @@ final class PermissionCatalog
                 'description' => null,
                 'permissions' => [
                     'dashboard.view',
+                    'operational_kpis.view',
                     'users.view',
                     'roles.view',
                     'permissions.view',
