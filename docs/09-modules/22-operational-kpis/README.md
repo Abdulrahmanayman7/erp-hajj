@@ -1,12 +1,12 @@
 # Module 22 — Operational KPIs (S09)
 
-> **Status:** `S09-D01…D16 = OWNER_APPROVED` · **Phase 1 implemented** on `feature/s09-operational-kpis` (uncommitted · not merged · not deployed)  
-> **Last updated:** 2026-11-08  
+> **Status:** `S09-D01…D16 = OWNER_APPROVED` · **Phase 1 MERGED to `develop`** @ `95ded77` (PR #47) · **NOT_DEPLOYED**  
+> **Last updated:** 2026-11-09  
 > **Phase:** Phase 2 / Workflow **S09**  
 > **D16:** `OWNER_APPROVED` (C) — Phase 1 S09 core; GPS/S10 **GATED**  
-> **Implemented:** API + 24 calculators + RBAC + Vue `/app/operational-kpis` + Pest 65 + Vitest display tests  
-> **Not implemented:** GPS · S10 · KPI result cache · auto-merge/deploy  
-> **Branch:** `feature/s09-operational-kpis` @ `origin/develop` (`3a18b16`) + local Phase 1 work; `stash@{0}` preserved  
+> **Implemented:** API + 24 calculators + RBAC + Vue `/app/operational-kpis` + Pest/Vitest coverage  
+> **Not implemented:** GPS · S10 · KPI result cache · production deploy  
+> **Merge record:** [S09_POST_MERGE_CLOSURE_2026-11-09.md](S09_POST_MERGE_CLOSURE_2026-11-09.md)  
 
 ## Purpose
 
@@ -56,11 +56,13 @@ Define **season-aware, permission-aware operational KPIs** for Transport, Accomm
 |---|---|
 | EXISTING | Present in codebase today |
 | OWNER_APPROVED | Explicit Owner act |
-| IMPLEMENTED_PHASE1 | S09 core API + Vue + tests on feature branch; uncommitted/unmerged |
+| IMPLEMENTED_PHASE1 | S09 core API + Vue + tests |
+| MERGED_TO_DEVELOP | Merged via PR #47 @ `95ded77` (2026-11-09); not production-deployed |
 | GATED | GPS / S10 — needs separate Owner scope act |
 
 ## Explicit non-claims
 
-- No migrations, commits, push, PR, merge, or deploy under D16 Phase 1 implementation.  
-- D16 Phase 1 ≠ authorization for S10, GPS, production deploy, formula changes, or KPI result caching.  
+- Merge ≠ production deploy authorization.  
+- D16 Phase 1 ≠ authorization for S10, GPS, formula changes, or KPI result caching.  
 - MVP Dashboard counts are **not** Phase 2 operational KPIs.  
+- Independent GitHub security Approve was **not recorded** before merge (see post-merge closure).  
