@@ -1,12 +1,13 @@
 # Module 22 — Operational KPIs (S09)
 
-> **Status:** `S09-D01…D16 = OWNER_APPROVED` · **Phase 1 MERGED to `develop`** @ `95ded77` (PR #47) · **NOT_DEPLOYED**  
-> **Last updated:** 2026-11-09  
-> **Phase:** Phase 2 / Workflow **S09**  
-> **D16:** `OWNER_APPROVED` (C) — Phase 1 S09 core; GPS/S10 **GATED**  
-> **Implemented:** API + 24 calculators + RBAC + Vue `/app/operational-kpis` + Pest/Vitest coverage  
-> **Not implemented:** GPS · S10 · KPI result cache · production deploy  
-> **Merge record:** [S09_POST_MERGE_CLOSURE_2026-11-09.md](S09_POST_MERGE_CLOSURE_2026-11-09.md)  
+> **Status:** `S09-D01…D16 = OWNER_APPROVED` · **Phase 1 MERGED to `develop`** @ `95ded77` (PR #47) · **NOT_DEPLOYED**
+> **Last updated:** 2026-11-09
+> **Phase:** Phase 2 / Workflow **S09**
+> **D16:** `OWNER_APPROVED` (C) — Phase 1 S09 core; GPS remains **outside S09**
+> **Implemented:** API + 24 calculators + RBAC + Vue `/app/operational-kpis` + Pest/Vitest coverage
+> **Not implemented:** GPS · S10 code · KPI result cache · production deploy
+> **S10:** product decisions **S10-D01…D06 OWNER_APPROVED**; **IMPLEMENTATION_NOT_STARTED** (no GPS integration exists yet)
+> **Merge record:** [S09_POST_MERGE_CLOSURE_2026-11-09.md](S09_POST_MERGE_CLOSURE_2026-11-09.md)
 
 ## Purpose
 
@@ -49,6 +50,7 @@ Define **season-aware, permission-aware operational KPIs** for Transport, Accomm
 | [S09_D16_DRAFT_AUTHORIZATION_2026-11-08.md](S09_D16_DRAFT_AUTHORIZATION_2026-11-08.md) | Owner D16 draft + historical + corrected readiness (superseded by the approval below) |
 | [S09_D16_OWNER_APPROVAL_2026-11-08.md](S09_D16_OWNER_APPROVAL_2026-11-08.md) | Formal D16 Owner approval — Option C, Phase 1 |
 | [S09_PHASE1_IMPLEMENTATION_EVIDENCE_2026-11-08.md](S09_PHASE1_IMPLEMENTATION_EVIDENCE_2026-11-08.md) | Phase 1 implementation evidence |
+| [S09_POST_MERGE_CLOSURE_2026-11-09.md](S09_POST_MERGE_CLOSURE_2026-11-09.md) | Post-merge closure + S10-D01…D06 product decisions |
 
 ## Status vocabulary (this package)
 
@@ -58,11 +60,13 @@ Define **season-aware, permission-aware operational KPIs** for Transport, Accomm
 | OWNER_APPROVED | Explicit Owner act |
 | IMPLEMENTED_PHASE1 | S09 core API + Vue + tests |
 | MERGED_TO_DEVELOP | Merged via PR #47 @ `95ded77` (2026-11-09); not production-deployed |
-| GATED | GPS / S10 — needs separate Owner scope act |
+| PRODUCT_DECISIONS_APPROVED | Owner product choices recorded; coding not started |
+| GATED | Live GPS / S10 implementation — needs technical specs + separate coding authorization |
 
 ## Explicit non-claims
 
-- Merge ≠ production deploy authorization.  
-- D16 Phase 1 ≠ authorization for S10, GPS, formula changes, or KPI result caching.  
-- MVP Dashboard counts are **not** Phase 2 operational KPIs.  
-- Independent GitHub security Approve was **not recorded** before merge (see post-merge closure).  
+- Merge ≠ production deploy authorization.
+- D16 Phase 1 ≠ authorization for S10 coding, GPS implementation, formula changes, or KPI result caching.
+- S10-D01…D06 product approval ≠ technical specification and ≠ GPS already integrated.
+- MVP Dashboard counts are **not** Phase 2 operational KPIs.
+- Independent GitHub security Approve was **NOT_RECORDED** before merge (technical assessment: **APPROVE_RECOMMENDED** — see post-merge closure).

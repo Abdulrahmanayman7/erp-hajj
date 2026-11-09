@@ -80,8 +80,8 @@ The following were historically listed as outside the **Foundation delivery** Ph
 | Seasonal projects & advanced tasking | S06 | **Implemented + Merged** via PR #45 @ `e25dc8f` ([20-season-projects](../09-modules/20-season-projects/README.md)). Stream status **FUNCTIONALLY_ACCEPTED / TECHNICAL_VALIDATION_DEFERRED** (2026-11-07) — **not** marked Owner Accepted / COMPLETE; MySQL 8 deferred; unsafe pilgrim/ops cloning remains forbidden elsewhere |
 | Risks & complaints | S07 | **Implemented + Merged** (PR #44 @ `a21e4ca`); Owner final acceptance not assumed from merge |
 | Seasonal templates (safe reference copy only) | S08 | **OWNER_ACCEPTED / NOT_MERGED / NOT_DEPLOYED** (Owner 2026-11-08) on `feature/s08-seasonal-templates` @ `707ca33` ([20-seasonal-templates](../09-modules/20-seasonal-templates/); [S08-OWNER-ACCEPTANCE-2026-11-08.md](../10-decisions/S08-OWNER-ACCEPTANCE-2026-11-08.md)); unsafe pilgrim/ops cloning remains forbidden |
-| Operational KPI engine (Phase 2 formulas) | S09 | **Phase 1 MERGED** (PR #47 @ `95ded77`); MVP dashboard counts remain ≠ Phase 2 KPIs; GPS/S10/cache still out of S09 |
-| Executive operations dashboard widgets | S10 | NOT_STARTED; maps/live per GPS special case; ADR-0020 product scope ≠ coding authorization |
+| Operational KPI engine (Phase 2 formulas) | S09 | **Phase 1 MERGED** (PR #47 @ `95ded77`); MVP dashboard counts remain ≠ Phase 2 KPIs; GPS/S10 code/cache still out of S09; GitHub security Approve **NOT_RECORDED** |
+| Executive operations dashboard widgets | S10 | **PRODUCT_DECISIONS_APPROVED** (S10-D01…D06) · **IMPLEMENTATION_NOT_STARTED**; full scope includes GPS product-wise but GPS integration does **not** already exist; maps/live remain gated on real source; coding authorization still outstanding |
 
 ## Rules
 

@@ -1,7 +1,7 @@
 # Roadmap
 
 > **Status:** Draft (delivery order aligned to completed / next sprints)
-> **Last updated:** 2026-11-09 (S09 Phase 1 MERGED via PR #47 @ `95ded77`; NOT_DEPLOYED; S08 already on `develop` via PR #46)
+> **Last updated:** 2026-11-09 (S09 Phase 1 MERGED via PR #47 @ `95ded77`; NOT_DEPLOYED; S10-D01…D06 product decisions approved / implementation not started; S08 already on `develop` via PR #46)
 > **Phase 2 product scope:** [ADR-0020](../10-decisions/ADR-0020-FULL-PHASE2-OPERATIONAL-SCOPE.md) (Full Phase 2 Operational Scope Adoption). Matrix: [PHASE2_SCOPE_MATRIX.md](PHASE2_SCOPE_MATRIX.md). Reconciliation: [PHASE2_SCOPE_RECONCILIATION.md](PHASE2_SCOPE_RECONCILIATION.md).
 > **Status vocabulary (S08-D09):** distinguish **Implemented** / **Merged** / **Tested** / **Owner Accepted** — merge ≠ automatic Owner acceptance.
 
@@ -81,8 +81,8 @@ Adopted by Project Owner via [ADR-0020](../10-decisions/ADR-0020-FULL-PHASE2-OPE
 | Seasonal projects & tasks | S06 | **In Phase 2.** **Implemented + Merged** via [PR #45](https://github.com/Abdulrahmanayman7/erp-hajj/pull/45) @ `e25dc8f` (`Modules/SeasonProjects` + FE + [20-season-projects](../09-modules/20-season-projects/README.md)). Stream label **FUNCTIONALLY_ACCEPTED / TECHNICAL_VALIDATION_DEFERRED** (2026-11-07); MySQL 8 **DEFERRED**; Browser E2E **NOT RUN**. **Not** marked Owner Accepted / COMPLETE / deploy-ready — [S06_FINAL_CLOSURE_REPORT.md](../09-modules/20-season-projects/S06_FINAL_CLOSURE_REPORT.md) |
 | Risks & complaints | S07 | **In Phase 2.** **Implemented + Merged** via [PR #44](https://github.com/Abdulrahmanayman7/erp-hajj/pull/44) @ `a21e4ca`. **Tested:** module Pest/Vitest + [S07_PART6_UAT_REPORT.md](../09-modules/21-risks-and-complaints/S07_PART6_UAT_REPORT.md). **Owner Accepted:** merge alone ≠ final Owner acceptance — not assumed |
 | Seasonal templates (safe copy) | S08 | **In Phase 2.** **Implemented + Merged** via [PR #46](https://github.com/Abdulrahmanayman7/erp-hajj/pull/46) (ancestry into `develop` before S09). Owner acceptance record: [S08-OWNER-ACCEPTANCE-2026-11-08.md](../10-decisions/S08-OWNER-ACCEPTANCE-2026-11-08.md). **Deploy:** not claimed here |
-| Operational KPIs | S09 | **In Phase 2.** **Phase 1 MERGED** via [PR #47](https://github.com/Abdulrahmanayman7/erp-hajj/pull/47) @ `95ded77` (24 KPIs + calculators + RBAC + Vue). **NOT_DEPLOYED**. Independent GitHub security Approve **not recorded** (technical assessment recommended Approve). GPS/S10/cache remain out — [S09_POST_MERGE_CLOSURE_2026-11-09.md](../09-modules/22-operational-kpis/S09_POST_MERGE_CLOSURE_2026-11-09.md) |
-| Executive ops dashboard | S10 | **In Phase 2; NOT_STARTED**; live ops map **in product scope** (ADR-0021) — not complete without real GPS/source; product direction D15=B does **not** authorize coding |
+| Operational KPIs | S09 | **In Phase 2.** **Phase 1 MERGED** via [PR #47](https://github.com/Abdulrahmanayman7/erp-hajj/pull/47) @ `95ded77` (24 KPIs + calculators + RBAC + Vue). **NOT_DEPLOYED**. Technical security: **APPROVE_RECOMMENDED**; independent GitHub Approve **NOT_RECORDED** (governance exception). GPS/S10 code/cache remain out of S09 — [S09_POST_MERGE_CLOSURE_2026-11-09.md](../09-modules/22-operational-kpis/S09_POST_MERGE_CLOSURE_2026-11-09.md) |
+| Executive ops dashboard | S10 | **In Phase 2.** **PRODUCT_DECISIONS_APPROVED** (S10-D01=D full scope incl. GPS product scope; D02=C dual page perms + domain; D03=D comprehensive dashboard + real GPS map; D04=C alerts/reports/export; D05=C parallel streams, live gated on real GPS; D06=A docs push). **IMPLEMENTATION_NOT_STARTED**. Full scope ≠ GPS already integrated; detailed tech specs / integration gates / coding authorization still outstanding — [S09_POST_MERGE_CLOSURE_2026-11-09.md](../09-modules/22-operational-kpis/S09_POST_MERGE_CLOSURE_2026-11-09.md) |
 
 | Integration & tests | S11 | In scope; audit **PARTIAL** |
 | UAT & handoff | S12 | In scope; **NOT_STARTED** |
