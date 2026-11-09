@@ -42,7 +42,7 @@ const EXPECTED_GROUP_ORDER = [
 ] as const
 
 const EXPECTED_GROUP_MEMBERSHIP: Record<(typeof EXPECTED_GROUP_ORDER)[number], readonly string[]> = {
-  home: ['dashboard'],
+  home: ['dashboard', 'operational-kpis'],
   system: ['users', 'roles', 'audit', 'settings'],
   hr: ['organization-structure', 'employees'],
   'seasons-pilgrims': [
@@ -163,11 +163,11 @@ describe('buildTenantNavGroups', () => {
     expect(groups).toHaveLength(11)
   })
 
-  it('exposes exactly 45 sidebar links without duplication', () => {
+  it('exposes exactly 46 sidebar links without duplication', () => {
     const groups = buildTenantNavGroups(allowAll)
     const keys = groups.flatMap((group) => group.items.map((item) => item.key))
     expect(keys).toEqual([...EXPECTED_LINK_KEYS])
-    expect(new Set(keys).size).toBe(45)
+    expect(new Set(keys).size).toBe(46)
   })
 
   it('keeps exact membership and order inside every approved group', () => {
@@ -185,6 +185,7 @@ describe('buildTenantNavGroups', () => {
         .map((item) => [item.key, item.to]),
     )
     expect(byKey.dashboard).toBe('/app')
+    expect(byKey['operational-kpis']).toBe('/app/operational-kpis')
     expect(byKey.users).toBe('/app/users')
     expect(byKey.roles).toBe('/app/roles')
     expect(byKey.audit).toBe('/app/audit')
@@ -293,6 +294,17 @@ describe('buildTenantNavGroups', () => {
     expect(groups[0]?.items.map((item) => item.key)).toEqual(['dashboard'])
   })
 
+  it('gates operational-kpis by operational_kpis.view and omits it otherwise', () => {
+    const withPerm = buildTenantNavGroups((permission) => permission === 'operational_kpis.view')
+    expect(withPerm.map((group) => group.key)).toEqual(['home'])
+    expect(withPerm[0]?.items.map((item) => item.key)).toEqual(['dashboard', 'operational-kpis'])
+    expect(withPerm[0]?.items[1]?.permission).toBe('operational_kpis.view')
+    expect(withPerm[0]?.items[1]?.to).toBe('/app/operational-kpis')
+
+    const withoutPerm = buildTenantNavGroups(() => false)
+    expect(withoutPerm[0]?.items.map((item) => item.key)).toEqual(['dashboard'])
+  })
+
   it('places procurement and suppliers-contracts as separate permission-gated groups', () => {
     const procurementOnly = buildTenantNavGroups(
       (permission) => permission === 'purchase_requests.view' || permission === 'rfq.view',
@@ -315,10 +327,14 @@ describe('buildTenantNavGroups', () => {
 describe('resolveActiveMultiItemGroupKey', () => {
   const groups = buildTenantNavGroups(() => true)
 
-  it('returns null for single-item destinations (home / accommodation)', () => {
-    expect(resolveActiveMultiItemGroupKey(groups, '/app')).toBeNull()
+  it('returns null for remaining single-item destinations (accommodation)', () => {
     expect(resolveActiveMultiItemGroupKey(groups, '/app/accommodation')).toBeNull()
     expect(resolveActiveMultiItemGroupKey(groups, '/app/accommodation/drafts')).toBeNull()
+  })
+
+  it('auto-selects home when it has multiple items (dashboard + operational-kpis)', () => {
+    expect(resolveActiveMultiItemGroupKey(groups, '/app')).toBe('home')
+    expect(resolveActiveMultiItemGroupKey(groups, '/app/operational-kpis')).toBe('home')
   })
 
   it('auto-selects the multi-item group for deep links', () => {
