@@ -29,6 +29,11 @@ test('owner can list same-tenant users and excludes platform users', function ()
 
 test('user list supports search status role filter and default name sort', function (): void {
     $owner = actingAsTenantOwner();
+    // Pin owner identity so Faker cannot collide with search=ahmad (name/email LIKE).
+    $owner->forceFill([
+        'name' => 'مالك الاختبار',
+        'email' => 'owner-search-fixture@example.test',
+    ])->save();
     $tenant = $owner->tenant;
 
     $alpha = tenantUser($tenant, ['name' => 'أحمد', 'email' => 'ahmad@example.com']);

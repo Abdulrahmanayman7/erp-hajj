@@ -40,6 +40,7 @@ import {
   CopyPlus,
   History,
   BellRing,
+  Gauge,
   type LucideIcon,
 } from 'lucide-vue-next'
 
@@ -130,18 +131,29 @@ function pushGroup(groups: AppNavGroup[], group: AppNavGroup): void {
 export function buildTenantNavGroups(can: (permission: string) => boolean): AppNavGroup[] {
   const groups: AppNavGroup[] = []
 
+  const homeItems: AppNavItem[] = [
+    {
+      key: 'dashboard',
+      labelKey: 'nav.dashboard',
+      to: '/app',
+      icon: Home,
+      match: 'exact',
+    },
+  ]
+  if (can('operational_kpis.view')) {
+    homeItems.push({
+      key: 'operational-kpis',
+      labelKey: 'nav.operationalKpis',
+      to: '/app/operational-kpis',
+      icon: Gauge,
+      permission: 'operational_kpis.view',
+      match: 'prefix',
+    })
+  }
   pushGroup(groups, {
     key: 'home',
     labelKey: 'nav.home',
-    items: [
-      {
-        key: 'dashboard',
-        labelKey: 'nav.dashboard',
-        to: '/app',
-        icon: Home,
-        match: 'exact',
-      },
-    ],
+    items: homeItems,
   })
 
   const systemItems: AppNavItem[] = []
