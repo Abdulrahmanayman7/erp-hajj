@@ -99,6 +99,16 @@ export const router = createRouter({
       meta: { requiresAuth: true, layout: 'app', permission: 'operational_kpis.view' },
     },
     {
+      path: '/app/executive-dashboard',
+      name: 'executive-dashboard',
+      component: () => import('@/modules/executive-dashboard/pages/ExecutiveDashboardPage.vue'),
+      meta: {
+        requiresAuth: true,
+        layout: 'app',
+        permissionsAll: ['executive_dashboard.view', 'operational_kpis.view'],
+      },
+    },
+    {
       path: '/app/403',
       name: 'app-forbidden',
       component: () => import('@/modules/auth/pages/ForbiddenPage.vue'),

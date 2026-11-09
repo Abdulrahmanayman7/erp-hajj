@@ -160,6 +160,93 @@ describe('createAuthGuard', () => {
     expect(result).toMatchObject({ name: 'app-forbidden' })
   })
 
+  it('allows permissionsAll when every listed permission is present', async () => {
+    queryClient.setQueryData(currentUserQueryKey, {
+      id: 1,
+      name: 'Test',
+      email: 't@example.com',
+      status: 'active',
+      is_platform_user: false,
+      tenant: null,
+      roles: [],
+      permissions: ['executive_dashboard.view', 'operational_kpis.view'],
+    })
+
+    const guard = createAuthGuard(queryClient)
+    const result = await guard(
+      route(
+        {
+          requiresAuth: true,
+          permissionsAll: ['executive_dashboard.view', 'operational_kpis.view'],
+        },
+        '/app/executive-dashboard',
+        'executive-dashboard',
+      ),
+      {} as never,
+      (() => undefined) as never,
+    )
+
+    expect(result).toBe(true)
+  })
+
+  it('denies permissionsAll when the first permission is missing', async () => {
+    queryClient.setQueryData(currentUserQueryKey, {
+      id: 1,
+      name: 'Test',
+      email: 't@example.com',
+      status: 'active',
+      is_platform_user: false,
+      tenant: null,
+      roles: [],
+      permissions: ['operational_kpis.view'],
+    })
+
+    const guard = createAuthGuard(queryClient)
+    const result = await guard(
+      route(
+        {
+          requiresAuth: true,
+          permissionsAll: ['executive_dashboard.view', 'operational_kpis.view'],
+        },
+        '/app/executive-dashboard',
+        'executive-dashboard',
+      ),
+      {} as never,
+      (() => undefined) as never,
+    )
+
+    expect(result).toMatchObject({ name: 'app-forbidden' })
+  })
+
+  it('denies permissionsAll when the second permission is missing', async () => {
+    queryClient.setQueryData(currentUserQueryKey, {
+      id: 1,
+      name: 'Test',
+      email: 't@example.com',
+      status: 'active',
+      is_platform_user: false,
+      tenant: null,
+      roles: [],
+      permissions: ['executive_dashboard.view'],
+    })
+
+    const guard = createAuthGuard(queryClient)
+    const result = await guard(
+      route(
+        {
+          requiresAuth: true,
+          permissionsAll: ['executive_dashboard.view', 'operational_kpis.view'],
+        },
+        '/app/executive-dashboard',
+        'executive-dashboard',
+      ),
+      {} as never,
+      (() => undefined) as never,
+    )
+
+    expect(result).toMatchObject({ name: 'app-forbidden' })
+  })
+
   it('soft-redirects platform users away from tenant app routes', async () => {
     queryClient.setQueryData(currentUserQueryKey, {
       id: 1,

@@ -3370,6 +3370,7 @@ export const ar = {
   "SUPPLIER_BANK_ACCOUNT_REVEALED": "إظهار بيانات حساب بنكي للمورد",
   "SUPPLIER_BANK_ACCOUNT_REVEAL_DENIED": "رفض إظهار بيانات حساب بنكي للمورد",
   "OPERATIONAL_KPIS_VIEW_DENIED": "رفض عرض المؤشرات التشغيلية",
+  "EXECUTIVE_DASHBOARD_VIEW_DENIED": "رفض عرض لوحة التحكم التنفيذية",
   "CRITERIA_PACK_CREATED": "إنشاء حزمة معايير تقييم",
   "CRITERIA_PACK_UPDATED": "تحديث حزمة معايير تقييم",
   "CRITERIA_PACK_PUBLISHED": "نشر حزمة معايير تقييم",

@@ -22,6 +22,7 @@ use App\Modules\Documents\Controllers\DocumentCategoryController;
 use App\Modules\Documents\Controllers\DocumentController;
 use App\Modules\Employees\Controllers\EmployeeController;
 use App\Modules\Employees\Controllers\PositionController;
+use App\Modules\ExecutiveDashboard\Controllers\ExecutiveDashboardController;
 use App\Modules\Inventory\Controllers\InventoryBalanceController;
 use App\Modules\Inventory\Controllers\InventoryCategoryController;
 use App\Modules\Inventory\Controllers\InventoryItemController;
@@ -132,6 +133,9 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
 
         // S09: explicit season_id only — deliberately outside any season.context Active fallback.
         Route::get('/operational-kpis', [OperationalKpiController::class, 'index'])->name('operational-kpis.index');
+
+        // S10 A0–A2: dual page gate + explicit season_id; outside season.context Active fallback.
+        Route::get('/executive-dashboard', [ExecutiveDashboardController::class, 'index'])->name('executive-dashboard.index');
 
         Route::get('/tenant-settings', [TenantSettingsController::class, 'show'])->name('tenant-settings.show');
         Route::patch('/tenant-settings', [TenantSettingsController::class, 'update'])->name('tenant-settings.update');
