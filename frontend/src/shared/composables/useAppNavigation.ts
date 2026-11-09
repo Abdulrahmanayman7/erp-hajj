@@ -41,6 +41,7 @@ import {
   History,
   BellRing,
   Gauge,
+  LayoutDashboard,
   type LucideIcon,
 } from 'lucide-vue-next'
 
@@ -147,6 +148,16 @@ export function buildTenantNavGroups(can: (permission: string) => boolean): AppN
       to: '/app/operational-kpis',
       icon: Gauge,
       permission: 'operational_kpis.view',
+      match: 'prefix',
+    })
+  }
+  if (can('executive_dashboard.view') && can('operational_kpis.view')) {
+    homeItems.push({
+      key: 'executive-dashboard',
+      labelKey: 'nav.executiveDashboard',
+      to: '/app/executive-dashboard',
+      icon: LayoutDashboard,
+      permission: 'executive_dashboard.view',
       match: 'prefix',
     })
   }

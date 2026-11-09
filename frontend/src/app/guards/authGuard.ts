@@ -59,8 +59,19 @@ export function createAuthGuard(queryClient: QueryClient): NavigationGuard {
       .map((record) => record.meta.permissionsAny as string[] | undefined)
       .filter((value): value is string[] => Array.isArray(value) && value.length > 0)
       .at(-1)
+    const requiredAllPermissions = to.matched
+      .map((record) => record.meta.permissionsAll as string[] | undefined)
+      .filter((value): value is string[] => Array.isArray(value) && value.length > 0)
+      .at(-1)
 
-    if (!needsAuth && !guestOnly && !requiredPermission && !requiredAnyPermissions && !isSetupRoute) {
+    if (
+      !needsAuth &&
+      !guestOnly &&
+      !requiredPermission &&
+      !requiredAnyPermissions &&
+      !requiredAllPermissions &&
+      !isSetupRoute
+    ) {
       return true
     }
 
@@ -113,7 +124,10 @@ export function createAuthGuard(queryClient: QueryClient): NavigationGuard {
       }
     }
 
-    if ((needsAuth || requiredPermission || requiredAnyPermissions) && !authenticated) {
+    if (
+      (needsAuth || requiredPermission || requiredAnyPermissions || requiredAllPermissions) &&
+      !authenticated
+    ) {
       return {
         name: 'login',
         query: to.fullPath !== '/app' && to.fullPath !== '/platform/tenants'
@@ -143,8 +157,11 @@ export function createAuthGuard(queryClient: QueryClient): NavigationGuard {
       const deniedAny =
         !!requiredAnyPermissions &&
         !requiredAnyPermissions.some((permission) => permissions.includes(permission))
+      const deniedAll =
+        !!requiredAllPermissions &&
+        !requiredAllPermissions.every((permission) => permissions.includes(permission))
 
-      if (deniedSingle || deniedAny) {
+      if (deniedSingle || deniedAny || deniedAll) {
         if (user?.is_platform_user) {
           // Soft: stay in platform area without a dedicated 403 page yet.
           if (to.name !== 'platform-tenants') {

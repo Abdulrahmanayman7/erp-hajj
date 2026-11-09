@@ -19,5 +19,7 @@ declare module 'vue-router' {
     permission?: string
     /** Allow access when the user has any of these permissions. */
     permissionsAny?: string[]
+    /** Require every listed permission (logical AND). */
+    permissionsAll?: string[]
   }
 }

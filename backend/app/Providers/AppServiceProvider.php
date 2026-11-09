@@ -50,6 +50,7 @@ use App\Modules\Meetings\Models\Meeting;
 use App\Modules\Meetings\Policies\MeetingPolicy;
 use App\Modules\Notifications\Models\Notification;
 use App\Modules\Notifications\Policies\NotificationPolicy;
+use App\Modules\ExecutiveDashboard\Policies\ExecutiveDashboardPolicy;
 use App\Modules\OperationalKpis\Policies\OperationalKpiPolicy;
 use App\Modules\OrganizationStructure\Models\OrganizationUnit;
 use App\Modules\OrganizationStructure\Policies\OrganizationUnitPolicy;
@@ -196,6 +197,7 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::define('viewDashboard', [DashboardPolicy::class, 'view']);
         Gate::define('viewOperationalKpis', [OperationalKpiPolicy::class, 'view']);
+        Gate::define('viewExecutiveDashboard', [ExecutiveDashboardPolicy::class, 'view']);
         Gate::define('viewTenantSettings', [TenantSettingsPolicy::class, 'view']);
         Gate::define('updateTenantSettings', [TenantSettingsPolicy::class, 'update']);
 

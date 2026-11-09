@@ -41,6 +41,10 @@ final class PermissionCatalog
         'audit_logs' => 'سجل التدقيق',
         'dashboard' => 'لوحة التحكم',
         'operational_kpis' => 'المؤشرات التشغيلية',
+        'executive_dashboard' => 'لوحة التحكم التنفيذية',
+        'executive_alerts' => 'التنبيهات التشغيلية',
+        'executive_reports' => 'التقارير التنفيذية',
+        'gps' => 'الخريطة الحية',
         'tenant_settings' => 'إعدادات المنشأة',
         'platform_tenants' => 'إدارة المنشآت (المنصة)',
     ];
@@ -309,6 +313,10 @@ final class PermissionCatalog
 
             ['name' => 'dashboard.view', 'display_name' => 'عرض لوحة التحكم', 'module' => 'dashboard', 'description' => 'الوصول إلى الصفحة الرئيسية بعد تسجيل الدخول'],
             ['name' => 'operational_kpis.view', 'display_name' => 'عرض المؤشرات التشغيلية', 'module' => 'operational_kpis', 'description' => 'الوصول إلى صفحة المؤشرات التشغيلية للموسم؛ تُعرض بطاقات كل مجال وفق صلاحية عرض ذلك المجال'],
+            ['name' => 'executive_dashboard.view', 'display_name' => 'عرض لوحة التحكم التنفيذية', 'module' => 'executive_dashboard', 'description' => 'الوصول إلى لوحة التحكم التنفيذية؛ يتطلب أيضًا operational_kpis.view على مستوى الصفحة'],
+            ['name' => 'executive_alerts.view', 'display_name' => 'عرض التنبيهات التنفيذية', 'module' => 'executive_alerts', 'description' => 'عرض تنبيهات لوحة التحكم التنفيذية (مسجّلة؛ لا واجهة في الشريحة الأولى)'],
+            ['name' => 'executive_reports.view', 'display_name' => 'عرض التقارير التنفيذية', 'module' => 'executive_reports', 'description' => 'عرض وتصدير التقارير التنفيذية (مسجّلة؛ لا واجهة في الشريحة الأولى)'],
+            ['name' => 'gps.map.view', 'display_name' => 'عرض خريطة المواقع', 'module' => 'gps', 'description' => 'عرض قسم الخريطة في اللوحة التنفيذية؛ بدون إحداثيات حية حتى بوابة التكامل'],
             ['name' => 'tenant_settings.view', 'display_name' => 'عرض إعدادات المنشأة', 'module' => 'tenant_settings', 'description' => 'عرض إعدادات المنشأة'],
             ['name' => 'tenant_settings.update', 'display_name' => 'تحديث إعدادات المنشأة', 'module' => 'tenant_settings', 'description' => 'تحديث إعدادات المنشأة'],
         ];
@@ -385,11 +393,20 @@ final class PermissionCatalog
         // Sensitive permissions are explicit-assignment only (never templated, incl. Tenant Owner).
         $sensitiveExplicitOnly = self::sensitiveExplicitOnlyPermissions();
 
+        // S10 page/feature perms: catalogued but not auto-granted to any role template (Owner A0 rule).
+        $s10ExplicitAssignmentOnly = [
+            'executive_dashboard.view',
+            'executive_alerts.view',
+            'executive_reports.view',
+            'gps.map.view',
+        ];
+
         $all = array_values(array_filter(
             self::allNames(),
             static fn (string $name): bool => ! str_starts_with($name, 'accommodation.')
                 && ! self::isPlatformPermission($name)
-                && ! in_array($name, $sensitiveExplicitOnly, true),
+                && ! in_array($name, $sensitiveExplicitOnly, true)
+                && ! in_array($name, $s10ExplicitAssignmentOnly, true),
         ));
 
         return [

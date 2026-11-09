@@ -1,0 +1,33 @@
+/** Arabic copy for Executive Dashboard (S10 A0–A2). */
+export const executiveDashboardAr = {
+  nav: {
+    executiveDashboard: 'لوحة التحكم التنفيذية',
+  },
+  executiveDashboard: {
+    title: 'لوحة التحكم التنفيذية',
+    subtitle: 'مؤشرات موسمية وصلاحيات مزدوجة — بدون خريطة حية في هذه الشريحة',
+    loading: 'جارٍ تحميل اللوحة…',
+    retry: 'إعادة المحاولة',
+    refresh: 'تحديث',
+    needSeason: 'اختر موسمًا ثم أكّد الاختيار لعرض اللوحة',
+    needSeasonsPermission: 'يتطلب منتقي المواسم صلاحية عرض المواسم',
+    manualSeasonHint: 'أدخل معرّف موسم مصرّح به ثم أكّد — بدون قائمة مواسم',
+    manualSeasonId: 'معرّف الموسم',
+    noSeasons: 'لا مواسم',
+    noDomain: 'لا توجد صلاحيات نطاق لعرض أي مؤشر',
+    empty: 'لا توجد مؤشرات للعرض',
+    closed: 'مغلق',
+    active: 'نشط',
+    draft: 'مسودة',
+    suggestedActive: 'الموسم النشط المقترح',
+    confirmSeason: 'تأكيد الموسم',
+    changeSeason: 'تغيير الموسم',
+    seasonLabel: 'الموسم',
+    pickSeason: 'اختر موسمًا',
+    generatedAt: 'وقت اللقطة',
+    timezone: 'المنطقة الزمنية',
+    gpsTitle: 'خريطة العمليات',
+    gpsUnavailable: 'الخريطة غير متاحة — لا بيانات موقع حية في هذه الشريحة',
+    gpsNoPermission: '',
+  },
+}
