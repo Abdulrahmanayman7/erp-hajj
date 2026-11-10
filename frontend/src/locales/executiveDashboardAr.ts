@@ -29,6 +29,19 @@ export const executiveDashboardAr = {
     gpsTitle: 'خريطة العمليات',
     gpsUnavailable: 'الخريطة غير متاحة — لا بيانات موقع حية في هذه الشريحة',
     gpsNoPermission: '',
+    alerts: {
+      title: 'التنبيهات التشغيلية',
+      hint: 'تنبيهات المخاطر العالية واعتمادات الشراء المتأخرة فقط — بدون قواعد إشغال أو تأخر تقدّم أو SLA شكاوى',
+      open: 'مفتوحة',
+      acknowledged: 'تم الإقرار',
+      critical: 'حرجة',
+      empty: 'لا توجد تنبيهات',
+      acknowledge: 'إقرار',
+      severity: {
+        warning: 'تحذير',
+        critical: 'حرج',
+      },
+    },
     panels: {
       seasonTitle: 'حالة الموسم',
       seasonId: 'معرّف الموسم',

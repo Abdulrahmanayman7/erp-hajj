@@ -246,6 +246,14 @@ final class NotificationComposer
                 'title' => $title !== '' ? mb_substr($title, 0, 255) : 'تذكير موسمي',
                 'body' => $this->clip($this->str($context['body'] ?? null) !== '' ? $this->str($context['body'] ?? null) : 'حان موعد تذكير موسمي مُعدّ في المنشأة.'),
             ],
+            NotificationType::ExecutiveAlertRiskHigh => [
+                'title' => 'تنبيه تشغيلي: خطر مرتفع',
+                'body' => $this->clip($number !== '' ? "الخطر {$number} مفتوح بمستوى خطورة مرتفع أو حرج." : 'يوجد خطر مفتوح بمستوى خطورة مرتفع أو حرج.'),
+            ],
+            NotificationType::ExecutiveAlertProcurementOverdue => [
+                'title' => 'تنبيه تشغيلي: اعتماد شراء متأخر',
+                'body' => $this->clip($number !== '' ? "خطوة اعتماد الطلب {$number} متأخرة بأكثر من 7 أيام." : 'توجد خطوة اعتماد شراء متأخرة بأكثر من 7 أيام.'),
+            ],
         };
     }
 

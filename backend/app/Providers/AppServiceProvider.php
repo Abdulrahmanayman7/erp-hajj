@@ -38,6 +38,8 @@ use App\Modules\Employees\Models\Employee;
 use App\Modules\Employees\Models\Position;
 use App\Modules\Employees\Policies\EmployeePolicy;
 use App\Modules\Employees\Policies\PositionPolicy;
+use App\Modules\ExecutiveAlerts\Models\ExecutiveAlert;
+use App\Modules\ExecutiveAlerts\Policies\ExecutiveAlertPolicy;
 use App\Modules\ExecutiveDashboard\Policies\ExecutiveDashboardPolicy;
 use App\Modules\Inventory\Models\InventoryBalance;
 use App\Modules\Inventory\Models\InventoryCategory;
@@ -194,10 +196,13 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(SeasonCopyPreview::class, SeasonCopyPolicy::class);
         Gate::policy(SeasonCopyRun::class, SeasonCopyPolicy::class);
         Gate::policy(SeasonReminderRule::class, SeasonReminderRulePolicy::class);
+        Gate::policy(ExecutiveAlert::class, ExecutiveAlertPolicy::class);
 
         Gate::define('viewDashboard', [DashboardPolicy::class, 'view']);
         Gate::define('viewOperationalKpis', [OperationalKpiPolicy::class, 'view']);
         Gate::define('viewExecutiveDashboard', [ExecutiveDashboardPolicy::class, 'view']);
+        Gate::define('viewExecutiveAlerts', [ExecutiveAlertPolicy::class, 'view']);
+        Gate::define('acknowledgeExecutiveAlert', [ExecutiveAlertPolicy::class, 'acknowledge']);
         Gate::define('viewTenantSettings', [TenantSettingsPolicy::class, 'view']);
         Gate::define('updateTenantSettings', [TenantSettingsPolicy::class, 'update']);
 

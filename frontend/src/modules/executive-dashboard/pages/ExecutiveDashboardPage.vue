@@ -10,8 +10,13 @@ import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.v
 import { usePermissions } from '@/shared/composables/usePermissions'
 
 import AccommodationCountsPanel from '../components/AccommodationCountsPanel.vue'
+import AlertsPanel from '../components/AlertsPanel.vue'
 import ProjectProgressPanel from '../components/ProjectProgressPanel.vue'
 import SeasonStatusPanel from '../components/SeasonStatusPanel.vue'
+import {
+  useAcknowledgeExecutiveAlertMutation,
+  useExecutiveAlertsQuery,
+} from '../queries/useExecutiveAlertsQuery'
 import { useExecutiveDashboardQuery } from '../queries/useExecutiveDashboardQuery'
 import {
   ACCOMMODATION_PANEL_IDS,
@@ -125,6 +130,15 @@ const pageState = computed(() => {
   if ((payload.value?.kpis.length ?? 0) === 0) return 'empty' as const
   return 'ready' as const
 })
+
+/** The alerts panel exists only when the API returned it (executive_alerts.view). */
+const alertsSummary = computed(() => payload.value?.panels?.alerts ?? null)
+const alertsQuery = useExecutiveAlertsQuery(
+  confirmedSeasonId,
+  () => confirmedSeasonId.value != null && alertsSummary.value != null,
+)
+const acknowledgeMutation = useAcknowledgeExecutiveAlertMutation()
+const alertRows = computed(() => alertsQuery.data.value ?? alertsSummary.value?.items ?? [])
 
 const showA3Panels = computed(
   () =>
@@ -249,6 +263,17 @@ const showA3Panels = computed(
       <SeasonStatusPanel :season="seasonPanel" />
       <AccommodationCountsPanel :kpis="accommodationPanelKpis" />
       <ProjectProgressPanel :kpis="projectPanelKpis" />
+      <AlertsPanel
+        v-if="alertsSummary"
+        :alerts="alertRows"
+        :open-count="alertsSummary.open_count"
+        :acknowledged-count="alertsSummary.acknowledged_count"
+        :critical-count="alertsSummary.critical_count"
+        :is-acknowledging="acknowledgeMutation.isPending.value"
+        :is-loading="alertsQuery.isLoading.value"
+        :is-error="alertsQuery.isError.value"
+        @acknowledge="acknowledgeMutation.mutate($event)"
+      />
     </div>
 
     <section

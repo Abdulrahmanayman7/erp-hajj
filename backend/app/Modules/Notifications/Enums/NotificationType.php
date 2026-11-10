@@ -60,6 +60,10 @@ enum NotificationType: string
     /** S08 season reminder rules (D15): tenant-configured, fired by the daily scanner only. */
     case SeasonReminderDue = 'SEASON_REMINDER_DUE';
 
+    /** S10-A4 executive operational alerts. */
+    case ExecutiveAlertRiskHigh = 'EXECUTIVE_ALERT_RISK_HIGH';
+    case ExecutiveAlertProcurementOverdue = 'EXECUTIVE_ALERT_PROCUREMENT_OVERDUE';
+
     public function defaultSeverity(): NotificationSeverity
     {
         return match ($this) {
@@ -79,12 +83,14 @@ enum NotificationType: string
             self::PurchaseRequestReturned,
             self::RiskSeverityAlert,
             self::SeasonReminderDue,
+            self::ExecutiveAlertProcurementOverdue,
             self::ComplaintEscalated => NotificationSeverity::Warning,
 
             self::ContractExpired,
             self::MeetingCancelled,
             self::TaskOverdue,
-            self::CustodyOverdue => NotificationSeverity::Critical,
+            self::CustodyOverdue,
+            self::ExecutiveAlertRiskHigh => NotificationSeverity::Critical,
 
             default => NotificationSeverity::Info,
         };

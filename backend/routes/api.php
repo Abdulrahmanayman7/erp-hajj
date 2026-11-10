@@ -22,6 +22,7 @@ use App\Modules\Documents\Controllers\DocumentCategoryController;
 use App\Modules\Documents\Controllers\DocumentController;
 use App\Modules\Employees\Controllers\EmployeeController;
 use App\Modules\Employees\Controllers\PositionController;
+use App\Modules\ExecutiveAlerts\Controllers\ExecutiveAlertController;
 use App\Modules\ExecutiveDashboard\Controllers\ExecutiveDashboardController;
 use App\Modules\Inventory\Controllers\InventoryBalanceController;
 use App\Modules\Inventory\Controllers\InventoryCategoryController;
@@ -136,6 +137,12 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
 
         // S10 A0–A2: dual page gate + explicit season_id; outside season.context Active fallback.
         Route::get('/executive-dashboard', [ExecutiveDashboardController::class, 'index'])->name('executive-dashboard.index');
+
+        // S10-A4 READY alerts (explicit season_id; dual page + executive_alerts.view).
+        Route::get('/executive-alerts', [ExecutiveAlertController::class, 'index'])->name('executive-alerts.index');
+        Route::post('/executive-alerts/{alert}/acknowledge', [ExecutiveAlertController::class, 'acknowledge'])
+            ->whereNumber('alert')
+            ->name('executive-alerts.acknowledge');
 
         Route::get('/tenant-settings', [TenantSettingsController::class, 'show'])->name('tenant-settings.show');
         Route::patch('/tenant-settings', [TenantSettingsController::class, 'update'])->name('tenant-settings.update');
