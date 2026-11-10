@@ -1,11 +1,11 @@
-/** Arabic copy for Executive Dashboard (S10 A0–A2). */
+/** Arabic copy for Executive Dashboard (S10 A0–A3). */
 export const executiveDashboardAr = {
   nav: {
     executiveDashboard: 'لوحة التحكم التنفيذية',
   },
   executiveDashboard: {
     title: 'لوحة التحكم التنفيذية',
-    subtitle: 'مؤشرات موسمية وصلاحيات مزدوجة — بدون خريطة حية في هذه الشريحة',
+    subtitle: 'حالة الموسم وإشغال الإقامة وتقدّم المشاريع — بدون نسب مخترعة أو خريطة حية',
     loading: 'جارٍ تحميل اللوحة…',
     retry: 'إعادة المحاولة',
     refresh: 'تحديث',
@@ -29,5 +29,16 @@ export const executiveDashboardAr = {
     gpsTitle: 'خريطة العمليات',
     gpsUnavailable: 'الخريطة غير متاحة — لا بيانات موقع حية في هذه الشريحة',
     gpsNoPermission: '',
+    panels: {
+      seasonTitle: 'حالة الموسم',
+      seasonId: 'معرّف الموسم',
+      seasonName: 'اسم الموسم',
+      seasonStatus: 'الحالة',
+      accommodationTitle: 'عدّادات الإقامة',
+      accommodationHint: 'قيم S09 المعتمدة (A02 / A03) فقط — بدون نسبة إشغال مخترعة',
+      projectsTitle: 'تقدّم المشاريع',
+      projectsHint: 'قيم S09 المعتمدة (J07 / J09) فقط — بدون تقدّم مخطط أو تأخير مخترع',
+      undefinedBadge: 'غير معرّف',
+    },
   },
 }

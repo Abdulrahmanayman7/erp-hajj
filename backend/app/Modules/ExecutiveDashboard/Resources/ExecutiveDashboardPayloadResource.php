@@ -19,18 +19,21 @@ class ExecutiveDashboardPayloadResource extends JsonResource
     {
         $season = $this->resource['season'];
 
+        $seasonPayload = [
+            'id' => $season->id,
+            'name' => $season->name,
+            'status' => $season->status->value,
+            'status_label' => self::statusLabel($season->status),
+        ];
+
         $data = [
             'kpis' => array_map(
                 static fn ($dto): array => (new OperationalKpiResource($dto))->resolve(),
                 $this->resource['kpis'],
             ),
-            'season' => [
-                'id' => $season->id,
-                'name' => $season->name,
-                'status' => $season->status->value,
-                'status_label' => self::statusLabel($season->status),
-            ],
+            'season' => $seasonPayload,
             'response_state' => $this->resource['response_state'],
+            'panels' => $this->panelsArray($seasonPayload),
         ];
 
         if (array_key_exists('gps', $this->resource)) {
@@ -38,6 +41,40 @@ class ExecutiveDashboardPayloadResource extends JsonResource
         }
 
         return $data;
+    }
+
+    /**
+     * @param  array{id: int, name: string, status: string, status_label: string}  $seasonPayload
+     * @return array<string, mixed>
+     */
+    private function panelsArray(array $seasonPayload): array
+    {
+        /** @var array<string, mixed> $raw */
+        $raw = $this->resource['panels'] ?? [];
+
+        $panels = [
+            'season' => $seasonPayload,
+        ];
+
+        if (isset($raw['accommodation']['kpis']) && is_array($raw['accommodation']['kpis']) && $raw['accommodation']['kpis'] !== []) {
+            $panels['accommodation'] = [
+                'kpis' => array_map(
+                    static fn ($dto): array => (new OperationalKpiResource($dto))->resolve(),
+                    $raw['accommodation']['kpis'],
+                ),
+            ];
+        }
+
+        if (isset($raw['projects']['kpis']) && is_array($raw['projects']['kpis']) && $raw['projects']['kpis'] !== []) {
+            $panels['projects'] = [
+                'kpis' => array_map(
+                    static fn ($dto): array => (new OperationalKpiResource($dto))->resolve(),
+                    $raw['projects']['kpis'],
+                ),
+            ];
+        }
+
+        return $panels;
     }
 
     /**
