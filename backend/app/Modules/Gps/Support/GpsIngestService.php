@@ -51,6 +51,10 @@ final class GpsIngestService
 
         $this->assertValidSignature($rawBody, $signatureHeader, $tenant);
 
+        // Purge expired nonces before clock/nonce checks so retention boundaries
+        // are observable even when recorded_at rejects the request.
+        $this->purgeExpiredNonces();
+
         $recordedAt = $this->assertAcceptableRecordedAt((string) $payload['recorded_at']);
         $this->assertFreshNonce((string) $payload['nonce']);
 
@@ -153,11 +157,8 @@ final class GpsIngestService
             throw new UnprocessableEntityHttpException('Invalid recorded_at.');
         }
 
-        $nonceTtl = max(60, (int) config('gps.nonce_ttl_seconds', 600));
-        $configuredAge = max(1, (int) config('gps.max_recorded_at_age_seconds', 600));
-        // Cap at nonce TTL so expired-nonce replays are also outside the clock window.
-        $maxAge = min($configuredAge, $nonceTtl);
-        $maxFuture = max(0, (int) config('gps.max_recorded_at_future_seconds', 60));
+        $maxAge = $this->maxRecordedAtAgeSeconds();
+        $maxFuture = $this->maxRecordedAtFutureSeconds();
 
         $now = now();
         if ($recordedAt->lt($now->copy()->subSeconds($maxAge))) {
@@ -177,10 +178,10 @@ final class GpsIngestService
             throw new UnprocessableEntityHttpException('Invalid nonce.');
         }
 
-        $ttl = max(60, (int) config('gps.nonce_ttl_seconds', 600));
-        $expiresAt = now()->addSeconds($ttl);
-
-        DB::table('gps_ingest_nonces')->where('expires_at', '<', now())->delete();
+        // Retention must cover the full recorded_at acceptance window, including
+        // max future skew (+1s boundary), so a future-dated payload cannot be
+        // replayed after the nominal nonce TTL while recorded_at is still fresh.
+        $expiresAt = now()->addSeconds($this->nonceRetentionSeconds());
 
         try {
             DB::table('gps_ingest_nonces')->insert([
@@ -197,6 +198,50 @@ final class GpsIngestService
 
             throw $e;
         }
+    }
+
+    private function purgeExpiredNonces(): void
+    {
+        DB::table('gps_ingest_nonces')->where('expires_at', '<', now())->delete();
+    }
+
+    /**
+     * Nominal nonce TTL (seconds), fail-closed floor at 60.
+     */
+    private function nonceTtlSeconds(): int
+    {
+        return max(60, (int) config('gps.nonce_ttl_seconds', 600));
+    }
+
+    /**
+     * Maximum allowed future clock skew (seconds). Negative / invalid → 0.
+     */
+    private function maxRecordedAtFutureSeconds(): int
+    {
+        return max(0, (int) config('gps.max_recorded_at_future_seconds', 60));
+    }
+
+    /**
+     * Maximum accepted age of recorded_at (seconds). Capped at nominal nonce TTL
+     * so past-dated stamps cannot outlive the base TTL window.
+     */
+    private function maxRecordedAtAgeSeconds(): int
+    {
+        $configuredAge = max(1, (int) config('gps.max_recorded_at_age_seconds', 600));
+
+        return min($configuredAge, $this->nonceTtlSeconds());
+    }
+
+    /**
+     * How long a consumed nonce must remain unique.
+     *
+     * = nominal TTL + max future skew + 1s boundary so that when the nonce row
+     * is eligible for cleanup, max-future recorded_at is already outside the
+     * acceptance window (or equal boundary is still covered by uniqueness).
+     */
+    private function nonceRetentionSeconds(): int
+    {
+        return $this->nonceTtlSeconds() + $this->maxRecordedAtFutureSeconds() + 1;
     }
 
     private function validateCoordinate(float|int|string $value, float $min, float $max, string $field): float

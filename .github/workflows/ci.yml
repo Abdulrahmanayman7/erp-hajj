@@ -256,6 +256,9 @@ jobs:
             tests/Feature/Contracts/ContractTest.php \
             --filter="C17|C18"
 
+      - name: S10 GPS ingest security tests (MySQL 8)
+        run: php vendor/bin/pest -c phpunit.mysql.xml tests/Feature/Gps/GpsIngestTest.php
+
   frontend:
     name: Frontend (Vue)
     runs-on: ubuntu-latest

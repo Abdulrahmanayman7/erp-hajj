@@ -1,7 +1,7 @@
 # Security Baseline
 
 > **Status:** Approved baseline; authentication through Audit Trail implemented (Sprint 018 / ADR-0015)
-> **Last updated:** 2026-08-12
+> **Last updated:** 2026-11-10 (S10 GPS ingest replay retention note)
 
 ## Purpose
 
@@ -32,6 +32,7 @@ Each control below names the attack it prevents. Implementation details are spec
 | **Notification IDOR / inbox leak** | Recipient-owned Policy (`recipient_user_id === actor`); tenant scope; no client create; no stored `action_url`; plain-text bodies — **implemented** Sprint 016 ([ADR-0013](../10-decisions/ADR-0013-IN-APP-NOTIFICATION-OWNERSHIP-AND-DELIVERY.md)). |
 | **Dashboard aggregate leakage** | `dashboard.view` page gate; omit sections without module `*.view`; never zero-fill forbidden modules; personal my-tasks/my-custodies never expand to unauthorized tenant totals; no cross-tenant aggregates — **implemented** Sprint 017 ([ADR-0014](../10-decisions/ADR-0014-PERMISSION-AWARE-DASHBOARD-AGGREGATION.md)). |
 | **Audit history leakage / tampering** | `audit_logs.view` for reads; append-only (no update/delete API); semantic events + sanitizer (no secrets); tenant-scoped list/show → cross-tenant **404**; actor spoof / client `tenant_id` ignored — **implemented** Sprint 018 ([ADR-0015](../10-decisions/ADR-0015-SEMANTIC-AUDIT-TRAIL-AND-IMMUTABLE-HISTORY.md)). |
+| **GPS ingest replay / cross-tenant webhook abuse** | Per-tenant HMAC secrets (`GPS_WEBHOOK_SECRETS`) fail-closed; required `device_id` bound in `gps_device_bindings`; `recorded_at` skew limits; nonce uniqueness with **retention = nominal TTL + max future skew + 1s** so future-dated stamps cannot be replayed after nominal TTL while still acceptable; monotonic last-known under `SELECT … FOR UPDATE`; no shared global webhook secret; Live vendor / history retention remain Owner-blocked (S10 G4/G5). |
 
 ### Authentication
 
