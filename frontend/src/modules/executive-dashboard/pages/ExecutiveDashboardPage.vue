@@ -24,11 +24,17 @@ import {
   PROJECT_PANEL_IDS,
   pickKpisById,
 } from '../utils/executiveDashboardPanels'
+import {
+  canPickExecutiveSeasons,
+  shouldShowExecutiveAlertsPanel,
+  shouldShowExecutiveGpsPanel,
+  shouldShowExecutiveReportsPanel,
+} from '../utils/executiveDashboardVisibility'
 
 const { t } = useI18n()
 const { can } = usePermissions()
 
-const canPickSeasons = computed(() => can('seasons.view'))
+const canPickSeasons = computed(() => canPickExecutiveSeasons(can))
 const seasonsQuery = useSeasonsQuery({ per_page: 100 })
 const seasons = computed(() => seasonsQuery.data.value?.data ?? [])
 const hasNoSeasons = computed(
@@ -104,7 +110,7 @@ const isFetching = computed(() => dashboardQuery.isFetching.value)
 const payload = computed(() => dashboardQuery.data.value?.data ?? null)
 const meta = computed(() => dashboardQuery.data.value?.meta)
 const confirmedSeasonMeta = computed(() => payload.value?.season ?? null)
-const showGps = computed(() => payload.value?.gps != null)
+const showGps = computed(() => shouldShowExecutiveGpsPanel(payload.value?.gps))
 
 const seasonPanel = computed(() => payload.value?.panels?.season ?? payload.value?.season ?? null)
 const accommodationPanelKpis = computed(() => {
@@ -136,7 +142,7 @@ const pageState = computed(() => {
 const alertsSummary = computed(() => payload.value?.panels?.alerts ?? null)
 const alertsQuery = useExecutiveAlertsQuery(
   confirmedSeasonId,
-  () => confirmedSeasonId.value != null && alertsSummary.value != null,
+  () => confirmedSeasonId.value != null && shouldShowExecutiveAlertsPanel(alertsSummary.value),
 )
 const acknowledgeMutation = useAcknowledgeExecutiveAlertMutation()
 const alertRows = computed(() => alertsQuery.data.value ?? alertsSummary.value?.items ?? [])
@@ -149,13 +155,8 @@ const showA3Panels = computed(
 )
 
 /** Reports panel is permission-gated on the client; API still enforces dual page + executive_reports.view. */
-const showReports = computed(
-  () =>
-    can('executive_reports.view') &&
-    confirmedSeasonId.value != null &&
-    (pageState.value === 'ready' ||
-      pageState.value === 'no_domain' ||
-      pageState.value === 'empty'),
+const showReports = computed(() =>
+  shouldShowExecutiveReportsPanel(can, confirmedSeasonId.value, pageState.value),
 )
 </script>
 
