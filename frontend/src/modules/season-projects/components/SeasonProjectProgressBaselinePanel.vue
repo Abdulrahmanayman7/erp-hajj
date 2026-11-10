@@ -213,7 +213,9 @@ watch(draftBaseline, (draft) => {
         {{
           lagMetric.unavailable_reason === 'no_checkpoint_at_evaluation_time'
             ? t('seasonProjects.baseline.noCheckpointYet')
-            : t('seasonProjects.baseline.noApprovedBaseline')
+            : lagMetric.unavailable_reason === 'invalid_actual_progress'
+              ? t('seasonProjects.baseline.invalidActualProgress')
+              : t('seasonProjects.baseline.noApprovedBaseline')
         }}
       </p>
     </div>

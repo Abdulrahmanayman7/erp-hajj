@@ -11,6 +11,7 @@
 | [#52](https://github.com/Abdulrahmanayman7/erp-hajj/pull/52) | GPS ingest security hardening | **PENDING** |
 | [#53](https://github.com/Abdulrahmanayman7/erp-hajj/pull/53) | GPS nonce retention / replay window | **PENDING** |
 | [#54](https://github.com/Abdulrahmanayman7/erp-hajj/pull/54) | Owner-approved U01/U02/U03 alerts + baseline APIs | **PENDING** |
+| [#55](https://github.com/Abdulrahmanayman7/erp-hajj/pull/55) | U02 baseline UI + operational readiness (no SLA activation) | **PENDING** |
 
 Existing evidence may include CI green runs and automated agent review comments. Those are **supporting artifacts only**.
 

@@ -88,6 +88,8 @@ export const seasonProjectsAr = {
       lagUnavailable: 'مقياس التأخر غير متاح',
       noApprovedBaseline: 'لا يوجد خط أساس معتمد — لا يُحسب تأخر.',
       noCheckpointYet: 'لا توجد نقطة تحقق سارية حتى الآن ضمن الخط الأساس المعتمد.',
+      invalidActualProgress:
+        'التقدم الفعلي غير صالح — لا يُحسب التأخر ولا يُستبدل بصفر.',
       thresholdsHint: 'فتح التنبيه ≥ {open} نقطة · المسح < {clear} نقطة (هيستيريسيس بينهما).',
       effectiveAt: 'تاريخ السريان',
       plannedPercent: 'التقدم المخطط (%)',
@@ -220,6 +222,8 @@ export const seasonProjectsAr = {
       seasonClosed: 'الموسم مغلق',
       required: 'هذا الحقل مطلوب',
       range: 'نطاق التواريخ غير صالح',
+      invalidDatetime: 'تاريخ السريان غير صالح',
+      invalidNumber: 'قيمة رقمية غير صالحة',
       percentRange: 'النسبة يجب أن تكون بين 0 و 100',
       checkpointsRequired: 'أضف نقطة تحقق واحدة على الأقل',
       checkpointsTooMany: 'تجاوز الحد الأقصى لنقاط التحقق (100)',

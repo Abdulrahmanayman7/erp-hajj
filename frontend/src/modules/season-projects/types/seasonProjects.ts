@@ -139,9 +139,14 @@ export interface SeasonProjectProgressCheckpointFormRow {
   planned_progress_percent: string
 }
 
+export type SeasonProjectProgressLagUnavailableReason =
+  | 'no_approved_baseline'
+  | 'no_checkpoint_at_evaluation_time'
+  | 'invalid_actual_progress'
+
 export interface SeasonProjectProgressLagMetric {
   state: 'available' | 'unavailable'
-  unavailable_reason: 'no_approved_baseline' | 'no_checkpoint_at_evaluation_time' | null
+  unavailable_reason: SeasonProjectProgressLagUnavailableReason | null
   planned_progress_percent: number | null
   actual_progress_percent: number | null
   lag_percentage_points: number | null

@@ -42,12 +42,14 @@
 | Scenario | Expected | Evidence |
 |---|---|---|
 | Draft create/replace via UI | POST progress-baselines | New Vue panel + API client |
-| Checkpoint validation | 0–100, unique dates, non-decreasing, max 100 | FE validation tests + backend FormRequest |
+| Checkpoint validation | 0–100, unique dates, non-decreasing, max 100; reject empty/whitespace/NaN/Infinity planned % and invalid datetimes | FE validation tests + backend FormRequest |
 | Approve with sensitive permission | 200 + audit | Pest approve path + UI PermissionGuard |
 | Approve without permission | 403 | `DeferredAlertsU01U02U03Test` |
 | Approved immutability | approved rows not mutated; new draft version | Action + UI copy |
 | No baseline / no checkpoint | lag UNAVAILABLE in UI + no alert | FE metric helper + scanner |
-| Lag &lt; 8 / = 8–10 / ≥ 10 | clear / hysteresis / open | Pest lag boundary + FE helper |
+| Invalid actual progress | lag UNAVAILABLE (`invalid_actual_progress`); never coerce to 0 | FE `parseActualProgressPercent` + Vitest |
+| Lag &lt; 8 / = 8–10 / ≥ 10 | clear / hysteresis / open (thresholds 10/8 preserved) | Pest lag boundary + FE helper |
+| Mutation buttons without permission / closed season | hidden | `PermissionGuard` + `seasonWritable` |
 | Audit | DRAFT_UPSERTED + APPROVED | Pest AuditLog assertions |
 | Tenant isolation | cross-tenant 404 | Pest |
 | Arabic RTL | locale keys under `seasonProjects.baseline` | `seasonProjectsAr.ts` |
@@ -74,7 +76,7 @@ See [S10_SECURITY_REVIEW_CHECKLIST.md](./S10_SECURITY_REVIEW_CHECKLIST.md).
 | #52 GPS hardening | **PENDING** |
 | #53 GPS replay retention | **PENDING** |
 | #54 U01/U02/U03 alerts | **PENDING** |
-| This PR (operational readiness UI) | **PENDING** |
+| #55 operational readiness UI + validation hardening | **PENDING** |
 
 Automated Cursor/security-agent reviews **do not** satisfy independent non-author human approval.
 

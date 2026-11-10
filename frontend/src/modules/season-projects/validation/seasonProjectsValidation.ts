@@ -176,7 +176,7 @@ export function checkpointFormToIso(localDatetime: string): string {
   const trimmed = localDatetime.trim()
   if (!trimmed) return ''
   const parsed = new Date(trimmed)
-  if (Number.isNaN(parsed.getTime())) return trimmed
+  if (Number.isNaN(parsed.getTime())) return ''
   return parsed.toISOString()
 }
 
@@ -185,6 +185,23 @@ export function isoToDatetimeLocalValue(iso: string): string {
   if (Number.isNaN(parsed.getTime())) return ''
   const local = new Date(parsed.getTime() - parsed.getTimezoneOffset() * 60_000)
   return local.toISOString().slice(0, 16)
+}
+
+/**
+ * Parse actual project progress for lag display.
+ * Empty / whitespace / NaN / Infinity → null (never coerce unknown to 0).
+ */
+export function parseActualProgressPercent(
+  value: number | string | null | undefined,
+): number | null {
+  if (value == null) return null
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    if (!trimmed) return null
+    const parsed = Number(trimmed)
+    return Number.isFinite(parsed) ? parsed : null
+  }
+  return Number.isFinite(value) ? value : null
 }
 
 /**
@@ -206,21 +223,32 @@ export function validateBaselineCheckpointForm(
 
   const normalized: Array<{ at: string; pct: number; index: number }> = []
   rows.forEach((row, index) => {
-    const at = row.effective_at.trim()
-    if (!at) {
+    const atRaw = row.effective_at.trim()
+    if (!atRaw) {
       errors[`checkpoints.${index}.effective_at`] = 'required'
       return
     }
-    const pct = Number(row.planned_progress_percent)
-    if (!Number.isFinite(pct)) {
+    const atIso = checkpointFormToIso(atRaw)
+    if (!atIso) {
+      errors[`checkpoints.${index}.effective_at`] = 'invalidDatetime'
+      return
+    }
+
+    const pctRaw = row.planned_progress_percent.trim()
+    if (!pctRaw) {
       errors[`checkpoints.${index}.planned_progress_percent`] = 'required'
+      return
+    }
+    const pct = Number(pctRaw)
+    if (!Number.isFinite(pct)) {
+      errors[`checkpoints.${index}.planned_progress_percent`] = 'invalidNumber'
       return
     }
     if (pct < 0 || pct > 100) {
       errors[`checkpoints.${index}.planned_progress_percent`] = 'percentRange'
       return
     }
-    normalized.push({ at: checkpointFormToIso(at), pct, index })
+    normalized.push({ at: atIso, pct, index })
   })
 
   if (Object.keys(errors).length) return errors
@@ -249,10 +277,10 @@ export function validateBaselineCheckpointForm(
 
 export function computeProgressLagMetric(
   baselines: SeasonProjectProgressBaseline[],
-  actualProgressPercent: number | string,
+  actualProgressPercent: number | string | null | undefined,
   now: Date = new Date(),
 ): SeasonProjectProgressLagMetric {
-  const actual = Number(actualProgressPercent)
+  const actual = parseActualProgressPercent(actualProgressPercent)
   const approved = [...baselines]
     .filter((b) => b.status === 'approved')
     .sort((a, b) => b.version - a.version)[0]
@@ -262,9 +290,20 @@ export function computeProgressLagMetric(
       state: 'unavailable',
       unavailable_reason: 'no_approved_baseline',
       planned_progress_percent: null,
-      actual_progress_percent: Number.isFinite(actual) ? actual : null,
+      actual_progress_percent: actual,
       lag_percentage_points: null,
       baseline_version: null,
+    }
+  }
+
+  if (actual === null) {
+    return {
+      state: 'unavailable',
+      unavailable_reason: 'invalid_actual_progress',
+      planned_progress_percent: null,
+      actual_progress_percent: null,
+      lag_percentage_points: null,
+      baseline_version: approved.version,
     }
   }
 
@@ -281,20 +320,31 @@ export function computeProgressLagMetric(
       state: 'unavailable',
       unavailable_reason: 'no_checkpoint_at_evaluation_time',
       planned_progress_percent: null,
-      actual_progress_percent: Number.isFinite(actual) ? actual : null,
+      actual_progress_percent: actual,
       lag_percentage_points: null,
       baseline_version: approved.version,
     }
   }
 
   const planned = Number(checkpoint.planned_progress_percent)
-  const lag = planned - (Number.isFinite(actual) ? actual : 0)
+  if (!Number.isFinite(planned)) {
+    return {
+      state: 'unavailable',
+      unavailable_reason: 'no_checkpoint_at_evaluation_time',
+      planned_progress_percent: null,
+      actual_progress_percent: actual,
+      lag_percentage_points: null,
+      baseline_version: approved.version,
+    }
+  }
+
+  const lag = planned - actual
 
   return {
     state: 'available',
     unavailable_reason: null,
     planned_progress_percent: planned,
-    actual_progress_percent: Number.isFinite(actual) ? actual : null,
+    actual_progress_percent: actual,
     lag_percentage_points: lag,
     baseline_version: approved.version,
   }
