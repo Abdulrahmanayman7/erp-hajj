@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/vue-query'
 
 import {
   activateSeasonProject,
+  approveSeasonProjectProgressBaseline,
   cancelSeasonProject,
   completeSeasonProject,
   createSeasonProject,
@@ -14,7 +15,9 @@ import {
   updateSeasonProject,
   updateSeasonProjectBudget,
   updateSeasonProjectPhase,
+  upsertSeasonProjectProgressBaselineDraft,
 } from '../api/seasonProjectsApi'
+import type { SeasonProjectProgressCheckpoint } from '../types/seasonProjects'
 import { seasonProjectsQueryKey } from '../queries/useSeasonProjectsQuery'
 import type { SeasonProjectPhaseFormState } from '../types/seasonProjects'
 
@@ -32,6 +35,9 @@ async function invalidateProject(
     })
     await client.invalidateQueries({
       queryKey: [...seasonProjectsQueryKey, 'budget', projectId],
+    })
+    await client.invalidateQueries({
+      queryKey: [...seasonProjectsQueryKey, 'progress-baselines', projectId],
     })
   }
 }
@@ -219,5 +225,39 @@ export function useUnlinkSeasonProjectPurchaseOrderMutation() {
       seasonId?: number | null
     }) => unlinkSeasonProjectPurchaseOrder(projectId, linkId, seasonId),
     onSuccess: (row) => invalidateProject(client, row.project_id),
+  })
+}
+
+export function useUpsertSeasonProjectProgressBaselineDraftMutation() {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      projectId,
+      checkpoints,
+      seasonId,
+    }: {
+      projectId: number
+      checkpoints: Array<
+        Pick<SeasonProjectProgressCheckpoint, 'effective_at' | 'planned_progress_percent'>
+      >
+      seasonId?: number | null
+    }) => upsertSeasonProjectProgressBaselineDraft(projectId, checkpoints, seasonId),
+    onSuccess: (_row, vars) => invalidateProject(client, vars.projectId),
+  })
+}
+
+export function useApproveSeasonProjectProgressBaselineMutation() {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      projectId,
+      baselineId,
+      seasonId,
+    }: {
+      projectId: number
+      baselineId: number
+      seasonId?: number | null
+    }) => approveSeasonProjectProgressBaseline(projectId, baselineId, seasonId),
+    onSuccess: (_row, vars) => invalidateProject(client, vars.projectId),
   })
 }

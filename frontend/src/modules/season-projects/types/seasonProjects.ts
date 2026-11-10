@@ -116,3 +116,39 @@ export const SEASON_PROJECT_PHASE_STATUSES: SeasonProjectPhaseStatus[] = [
   'active',
   'done',
 ]
+
+export type SeasonProjectProgressBaselineStatus = 'draft' | 'approved'
+
+export interface SeasonProjectProgressCheckpoint {
+  id?: number
+  effective_at: string
+  planned_progress_percent: number
+}
+
+export interface SeasonProjectProgressBaseline {
+  id: number
+  version: number
+  status: SeasonProjectProgressBaselineStatus
+  approved_at: string | null
+  approved_by: number | null
+  checkpoints: SeasonProjectProgressCheckpoint[]
+}
+
+export interface SeasonProjectProgressCheckpointFormRow {
+  effective_at: string
+  planned_progress_percent: string
+}
+
+export type SeasonProjectProgressLagUnavailableReason =
+  | 'no_approved_baseline'
+  | 'no_checkpoint_at_evaluation_time'
+  | 'invalid_actual_progress'
+
+export interface SeasonProjectProgressLagMetric {
+  state: 'available' | 'unavailable'
+  unavailable_reason: SeasonProjectProgressLagUnavailableReason | null
+  planned_progress_percent: number | null
+  actual_progress_percent: number | null
+  lag_percentage_points: number | null
+  baseline_version: number | null
+}

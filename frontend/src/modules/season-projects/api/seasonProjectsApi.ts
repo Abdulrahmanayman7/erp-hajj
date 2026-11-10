@@ -7,6 +7,8 @@ import type {
   SeasonProjectBudget,
   SeasonProjectPhase,
   SeasonProjectPhaseFormState,
+  SeasonProjectProgressBaseline,
+  SeasonProjectProgressCheckpoint,
 } from '../types/seasonProjects'
 import { seasonRequestOptions } from './seasonRequest'
 
@@ -243,6 +245,46 @@ export async function unlinkSeasonProjectPurchaseOrder(
   return (
     await apiDelete<SeasonProjectBudget>(
       `/api/v1/season-projects/${projectId}/budget/po-links/${linkId}`,
+      seasonRequestOptions(seasonId),
+    )
+  ).data
+}
+
+export async function listSeasonProjectProgressBaselines(
+  projectId: number,
+  seasonId?: number | null,
+): Promise<SeasonProjectProgressBaseline[]> {
+  return (
+    await apiGet<SeasonProjectProgressBaseline[]>(
+      `/api/v1/season-projects/${projectId}/progress-baselines`,
+      seasonRequestOptions(seasonId),
+    )
+  ).data
+}
+
+export async function upsertSeasonProjectProgressBaselineDraft(
+  projectId: number,
+  checkpoints: Array<Pick<SeasonProjectProgressCheckpoint, 'effective_at' | 'planned_progress_percent'>>,
+  seasonId?: number | null,
+): Promise<{ id: number; version: number; status: string }> {
+  return (
+    await apiPost<{ id: number; version: number; status: string }>(
+      `/api/v1/season-projects/${projectId}/progress-baselines`,
+      { checkpoints },
+      seasonRequestOptions(seasonId),
+    )
+  ).data
+}
+
+export async function approveSeasonProjectProgressBaseline(
+  projectId: number,
+  baselineId: number,
+  seasonId?: number | null,
+): Promise<{ id: number; version: number; status: string; approved_at: string | null }> {
+  return (
+    await apiPost<{ id: number; version: number; status: string; approved_at: string | null }>(
+      `/api/v1/season-projects/${projectId}/progress-baselines/${baselineId}/approve`,
+      {},
       seasonRequestOptions(seasonId),
     )
   ).data
