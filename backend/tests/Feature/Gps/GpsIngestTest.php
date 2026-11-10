@@ -189,6 +189,115 @@ it('rejects replay after nonce expiry because recorded_at is also stale', functi
     gpsSignedPost($payload, $fx['secret'])->assertForbidden();
 });
 
+it('accepts recorded_at at the maximum permitted future skew', function (): void {
+    $fx = gpsIngestFixture();
+    Config::set('gps.max_recorded_at_future_seconds', 60);
+
+    gpsSignedPost(gpsIngestPayload($fx, [
+        'recorded_at' => now()->addSeconds(60)->toIso8601String(),
+    ]), $fx['secret'])->assertCreated();
+});
+
+it('rejects exact replay while the nonce is still retained', function (): void {
+    $fx = gpsIngestFixture();
+    $payload = gpsIngestPayload($fx);
+
+    gpsSignedPost($payload, $fx['secret'])->assertCreated();
+    gpsSignedPost($payload, $fx['secret'])->assertStatus(409);
+});
+
+it('rejects future-skewed replay after the nominal nonce TTL while retention remains', function (): void {
+    $fx = gpsIngestFixture();
+    Config::set('gps.nonce_ttl_seconds', 60);
+    Config::set('gps.max_recorded_at_age_seconds', 60);
+    Config::set('gps.max_recorded_at_future_seconds', 30);
+
+    $payload = gpsIngestPayload($fx, [
+        'nonce' => 'nonce-future-skew-'.uniqid(),
+        'recorded_at' => now()->addSeconds(30)->toIso8601String(),
+    ]);
+
+    gpsSignedPost($payload, $fx['secret'])->assertCreated();
+
+    // Past nominal TTL (60s) but inside retention (60 + 30 + 1 = 91s).
+    $this->travel(61)->seconds();
+
+    $expiresAt = DB::table('gps_ingest_nonces')->where('nonce', $payload['nonce'])->value('expires_at');
+    expect($expiresAt)->not->toBeNull();
+
+    gpsSignedPost($payload, $fx['secret'])->assertStatus(409);
+});
+
+it('rejects future-skewed replay at and after the effective nonce retention boundary', function (): void {
+    $fx = gpsIngestFixture();
+    Config::set('gps.nonce_ttl_seconds', 60);
+    Config::set('gps.max_recorded_at_age_seconds', 60);
+    Config::set('gps.max_recorded_at_future_seconds', 30);
+
+    $payload = gpsIngestPayload($fx, [
+        'nonce' => 'nonce-retention-boundary-'.uniqid(),
+        'recorded_at' => now()->addSeconds(30)->toIso8601String(),
+    ]);
+
+    gpsSignedPost($payload, $fx['secret'])->assertCreated();
+
+    // Effective retention = 60 + 30 + 1 = 91s. Travel just past cleanup eligibility.
+    $this->travel(92)->seconds();
+
+    // Force cleanup path by attempting ingest; nonce row must be gone and recorded_at stale.
+    gpsSignedPost($payload, $fx['secret'])->assertForbidden();
+
+    expect(DB::table('gps_ingest_nonces')->where('nonce', $payload['nonce'])->exists())->toBeFalse();
+});
+
+it('does not allow unsafe post-TTL replay when the first write failed after nonce insert', function (): void {
+    $fx = gpsIngestFixture();
+    Config::set('gps.nonce_ttl_seconds', 60);
+    Config::set('gps.max_recorded_at_age_seconds', 60);
+    Config::set('gps.max_recorded_at_future_seconds', 30);
+
+    withTenant($fx['tenant'], function () use ($fx): void {
+        $fx['vehicle']->forceFill(['is_active' => false])->save();
+    });
+
+    $payload = gpsIngestPayload($fx, [
+        'nonce' => 'nonce-failed-write-'.uniqid(),
+        'recorded_at' => now()->addSeconds(30)->toIso8601String(),
+    ]);
+
+    // Nonce is consumed before the vehicle/active check fails.
+    gpsSignedPost($payload, $fx['secret'])->assertForbidden();
+    expect(DB::table('gps_ingest_nonces')->where('nonce', $payload['nonce'])->exists())->toBeTrue();
+
+    withTenant($fx['tenant'], function () use ($fx): void {
+        $fx['vehicle']->forceFill(['is_active' => true])->save();
+    });
+
+    // Past nominal TTL, still inside extended retention → replay blocked by nonce.
+    $this->travel(61)->seconds();
+    gpsSignedPost($payload, $fx['secret'])->assertStatus(409);
+
+    // After effective retention, recorded_at is outside the acceptance window.
+    $this->travel(31)->seconds();
+    gpsSignedPost($payload, $fx['secret'])->assertForbidden();
+});
+
+it('floors invalid GPS timing config and still fails closed without secrets', function (): void {
+    $fx = gpsIngestFixture();
+    Config::set('gps.nonce_ttl_seconds', 1); // floored to 60 at runtime
+    Config::set('gps.max_recorded_at_future_seconds', -15); // treated as 0
+    Config::set('gps.max_recorded_at_age_seconds', 0); // floored to 1, then capped by TTL
+
+    gpsSignedPost(gpsIngestPayload($fx, [
+        'recorded_at' => now()->toIso8601String(),
+    ]), $fx['secret'])->assertCreated();
+
+    Config::set('gps.webhook_secrets', []);
+    gpsSignedPost(gpsIngestPayload($fx, [
+        'nonce' => 'nonce-no-secret-'.uniqid(),
+    ]), $fx['secret'])->assertForbidden();
+});
+
 it('refuses older telemetry that would overwrite a newer last-known fix', function (): void {
     $fx = gpsIngestFixture();
 

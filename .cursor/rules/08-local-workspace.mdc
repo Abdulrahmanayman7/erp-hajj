@@ -1,0 +1,24 @@
+---
+description: Exclusive local workspace — D:\erp-hajj-1 only
+alwaysApply: true
+---
+
+# Local Workspace (permanent)
+
+The **only** authorized local workspace for ERP Hajj is:
+
+`D:\erp-hajj-1`
+
+## Rules
+
+- Run all commands, edits, tests, reports, and project-generated artifacts **inside** `D:\erp-hajj-1`.
+- **Do not** create sibling repositories, Git worktrees, clones, or temporary copies of this project elsewhere.
+- **Do not** use alternate checkouts (including historical paths such as `D:\erp-hajj-s10-completion` or other `D:\erp-hajj-*` worktrees) for new work.
+- Prefer operating on the `develop` / feature branches checked out in `D:\erp-hajj-1` itself.
+
+## Preserve local Git state
+
+- **Never** discard or overwrite the user’s existing uncommitted changes, stashes, or Git history unless the user explicitly requests that action.
+- Do **not** automatically run destructive sync commands (`git reset --hard`, `git clean`, `git restore`, `git stash`, `git switch`, `git pull` that would overwrite local work, directory removal of alternate trees, or blind overwrite of modified files).
+- If existing local changes conflict with a requested sync or checkout, **stop**, report the conflict, and wait for Owner direction.
+- `git fetch` and read-only inspection of remote-tracking refs are allowed without modifying the working tree.
