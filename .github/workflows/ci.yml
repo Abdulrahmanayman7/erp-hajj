@@ -69,9 +69,10 @@ jobs:
 
   # SQLite cannot exercise InnoDB locking, MySQL FK/index names, LAST_INSERT_ID
   # upserts, or real concurrent transactions. This job covers Transportation,
-  # SeasonPilgrims, and S04 Suppliers & Procurement Feature + Concurrency.
+  # SeasonPilgrims, Accommodation concurrency, and S04/S05 Feature + Concurrency
+  # (plus S08 templates and S10 GPS/alerts steps below).
   backend-mysql:
-    name: Backend (MySQL 8 — Transport + S04)
+    name: Backend (MySQL 8 — Transport + Accommodation + S04)
     runs-on: ubuntu-latest
     timeout-minutes: 60
     services:
@@ -172,6 +173,15 @@ jobs:
 
       - name: Transportation concurrency tests (MySQL)
         run: php vendor/bin/pest -c phpunit.mysql.xml tests/Concurrency/TransportConcurrencyTest.php
+
+      # Sequential on shared erp_hajj_testing — ConcurrencyTestCase uses migrate:fresh.
+      # These suites skip on SQLite; they were previously absent from MySQL CI.
+      - name: Accommodation concurrency tests (MySQL, sequential)
+        run: |
+          php vendor/bin/pest -c phpunit.mysql.xml \
+            tests/Concurrency/AccommodationConfirmConcurrencyTest.php \
+            tests/Concurrency/AccommodationOpsConcurrencyTest.php \
+            tests/Concurrency/AccommodationPilgrimLockConcurrencyTest.php
 
       - name: S04 Suppliers and Procurement Feature tests (MySQL)
         run: php vendor/bin/pest -c phpunit.mysql.xml tests/Feature/SuppliersAndProcurement

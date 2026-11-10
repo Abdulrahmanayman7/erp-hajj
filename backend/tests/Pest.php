@@ -31,6 +31,7 @@ require_once __DIR__.'/Feature/RisksAndComplaints/Helpers.php';
 require_once __DIR__.'/Feature/SeasonalTemplates/Helpers.php';
 require_once __DIR__.'/Feature/OperationalKpis/Helpers.php';
 require_once __DIR__.'/Feature/ExecutiveDashboard/Helpers.php';
+require_once __DIR__.'/Feature/Integration/Helpers.php';
 
 function withTenant(Tenant $tenant, Closure $callback): mixed
 {
