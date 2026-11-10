@@ -63,6 +63,9 @@ enum NotificationType: string
     /** S10-A4 executive operational alerts. */
     case ExecutiveAlertRiskHigh = 'EXECUTIVE_ALERT_RISK_HIGH';
     case ExecutiveAlertProcurementOverdue = 'EXECUTIVE_ALERT_PROCUREMENT_OVERDUE';
+    case ExecutiveAlertOccupancyHigh = 'EXECUTIVE_ALERT_OCCUPANCY_HIGH';
+    case ExecutiveAlertProjectLag = 'EXECUTIVE_ALERT_PROJECT_LAG';
+    case ExecutiveAlertComplaintSla = 'EXECUTIVE_ALERT_COMPLAINT_SLA';
 
     public function defaultSeverity(): NotificationSeverity
     {
@@ -84,6 +87,9 @@ enum NotificationType: string
             self::RiskSeverityAlert,
             self::SeasonReminderDue,
             self::ExecutiveAlertProcurementOverdue,
+            self::ExecutiveAlertOccupancyHigh,
+            self::ExecutiveAlertProjectLag,
+            self::ExecutiveAlertComplaintSla,
             self::ComplaintEscalated => NotificationSeverity::Warning,
 
             self::ContractExpired,

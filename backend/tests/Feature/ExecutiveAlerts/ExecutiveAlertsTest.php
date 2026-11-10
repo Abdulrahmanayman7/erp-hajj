@@ -126,13 +126,10 @@ it('omits risk alerts without risks.view domain permission', function (): void {
         ->not->toContain(ExecutiveAlertRule::RiskHigh->value);
 });
 
-it('does not invent deferred OCC PROJ COMP alert rules in the scannable set', function (): void {
-    expect(ExecutiveAlertRule::values())
-        ->toEqual([
-            ExecutiveAlertRule::RiskHigh->value,
-            ExecutiveAlertRule::ProcurementOverdue->value,
-        ])
-        ->and(ExecutiveAlertRule::values())->not->toContain('ALT-OCC-90')
-        ->and(ExecutiveAlertRule::values())->not->toContain('ALT-PROJ-LAG')
-        ->and(ExecutiveAlertRule::values())->not->toContain('ALT-COMP-SLA');
+it('exposes Owner-approved OCC PROJ COMP alert rules in the scannable set', function (): void {
+    expect(ExecutiveAlertRule::values())->toContain(ExecutiveAlertRule::RiskHigh->value)
+        ->and(ExecutiveAlertRule::values())->toContain(ExecutiveAlertRule::ProcurementOverdue->value)
+        ->and(ExecutiveAlertRule::values())->toContain(ExecutiveAlertRule::OccupancyHigh->value)
+        ->and(ExecutiveAlertRule::values())->toContain(ExecutiveAlertRule::ProjectLag->value)
+        ->and(ExecutiveAlertRule::values())->toContain(ExecutiveAlertRule::ComplaintSla->value);
 });

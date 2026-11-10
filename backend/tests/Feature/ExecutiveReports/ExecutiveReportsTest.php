@@ -130,7 +130,7 @@ it('forbids accommodation-occupancy without accommodation.view', function (): vo
     execReportGet('accommodation-occupancy', $season->id)->assertForbidden();
 });
 
-it('returns accommodation occupancy with null percent and unavailable state (U01=C)', function (): void {
+it('returns accommodation occupancy unavailable when no eligible capacity exists (U01)', function (): void {
     $tenant = actingAsTenantOwner()->tenant;
     $season = kpiSeason($tenant, 'active');
     execDashActingAs(execReportsPerms(['accommodation.view']), $tenant);

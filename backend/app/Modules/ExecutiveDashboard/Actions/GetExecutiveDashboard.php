@@ -5,10 +5,12 @@ namespace App\Modules\ExecutiveDashboard\Actions;
 use App\Models\User;
 use App\Modules\ExecutiveAlerts\Actions\ListExecutiveAlerts;
 use App\Modules\ExecutiveAlerts\Models\ExecutiveAlert;
+use App\Modules\ExecutiveAlerts\Support\OccupancyMetricCalculator;
 use App\Modules\Gps\Support\ComposeExecutiveGpsPanel;
 use App\Modules\OperationalKpis\Actions\GetOperationalKpis;
 use App\Modules\OperationalKpis\Support\KpiDto;
 use App\Modules\SeasonPilgrims\Models\Season;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Gate;
 
 /**
@@ -21,6 +23,7 @@ final class GetExecutiveDashboard
         private readonly GetOperationalKpis $getOperationalKpis,
         private readonly ListExecutiveAlerts $alerts,
         private readonly ComposeExecutiveGpsPanel $gpsPanel,
+        private readonly OccupancyMetricCalculator $occupancy,
     ) {}
 
     /**
@@ -49,7 +52,7 @@ final class GetExecutiveDashboard
         /** @var Season $season */
         $season = $kpiPayload['season'];
 
-        $panels = $this->composePanels($season, $kpis);
+        $panels = $this->composePanels($season, $kpis, (string) $kpiPayload['generated_at']);
 
         // A4: alerts summary only for holders of executive_alerts.view (U05 = A), domain-filtered.
         if ($actor->hasPermission('executive_alerts.view')) {
@@ -79,11 +82,11 @@ final class GetExecutiveDashboard
      * @param  list<KpiDto>  $kpis
      * @return array{
      *   season: array{id: int, name: string, status: string},
-     *   accommodation?: array{kpis: list<KpiDto>},
+     *   accommodation?: array{kpis: list<KpiDto>, occupancy_percent: float|null, occupancy_state: string, occupancy_unavailable_reason: string|null, occupancy_denominator: int|null},
      *   projects?: array{kpis: list<KpiDto>}
      * }
      */
-    private function composePanels(Season $season, array $kpis): array
+    private function composePanels(Season $season, array $kpis, string $generatedAt): array
     {
         $byId = [];
         foreach ($kpis as $kpi) {
@@ -103,7 +106,14 @@ final class GetExecutiveDashboard
             $byId['A03'] ?? null,
         ]));
         if ($accommodation !== []) {
-            $panels['accommodation'] = ['kpis' => $accommodation];
+            $metric = $this->occupancy->calculate($season, Carbon::parse($generatedAt));
+            $panels['accommodation'] = [
+                'kpis' => $accommodation,
+                'occupancy_percent' => $metric['occupancy_percent'],
+                'occupancy_state' => $metric['state'],
+                'occupancy_unavailable_reason' => $metric['unavailable_reason'],
+                'occupancy_denominator' => $metric['denominator'],
+            ];
         }
 
         $projects = array_values(array_filter([

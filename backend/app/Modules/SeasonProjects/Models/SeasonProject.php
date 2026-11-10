@@ -161,6 +161,11 @@ class SeasonProject extends Model implements TenantOwned
         return $this->hasMany(SeasonProjectPhase::class, 'project_id')->orderBy('sort_order');
     }
 
+    public function baselines(): HasMany
+    {
+        return $this->hasMany(SeasonProjectProgressBaseline::class, 'season_project_id');
+    }
+
     public function budgetPoLinks(): HasMany
     {
         return $this->hasMany(SeasonProjectBudgetPoLink::class, 'project_id');

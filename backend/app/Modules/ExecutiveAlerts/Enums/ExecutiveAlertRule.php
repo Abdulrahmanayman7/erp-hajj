@@ -3,14 +3,17 @@
 namespace App\Modules\ExecutiveAlerts\Enums;
 
 /**
- * Approved S10 alert rules only. Occupancy (ALT-OCC-90), planned-progress lag
- * (ALT-PROJ-LAG) and complaints SLA (ALT-COMP-SLA) are DEFERRED_BLOCKED
- * (U01/U02/U03 = C): they have no approved formula and MUST NOT be added here.
+ * Approved S10 alert rules (incl. U01/U02/U03 Owner approval 2026-11-10).
+ *
+ * @see docs/09-modules/23-executive-dashboard/S10_U01_U02_U03_OWNER_APPROVAL_2026-11-10.md
  */
 enum ExecutiveAlertRule: string
 {
     case RiskHigh = 'ALT-RISK-HIGH';
     case ProcurementOverdue = 'ALT-PROC-OVERDUE';
+    case OccupancyHigh = 'ALT-OCC-90';
+    case ProjectLag = 'ALT-PROJ-LAG';
+    case ComplaintSla = 'ALT-COMP-SLA';
 
     /**
      * Domain permission required to see (and acknowledge) alerts of this rule.
@@ -20,6 +23,9 @@ enum ExecutiveAlertRule: string
         return match ($this) {
             self::RiskHigh => 'risks.view',
             self::ProcurementOverdue => 'purchase_requests.view',
+            self::OccupancyHigh => 'accommodation.view',
+            self::ProjectLag => 'season_projects.view',
+            self::ComplaintSla => 'complaints.view',
         };
     }
 

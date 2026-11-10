@@ -58,6 +58,7 @@ use App\Modules\SeasonPilgrims\Controllers\SeasonProgramController;
 use App\Modules\SeasonProjects\Controllers\SeasonProjectBudgetController;
 use App\Modules\SeasonProjects\Controllers\SeasonProjectController;
 use App\Modules\SeasonProjects\Controllers\SeasonProjectPhaseController;
+use App\Modules\SeasonProjects\Controllers\SeasonProjectProgressBaselineController;
 use App\Modules\Settings\Controllers\TenantSettingsController;
 use App\Modules\SuppliersAndProcurement\Controllers\GeoPlaceController;
 use App\Modules\SuppliersAndProcurement\Controllers\GoodsReceiptController;
@@ -678,6 +679,10 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
                 Route::post('/season-projects/{season_project}/complete', [SeasonProjectController::class, 'complete'])->name('season-projects.complete');
                 Route::post('/season-projects/{season_project}/cancel', [SeasonProjectController::class, 'cancel'])->name('season-projects.cancel');
                 Route::post('/season-projects/{season_project}/reassign-owner', [SeasonProjectController::class, 'reassignOwner'])->name('season-projects.reassign-owner');
+
+                Route::get('/season-projects/{season_project}/progress-baselines', [SeasonProjectProgressBaselineController::class, 'index'])->name('season-projects.progress-baselines.index');
+                Route::post('/season-projects/{season_project}/progress-baselines', [SeasonProjectProgressBaselineController::class, 'storeDraft'])->name('season-projects.progress-baselines.store');
+                Route::post('/season-projects/{season_project}/progress-baselines/{baseline}/approve', [SeasonProjectProgressBaselineController::class, 'approve'])->name('season-projects.progress-baselines.approve');
 
                 Route::get('/season-projects/{season_project}/phases', [SeasonProjectPhaseController::class, 'index'])->name('season-projects.phases.index');
                 Route::post('/season-projects/{season_project}/phases', [SeasonProjectPhaseController::class, 'store'])->name('season-projects.phases.store');

@@ -1,7 +1,7 @@
 # Roadmap
 
 > **Status:** Draft (delivery order aligned to completed / next sprints)
-> **Last updated:** 2026-11-10 (S10 **IN_PROGRESS** on `feature/s10-full-completion`: A0–A5 + G0–G3; **G4_LIVE=BLOCKED**, **G5=BLOCKED**; not COMPLETED / not deployed)
+> **Last updated:** 2026-11-10 (S10 **IN_PROGRESS**: A0–A5 + G0–G3 + U01/U02/U03 Owner-approved alerts; **G4_LIVE=BLOCKED**, **G5=BLOCKED**; not COMPLETED / not deployed)
 > **Phase 2 product scope:** [ADR-0020](../10-decisions/ADR-0020-FULL-PHASE2-OPERATIONAL-SCOPE.md) (Full Phase 2 Operational Scope Adoption). Matrix: [PHASE2_SCOPE_MATRIX.md](PHASE2_SCOPE_MATRIX.md). Reconciliation: [PHASE2_SCOPE_RECONCILIATION.md](PHASE2_SCOPE_RECONCILIATION.md).
 > **Status vocabulary (S08-D09):** distinguish **Implemented** / **Merged** / **Tested** / **Owner Accepted** — merge ≠ automatic Owner acceptance.
 
@@ -82,7 +82,7 @@ Adopted by Project Owner via [ADR-0020](../10-decisions/ADR-0020-FULL-PHASE2-OPE
 | Risks & complaints | S07 | **In Phase 2.** **Implemented + Merged** via [PR #44](https://github.com/Abdulrahmanayman7/erp-hajj/pull/44) @ `a21e4ca`. **Tested:** module Pest/Vitest + [S07_PART6_UAT_REPORT.md](../09-modules/21-risks-and-complaints/S07_PART6_UAT_REPORT.md). **Owner Accepted:** merge alone ≠ final Owner acceptance — not assumed |
 | Seasonal templates (safe copy) | S08 | **In Phase 2.** **Implemented + Merged** via [PR #46](https://github.com/Abdulrahmanayman7/erp-hajj/pull/46) (ancestry into `develop` before S09). Owner acceptance record: [S08-OWNER-ACCEPTANCE-2026-11-08.md](../10-decisions/S08-OWNER-ACCEPTANCE-2026-11-08.md). **Deploy:** not claimed here |
 | Operational KPIs | S09 | **In Phase 2.** **Phase 1 MERGED** via [PR #47](https://github.com/Abdulrahmanayman7/erp-hajj/pull/47) @ `95ded77` (24 KPIs + calculators + RBAC + Vue). **NOT_DEPLOYED**. Technical security: **APPROVE_RECOMMENDED**; independent GitHub Approve **NOT_RECORDED** (governance exception). GPS/S10 code/cache remain out of S09 — [S09_POST_MERGE_CLOSURE_2026-11-09.md](../09-modules/22-operational-kpis/S09_POST_MERGE_CLOSURE_2026-11-09.md) |
-| Executive ops dashboard | S10 | **In Phase 2.** **IN_PROGRESS** (A0–A5 + G0–G3 on `feature/s10-full-completion`). Dual page RBAC, season panels, alerts, six executive reports/CSV, GPS contracts + HMAC ingest + last-known markers/freshness. **G4_LIVE=BLOCKED** (no live vendor). **G5=BLOCKED** (no history retention). **Not** `S10_COMPLETED` / not Owner Accepted / not deployed — [S10_COMPLETION_STATUS.md](../09-modules/23-executive-dashboard/S10_COMPLETION_STATUS.md) |
+| Executive ops dashboard | S10 | **In Phase 2.** **IN_PROGRESS** (A0–A5 + G0–G3; U01/U02/U03 Owner-approved 2026-11-10). Dual page RBAC, season panels, alerts (incl. OCC/PROJ-LAG/COMP-SLA), six executive reports/CSV, GPS contracts + HMAC ingest + last-known markers/freshness. **G4_LIVE=BLOCKED** (no live vendor). **G5=BLOCKED** (no history retention). **Not** `S10_COMPLETED` / not deployed — [S10_COMPLETION_STATUS.md](../09-modules/23-executive-dashboard/S10_COMPLETION_STATUS.md) |
 
 | Integration & tests | S11 | In scope; audit **PARTIAL** |
 | UAT & handoff | S12 | In scope; **NOT_STARTED** |

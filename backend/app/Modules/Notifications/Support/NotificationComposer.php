@@ -254,6 +254,18 @@ final class NotificationComposer
                 'title' => 'تنبيه تشغيلي: اعتماد شراء متأخر',
                 'body' => $this->clip($number !== '' ? "خطوة اعتماد الطلب {$number} متأخرة بأكثر من 7 أيام." : 'توجد خطوة اعتماد شراء متأخرة بأكثر من 7 أيام.'),
             ],
+            NotificationType::ExecutiveAlertOccupancyHigh => [
+                'title' => 'تنبيه تشغيلي: إشغال مرتفع',
+                'body' => $this->clip($number !== '' ? "إشغال الموسم {$number} بلغ عتبة التنبيه." : 'إشغال أحد المواسم بلغ عتبة التنبيه.'),
+            ],
+            NotificationType::ExecutiveAlertProjectLag => [
+                'title' => 'تنبيه تشغيلي: تأخر تقدم مشروع',
+                'body' => $this->clip($number !== '' ? "المشروع {$number} متأخر عن الخط الأساس المعتمد." : 'أحد المشاريع متأخر عن الخط الأساس المعتمد.'),
+            ],
+            NotificationType::ExecutiveAlertComplaintSla => [
+                'title' => 'تنبيه تشغيلي: تجاوز مهلة شكوى',
+                'body' => $this->clip($number !== '' ? "الشكوى {$number} تجاوزت مهلة المعالجة المعتمدة." : 'إحدى الشكاوى تجاوزت مهلة المعالجة المعتمدة.'),
+            ],
         };
     }
 

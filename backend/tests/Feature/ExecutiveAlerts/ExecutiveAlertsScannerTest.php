@@ -359,26 +359,18 @@ it('composes the alerts summary into the dashboard only with executive_alerts.vi
     expect($empty['open_count'])->toBe(0)->and($empty['items'])->toBe([]);
 });
 
-it('has no code path for the deferred OCC / PROJ-LAG / COMP-SLA alert rules (U01/U02/U03 = C)', function (): void {
+it('registers Owner-approved OCC / PROJ-LAG / COMP-SLA rules without inventing alerts when data is unavailable', function (): void {
     $tenant = actingAsTenantOwner()->tenant;
     $season = kpiSeason($tenant, 'active');
     kpiProject($tenant, $season, 'active', ['progress_percent' => 5]);
     kpiComplaint($tenant, $season);
     s10a4Scan($tenant);
 
+    // No capacity / no baseline / SLA policy disabled → no U01–U03 alerts opened.
     expect(s10a4Alerts($tenant))->toHaveCount(0)
-        ->and(ExecutiveAlertRule::values())->toBe(['ALT-RISK-HIGH', 'ALT-PROC-OVERDUE']);
-
-    $source = '';
-    foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator(app_path('Modules/ExecutiveAlerts'))) as $file) {
-        if ($file->isFile() && $file->getExtension() === 'php') {
-            $source .= file_get_contents($file->getPathname());
-        }
-    }
-    foreach (['ALT-OCC-90', 'ALT-PROJ-LAG', 'ALT-COMP-SLA'] as $deferred) {
-        // Only documentation comments may mention them; no enum case / rule constant.
-        expect(preg_match("/case\s+\w+\s*=\s*'".preg_quote($deferred, '/')."'/", $source))->toBe(0);
-    }
+        ->and(ExecutiveAlertRule::values())->toContain('ALT-OCC-90')
+        ->and(ExecutiveAlertRule::values())->toContain('ALT-PROJ-LAG')
+        ->and(ExecutiveAlertRule::values())->toContain('ALT-COMP-SLA');
 });
 
 it('keeps the alert model closed to mass assignment (tenant_id is never client-controlled)', function (): void {
