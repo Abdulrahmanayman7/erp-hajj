@@ -2,6 +2,7 @@
 
 use App\Modules\RisksAndComplaints\Models\OperationalRisk;
 use App\Modules\SeasonPilgrims\Enums\SeasonPilgrimStatus;
+use App\Modules\SeasonPilgrims\Models\Pilgrim;
 use App\Modules\SeasonPilgrims\Models\Season;
 use App\Modules\SeasonPilgrims\Models\SeasonPilgrim;
 use App\Modules\SeasonPilgrims\Models\SeasonPilgrimGroup;
@@ -27,7 +28,7 @@ it('rejects foreign-tenant and foreign-season operational links on risk create',
     $ctxB = riskBootContext();
 
     withTenant($tenantB, function () use ($tenantB, $ctxB, $ownerB, &$foreignSpId, &$foreignGroupId, &$foreignTsvId, &$foreignProjectId): void {
-        $pilgrim = \App\Modules\SeasonPilgrims\Models\Pilgrim::factory()->create();
+        $pilgrim = Pilgrim::factory()->create();
         $sp = SeasonPilgrim::query()->create([
             'season_id' => $ctxB['season']['id'],
             'pilgrim_id' => $pilgrim->id,
@@ -95,7 +96,7 @@ it('rejects same-tenant foreign-season operational links on risk create', functi
 
     $otherSeason = withTenant($tenant, fn () => Season::factory()->create());
     $foreignSpId = withTenant($tenant, function () use ($otherSeason) {
-        $pilgrim = \App\Modules\SeasonPilgrims\Models\Pilgrim::factory()->create();
+        $pilgrim = Pilgrim::factory()->create();
 
         return SeasonPilgrim::query()->create([
             'season_id' => $otherSeason->id,

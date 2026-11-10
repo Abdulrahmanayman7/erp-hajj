@@ -2,6 +2,7 @@
 
 use App\Modules\Accommodation\Models\AccommodationAssignment;
 use App\Modules\Accommodation\Models\AccommodationFacilityScope;
+use App\Modules\SeasonPilgrims\Models\Season;
 use App\Modules\SeasonPilgrims\Models\SeasonPilgrim;
 
 /**
@@ -103,7 +104,7 @@ it('returns 404 when mutating a foreign-season assignment under the same tenant'
         ->json('data');
 
     // Second season must not be active (tenant UNIQUE active_flag).
-    $seasonB = withTenant($actor->tenant, fn () => \App\Modules\SeasonPilgrims\Models\Season::factory()->create());
+    $seasonB = withTenant($actor->tenant, fn () => Season::factory()->create());
     $hB = seasonHeader($seasonB->id);
 
     spaPostJson('/api/v1/accommodation/assignments/'.$confirmed['id'].'/arrive', [], $hB)->assertNotFound();
@@ -118,7 +119,7 @@ it('prohibits client-supplied tenant_id and season_id on assignment create', fun
     [$actor, $season] = accGateCActor(accTenancyOpsPerms());
     $world = accGateCWorld($actor, $season, capacity: 2);
     $sp = accGateCPilgrim($actor, $season);
-    $otherSeason = withTenant($actor->tenant, fn () => \App\Modules\SeasonPilgrims\Models\Season::factory()->create());
+    $otherSeason = withTenant($actor->tenant, fn () => Season::factory()->create());
 
     spaPostJson('/api/v1/accommodation/assignments', [
         'season_pilgrim_id' => $sp->id,
