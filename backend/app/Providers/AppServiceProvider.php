@@ -38,7 +38,12 @@ use App\Modules\Employees\Models\Employee;
 use App\Modules\Employees\Models\Position;
 use App\Modules\Employees\Policies\EmployeePolicy;
 use App\Modules\Employees\Policies\PositionPolicy;
+use App\Modules\ExecutiveAlerts\Models\ExecutiveAlert;
+use App\Modules\ExecutiveAlerts\Policies\ExecutiveAlertPolicy;
 use App\Modules\ExecutiveDashboard\Policies\ExecutiveDashboardPolicy;
+use App\Modules\ExecutiveReports\Policies\ExecutiveReportPolicy;
+use App\Modules\Gps\Contracts\GpsProviderInterface;
+use App\Modules\Gps\Providers\NullGpsProvider;
 use App\Modules\Inventory\Models\InventoryBalance;
 use App\Modules\Inventory\Models\InventoryCategory;
 use App\Modules\Inventory\Models\InventoryItem;
@@ -106,6 +111,16 @@ class AppServiceProvider extends ServiceProvider
         $this->app->scoped(CorrelationId::class);
         $this->app->scoped(EffectivePermissions::class);
         $this->app->scoped(EffectivePlatformPermissions::class);
+
+        // G0: default NullGpsProvider. G4 Live vendor binding remains BLOCKED.
+        $this->app->bind(GpsProviderInterface::class, function (): GpsProviderInterface {
+            $provider = (string) config('gps.provider', 'null');
+
+            return match ($provider) {
+                'null', '' => new NullGpsProvider,
+                default => new NullGpsProvider,
+            };
+        });
     }
 
     public function boot(): void
@@ -194,10 +209,14 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(SeasonCopyPreview::class, SeasonCopyPolicy::class);
         Gate::policy(SeasonCopyRun::class, SeasonCopyPolicy::class);
         Gate::policy(SeasonReminderRule::class, SeasonReminderRulePolicy::class);
+        Gate::policy(ExecutiveAlert::class, ExecutiveAlertPolicy::class);
 
         Gate::define('viewDashboard', [DashboardPolicy::class, 'view']);
         Gate::define('viewOperationalKpis', [OperationalKpiPolicy::class, 'view']);
         Gate::define('viewExecutiveDashboard', [ExecutiveDashboardPolicy::class, 'view']);
+        Gate::define('viewExecutiveAlerts', [ExecutiveAlertPolicy::class, 'view']);
+        Gate::define('acknowledgeExecutiveAlert', [ExecutiveAlertPolicy::class, 'acknowledge']);
+        Gate::define('viewExecutiveReports', [ExecutiveReportPolicy::class, 'view']);
         Gate::define('viewTenantSettings', [TenantSettingsPolicy::class, 'view']);
         Gate::define('updateTenantSettings', [TenantSettingsPolicy::class, 'update']);
 

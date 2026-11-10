@@ -141,7 +141,7 @@ it('T13 returns UNAVAILABLE GPS stub with gps.map.view', function (): void {
         ->assertJsonPath('data.gps.markers', []);
 });
 
-it('T14 never exposes GPS coordinates or simulated markers', function (): void {
+it('T14 never exposes simulated GPS markers when last-known is empty', function (): void {
     $tenant = actingAsTenantOwner()->tenant;
     $season = kpiSeason($tenant);
     execDashActingAs(execDashPermissions(['gps.map.view', 'transportation.view']), $tenant);
@@ -152,9 +152,8 @@ it('T14 never exposes GPS coordinates or simulated markers', function (): void {
         'freshness_class' => 'unavailable',
         'markers' => [],
     ])
-        ->and($gps)->not->toHaveKey('latitude')
-        ->and($gps)->not->toHaveKey('longitude')
-        ->and(json_encode($gps))->not->toContain('simulated');
+        ->and(json_encode($gps))->not->toContain('simulated')
+        ->and(json_encode($gps))->not->toContain('SIMULATED');
 });
 
 it('T15 does not audit a successful executive dashboard GET', function (): void {

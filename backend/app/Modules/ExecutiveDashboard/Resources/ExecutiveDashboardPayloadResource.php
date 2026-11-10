@@ -2,6 +2,7 @@
 
 namespace App\Modules\ExecutiveDashboard\Resources;
 
+use App\Modules\ExecutiveAlerts\Resources\ExecutiveAlertResource;
 use App\Modules\OperationalKpis\Resources\OperationalKpiResource;
 use App\Modules\SeasonPilgrims\Enums\SeasonStatus;
 use Illuminate\Http\Request;
@@ -70,6 +71,18 @@ class ExecutiveDashboardPayloadResource extends JsonResource
                 'kpis' => array_map(
                     static fn ($dto): array => (new OperationalKpiResource($dto))->resolve(),
                     $raw['projects']['kpis'],
+                ),
+            ];
+        }
+
+        if (isset($raw['alerts']) && is_array($raw['alerts'])) {
+            $panels['alerts'] = [
+                'open_count' => (int) $raw['alerts']['open_count'],
+                'acknowledged_count' => (int) $raw['alerts']['acknowledged_count'],
+                'critical_count' => (int) $raw['alerts']['critical_count'],
+                'items' => array_map(
+                    static fn ($alert): array => (new ExecutiveAlertResource($alert))->resolve(),
+                    $raw['alerts']['items'],
                 ),
             ];
         }

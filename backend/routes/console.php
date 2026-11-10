@@ -19,6 +19,9 @@ Schedule::command('notifications:scan-meetings-soon')->everyFifteenMinutes();
 
 Schedule::command('purchase-requests:reconcile-routing')->everyFiveMinutes();
 
+// S10-A4 / T07=C — READY alert rules scanner (queue/cron ops prerequisite).
+Schedule::command('executive-alerts:scan')->everyFiveMinutes();
+
 // S06 E-Q05 — persist delay_state projection daily (authoritative calc on write + this job).
 // External cron / scheduler runner remains an ops prerequisite; this only registers the app schedule.
 Schedule::command('tasks:recompute-delay')->daily();
