@@ -8,6 +8,7 @@ use App\Modules\SeasonProjects\Actions\UpsertSeasonProjectProgressBaselineDraft;
 use App\Modules\SeasonProjects\Enums\SeasonProjectProgressBaselineStatus;
 use App\Modules\SeasonProjects\Models\SeasonProject;
 use App\Modules\SeasonProjects\Models\SeasonProjectProgressBaseline;
+use App\Modules\SeasonProjects\Requests\UpsertSeasonProjectProgressBaselineDraftRequest;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -43,24 +44,15 @@ class SeasonProjectProgressBaselineController
         return ApiResponse::success(data: $rows);
     }
 
-    public function storeDraft(Request $request, SeasonProject $season_project, UpsertSeasonProjectProgressBaselineDraft $action): JsonResponse
-    {
-        $checkpoints = $request->input('checkpoints');
-        if (! is_array($checkpoints) || $checkpoints === []) {
-            throw new UnprocessableEntityHttpException('Invalid checkpoints.');
-        }
+    public function storeDraft(
+        UpsertSeasonProjectProgressBaselineDraftRequest $request,
+        SeasonProject $season_project,
+        UpsertSeasonProjectProgressBaselineDraft $action,
+    ): JsonResponse {
+        /** @var list<array{effective_at: string, planned_progress_percent: float|int|string}> $checkpoints */
+        $checkpoints = array_values($request->validated('checkpoints'));
 
-        foreach ($checkpoints as $row) {
-            if (! is_array($row) || ! isset($row['effective_at'], $row['planned_progress_percent'])) {
-                throw new UnprocessableEntityHttpException('Invalid checkpoints.');
-            }
-            $pct = (float) $row['planned_progress_percent'];
-            if ($pct < 0 || $pct > 100) {
-                throw new UnprocessableEntityHttpException('Invalid planned_progress_percent.');
-            }
-        }
-
-        $baseline = $action->execute($request->user(), $season_project, $checkpoints);
+        $baseline = $action->execute($request->user(), $season_project, $checkpoints, $request);
 
         return ApiResponse::success(data: [
             'id' => $baseline->id,

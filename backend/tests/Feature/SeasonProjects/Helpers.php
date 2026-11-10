@@ -84,6 +84,7 @@ function seasonProjectCorePermissions(): array
             'season_projects.cancel',
             'season_projects.manage_budget',
             'season_projects.link_po',
+            'season_projects.approve_progress_baseline',
         ], true))
         ->values()
         ->all();

@@ -52,16 +52,39 @@ function s10a4Risk(Tenant $tenant, Season $season, int $likelihood, int $impact,
 
 function s10a4PendingStep(Tenant $tenant, PurchaseRequest $pr, Carbon $dueAt, string $stepStatus = 'pending', string $instanceStatus = 'active', int $version = 1): int
 {
-    // Matrix/rule FKs are irrelevant to the scanner; defer them inside the test transaction.
-    DB::statement('PRAGMA defer_foreign_keys = ON');
+    // Keep FK constraints enabled on SQLite and MySQL 8 — seed real tenant-owned matrix/rule rows.
+    $creatorId = (int) ($pr->requested_by ?? tenantUser($tenant)->id);
+
+    $matrixId = DB::table('purchase_approval_matrices')->insertGetId([
+        'tenant_id' => $tenant->id,
+        'name' => 'S10 overdue fixture matrix',
+        'status' => 'published',
+        'version_no' => 1,
+        'effective_from' => now(),
+        'published_at' => now(),
+        'published_by' => $creatorId,
+        'created_by' => $creatorId,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $ruleId = DB::table('purchase_approval_matrix_rules')->insertGetId([
+        'tenant_id' => $tenant->id,
+        'matrix_id' => $matrixId,
+        'min_amount' => '0.00',
+        'max_amount' => '10000.00',
+        'applies_when_unpriced' => true,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
 
     $instanceId = DB::table('purchase_request_approval_instances')->insertGetId([
         'tenant_id' => $tenant->id,
         'purchase_request_id' => $pr->id,
         'version_no' => $version,
-        'matrix_id' => 1,
+        'matrix_id' => $matrixId,
         'matrix_version_no' => 1,
-        'rule_id' => 1,
+        'rule_id' => $ruleId,
         'status' => $instanceStatus,
         'routed_at' => now(),
         'created_at' => now(),
