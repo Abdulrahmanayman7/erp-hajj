@@ -214,16 +214,60 @@ final class AccommodationCapacityGuard
                 ->where('is_active', true)
                 ->count();
 
-            if ($enabled < 1) {
-                return 0;
-            }
-
-            $ceiling = $seasonUnit->capacity;
-
-            return $ceiling === null ? $enabled : min($enabled, max(0, (int) $ceiling));
+            return $this->capacityFromPositionCount($seasonUnit, $enabled);
         }
 
         return $seasonUnit->capacity === null ? null : max(0, (int) $seasonUnit->capacity);
+    }
+
+    /**
+     * Batch effective capacities for many season units (one position COUNT query).
+     *
+     * @param  Collection<int, AccommodationSeasonUnit>  $seasonUnits
+     * @return array<int, int|null> keyed by season_unit id
+     */
+    public function effectiveCapacitiesForUnits(Collection $seasonUnits): array
+    {
+        $positionUnitIds = $seasonUnits
+            ->filter(static fn (AccommodationSeasonUnit $u): bool => $u->allocation_mode === 'position')
+            ->pluck('id')
+            ->all();
+
+        $positionCounts = [];
+        if ($positionUnitIds !== []) {
+            $positionCounts = AccommodationSeasonPosition::query()
+                ->whereIn('season_unit_id', $positionUnitIds)
+                ->where('is_active', true)
+                ->selectRaw('season_unit_id, COUNT(*) as enabled_count')
+                ->groupBy('season_unit_id')
+                ->pluck('enabled_count', 'season_unit_id')
+                ->all();
+        }
+
+        $out = [];
+        foreach ($seasonUnits as $unit) {
+            if ($unit->allocation_mode === 'position') {
+                $out[(int) $unit->id] = $this->capacityFromPositionCount(
+                    $unit,
+                    (int) ($positionCounts[$unit->id] ?? 0),
+                );
+            } else {
+                $out[(int) $unit->id] = $unit->capacity === null ? null : max(0, (int) $unit->capacity);
+            }
+        }
+
+        return $out;
+    }
+
+    private function capacityFromPositionCount(AccommodationSeasonUnit $seasonUnit, int $enabled): ?int
+    {
+        if ($enabled < 1) {
+            return 0;
+        }
+
+        $ceiling = $seasonUnit->capacity;
+
+        return $ceiling === null ? $enabled : min($enabled, max(0, (int) $ceiling));
     }
 
     /**
