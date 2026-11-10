@@ -156,7 +156,12 @@ jobs:
           test -f tests/Concurrency/SupplierBankDeadlockConcurrencyTest.php
           test -f tests/Concurrency/SupplierCriteriaPackConcurrencyTest.php
           test -f tests/Concurrency/SupplierEvaluationConcurrencyTest.php
+          test -f tests/Concurrency/PurchaseRequestNumberConcurrencyTest.php
+          test -f tests/Concurrency/EvaluationNumberConcurrencyTest.php
           test -f tests/Concurrency/TransportConcurrencyTest.php
+          test -f tests/Concurrency/SeasonProjectNumberConcurrencyTest.php
+          test -f tests/Concurrency/OperationalRiskNumberConcurrencyTest.php
+          test -f tests/Concurrency/OperationalComplaintNumberConcurrencyTest.php
 
       - name: Migrations (fresh; optional recent-batch remigrate)
         run: |
@@ -196,7 +201,9 @@ jobs:
             tests/Concurrency/SupplierBankActionConcurrencyTest.php \
             tests/Concurrency/SupplierBankDeadlockConcurrencyTest.php \
             tests/Concurrency/SupplierCriteriaPackConcurrencyTest.php \
-            tests/Concurrency/SupplierEvaluationConcurrencyTest.php
+            tests/Concurrency/SupplierEvaluationConcurrencyTest.php \
+            tests/Concurrency/PurchaseRequestNumberConcurrencyTest.php \
+            tests/Concurrency/EvaluationNumberConcurrencyTest.php
 
       - name: S05 procurement concurrency tests (MySQL, sequential)
         run: |
@@ -206,6 +213,14 @@ jobs:
             tests/Concurrency/PurchaseOrderCreateConcurrencyTest.php \
             tests/Concurrency/GoodsReceiptPostConcurrencyTest.php \
             tests/Concurrency/PurchaseOrderCloseConcurrencyTest.php
+
+      # S11-P3: S06/S07 number allocation races (MySQL locking only — skipped on SQLite).
+      - name: S06/S07 number concurrency tests (MySQL, sequential)
+        run: |
+          php vendor/bin/pest -c phpunit.mysql.xml \
+            tests/Concurrency/SeasonProjectNumberConcurrencyTest.php \
+            tests/Concurrency/OperationalRiskNumberConcurrencyTest.php \
+            tests/Concurrency/OperationalComplaintNumberConcurrencyTest.php
 
       # S08 Seasonal Templates — MySQL 8 FK/JSON/nullable source_season + reminder rules.
       # migrate:fresh already applied 320002/320003 above; this step only asserts + tests.
