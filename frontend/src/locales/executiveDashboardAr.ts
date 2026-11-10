@@ -27,8 +27,15 @@ export const executiveDashboardAr = {
     generatedAt: 'وقت اللقطة',
     timezone: 'المنطقة الزمنية',
     gpsTitle: 'خريطة العمليات',
-    gpsUnavailable: 'الخريطة غير متاحة — لا بيانات موقع حية في هذه الشريحة',
+    gpsUnavailable: 'الخريطة غير متاحة — لا بيانات موقع معروفة لهذا الموسم',
     gpsNoPermission: '',
+    gpsFreshness: {
+      real: 'حديث',
+      stale: 'قديم',
+      unavailable: 'غير متاح',
+    },
+    gpsMarkers: 'علامات الأسطول',
+    gpsMarkerVehicle: 'مركبة موسمية',
     alerts: {
       title: 'التنبيهات التشغيلية',
       hint: 'تنبيهات المخاطر العالية واعتمادات الشراء المتأخرة فقط — بدون قواعد إشغال أو تأخر تقدّم أو SLA شكاوى',

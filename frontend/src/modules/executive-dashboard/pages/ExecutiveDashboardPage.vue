@@ -290,16 +290,59 @@ const showReports = computed(
 
     <section
       v-if="showGps && payload?.gps"
-      class="app-surface-flat flex items-start gap-3 p-4"
-      aria-label="gps unavailable"
+      class="app-surface-flat space-y-3 p-4"
+      aria-label="gps map panel"
     >
-      <MapPin class="mt-0.5 h-5 w-5 shrink-0 text-brand-text-muted" aria-hidden="true" />
-      <div class="space-y-1">
-        <h2 class="text-sm font-bold text-brand-text">{{ t('executiveDashboard.gpsTitle') }}</h2>
-        <p class="text-sm text-brand-text-secondary">{{ t('executiveDashboard.gpsUnavailable') }}</p>
-        <p class="text-[11px] font-semibold uppercase tracking-wide text-brand-text-muted">
-          {{ payload.gps.freshness_class }}
-        </p>
+      <div class="flex items-start gap-3">
+        <MapPin class="mt-0.5 h-5 w-5 shrink-0 text-brand-text-muted" aria-hidden="true" />
+        <div class="min-w-0 flex-1 space-y-2">
+          <div class="flex flex-wrap items-center gap-2">
+            <h2 class="text-sm font-bold text-brand-text">{{ t('executiveDashboard.gpsTitle') }}</h2>
+            <span
+              class="inline-flex rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide"
+              :class="{
+                'bg-emerald-50 text-emerald-800': payload.gps.freshness_class === 'real',
+                'bg-amber-50 text-amber-800': payload.gps.freshness_class === 'stale',
+                'bg-[var(--surface-subtle)] text-brand-text-muted': payload.gps.freshness_class === 'unavailable',
+              }"
+              data-test="gps-freshness-chip"
+            >
+              {{ t(`executiveDashboard.gpsFreshness.${payload.gps.freshness_class}`) }}
+            </span>
+          </div>
+          <p
+            v-if="payload.gps.markers.length === 0"
+            class="text-sm text-brand-text-secondary"
+            data-test="gps-unavailable"
+          >
+            {{ t('executiveDashboard.gpsUnavailable') }}
+          </p>
+          <ul v-else class="space-y-2" data-test="gps-markers">
+            <li
+              v-for="marker in payload.gps.markers"
+              :key="marker.transport_season_vehicle_id"
+              class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-brand-border/80 bg-[var(--surface-subtle)] px-3 py-2 text-sm"
+            >
+              <span class="font-bold text-brand-text">
+                {{ t('executiveDashboard.gpsMarkerVehicle') }} #{{ marker.transport_season_vehicle_id }}
+              </span>
+              <span class="font-mono text-xs text-brand-text-secondary">
+                {{ marker.lat.toFixed(5) }}, {{ marker.lng.toFixed(5) }}
+              </span>
+              <span
+                class="inline-flex rounded px-1.5 py-0.5 text-[10px] font-bold uppercase"
+                :class="{
+                  'bg-emerald-50 text-emerald-800': marker.freshness_class === 'real',
+                  'bg-amber-50 text-amber-800': marker.freshness_class === 'stale',
+                  'bg-[var(--surface-subtle)] text-brand-text-muted': marker.freshness_class === 'unavailable',
+                }"
+                data-test="gps-marker-freshness"
+              >
+                {{ t(`executiveDashboard.gpsFreshness.${marker.freshness_class}`) }}
+              </span>
+            </li>
+          </ul>
+        </div>
       </div>
     </section>
 

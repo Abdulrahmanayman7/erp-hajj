@@ -42,6 +42,8 @@ use App\Modules\ExecutiveAlerts\Models\ExecutiveAlert;
 use App\Modules\ExecutiveAlerts\Policies\ExecutiveAlertPolicy;
 use App\Modules\ExecutiveDashboard\Policies\ExecutiveDashboardPolicy;
 use App\Modules\ExecutiveReports\Policies\ExecutiveReportPolicy;
+use App\Modules\Gps\Contracts\GpsProviderInterface;
+use App\Modules\Gps\Providers\NullGpsProvider;
 use App\Modules\Inventory\Models\InventoryBalance;
 use App\Modules\Inventory\Models\InventoryCategory;
 use App\Modules\Inventory\Models\InventoryItem;
@@ -109,6 +111,16 @@ class AppServiceProvider extends ServiceProvider
         $this->app->scoped(CorrelationId::class);
         $this->app->scoped(EffectivePermissions::class);
         $this->app->scoped(EffectivePlatformPermissions::class);
+
+        // G0: default NullGpsProvider. G4 Live vendor binding remains BLOCKED.
+        $this->app->bind(GpsProviderInterface::class, function (): GpsProviderInterface {
+            $provider = (string) config('gps.provider', 'null');
+
+            return match ($provider) {
+                'null', '' => new NullGpsProvider,
+                default => new NullGpsProvider,
+            };
+        });
     }
 
     public function boot(): void

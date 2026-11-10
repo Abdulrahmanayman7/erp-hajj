@@ -5,6 +5,7 @@ namespace App\Modules\ExecutiveDashboard\Actions;
 use App\Models\User;
 use App\Modules\ExecutiveAlerts\Actions\ListExecutiveAlerts;
 use App\Modules\ExecutiveAlerts\Models\ExecutiveAlert;
+use App\Modules\Gps\Support\ComposeExecutiveGpsPanel;
 use App\Modules\OperationalKpis\Actions\GetOperationalKpis;
 use App\Modules\OperationalKpis\Support\KpiDto;
 use App\Modules\SeasonPilgrims\Models\Season;
@@ -12,13 +13,14 @@ use Illuminate\Support\Facades\Gate;
 
 /**
  * S10 orchestrator: dual page gate → reuse S09 GetOperationalKpis in-process
- * (no HTTP hop, no formula fork) → optional GPS UNAVAILABLE stub.
+ * (no HTTP hop, no formula fork) → optional GPS last-known markers (G3; never SIMULATED).
  */
 final class GetExecutiveDashboard
 {
     public function __construct(
         private readonly GetOperationalKpis $getOperationalKpis,
         private readonly ListExecutiveAlerts $alerts,
+        private readonly ComposeExecutiveGpsPanel $gpsPanel,
     ) {}
 
     /**
@@ -34,7 +36,7 @@ final class GetExecutiveDashboard
      *     projects?: array{kpis: list<KpiDto>},
      *     alerts?: array{open_count: int, acknowledged_count: int, critical_count: int, items: list<ExecutiveAlert>}
      *   },
-     *   gps?: array{freshness_class: string, markers: list<never>}
+     *   gps?: array{freshness_class: string, markers: list<array{transport_season_vehicle_id: int, lat: float, lng: float, freshness_class: string, recorded_at: string}>}
      * }
      */
     public function execute(User $actor, int $seasonId): array
@@ -64,10 +66,7 @@ final class GetExecutiveDashboard
         ];
 
         if ($actor->hasPermission('gps.map.view')) {
-            $payload['gps'] = [
-                'freshness_class' => 'unavailable',
-                'markers' => [],
-            ];
+            $payload['gps'] = $this->gpsPanel->compose($actor, $season);
         }
 
         return $payload;

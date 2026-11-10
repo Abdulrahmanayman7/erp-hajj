@@ -2,9 +2,19 @@ import type { OperationalKpiCard, OperationalKpiSeason } from '@/modules/operati
 
 export type ExecutiveDashboardResponseState = 'ok' | 'no_domain'
 
+export type GpsFreshnessClass = 'real' | 'stale' | 'unavailable'
+
+export interface ExecutiveDashboardGpsMarker {
+  transport_season_vehicle_id: number
+  lat: number
+  lng: number
+  freshness_class: GpsFreshnessClass
+  recorded_at: string
+}
+
 export interface ExecutiveDashboardGps {
-  freshness_class: 'unavailable'
-  markers: []
+  freshness_class: GpsFreshnessClass
+  markers: ExecutiveDashboardGpsMarker[]
 }
 
 export interface ExecutiveDashboardPanelBlock {
