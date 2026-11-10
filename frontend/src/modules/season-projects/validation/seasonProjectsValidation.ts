@@ -1,8 +1,18 @@
 import type {
   SeasonProjectFormState,
   SeasonProjectPhaseFormState,
+  SeasonProjectProgressBaseline,
+  SeasonProjectProgressCheckpointFormRow,
+  SeasonProjectProgressLagMetric,
   SeasonProjectStatus,
 } from '../types/seasonProjects'
+
+/** Matches backend UpsertSeasonProjectProgressBaselineDraftRequest::MAX_CHECKPOINTS */
+export const MAX_BASELINE_CHECKPOINTS = 100
+
+/** Owner-approved U02 open/clear thresholds (percentage points). */
+export const PROGRESS_LAG_OPEN_THRESHOLD = 10
+export const PROGRESS_LAG_CLEAR_THRESHOLD = 8
 
 export type ListViewState = 'need_season' | 'loading' | 'error' | 'empty' | 'ready'
 
@@ -152,4 +162,140 @@ export function isTaskMutationFrozenForCompletedProject(
 ): boolean {
   if (projectStatus !== 'completed') return false
   return action !== 'complete' && action !== 'cancel'
+}
+
+export function emptyCheckpointFormRow(now = new Date()): SeasonProjectProgressCheckpointFormRow {
+  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60_000)
+  return {
+    effective_at: local.toISOString().slice(0, 16),
+    planned_progress_percent: '0',
+  }
+}
+
+export function checkpointFormToIso(localDatetime: string): string {
+  const trimmed = localDatetime.trim()
+  if (!trimmed) return ''
+  const parsed = new Date(trimmed)
+  if (Number.isNaN(parsed.getTime())) return trimmed
+  return parsed.toISOString()
+}
+
+export function isoToDatetimeLocalValue(iso: string): string {
+  const parsed = new Date(iso)
+  if (Number.isNaN(parsed.getTime())) return ''
+  const local = new Date(parsed.getTime() - parsed.getTimezoneOffset() * 60_000)
+  return local.toISOString().slice(0, 16)
+}
+
+/**
+ * Client-side checkpoint validation mirroring the backend FormRequest
+ * (bounds, uniqueness, non-decreasing planned %). Server remains authoritative.
+ */
+export function validateBaselineCheckpointForm(
+  rows: SeasonProjectProgressCheckpointFormRow[],
+): Record<string, string> {
+  const errors: Record<string, string> = {}
+  if (rows.length < 1) {
+    errors.checkpoints = 'checkpointsRequired'
+    return errors
+  }
+  if (rows.length > MAX_BASELINE_CHECKPOINTS) {
+    errors.checkpoints = 'checkpointsTooMany'
+    return errors
+  }
+
+  const normalized: Array<{ at: string; pct: number; index: number }> = []
+  rows.forEach((row, index) => {
+    const at = row.effective_at.trim()
+    if (!at) {
+      errors[`checkpoints.${index}.effective_at`] = 'required'
+      return
+    }
+    const pct = Number(row.planned_progress_percent)
+    if (!Number.isFinite(pct)) {
+      errors[`checkpoints.${index}.planned_progress_percent`] = 'required'
+      return
+    }
+    if (pct < 0 || pct > 100) {
+      errors[`checkpoints.${index}.planned_progress_percent`] = 'percentRange'
+      return
+    }
+    normalized.push({ at: checkpointFormToIso(at), pct, index })
+  })
+
+  if (Object.keys(errors).length) return errors
+
+  const seen = new Set<string>()
+  for (const row of normalized) {
+    if (seen.has(row.at)) {
+      errors.checkpoints = 'checkpointsDuplicateEffectiveAt'
+      return errors
+    }
+    seen.add(row.at)
+  }
+
+  const ordered = [...normalized].sort((a, b) => a.at.localeCompare(b.at))
+  let previous: number | null = null
+  for (const row of ordered) {
+    if (previous !== null && row.pct + 0.00001 < previous) {
+      errors.checkpoints = 'checkpointsNotNonDecreasing'
+      return errors
+    }
+    previous = row.pct
+  }
+
+  return errors
+}
+
+export function computeProgressLagMetric(
+  baselines: SeasonProjectProgressBaseline[],
+  actualProgressPercent: number | string,
+  now: Date = new Date(),
+): SeasonProjectProgressLagMetric {
+  const actual = Number(actualProgressPercent)
+  const approved = [...baselines]
+    .filter((b) => b.status === 'approved')
+    .sort((a, b) => b.version - a.version)[0]
+
+  if (!approved) {
+    return {
+      state: 'unavailable',
+      unavailable_reason: 'no_approved_baseline',
+      planned_progress_percent: null,
+      actual_progress_percent: Number.isFinite(actual) ? actual : null,
+      lag_percentage_points: null,
+      baseline_version: null,
+    }
+  }
+
+  const nowMs = now.getTime()
+  const checkpoint = [...approved.checkpoints]
+    .filter((c) => {
+      const t = new Date(c.effective_at).getTime()
+      return Number.isFinite(t) && t <= nowMs
+    })
+    .sort((a, b) => new Date(b.effective_at).getTime() - new Date(a.effective_at).getTime())[0]
+
+  if (!checkpoint) {
+    return {
+      state: 'unavailable',
+      unavailable_reason: 'no_checkpoint_at_evaluation_time',
+      planned_progress_percent: null,
+      actual_progress_percent: Number.isFinite(actual) ? actual : null,
+      lag_percentage_points: null,
+      baseline_version: approved.version,
+    }
+  }
+
+  const planned = Number(checkpoint.planned_progress_percent)
+  const lag = planned - (Number.isFinite(actual) ? actual : 0)
+
+  return {
+    state: 'available',
+    unavailable_reason: null,
+    planned_progress_percent: planned,
+    actual_progress_percent: Number.isFinite(actual) ? actual : null,
+    lag_percentage_points: lag,
+    baseline_version: approved.version,
+  }
 }

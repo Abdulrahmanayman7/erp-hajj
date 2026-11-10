@@ -3,10 +3,13 @@ import { describe, expect, it } from 'vitest'
 import {
   canActivateProject,
   canSoftDeleteProject,
+  computeProgressLagMetric,
   formatMoneyDisplay,
   isTaskMutationFrozenForCompletedProject,
   mapSeasonProjectErrorCode,
+  MAX_BASELINE_CHECKPOINTS,
   resolveListState,
+  validateBaselineCheckpointForm,
   validateProjectForm,
 } from './seasonProjectsValidation'
 
@@ -60,5 +63,68 @@ describe('seasonProjectsValidation', () => {
     expect(
       validateProjectForm({ title: 'مشروع', description: '', owner_employee_id: '' }),
     ).toEqual({})
+  })
+
+  it('validates baseline checkpoints strictly and bounds count', () => {
+    expect(validateBaselineCheckpointForm([])).toEqual({ checkpoints: 'checkpointsRequired' })
+    expect(
+      validateBaselineCheckpointForm([
+        { effective_at: '2026-11-01T10:00', planned_progress_percent: '50' },
+        { effective_at: '2026-11-02T10:00', planned_progress_percent: '40' },
+      ]),
+    ).toEqual({ checkpoints: 'checkpointsNotNonDecreasing' })
+    expect(
+      validateBaselineCheckpointForm([
+        { effective_at: '2026-11-01T10:00', planned_progress_percent: '101' },
+      ])[`checkpoints.0.planned_progress_percent`],
+    ).toBe('percentRange')
+
+    const tooMany = Array.from({ length: MAX_BASELINE_CHECKPOINTS + 1 }, (_, i) => ({
+      effective_at: `2026-01-${String((i % 28) + 1).padStart(2, '0')}T10:00`,
+      planned_progress_percent: String(Math.min(100, i)),
+    }))
+    // Force unique ISO-ish stamps that still exceed max count.
+    const uniqueTooMany = tooMany.map((row, i) => ({
+      ...row,
+      effective_at: `2026-01-01T${String(Math.floor(i / 60)).padStart(2, '0')}:${String(i % 60).padStart(2, '0')}`,
+    }))
+    expect(validateBaselineCheckpointForm(uniqueTooMany)).toEqual({
+      checkpoints: 'checkpointsTooMany',
+    })
+  })
+
+  it('computes planned lag metric and unavailable states', () => {
+    expect(computeProgressLagMetric([], 10).unavailable_reason).toBe('no_approved_baseline')
+
+    const now = new Date('2026-11-10T12:00:00.000Z')
+    const baselines = [
+      {
+        id: 1,
+        version: 1,
+        status: 'approved' as const,
+        approved_at: now.toISOString(),
+        approved_by: 9,
+        checkpoints: [
+          { effective_at: '2026-11-09T12:00:00.000Z', planned_progress_percent: 40 },
+        ],
+      },
+    ]
+    const lag = computeProgressLagMetric(baselines, 30, now)
+    expect(lag.state).toBe('available')
+    expect(lag.lag_percentage_points).toBe(10)
+
+    const futureOnly = computeProgressLagMetric(
+      [
+        {
+          ...baselines[0],
+          checkpoints: [
+            { effective_at: '2026-11-11T12:00:00.000Z', planned_progress_percent: 40 },
+          ],
+        },
+      ],
+      30,
+      now,
+    )
+    expect(futureOnly.unavailable_reason).toBe('no_checkpoint_at_evaluation_time')
   })
 })

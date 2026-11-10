@@ -28,6 +28,7 @@ import { usePermissions } from '@/shared/composables/usePermissions'
 import { useToast } from '@/shared/composables/useToast'
 import { employeeSelectOption } from '@/shared/lookups/selectOptions'
 
+import SeasonProjectProgressBaselinePanel from '../components/SeasonProjectProgressBaselinePanel.vue'
 import {
   useActivateSeasonProjectMutation,
   useCancelSeasonProjectMutation,
@@ -709,6 +710,14 @@ watch(
           </div>
         </PermissionGuard>
       </section>
+
+      <PermissionGuard permission="season_projects.view">
+        <SeasonProjectProgressBaselinePanel
+          :project="project"
+          :season-id="selectedSeasonId"
+          :season-writable="seasonWritable"
+        />
+      </PermissionGuard>
 
       <!-- Phases -->
       <section class="rounded-xl border border-brand-border bg-brand-surface p-4">
