@@ -58,44 +58,48 @@ final class GpsIngestService
         $lng = $this->validateCoordinate($payload['lng'], -180, 180, 'lng');
 
         return $this->tenantContext->runAsTenant($tenant, function () use ($tsvId, $lat, $lng, $recordedAt, $deviceId): GpsVehicleLastKnown {
-            /** @var TransportSeasonVehicle|null $vehicle */
-            $vehicle = TransportSeasonVehicle::query()->whereKey($tsvId)->first();
-            if ($vehicle === null || ! $vehicle->is_active) {
-                throw new AccessDeniedHttpException('Invalid device.');
-            }
+            return DB::transaction(function () use ($tsvId, $lat, $lng, $recordedAt, $deviceId): GpsVehicleLastKnown {
+                /** @var TransportSeasonVehicle|null $vehicle */
+                $vehicle = TransportSeasonVehicle::query()->whereKey($tsvId)->lockForUpdate()->first();
+                if ($vehicle === null || ! $vehicle->is_active) {
+                    throw new AccessDeniedHttpException('Invalid device.');
+                }
 
-            /** @var GpsDeviceBinding|null $binding */
-            $binding = GpsDeviceBinding::query()
-                ->where('device_id', $deviceId)
-                ->first();
+                /** @var GpsDeviceBinding|null $binding */
+                $binding = GpsDeviceBinding::query()
+                    ->where('device_id', $deviceId)
+                    ->lockForUpdate()
+                    ->first();
 
-            if ($binding === null || (int) $binding->transport_season_vehicle_id !== (int) $vehicle->id) {
-                throw new AccessDeniedHttpException('Invalid device.');
-            }
+                if ($binding === null || (int) $binding->transport_season_vehicle_id !== (int) $vehicle->id) {
+                    throw new AccessDeniedHttpException('Invalid device.');
+                }
 
-            $row = GpsVehicleLastKnown::query()
-                ->where('transport_season_vehicle_id', $vehicle->id)
-                ->first();
+                $row = GpsVehicleLastKnown::query()
+                    ->where('transport_season_vehicle_id', $vehicle->id)
+                    ->lockForUpdate()
+                    ->first();
 
-            if ($row !== null && $recordedAt->lte($row->recorded_at)) {
-                throw new HttpException(409, 'Stale telemetry.');
-            }
+                if ($row !== null && $recordedAt->lte($row->recorded_at)) {
+                    throw new HttpException(409, 'Stale telemetry.');
+                }
 
-            if ($row === null) {
-                $row = new GpsVehicleLastKnown;
-            }
+                if ($row === null) {
+                    $row = new GpsVehicleLastKnown;
+                }
 
-            $row->forceFill([
-                'season_id' => $vehicle->season_id,
-                'transport_season_vehicle_id' => $vehicle->id,
-                'latitude' => number_format($lat, 7, '.', ''),
-                'longitude' => number_format($lng, 7, '.', ''),
-                'recorded_at' => $recordedAt,
-                'device_id' => $deviceId,
-            ]);
-            $row->save();
+                $row->forceFill([
+                    'season_id' => $vehicle->season_id,
+                    'transport_season_vehicle_id' => $vehicle->id,
+                    'latitude' => number_format($lat, 7, '.', ''),
+                    'longitude' => number_format($lng, 7, '.', ''),
+                    'recorded_at' => $recordedAt,
+                    'device_id' => $deviceId,
+                ]);
+                $row->save();
 
-            return $row->fresh();
+                return $row->fresh();
+            });
         });
     }
 
