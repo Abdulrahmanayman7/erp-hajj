@@ -12,6 +12,7 @@ import { usePermissions } from '@/shared/composables/usePermissions'
 import AccommodationCountsPanel from '../components/AccommodationCountsPanel.vue'
 import AlertsPanel from '../components/AlertsPanel.vue'
 import ProjectProgressPanel from '../components/ProjectProgressPanel.vue'
+import ReportsPanel from '../components/ReportsPanel.vue'
 import SeasonStatusPanel from '../components/SeasonStatusPanel.vue'
 import {
   useAcknowledgeExecutiveAlertMutation,
@@ -146,6 +147,16 @@ const showA3Panels = computed(
     pageState.value === 'no_domain' ||
     pageState.value === 'empty',
 )
+
+/** Reports panel is permission-gated on the client; API still enforces dual page + executive_reports.view. */
+const showReports = computed(
+  () =>
+    can('executive_reports.view') &&
+    confirmedSeasonId.value != null &&
+    (pageState.value === 'ready' ||
+      pageState.value === 'no_domain' ||
+      pageState.value === 'empty'),
+)
 </script>
 
 <template>
@@ -274,6 +285,7 @@ const showA3Panels = computed(
         :is-error="alertsQuery.isError.value"
         @acknowledge="acknowledgeMutation.mutate($event)"
       />
+      <ReportsPanel v-if="showReports && confirmedSeasonId != null" :season-id="confirmedSeasonId" />
     </div>
 
     <section

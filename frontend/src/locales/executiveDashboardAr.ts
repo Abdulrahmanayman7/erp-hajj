@@ -42,6 +42,18 @@ export const executiveDashboardAr = {
         critical: 'حرج',
       },
     },
+    reports: {
+      title: 'التقارير التنفيذية',
+      hint: 'تصدير CSV للموسم المؤكّد — النطاقات غير المصرّح بها تُرفض أو تُحذف دون اختراع أصفار',
+      items: {
+        'season-kpi-summary': 'ملخص مؤشرات الموسم',
+        'operational-alerts': 'التنبيهات التشغيلية',
+        'transport-movements': 'حركات النقل',
+        'accommodation-occupancy': 'عدّادات الإقامة (بدون نسبة إشغال)',
+        'overdue-purchase-approvals': 'اعتمادات شراء متأخرة',
+        'risks-and-complaints': 'المخاطر والشكاوى',
+      },
+    },
     panels: {
       seasonTitle: 'حالة الموسم',
       seasonId: 'معرّف الموسم',

@@ -24,6 +24,7 @@ use App\Modules\Employees\Controllers\EmployeeController;
 use App\Modules\Employees\Controllers\PositionController;
 use App\Modules\ExecutiveAlerts\Controllers\ExecutiveAlertController;
 use App\Modules\ExecutiveDashboard\Controllers\ExecutiveDashboardController;
+use App\Modules\ExecutiveReports\Controllers\ExecutiveReportController;
 use App\Modules\Inventory\Controllers\InventoryBalanceController;
 use App\Modules\Inventory\Controllers\InventoryCategoryController;
 use App\Modules\Inventory\Controllers\InventoryItemController;
@@ -143,6 +144,14 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::post('/executive-alerts/{alert}/acknowledge', [ExecutiveAlertController::class, 'acknowledge'])
             ->whereNumber('alert')
             ->name('executive-alerts.acknowledge');
+
+        // S10-A5 executive reports + CSV (explicit season_id; dual page + executive_reports.view).
+        Route::get('/executive-reports/{report}', [ExecutiveReportController::class, 'show'])
+            ->where('report', 'season-kpi-summary|operational-alerts|transport-movements|accommodation-occupancy|overdue-purchase-approvals|risks-and-complaints')
+            ->name('executive-reports.show');
+        Route::get('/executive-reports/{report}/export.csv', [ExecutiveReportController::class, 'exportCsv'])
+            ->where('report', 'season-kpi-summary|operational-alerts|transport-movements|accommodation-occupancy|overdue-purchase-approvals|risks-and-complaints')
+            ->name('executive-reports.export');
 
         Route::get('/tenant-settings', [TenantSettingsController::class, 'show'])->name('tenant-settings.show');
         Route::patch('/tenant-settings', [TenantSettingsController::class, 'update'])->name('tenant-settings.update');
