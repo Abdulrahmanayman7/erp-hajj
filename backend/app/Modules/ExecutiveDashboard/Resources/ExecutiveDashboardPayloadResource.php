@@ -63,6 +63,10 @@ class ExecutiveDashboardPayloadResource extends JsonResource
                     static fn ($dto): array => (new OperationalKpiResource($dto))->resolve(),
                     $raw['accommodation']['kpis'],
                 ),
+                'occupancy_percent' => $raw['accommodation']['occupancy_percent'] ?? null,
+                'occupancy_state' => $raw['accommodation']['occupancy_state'] ?? 'unavailable',
+                'occupancy_unavailable_reason' => $raw['accommodation']['occupancy_unavailable_reason'] ?? null,
+                'occupancy_denominator' => $raw['accommodation']['occupancy_denominator'] ?? null,
             ];
         }
 

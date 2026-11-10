@@ -53,6 +53,18 @@ class SeasonProjectPolicy
             && $this->sameTenant($actor, $project);
     }
 
+    public function approveProgressBaseline(User $actor, SeasonProject $project): bool
+    {
+        return $actor->hasPermission('season_projects.approve_progress_baseline')
+            && $this->sameTenant($actor, $project);
+    }
+
+    public function manageProgressBaseline(User $actor, SeasonProject $project): bool
+    {
+        return $actor->hasPermission('season_projects.update')
+            && $this->sameTenant($actor, $project);
+    }
+
     public function delete(User $actor, SeasonProject $project): bool
     {
         return $actor->hasPermission('season_projects.update')

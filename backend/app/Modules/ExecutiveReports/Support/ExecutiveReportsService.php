@@ -10,6 +10,7 @@ use App\Modules\ExecutiveAlerts\Enums\ExecutiveAlertStatus;
 use App\Modules\ExecutiveAlerts\Resources\ExecutiveAlertResource;
 use App\Modules\ExecutiveAlerts\Support\ExecutiveAlertScanner;
 use App\Modules\ExecutiveAlerts\Support\ExecutiveAlertVisibility;
+use App\Modules\ExecutiveAlerts\Support\OccupancyMetricCalculator;
 use App\Modules\ExecutiveReports\Enums\ExecutiveReportId;
 use App\Modules\OperationalKpis\Actions\GetOperationalKpis;
 use App\Modules\OperationalKpis\Resources\OperationalKpiResource;
@@ -182,7 +183,7 @@ final class ExecutiveReportsService
     }
 
     /**
-     * A02/A03 counts only. occupancy_percent is always null / unavailable (U01 = C).
+     * A02/A03 counts plus U01 occupancy % (A03 / Σ effectiveCapacity; never A02).
      *
      * @return array<string, mixed>
      */
@@ -199,11 +200,18 @@ final class ExecutiveReportsService
         $a02 = $byId['A02'] ?? null;
         $a03 = $byId['A03'] ?? null;
 
+        $metric = app(OccupancyMetricCalculator::class)->calculate(
+            $season,
+            Carbon::parse((string) $kpiPayload['generated_at']),
+        );
+
         $row = [
             'a02' => $a02,
             'a03' => $a03,
-            'occupancy_percent' => null,
-            'state' => 'unavailable',
+            'occupancy_percent' => $metric['occupancy_percent'],
+            'denominator' => $metric['denominator'],
+            'state' => $metric['state'],
+            'unavailable_reason' => $metric['unavailable_reason'],
         ];
 
         return [
@@ -213,8 +221,9 @@ final class ExecutiveReportsService
             'timezone' => $kpiPayload['timezone'],
             'rows' => [$row],
             'count' => 1,
-            'occupancy_percent' => null,
-            'state' => 'unavailable',
+            'occupancy_percent' => $metric['occupancy_percent'],
+            'state' => $metric['state'],
+            'unavailable_reason' => $metric['unavailable_reason'],
         ];
     }
 
@@ -422,13 +431,15 @@ final class ExecutiveReportsService
      */
     private function occupancyCsv(array $payload): array
     {
-        $headers = ['a02_value', 'a03_value', 'occupancy_percent', 'state'];
+        $headers = ['a02_value', 'a03_value', 'denominator', 'occupancy_percent', 'state', 'unavailable_reason'];
         $row = $payload['rows'][0] ?? [];
         $rows = [[
             $row['a02']['value'] ?? null,
             $row['a03']['value'] ?? null,
-            null,
-            'unavailable',
+            $row['denominator'] ?? null,
+            $row['occupancy_percent'] ?? null,
+            $row['state'] ?? 'unavailable',
+            $row['unavailable_reason'] ?? null,
         ]];
 
         return [$headers, $rows];

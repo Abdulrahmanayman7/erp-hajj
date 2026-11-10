@@ -331,7 +331,7 @@ it('T24 no_domain actors get season panel only without forbidden KPI panels', fu
         ->and($response->json('data.kpis'))->toBe([]);
 });
 
-it('T25 never returns invented occupancy percentage or planned-progress fields', function (): void {
+it('T25 never returns invented planned-progress fields (U01 occupancy_percent is Owner-approved)', function (): void {
     $tenant = actingAsTenantOwner()->tenant;
     $season = kpiSeason($tenant);
     kpiProject($tenant, $season, 'active', ['progress_percent' => 25]);
@@ -339,9 +339,10 @@ it('T25 never returns invented occupancy percentage or planned-progress fields',
 
     $encoded = execDashGet($season->id)->assertOk()->getContent();
 
+    // U01 approved: occupancy_percent may appear (null/unavailable without capacity).
+    expect($encoded)->toContain('"occupancy_percent"');
+
     foreach ([
-        'occupancy_percent',
-        'occupancy_percentage',
         'planned_progress',
         'progress_lag',
         'delay_percent',

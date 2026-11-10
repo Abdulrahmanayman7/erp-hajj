@@ -12,7 +12,11 @@ use App\Modules\Notifications\Support\NotificationDispatcher;
 use App\Modules\Notifications\Support\NotificationRecipientResolver;
 use App\Modules\RisksAndComplaints\Enums\RiskSeverity;
 use App\Modules\RisksAndComplaints\Enums\RiskStatus;
+use App\Modules\RisksAndComplaints\Models\OperationalComplaint;
 use App\Modules\RisksAndComplaints\Models\OperationalRisk;
+use App\Modules\SeasonPilgrims\Models\Season;
+use App\Modules\SeasonProjects\Enums\SeasonProjectStatus;
+use App\Modules\SeasonProjects\Models\SeasonProject;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -24,13 +28,9 @@ use Illuminate\Support\Facades\DB;
  *  - condition true  → idempotent upsert by `(tenant_id, dedupe_key)`; a brand-new or
  *    re-opened (previously cleared) alert notifies domain holders, a refresh never does;
  *  - condition false → live alerts of the scanned rules become `cleared`.
+ *  - hysteresis bands (U01/U02) preserve live state without opening new alerts.
  *
- * Rules (the ONLY ones with an approved formula):
- *  - ALT-RISK-HIGH     risk.status <> closed AND severity ∈ high|critical (`RiskSeverity::isAlertBand`)
- *  - ALT-PROC-OVERDUE  pending approval step with due_at <= now - 7 days (U07 = A)
- *
- * ALT-OCC-90 / ALT-PROJ-LAG / ALT-COMP-SLA are DEFERRED_BLOCKED (U01/U02/U03 = C) and
- * intentionally have no code path here.
+ * @see docs/09-modules/23-executive-dashboard/S10_U01_U02_U03_OWNER_APPROVAL_2026-11-10.md
  */
 final class ExecutiveAlertScanner
 {
@@ -41,6 +41,9 @@ final class ExecutiveAlertScanner
         private readonly TenantContext $tenantContext,
         private readonly NotificationDispatcher $dispatcher,
         private readonly NotificationRecipientResolver $recipients,
+        private readonly OccupancyMetricCalculator $occupancy,
+        private readonly ProjectLagMetricCalculator $projectLag,
+        private readonly ComplaintSlaEvaluator $complaintSla,
     ) {}
 
     /**
@@ -55,6 +58,9 @@ final class ExecutiveAlertScanner
 
         $this->mergeStats($stats, $this->scanRiskHigh($now));
         $this->mergeStats($stats, $this->scanProcurementOverdue($now));
+        $this->mergeStats($stats, $this->scanOccupancyHigh($now));
+        $this->mergeStats($stats, $this->scanProjectLag($now));
+        $this->mergeStats($stats, $this->scanComplaintSla($now));
 
         return $stats;
     }
@@ -173,6 +179,183 @@ final class ExecutiveAlertScanner
         $stats['cleared'] += $this->clearUnseen(ExecutiveAlertRule::ProcurementOverdue, $seen, $now);
 
         return $stats;
+    }
+
+    /**
+     * @return array{opened: int, refreshed: int, cleared: int}
+     */
+    private function scanOccupancyHigh(Carbon $now): array
+    {
+        /** @var array<string, true> $seen */
+        $seen = [];
+        $stats = ['opened' => 0, 'refreshed' => 0, 'cleared' => 0];
+
+        Season::query()->orderBy('id')->chunkById(100, function ($seasons) use ($now, &$seen, &$stats): void {
+            foreach ($seasons as $season) {
+                /** @var Season $season */
+                $metric = $this->occupancy->calculate($season, $now);
+                $key = ExecutiveAlertRule::OccupancyHigh->value.':season:'.$season->id;
+
+                if ($metric['state'] !== 'available' || $metric['occupancy_percent_raw'] === null) {
+                    continue;
+                }
+
+                $raw = (float) $metric['occupancy_percent_raw'];
+                $live = $this->hasLiveAlert($key);
+
+                if ($raw >= OccupancyMetricCalculator::OPEN_THRESHOLD) {
+                    $seen[$key] = true;
+                    $outcome = $this->upsert(
+                        rule: ExecutiveAlertRule::OccupancyHigh,
+                        dedupeKey: $key,
+                        seasonId: (int) $season->id,
+                        title: 'إشغال مرتفع للموسم',
+                        body: sprintf('نسبة الإشغال %.1f%% (عتبة الفتح 90%%).', (float) $metric['occupancy_percent']),
+                        severity: ExecutiveAlertSeverity::Warning,
+                        sourceType: 'season',
+                        sourceId: (int) $season->id,
+                        meta: [
+                            'a03' => $metric['a03'],
+                            'denominator' => $metric['denominator'],
+                            'occupancy_percent' => $metric['occupancy_percent'],
+                            'occupancy_percent_raw' => $raw,
+                        ],
+                        now: $now,
+                        notificationType: NotificationType::ExecutiveAlertOccupancyHigh,
+                        notificationNumber: (string) $season->id,
+                    );
+                    $stats[$outcome]++;
+                } elseif ($raw >= OccupancyMetricCalculator::CLEAR_THRESHOLD && $live) {
+                    $seen[$key] = true;
+                }
+            }
+        });
+
+        $stats['cleared'] += $this->clearUnseen(ExecutiveAlertRule::OccupancyHigh, $seen, $now);
+
+        return $stats;
+    }
+
+    /**
+     * @return array{opened: int, refreshed: int, cleared: int}
+     */
+    private function scanProjectLag(Carbon $now): array
+    {
+        /** @var array<string, true> $seen */
+        $seen = [];
+        $stats = ['opened' => 0, 'refreshed' => 0, 'cleared' => 0];
+
+        SeasonProject::query()
+            ->where('status', SeasonProjectStatus::Active->value)
+            ->orderBy('id')
+            ->chunkById(100, function ($projects) use ($now, &$seen, &$stats): void {
+                foreach ($projects as $project) {
+                    /** @var SeasonProject $project */
+                    $metric = $this->projectLag->calculate($project, $now);
+                    $key = ExecutiveAlertRule::ProjectLag->value.':project:'.$project->id;
+
+                    if ($metric['state'] !== 'available' || $metric['lag_percentage_points'] === null) {
+                        continue;
+                    }
+
+                    $lag = (float) $metric['lag_percentage_points'];
+                    $live = $this->hasLiveAlert($key);
+
+                    if ($lag >= ProjectLagMetricCalculator::OPEN_THRESHOLD) {
+                        $seen[$key] = true;
+                        $outcome = $this->upsert(
+                            rule: ExecutiveAlertRule::ProjectLag,
+                            dedupeKey: $key,
+                            seasonId: (int) $project->season_id,
+                            title: 'تأخر تقدم مشروع: '.$project->number,
+                            body: sprintf('فجوة التقدم %.1f نقطة مئوية مقابل الخط الأساس المعتمد.', $lag),
+                            severity: ExecutiveAlertSeverity::Warning,
+                            sourceType: 'season_project',
+                            sourceId: (int) $project->id,
+                            meta: [
+                                'project_number' => $project->number,
+                                'planned_progress_percent' => $metric['planned_progress_percent'],
+                                'actual_progress_percent' => $metric['actual_progress_percent'],
+                                'lag_percentage_points' => $lag,
+                            ],
+                            now: $now,
+                            notificationType: NotificationType::ExecutiveAlertProjectLag,
+                            notificationNumber: (string) $project->number,
+                        );
+                        $stats[$outcome]++;
+                    } elseif ($lag >= ProjectLagMetricCalculator::CLEAR_THRESHOLD && $live) {
+                        $seen[$key] = true;
+                    }
+                }
+            });
+
+        $stats['cleared'] += $this->clearUnseen(ExecutiveAlertRule::ProjectLag, $seen, $now);
+
+        return $stats;
+    }
+
+    /**
+     * @return array{opened: int, refreshed: int, cleared: int}
+     */
+    private function scanComplaintSla(Carbon $now): array
+    {
+        /** @var array<string, true> $seen */
+        $seen = [];
+        $stats = ['opened' => 0, 'refreshed' => 0, 'cleared' => 0];
+
+        if (! $this->complaintSla->isPolicyActive()) {
+            $stats['cleared'] += $this->clearUnseen(ExecutiveAlertRule::ComplaintSla, $seen, $now);
+
+            return $stats;
+        }
+
+        OperationalComplaint::query()
+            ->orderBy('id')
+            ->chunkById(200, function ($complaints) use ($now, &$seen, &$stats): void {
+                foreach ($complaints as $complaint) {
+                    /** @var OperationalComplaint $complaint */
+                    $eval = $this->complaintSla->evaluate($complaint, $now);
+                    if (! $eval['eligible'] || ! $eval['breached']) {
+                        continue;
+                    }
+
+                    $key = ExecutiveAlertRule::ComplaintSla->value.':complaint:'.$complaint->id;
+                    $seen[$key] = true;
+
+                    $outcome = $this->upsert(
+                        rule: ExecutiveAlertRule::ComplaintSla,
+                        dedupeKey: $key,
+                        seasonId: (int) $complaint->season_id,
+                        title: 'تجاوز مهلة شكوى: '.$complaint->complaint_number,
+                        body: sprintf('تجاوزت الشكوى مهلة %d ساعة تقويمية.', $this->complaintSla->hours()),
+                        severity: ExecutiveAlertSeverity::Warning,
+                        sourceType: 'operational_complaint',
+                        sourceId: (int) $complaint->id,
+                        meta: [
+                            'complaint_number' => $complaint->complaint_number,
+                            'status' => $complaint->status->value,
+                            'due_at' => $eval['due_at'],
+                            'sla_hours' => $this->complaintSla->hours(),
+                        ],
+                        now: $now,
+                        notificationType: NotificationType::ExecutiveAlertComplaintSla,
+                        notificationNumber: (string) $complaint->complaint_number,
+                    );
+                    $stats[$outcome]++;
+                }
+            });
+
+        $stats['cleared'] += $this->clearUnseen(ExecutiveAlertRule::ComplaintSla, $seen, $now);
+
+        return $stats;
+    }
+
+    private function hasLiveAlert(string $dedupeKey): bool
+    {
+        return ExecutiveAlert::query()
+            ->where('dedupe_key', $dedupeKey)
+            ->whereIn('status', ExecutiveAlertStatus::liveValues())
+            ->exists();
     }
 
     /**

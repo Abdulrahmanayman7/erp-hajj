@@ -308,6 +308,7 @@ final class PermissionCatalog
             ['name' => 'season_projects.manage_budget', 'display_name' => 'إدارة ميزانية مشروع الموسم', 'module' => 'season_projects', 'description' => 'تعيين ميزانية المشروع (E-Q13 — صريحة؛ ليست على قوالب تشغيلية عامة)'],
             ['name' => 'season_projects.link_po', 'display_name' => 'ربط أوامر شراء بمشروع الموسم', 'module' => 'season_projects', 'description' => 'ربط وفك ربط أوامر الشراء (E-Q13 — صريحة؛ ليست على قوالب تشغيلية عامة)'],
             ['name' => 'season_projects.reassign_owner', 'display_name' => 'إعادة تعيين مالك مشروع الموسم', 'module' => 'season_projects', 'description' => 'تغيير مالك المشروع النشط'],
+            ['name' => 'season_projects.approve_progress_baseline', 'display_name' => 'اعتماد خط أساس تقدم المشروع', 'module' => 'season_projects', 'description' => 'اعتماد نسخ خط أساس التقدم المخطط (صلاحية حساسة — تُمنح صراحةً فقط؛ S10 U02)'],
 
             ['name' => 'audit_logs.view', 'display_name' => 'عرض سجل التدقيق', 'module' => 'audit_logs', 'description' => 'عرض سجلات تدقيق المنشأة'],
 
@@ -718,6 +719,8 @@ final class PermissionCatalog
             // F-Q03 = A: manage_budget + link_po granted to tenant_owner via non-sensitive catalog path.
             'season_projects.complete',
             'season_projects.cancel',
+            // S10 U02 — baseline approval never auto-granted.
+            'season_projects.approve_progress_baseline',
             // S07 — sensitive explicit-only.
             'risks.approve_assessment',
             'complaints.close',

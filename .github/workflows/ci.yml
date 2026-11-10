@@ -259,6 +259,9 @@ jobs:
       - name: S10 GPS ingest security tests (MySQL 8)
         run: php vendor/bin/pest -c phpunit.mysql.xml tests/Feature/Gps/GpsIngestTest.php
 
+      - name: S10 deferred alerts U01/U02/U03 tests (MySQL 8)
+        run: php vendor/bin/pest -c phpunit.mysql.xml tests/Feature/ExecutiveAlerts
+
   frontend:
     name: Frontend (Vue)
     runs-on: ubuntu-latest
