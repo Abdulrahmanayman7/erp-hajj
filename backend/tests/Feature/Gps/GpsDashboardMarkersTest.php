@@ -99,3 +99,83 @@ it('marks last-known older than 5 minutes as stale', function (): void {
     expect($gps['freshness_class'])->toBe('stale')
         ->and($gps['markers'][0]['freshness_class'])->toBe('stale');
 });
+
+it('never leaks GPS markers from another tenant or another season', function (): void {
+    $tenantA = actingAsTenantOwner()->tenant;
+    $seasonA = kpiSeason($tenantA, 'active');
+    $seasonAOther = kpiSeason($tenantA, 'draft');
+
+    $foreignTsvId = null;
+    $otherSeasonTsvId = null;
+
+    withTenant($tenantA, function () use ($seasonAOther, $tenantA, &$otherSeasonTsvId): void {
+        $ownerId = $tenantA->users()->first()->id;
+        $vehicle = TransportVehicle::query()->create([
+            'vehicle_number' => 'V-SEA-'.uniqid(),
+            'plate_number' => 'SEA-'.uniqid(),
+            'vehicle_class' => VehicleClass::Bus,
+            'is_active' => true,
+            'created_by' => $ownerId,
+        ]);
+        $tsv = new TransportSeasonVehicle;
+        $tsv->forceFill([
+            'season_id' => $seasonAOther->id,
+            'transport_vehicle_id' => $vehicle->id,
+            'operational_capacity' => 40,
+            'service_level' => ServiceLevel::Standard,
+            'is_active' => true,
+            'created_by' => $ownerId,
+        ]);
+        $tsv->save();
+        $row = new GpsVehicleLastKnown;
+        $row->forceFill([
+            'season_id' => $seasonAOther->id,
+            'transport_season_vehicle_id' => $tsv->id,
+            'latitude' => '21.2000000',
+            'longitude' => '39.2000000',
+            'recorded_at' => now()->subMinute(),
+        ]);
+        $row->save();
+        $otherSeasonTsvId = $tsv->id;
+    });
+
+    $tenantB = actingAsTenantOwner()->tenant;
+    $seasonB = kpiSeason($tenantB, 'active');
+    withTenant($tenantB, function () use ($seasonB, $tenantB, &$foreignTsvId): void {
+        $ownerId = $tenantB->users()->first()->id;
+        $vehicle = TransportVehicle::query()->create([
+            'vehicle_number' => 'V-FRN-'.uniqid(),
+            'plate_number' => 'FRN-'.uniqid(),
+            'vehicle_class' => VehicleClass::Bus,
+            'is_active' => true,
+            'created_by' => $ownerId,
+        ]);
+        $tsv = new TransportSeasonVehicle;
+        $tsv->forceFill([
+            'season_id' => $seasonB->id,
+            'transport_vehicle_id' => $vehicle->id,
+            'operational_capacity' => 40,
+            'service_level' => ServiceLevel::Standard,
+            'is_active' => true,
+            'created_by' => $ownerId,
+        ]);
+        $tsv->save();
+        $row = new GpsVehicleLastKnown;
+        $row->forceFill([
+            'season_id' => $seasonB->id,
+            'transport_season_vehicle_id' => $tsv->id,
+            'latitude' => '21.3000000',
+            'longitude' => '39.3000000',
+            'recorded_at' => now()->subMinute(),
+        ]);
+        $row->save();
+        $foreignTsvId = $tsv->id;
+    });
+
+    execDashActingAs(execDashPermissions(['gps.map.view']), $tenantA);
+    $gps = execDashGet($seasonA->id)->assertOk()->json('data.gps');
+    $ids = collect($gps['markers'] ?? [])->pluck('transport_season_vehicle_id')->all();
+
+    expect($ids)->not->toContain($foreignTsvId)
+        ->and($ids)->not->toContain($otherSeasonTsvId);
+});

@@ -21,6 +21,39 @@ it('returns 403 without executive_alerts.view even with dual page perms', functi
     spaGetJson('/api/v1/executive-alerts?season_id='.$season->id)->assertForbidden();
 });
 
+it('returns 403 when executive_alerts.view is present but dual page perms are incomplete', function (): void {
+    $tenant = actingAsTenantOwner()->tenant;
+    $season = kpiSeason($tenant, 'active');
+
+    $alertId = withTenant($tenant, function () use ($season): int {
+        $alert = new ExecutiveAlert;
+        $alert->forceFill([
+            'season_id' => $season->id,
+            'rule_code' => ExecutiveAlertRule::RiskHigh,
+            'dedupe_key' => 'ALT-RISK-HIGH:risk:dual-partial-'.uniqid(),
+            'status' => ExecutiveAlertStatus::Open,
+            'title' => 'تنبيه جزئي',
+            'body' => null,
+            'severity' => ExecutiveAlertSeverity::Warning,
+            'opened_at' => now(),
+            'last_seen_at' => now(),
+        ]);
+        $alert->save();
+
+        return (int) $alert->id;
+    });
+
+    execDashActingAs(['executive_alerts.view', 'executive_dashboard.view', 'risks.view'], $tenant);
+    spaGetJson('/api/v1/executive-alerts?season_id='.$season->id)->assertForbidden();
+    spaPostJson('/api/v1/executive-alerts/'.$alertId.'/acknowledge')->assertForbidden();
+
+    execDashActingAs(['executive_alerts.view', 'operational_kpis.view', 'risks.view'], $tenant);
+    spaGetJson('/api/v1/executive-alerts?season_id='.$season->id)->assertForbidden();
+    spaPostJson('/api/v1/executive-alerts/'.$alertId.'/acknowledge')->assertForbidden();
+
+    expect(ExecutiveAlert::query()->withoutGlobalScopes()->findOrFail($alertId)->status)->toBe(ExecutiveAlertStatus::Open);
+});
+
 it('returns 422 SEASON_REQUIRED when season_id is missing', function (): void {
     $tenant = actingAsTenantOwner()->tenant;
     execDashActingAs(execDashPermissions(['executive_alerts.view', 'risks.view']), $tenant);
