@@ -4,6 +4,7 @@ namespace App\Modules\Gps\Support;
 
 use App\Core\Tenancy\Models\Tenant;
 use App\Core\Tenancy\TenantContext;
+use App\Modules\Gps\Models\GpsDeviceBinding;
 use App\Modules\Gps\Models\GpsVehicleLastKnown;
 use App\Modules\Transportation\Models\TransportSeasonVehicle;
 use Illuminate\Database\QueryException;
@@ -16,6 +17,13 @@ use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 /**
  * G1 HMAC ingest → last-known upsert only (history retention BLOCKED / U04).
+ *
+ * Hardened fail-closed checks:
+ * - per-tenant HMAC secret (no shared global secret)
+ * - recorded_at skew window (caps at nonce TTL → closes post-TTL replay)
+ * - nonce replay detection
+ * - authorized device ↔ vehicle binding
+ * - monotonic last-known (older recorded_at cannot overwrite newer)
  */
 final class GpsIngestService
 {
@@ -24,24 +32,30 @@ final class GpsIngestService
     ) {}
 
     /**
-     * @param  array{tenant_id: int, transport_season_vehicle_id: int, lat: float|int|string, lng: float|int|string, recorded_at: string, nonce: string, device_id?: string|null}  $payload
+     * @param  array{tenant_id: int, transport_season_vehicle_id: int, lat: float|int|string, lng: float|int|string, recorded_at: string, nonce: string, device_id: string}  $payload
      */
     public function ingest(string $rawBody, ?string $signatureHeader, array $payload): GpsVehicleLastKnown
     {
-        $this->assertValidSignature($rawBody, $signatureHeader);
-        $this->assertFreshNonce((string) $payload['nonce']);
-
-        $lat = $this->validateCoordinate($payload['lat'], -90, 90, 'lat');
-        $lng = $this->validateCoordinate($payload['lng'], -180, 180, 'lng');
-        $recordedAt = Carbon::parse((string) $payload['recorded_at']);
         $tenantId = (int) $payload['tenant_id'];
         $tsvId = (int) $payload['transport_season_vehicle_id'];
-        $deviceId = isset($payload['device_id']) ? (string) $payload['device_id'] : null;
+        $deviceId = trim((string) $payload['device_id']);
+
+        if ($deviceId === '' || strlen($deviceId) > 64) {
+            throw new UnprocessableEntityHttpException('Invalid device_id.');
+        }
 
         $tenant = Tenant::query()->whereKey($tenantId)->first();
         if ($tenant === null) {
             throw new AccessDeniedHttpException('Invalid device.');
         }
+
+        $this->assertValidSignature($rawBody, $signatureHeader, $tenant);
+
+        $recordedAt = $this->assertAcceptableRecordedAt((string) $payload['recorded_at']);
+        $this->assertFreshNonce((string) $payload['nonce']);
+
+        $lat = $this->validateCoordinate($payload['lat'], -90, 90, 'lat');
+        $lng = $this->validateCoordinate($payload['lng'], -180, 180, 'lng');
 
         return $this->tenantContext->runAsTenant($tenant, function () use ($tsvId, $lat, $lng, $recordedAt, $deviceId): GpsVehicleLastKnown {
             /** @var TransportSeasonVehicle|null $vehicle */
@@ -50,9 +64,22 @@ final class GpsIngestService
                 throw new AccessDeniedHttpException('Invalid device.');
             }
 
+            /** @var GpsDeviceBinding|null $binding */
+            $binding = GpsDeviceBinding::query()
+                ->where('device_id', $deviceId)
+                ->first();
+
+            if ($binding === null || (int) $binding->transport_season_vehicle_id !== (int) $vehicle->id) {
+                throw new AccessDeniedHttpException('Invalid device.');
+            }
+
             $row = GpsVehicleLastKnown::query()
                 ->where('transport_season_vehicle_id', $vehicle->id)
                 ->first();
+
+            if ($row !== null && $recordedAt->lte($row->recorded_at)) {
+                throw new HttpException(409, 'Stale telemetry.');
+            }
 
             if ($row === null) {
                 $row = new GpsVehicleLastKnown;
@@ -64,7 +91,7 @@ final class GpsIngestService
                 'latitude' => number_format($lat, 7, '.', ''),
                 'longitude' => number_format($lng, 7, '.', ''),
                 'recorded_at' => $recordedAt,
-                'device_id' => $deviceId !== '' ? $deviceId : null,
+                'device_id' => $deviceId,
             ]);
             $row->save();
 
@@ -72,10 +99,10 @@ final class GpsIngestService
         });
     }
 
-    private function assertValidSignature(string $rawBody, ?string $signatureHeader): void
+    private function assertValidSignature(string $rawBody, ?string $signatureHeader, Tenant $tenant): void
     {
-        $secret = config('gps.webhook_secret');
-        if (! is_string($secret) || trim($secret) === '') {
+        $secret = $this->resolveTenantWebhookSecret($tenant);
+        if ($secret === null) {
             throw new AccessDeniedHttpException('GPS webhook secret is not configured.');
         }
 
@@ -92,6 +119,52 @@ final class GpsIngestService
         if (! hash_equals($expected, $provided)) {
             throw new AccessDeniedHttpException('Invalid signature.');
         }
+    }
+
+    private function resolveTenantWebhookSecret(Tenant $tenant): ?string
+    {
+        $secrets = config('gps.webhook_secrets', []);
+        if (! is_array($secrets) || $secrets === []) {
+            return null;
+        }
+
+        $byId = $secrets[(string) $tenant->id] ?? null;
+        if (is_string($byId) && trim($byId) !== '') {
+            return $byId;
+        }
+
+        $byCode = $secrets[(string) $tenant->tenant_code] ?? null;
+        if (is_string($byCode) && trim($byCode) !== '') {
+            return $byCode;
+        }
+
+        return null;
+    }
+
+    private function assertAcceptableRecordedAt(string $raw): Carbon
+    {
+        try {
+            $recordedAt = Carbon::parse($raw);
+        } catch (\Throwable) {
+            throw new UnprocessableEntityHttpException('Invalid recorded_at.');
+        }
+
+        $nonceTtl = max(60, (int) config('gps.nonce_ttl_seconds', 600));
+        $configuredAge = max(1, (int) config('gps.max_recorded_at_age_seconds', 600));
+        // Cap at nonce TTL so expired-nonce replays are also outside the clock window.
+        $maxAge = min($configuredAge, $nonceTtl);
+        $maxFuture = max(0, (int) config('gps.max_recorded_at_future_seconds', 60));
+
+        $now = now();
+        if ($recordedAt->lt($now->copy()->subSeconds($maxAge))) {
+            throw new AccessDeniedHttpException('Stale recorded_at.');
+        }
+
+        if ($recordedAt->gt($now->copy()->addSeconds($maxFuture))) {
+            throw new AccessDeniedHttpException('Future recorded_at.');
+        }
+
+        return $recordedAt;
     }
 
     private function assertFreshNonce(string $nonce): void

@@ -26,7 +26,7 @@ class GpsIngestController
             'lng' => ['required', 'numeric'],
             'recorded_at' => ['required', 'date'],
             'nonce' => ['required', 'string', 'min:8', 'max:128'],
-            'device_id' => ['sometimes', 'nullable', 'string', 'max:64'],
+            'device_id' => ['required', 'string', 'min:1', 'max:64'],
         ]);
 
         if ($validator->fails()) {
