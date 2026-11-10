@@ -240,6 +240,133 @@ it('checks the dual page gate before season_id validation (403 beats 422)', func
     execDashGet()->assertForbidden()->assertJsonPath('code', 'AUTHORIZATION_DENIED');
 });
 
+it('T19 season panel exposes id name status and authorized label', function (): void {
+    $tenant = actingAsTenantOwner()->tenant;
+    $season = kpiSeason($tenant, 'active');
+    execDashActingAs(execDashPagePermissions(), $tenant);
+
+    $response = execDashGet($season->id)->assertOk();
+
+    expect($response->json('data.panels.season'))->toEqual([
+        'id' => $season->id,
+        'name' => $season->name,
+        'status' => 'active',
+        'status_label' => 'نشط',
+    ])
+        ->and($response->json('data.season'))->toEqual($response->json('data.panels.season'));
+});
+
+it('T20 accommodation panel A02/A03 match S09 for the same actor and season', function (): void {
+    $tenant = actingAsTenantOwner()->tenant;
+    $season = kpiSeason($tenant);
+    $perms = execDashPermissions(['accommodation.view']);
+    execDashActingAs($perms, $tenant);
+
+    $s09 = kpiGet($season->id)->assertOk();
+    $s10 = execDashGet($season->id)->assertOk();
+
+    $s09Map = kpiMap($s09);
+    $panelKpis = collect($s10->json('data.panels.accommodation.kpis'))->keyBy('id')->all();
+
+    expect($panelKpis)->toHaveKeys(['A02', 'A03'])
+        ->and($panelKpis['A02'])->toEqual($s09Map['A02'])
+        ->and($panelKpis['A03'])->toEqual($s09Map['A03']);
+});
+
+it('T21 project panel J07/J09 match S09 for the same actor and season', function (): void {
+    $tenant = actingAsTenantOwner()->tenant;
+    $season = kpiSeason($tenant);
+    kpiProject($tenant, $season, 'active', ['progress_percent' => 40]);
+    kpiProject($tenant, $season, 'completed', ['progress_percent' => 100]);
+    execDashActingAs(execDashPermissions(['season_projects.view']), $tenant);
+
+    $s09 = kpiGet($season->id)->assertOk();
+    $s10 = execDashGet($season->id)->assertOk();
+
+    $s09Map = kpiMap($s09);
+    $panelKpis = collect($s10->json('data.panels.projects.kpis'))->keyBy('id')->all();
+
+    expect($panelKpis)->toHaveKeys(['J07', 'J09'])
+        ->and($panelKpis['J07'])->toEqual($s09Map['J07'])
+        ->and($panelKpis['J09'])->toEqual($s09Map['J09']);
+});
+
+it('T22 omits accommodation panel without accommodation.view', function (): void {
+    $tenant = actingAsTenantOwner()->tenant;
+    $season = kpiSeason($tenant);
+    execDashActingAs(execDashPermissions(['season_projects.view']), $tenant);
+
+    $response = execDashGet($season->id)->assertOk();
+
+    expect($response->json('data.panels'))->not->toHaveKey('accommodation')
+        ->and($response->json('data.panels'))->toHaveKey('projects')
+        ->and(array_keys(execDashKpiMap($response)))->not->toContain('A02')
+        ->and(array_keys(execDashKpiMap($response)))->not->toContain('A03');
+});
+
+it('T23 omits project panel without season_projects.view', function (): void {
+    $tenant = actingAsTenantOwner()->tenant;
+    $season = kpiSeason($tenant);
+    execDashActingAs(execDashPermissions(['accommodation.view']), $tenant);
+
+    $response = execDashGet($season->id)->assertOk();
+
+    expect($response->json('data.panels'))->not->toHaveKey('projects')
+        ->and($response->json('data.panels'))->toHaveKey('accommodation')
+        ->and(array_keys(execDashKpiMap($response)))->not->toContain('J07')
+        ->and(array_keys(execDashKpiMap($response)))->not->toContain('J09');
+});
+
+it('T24 no_domain actors get season panel only without forbidden KPI panels', function (): void {
+    $tenant = actingAsTenantOwner()->tenant;
+    $season = kpiSeason($tenant);
+    execDashActingAs(execDashPagePermissions(), $tenant);
+
+    $response = execDashGet($season->id)
+        ->assertOk()
+        ->assertJsonPath('data.response_state', 'no_domain');
+
+    expect($response->json('data.panels.season.id'))->toBe($season->id)
+        ->and($response->json('data.panels'))->not->toHaveKey('accommodation')
+        ->and($response->json('data.panels'))->not->toHaveKey('projects')
+        ->and($response->json('data.kpis'))->toBe([]);
+});
+
+it('T25 never returns invented occupancy percentage or planned-progress fields', function (): void {
+    $tenant = actingAsTenantOwner()->tenant;
+    $season = kpiSeason($tenant);
+    kpiProject($tenant, $season, 'active', ['progress_percent' => 25]);
+    execDashActingAs(execDashPermissions(['accommodation.view', 'season_projects.view']), $tenant);
+
+    $encoded = execDashGet($season->id)->assertOk()->getContent();
+
+    foreach ([
+        'occupancy_percent',
+        'occupancy_percentage',
+        'planned_progress',
+        'progress_lag',
+        'delay_percent',
+        'delay_percentage',
+    ] as $forbidden) {
+        expect($encoded)->not->toContain('"'.$forbidden.'"');
+    }
+});
+
+it('T26 GPS behavior remains unchanged with A3 panels present', function (): void {
+    $tenant = actingAsTenantOwner()->tenant;
+    $season = kpiSeason($tenant);
+    execDashActingAs(execDashPermissions(['accommodation.view', 'gps.map.view']), $tenant);
+
+    $response = execDashGet($season->id)->assertOk();
+
+    expect($response->json('data.gps'))->toBe([
+        'freshness_class' => 'unavailable',
+        'markers' => [],
+    ])
+        ->and($response->json('data.panels'))->toHaveKey('accommodation')
+        ->and($response->json('data.panels.season.id'))->toBe($season->id);
+});
+
 /**
  * @return list<string>
  */

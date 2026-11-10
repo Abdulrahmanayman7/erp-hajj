@@ -9,7 +9,15 @@ import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 import { usePermissions } from '@/shared/composables/usePermissions'
 
+import AccommodationCountsPanel from '../components/AccommodationCountsPanel.vue'
+import ProjectProgressPanel from '../components/ProjectProgressPanel.vue'
+import SeasonStatusPanel from '../components/SeasonStatusPanel.vue'
 import { useExecutiveDashboardQuery } from '../queries/useExecutiveDashboardQuery'
+import {
+  ACCOMMODATION_PANEL_IDS,
+  PROJECT_PANEL_IDS,
+  pickKpisById,
+} from '../utils/executiveDashboardPanels'
 
 const { t } = useI18n()
 const { can } = usePermissions()
@@ -92,6 +100,18 @@ const meta = computed(() => dashboardQuery.data.value?.meta)
 const confirmedSeasonMeta = computed(() => payload.value?.season ?? null)
 const showGps = computed(() => payload.value?.gps != null)
 
+const seasonPanel = computed(() => payload.value?.panels?.season ?? payload.value?.season ?? null)
+const accommodationPanelKpis = computed(() => {
+  const fromPanels = payload.value?.panels?.accommodation?.kpis
+  if (fromPanels && fromPanels.length > 0) return fromPanels
+  return pickKpisById(payload.value?.kpis ?? [], ACCOMMODATION_PANEL_IDS)
+})
+const projectPanelKpis = computed(() => {
+  const fromPanels = payload.value?.panels?.projects?.kpis
+  if (fromPanels && fromPanels.length > 0) return fromPanels
+  return pickKpisById(payload.value?.kpis ?? [], PROJECT_PANEL_IDS)
+})
+
 const pageState = computed(() => {
   if (canPickSeasons.value) {
     if (seasonsQuery.isLoading.value) return 'loading_seasons' as const
@@ -105,6 +125,13 @@ const pageState = computed(() => {
   if ((payload.value?.kpis.length ?? 0) === 0) return 'empty' as const
   return 'ready' as const
 })
+
+const showA3Panels = computed(
+  () =>
+    pageState.value === 'ready' ||
+    pageState.value === 'no_domain' ||
+    pageState.value === 'empty',
+)
 </script>
 
 <template>
@@ -203,13 +230,7 @@ const pageState = computed(() => {
     </section>
 
     <p v-if="confirmedSeasonMeta" class="text-xs text-brand-text-muted px-1">
-      <span class="font-semibold text-brand-text">{{ confirmedSeasonMeta.name }}</span>
-      <span
-        v-if="confirmedSeasonMeta.status === 'closed'"
-        class="ms-2 rounded bg-amber-50 px-1.5 py-0.5 text-[11px] font-bold text-amber-800"
-        >{{ confirmedSeasonMeta.status_label || t('executiveDashboard.closed') }}</span
-      >
-      <span v-if="meta?.generated_at" class="ms-3"
+      <span v-if="meta?.generated_at"
         >{{ t('executiveDashboard.generatedAt') }}: {{ meta.generated_at }}</span
       >
       <span v-if="meta?.timezone" class="ms-2"
@@ -223,6 +244,12 @@ const pageState = computed(() => {
         {{ t('executiveDashboard.changeSeason') }}
       </button>
     </p>
+
+    <div v-if="showA3Panels && seasonPanel" class="space-y-4">
+      <SeasonStatusPanel :season="seasonPanel" />
+      <AccommodationCountsPanel :kpis="accommodationPanelKpis" />
+      <ProjectProgressPanel :kpis="projectPanelKpis" />
+    </div>
 
     <section
       v-if="showGps && payload?.gps"

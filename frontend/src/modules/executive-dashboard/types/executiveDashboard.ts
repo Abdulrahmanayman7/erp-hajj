@@ -7,10 +7,21 @@ export interface ExecutiveDashboardGps {
   markers: []
 }
 
+export interface ExecutiveDashboardPanelBlock {
+  kpis: OperationalKpiCard[]
+}
+
+export interface ExecutiveDashboardPanels {
+  season: OperationalKpiSeason
+  accommodation?: ExecutiveDashboardPanelBlock
+  projects?: ExecutiveDashboardPanelBlock
+}
+
 export interface ExecutiveDashboardData {
   season: OperationalKpiSeason
   kpis: OperationalKpiCard[]
   response_state: ExecutiveDashboardResponseState
+  panels: ExecutiveDashboardPanels
   gps?: ExecutiveDashboardGps
 }
 
