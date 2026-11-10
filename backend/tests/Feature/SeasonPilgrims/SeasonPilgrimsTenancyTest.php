@@ -91,6 +91,10 @@ it('isolates season pilgrims across tenants', function (): void {
     spaPostJson("/api/v1/season-pilgrims/{$id}/activate", [], $header)->assertNotFound();
     spaPostJson("/api/v1/season-pilgrims/{$id}/cancel", ['reason' => 'محاولة'], $header)->assertNotFound();
     spaPostJson("/api/v1/season-pilgrims/{$id}/snapshot/refresh", [], $header)->assertNotFound();
+    spaPostJson("/api/v1/season-pilgrims/{$id}/snapshot/correct", [
+        'reason' => 'محاولة عبر المستأجر',
+        'full_name' => 'اسم مخترق',
+    ], $header)->assertNotFound();
     spaPutJson("/api/v1/season-pilgrims/{$id}/program", ['season_program_id' => null], $header)->assertNotFound();
     spaDeleteJson("/api/v1/season-pilgrims/{$id}", $header)->assertNotFound();
 

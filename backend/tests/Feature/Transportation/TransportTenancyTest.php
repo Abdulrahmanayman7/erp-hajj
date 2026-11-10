@@ -2,6 +2,7 @@
 
 use App\Modules\Transportation\Models\TransportMovement;
 use App\Modules\Transportation\Models\TransportPoint;
+use App\Modules\Transportation\Models\TransportReviewItem;
 
 it('returns 404 for every tenant-level transport record of another tenant', function (): void {
     actingAsTenantOwner();
@@ -107,4 +108,69 @@ it('takes the season from the context and ignores payload season ids', function 
     ], $h)->assertCreated()->json('data');
 
     expect($movement['season_id'])->toBe($season['id']);
+});
+
+it('returns 404 for foreign-tenant run operate, crew, timeline correct, and review resolve', function (): void {
+    actingAsTenantOwner();
+    $foreign = trScenario();
+    $fh = $foreign['header'];
+    $sp = trActiveSp($foreign['season']['id']);
+    [$passengerId] = trAddPassengers($foreign['run']['id'], [$sp['id']], $fh);
+    trStartMovement($foreign['movement']['id'], $fh);
+    trAssignDriver($foreign['run']['id'], $fh);
+    spaPostJson("/api/v1/transport-runs/{$foreign['run']['id']}/start-boarding", [], $fh)->assertOk();
+    spaPostJson("/api/v1/transport-runs/{$foreign['run']['id']}/passengers/board", ['passenger_ids' => [$passengerId]], $fh)->assertOk();
+    spaPostJson("/api/v1/season-pilgrims/{$sp['id']}/cancel", ['reason' => 'انسحاب الحاج'], $fh)->assertOk();
+
+    $eventId = (int) spaGetJson("/api/v1/transport-movements/{$foreign['movement']['id']}/timeline", $fh)
+        ->assertOk()
+        ->json('data.0.id');
+    expect($eventId)->toBeGreaterThan(0);
+
+    $review = spaGetJson('/api/v1/transport-review-items?status=open', $fh)->assertOk()->json('data.0');
+    expect($review)->not->toBeNull();
+    $reviewId = (int) $review['id'];
+
+    actingAsTenantOwner();
+    $mine = trScenario();
+    $h = $mine['header'];
+
+    spaPostJson("/api/v1/transport-runs/{$foreign['run']['id']}/start-boarding", [], $h)->assertNotFound();
+    spaPostJson("/api/v1/transport-runs/{$foreign['run']['id']}/depart", [], $h)->assertNotFound();
+    spaPostJson("/api/v1/transport-runs/{$foreign['run']['id']}/arrive", [], $h)->assertNotFound();
+    spaPostJson("/api/v1/transport-runs/{$foreign['run']['id']}/complete", [], $h)->assertNotFound();
+    spaPostJson("/api/v1/transport-runs/{$foreign['run']['id']}/cancel", ['reason' => 'هجوم'], $h)->assertNotFound();
+    spaPostJson("/api/v1/transport-runs/{$foreign['run']['id']}/passengers/board", ['passenger_ids' => [$passengerId]], $h)->assertNotFound();
+    spaPostJson("/api/v1/transport-runs/{$foreign['run']['id']}/passengers/no-show", ['passenger_ids' => [$passengerId]], $h)->assertNotFound();
+    spaPutJson("/api/v1/transport-runs/{$foreign['run']['id']}/driver", ['external_driver_id' => null], $h)->assertNotFound();
+    spaPutJson("/api/v1/transport-runs/{$foreign['run']['id']}/supervisor", ['supervisor_employee_id' => null], $h)->assertNotFound();
+    spaPutJson("/api/v1/transport-season-vehicles/{$foreign['sv']['id']}/default-crew", [
+        'driver_employee_id' => null,
+        'external_driver_id' => null,
+        'supervisor_employee_id' => null,
+    ], $h)->assertNotFound();
+    spaPostJson("/api/v1/transport-timeline-events/{$eventId}/correct", [
+        'occurred_at' => now()->subHour()->toIso8601String(),
+        'reason' => 'هجوم عبر المستأجر',
+    ], $h)->assertNotFound();
+    spaPostJson("/api/v1/transport-review-items/{$reviewId}/resolve", ['resolution_note' => 'هجوم'], $h)->assertNotFound();
+
+    expect(TransportReviewItem::query()->withoutGlobalScopes()->findOrFail($reviewId)->status->value)->toBe('open');
+});
+
+it('returns 404 for operate verbs on closed-season records under a different active season', function (): void {
+    actingAsTenantOwner();
+    $old = trScenario();
+    // Close while movement remains draft so closing readiness does not block.
+    spaPostJson("/api/v1/seasons/{$old['season']['id']}/close")->assertOk();
+
+    $current = spActiveSeason();
+    $h = seasonHeader($current['id']);
+
+    spaPostJson("/api/v1/transport-runs/{$old['run']['id']}/start-boarding", [], $h)->assertNotFound();
+    spaPostJson("/api/v1/transport-runs/{$old['run']['id']}/depart", [], $h)->assertNotFound();
+    spaPostJson("/api/v1/transport-movements/{$old['movement']['id']}/cancel", ['reason' => 'موسم مغلق'], $h)->assertNotFound();
+
+    expect(TransportMovement::query()->withoutGlobalScopes()->find($old['movement']['id'])->status->value)
+        ->toBe('draft');
 });

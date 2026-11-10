@@ -68,6 +68,19 @@ it('returns 403 without executive_reports.view even with dual page perms and aud
     );
 });
 
+it('returns 403 for JSON and CSV when executive_reports.view is present but dual page perms are incomplete', function (): void {
+    $tenant = actingAsTenantOwner()->tenant;
+    $season = kpiSeason($tenant, 'active');
+
+    execDashActingAs(['executive_reports.view', 'executive_dashboard.view', 'transportation.view'], $tenant);
+    execReportGet('transport-movements', $season->id)->assertForbidden();
+    execReportCsv('transport-movements', $season->id)->assertForbidden();
+
+    execDashActingAs(['executive_reports.view', 'operational_kpis.view', 'transportation.view'], $tenant);
+    execReportGet('transport-movements', $season->id)->assertForbidden();
+    execReportCsv('transport-movements', $season->id)->assertForbidden();
+});
+
 it('returns 403 before 422 when unauthorized and season_id is missing', function (): void {
     $tenant = actingAsTenantOwner()->tenant;
     execDashActingAs(execDashPermissions(), $tenant);
@@ -92,6 +105,16 @@ it('returns indistinguishable 404 for a foreign tenant season', function (): voi
     execDashActingAs(execReportsPerms(['transportation.view']), $tenantA);
 
     execReportGet('transport-movements', $foreignSeason->id)->assertNotFound();
+});
+
+it('returns indistinguishable 404 for foreign-tenant CSV export', function (): void {
+    $tenantA = actingAsTenantOwner()->tenant;
+    $tenantB = actingAsTenantOwner()->tenant;
+    $foreignSeason = kpiSeason($tenantB, 'active');
+
+    execDashActingAs(execReportsPerms(['transportation.view']), $tenantA);
+
+    execReportCsv('transport-movements', $foreignSeason->id)->assertNotFound();
 });
 
 it('returns 404 for an unknown report key', function (): void {
