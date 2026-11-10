@@ -3457,6 +3457,7 @@ export const ar = {
   "SEASON_PROJECT_SOFT_DELETED": "حذف مسودة مشروع موسم",
   "SEASON_PROJECT_COMPLETED": "إكمال مشروع موسم",
   "SEASON_PROJECT_PROGRESS_BASELINE_APPROVED": "اعتماد خط أساس تقدم مشروع موسم",
+  "SEASON_PROJECT_PROGRESS_BASELINE_DRAFT_UPSERTED": "حفظ مسودة خط أساس تقدم مشروع موسم",
   "SEASON_PROJECT_PHASE_CREATED": "إنشاء مرحلة مشروع موسم",
   "SEASON_PROJECT_PHASE_UPDATED": "تحديث مرحلة مشروع موسم",
   "SEASON_PROJECT_PHASE_DELETED": "حذف مرحلة مشروع موسم",
