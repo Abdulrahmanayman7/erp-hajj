@@ -69,6 +69,7 @@ describe('AlertsPanel', () => {
       criticalCount: 1,
     })
     expect(host.querySelector('[dir="rtl"]')).not.toBeNull()
+    expect(host.querySelector('[aria-label="لوحة التنبيهات التشغيلية"]')).not.toBeNull()
     expect(host.textContent).toContain('التنبيهات التشغيلية')
     expect(host.textContent).toContain('ALT-RISK-HIGH')
     expect(host.querySelector('[data-test="alerts-open-count"]')?.textContent?.trim()).toBe('1')

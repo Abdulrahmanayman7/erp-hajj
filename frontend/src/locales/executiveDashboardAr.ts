@@ -72,5 +72,15 @@ export const executiveDashboardAr = {
       projectsHint: 'قيم S09 المعتمدة (J07 / J09) فقط — بدون تقدّم مخطط أو تأخير مخترع',
       undefinedBadge: 'غير معرّف',
     },
+    a11y: {
+      seasonPicker: 'منتقي الموسم',
+      manualSeason: 'إدخال معرّف الموسم يدويًا',
+      gpsPanel: 'لوحة خريطة العمليات',
+      seasonStatusPanel: 'لوحة حالة الموسم',
+      accommodationCountsPanel: 'لوحة عدّادات الإقامة',
+      projectProgressPanel: 'لوحة تقدّم المشاريع',
+      alertsPanel: 'لوحة التنبيهات التشغيلية',
+      reportsPanel: 'لوحة التقارير التنفيذية',
+    },
   },
 }

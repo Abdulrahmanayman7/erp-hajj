@@ -177,16 +177,38 @@ jobs:
         run: php vendor/bin/pest -c phpunit.mysql.xml tests/Feature/Transportation tests/Feature/SeasonPilgrims
 
       - name: Transportation concurrency tests (MySQL)
-        run: php vendor/bin/pest -c phpunit.mysql.xml tests/Concurrency/TransportConcurrencyTest.php
+        run: |
+          echo "::group::Transportation concurrency"
+          START=$SECONDS
+          php vendor/bin/pest -c phpunit.mysql.xml tests/Concurrency/TransportConcurrencyTest.php
+          echo "elapsed=$((SECONDS-START))s"
+          echo "::endgroup::"
 
       # Sequential on shared erp_hajj_testing — ConcurrencyTestCase uses migrate:fresh.
-      # These suites skip on SQLite; they were previously absent from MySQL CI.
-      - name: Accommodation concurrency tests (MySQL, sequential)
+      # Split into separately named steps for CI observability (S11-P4).
+      - name: Accommodation confirm concurrency (MySQL)
         run: |
-          php vendor/bin/pest -c phpunit.mysql.xml \
-            tests/Concurrency/AccommodationConfirmConcurrencyTest.php \
-            tests/Concurrency/AccommodationOpsConcurrencyTest.php \
-            tests/Concurrency/AccommodationPilgrimLockConcurrencyTest.php
+          echo "::group::Accommodation confirm concurrency"
+          START=$SECONDS
+          php vendor/bin/pest -c phpunit.mysql.xml tests/Concurrency/AccommodationConfirmConcurrencyTest.php
+          echo "elapsed=$((SECONDS-START))s"
+          echo "::endgroup::"
+
+      - name: Accommodation ops concurrency (MySQL)
+        run: |
+          echo "::group::Accommodation ops concurrency"
+          START=$SECONDS
+          php vendor/bin/pest -c phpunit.mysql.xml tests/Concurrency/AccommodationOpsConcurrencyTest.php
+          echo "elapsed=$((SECONDS-START))s"
+          echo "::endgroup::"
+
+      - name: Accommodation pilgrim-lock concurrency (MySQL)
+        run: |
+          echo "::group::Accommodation pilgrim-lock concurrency"
+          START=$SECONDS
+          php vendor/bin/pest -c phpunit.mysql.xml tests/Concurrency/AccommodationPilgrimLockConcurrencyTest.php
+          echo "elapsed=$((SECONDS-START))s"
+          echo "::endgroup::"
 
       - name: S04 Suppliers and Procurement Feature tests (MySQL)
         run: php vendor/bin/pest -c phpunit.mysql.xml tests/Feature/SuppliersAndProcurement
@@ -194,6 +216,8 @@ jobs:
       # Sequential on shared erp_hajj_testing — ConcurrencyTestCase uses migrate:fresh.
       - name: S04 Supplier concurrency tests (MySQL, sequential)
         run: |
+          echo "::group::S04 supplier concurrency"
+          START=$SECONDS
           php vendor/bin/pest -c phpunit.mysql.xml \
             tests/Concurrency/SupplierNumberConcurrencyTest.php \
             tests/Concurrency/SupplierDocumentRecordConcurrencyTest.php \
@@ -204,24 +228,40 @@ jobs:
             tests/Concurrency/SupplierEvaluationConcurrencyTest.php \
             tests/Concurrency/PurchaseRequestNumberConcurrencyTest.php \
             tests/Concurrency/EvaluationNumberConcurrencyTest.php
+          echo "elapsed=$((SECONDS-START))s"
+          echo "::endgroup::"
 
       - name: S05 procurement concurrency tests (MySQL, sequential)
         run: |
+          echo "::group::S05 procurement concurrency"
+          START=$SECONDS
           php vendor/bin/pest -c phpunit.mysql.xml \
             tests/Concurrency/ProcurementRfqPublishConcurrencyTest.php \
             tests/Concurrency/ProcurementRfqSelectConcurrencyTest.php \
             tests/Concurrency/PurchaseOrderCreateConcurrencyTest.php \
             tests/Concurrency/GoodsReceiptPostConcurrencyTest.php \
             tests/Concurrency/PurchaseOrderCloseConcurrencyTest.php
+          echo "elapsed=$((SECONDS-START))s"
+          echo "::endgroup::"
 
       # S11-P3: S06/S07 number allocation races (MySQL locking only — skipped on SQLite).
       - name: S06/S07 number concurrency tests (MySQL, sequential)
         run: |
+          echo "::group::S06/S07 number concurrency"
+          START=$SECONDS
           php vendor/bin/pest -c phpunit.mysql.xml \
             tests/Concurrency/SeasonProjectNumberConcurrencyTest.php \
             tests/Concurrency/OperationalRiskNumberConcurrencyTest.php \
             tests/Concurrency/OperationalComplaintNumberConcurrencyTest.php
+          echo "elapsed=$((SECONDS-START))s"
+          echo "::endgroup::"
 
+      # S11-P4: stop orphan worker PHP processes if a concurrency step failed mid-flight.
+      - name: Cleanup orphan concurrency workers
+        if: always()
+        run: |
+          pkill -f 'tests/Concurrency/.*_worker\.php' 2>/dev/null || true
+          echo "orphan concurrency worker cleanup attempted"
       # S08 Seasonal Templates — MySQL 8 FK/JSON/nullable source_season + reminder rules.
       # migrate:fresh already applied 320002/320003 above; this step only asserts + tests.
       - name: Assert S08 MySQL migrations present

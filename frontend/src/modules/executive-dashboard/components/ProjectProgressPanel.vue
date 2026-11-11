@@ -21,7 +21,7 @@ const unavailable = computed(() => t('operationalKpis.unavailable'))
   <section
     v-if="kpis.length > 0"
     class="app-surface-flat space-y-3 p-4"
-    aria-label="project progress panel"
+    :aria-label="t('executiveDashboard.a11y.projectProgressPanel')"
     dir="rtl"
   >
     <div class="space-y-1">

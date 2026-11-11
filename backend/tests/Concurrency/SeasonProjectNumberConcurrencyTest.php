@@ -5,6 +5,7 @@ use App\Modules\SeasonPilgrims\Models\Season;
 use App\Modules\SeasonProjects\Support\SeasonProjectNumberGenerator;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\Process\Process;
+use Tests\Support\ConcurrencyWorkerPool;
 
 beforeEach(function (): void {
     if (! in_array(DB::connection()->getDriverName(), ['mysql', 'mariadb'], true)) {
@@ -60,8 +61,7 @@ function runSpjNumberWorkers(array $jobs, float $barrierDelay = 2.0): array
     }
 
     $outcomes = [];
-    foreach ($processes as $process) {
-        $process->wait();
+    foreach (ConcurrencyWorkerPool::awaitAll($processes) as $process) {
         $raw = trim($process->getOutput());
         expect($process->isSuccessful())->toBeTrue($process->getErrorOutput().$raw);
         $decoded = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);

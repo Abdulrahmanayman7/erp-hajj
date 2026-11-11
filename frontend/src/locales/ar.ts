@@ -14,6 +14,7 @@ export const ar = {
     prev: 'السابق',
     next: 'التالي',
     pageOf: 'صفحة {page} من {total}',
+    skipToContent: 'تخطي إلى المحتوى الرئيسي',
   },
   nav: {
     home: 'الرئيسية',

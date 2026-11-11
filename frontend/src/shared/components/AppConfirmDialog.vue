@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onUnmounted, watch } from 'vue'
+import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { AlertTriangle, UserCheck, UserX, X } from 'lucide-vue-next'
 
@@ -7,6 +7,7 @@ import { useConfirm, type ConfirmVariant } from '@/shared/composables/useConfirm
 
 const { t } = useI18n()
 const { state, accept, cancel } = useConfirm()
+const confirmBtnRef = ref<HTMLButtonElement | null>(null)
 
 const icon = computed(() => {
   if (state.value.variant === 'primary') return UserCheck
@@ -40,9 +41,11 @@ function onKeydown(event: KeyboardEvent): void {
 
 watch(
   () => state.value.open,
-  (open) => {
+  async (open) => {
     if (open) {
       document.addEventListener('keydown', onKeydown)
+      await nextTick()
+      confirmBtnRef.value?.focus()
       return
     }
     document.removeEventListener('keydown', onKeydown)
@@ -78,8 +81,9 @@ onUnmounted(() => {
         >
           <button
             type="button"
-            class="absolute end-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-lg text-brand-text-muted transition hover:bg-brand-bg hover:text-brand-text"
+            class="absolute end-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-lg text-brand-text-muted transition hover:bg-brand-bg hover:text-brand-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25"
             :aria-label="t('users.closeDrawer')"
+            data-test="app-confirm-close"
             @click="cancel"
           >
             <X class="h-4 w-4" :stroke-width="2.25" />
@@ -115,9 +119,11 @@ onUnmounted(() => {
               {{ state.cancelLabel || t('users.cancel') }}
             </button>
             <button
+              ref="confirmBtnRef"
               type="button"
               class="inline-flex h-10 min-w-[7.5rem] items-center justify-center rounded-[10px] px-4 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25"
               :class="confirmBtnClass(state.variant)"
+              data-test="app-confirm-accept"
               @click="accept"
             >
               {{ state.confirmLabel || t('users.confirm') }}
