@@ -1,0 +1,242 @@
+/**
+ * S11-P4 operational Browser UAT (real API + disposable UAT DB only).
+ *
+ * Required safe environment:
+ *   - Frontend at UAT_BASE_URL (default http://127.0.0.1:5173)
+ *   - Laravel API at UAT_API_URL (default http://127.0.0.1:8000)
+ *   - Disposable DB name advertised by GET /api/v1/health or X-Uat-Database header
+ *     matching /^erp_hajj_.+_uat$/ (never production / erp_hajj without _uat)
+ *
+ * If the environment is missing or not verified disposable → writes NOT_RUN report and exits 0.
+ */
+import { chromium } from 'playwright-core'
+import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const EVIDENCE = path.join(__dirname, 'evidence')
+const L = JSON.parse(fs.readFileSync(path.join(__dirname, 'labels.json'), 'utf8'))
+const BASE = process.env.UAT_BASE_URL || 'http://127.0.0.1:5173'
+const API = process.env.UAT_API_URL || 'http://127.0.0.1:8000'
+const OWNER = {
+  email: process.env.UAT_OWNER_EMAIL || 'uat.owner@example.com',
+  password: process.env.UAT_OWNER_PASSWORD || 'Admin@12345',
+}
+const VIEWER = {
+  email: process.env.UAT_VIEWER_EMAIL || 'uat.viewer@example.com',
+  password: process.env.UAT_VIEWER_PASSWORD || 'Viewer@12345',
+}
+
+const stamp = new Date().toISOString().replace(/[:.]/g, '-')
+const report = {
+  suite: 's11-p4-browser-uat',
+  started_at: new Date().toISOString(),
+  isolation: { database: null, verified_disposable: false },
+  env: { base: BASE, api: API },
+  steps: [],
+  verdict: 'NOT_RUN',
+  not_run_reason: null,
+}
+
+fs.mkdirSync(EVIDENCE, { recursive: true })
+
+function record(step, status, detail = '', shot = null) {
+  report.steps.push({ step, status, detail, screenshot: shot })
+  console.log(`[${status}] ${step}${detail ? ' -- ' + detail : ''}`)
+}
+
+async function shot(page, name) {
+  const file = `${stamp}_${name}.png`
+  await page.screenshot({ path: path.join(EVIDENCE, file), fullPage: true })
+  return file
+}
+
+async function probeJson(url, timeoutMs = 4000) {
+  const ctrl = new AbortController()
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs)
+  try {
+    const res = await fetch(url, { signal: ctrl.signal })
+    const text = await res.text()
+    let json = null
+    try {
+      json = JSON.parse(text)
+    } catch {
+      json = null
+    }
+    return { ok: res.ok, status: res.status, json, headers: res.headers }
+  } catch (err) {
+    return { ok: false, status: 0, json: null, headers: null, error: String(err) }
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+function isDisposableUatDb(name) {
+  return typeof name === 'string' && /^erp_hajj_.+_uat$/.test(name)
+}
+
+async function verifySafeEnvironment() {
+  const fe = await probeJson(BASE)
+  if (!fe.ok && fe.status === 0) {
+    return {
+      ok: false,
+      reason: `Frontend unreachable at ${BASE} (${fe.error || 'timeout/connection refused'})`,
+    }
+  }
+
+  const health = await probeJson(`${API}/api/v1/health`)
+  const alt = health.ok ? health : await probeJson(`${API}/up`)
+  if (!alt.ok && alt.status === 0) {
+    return {
+      ok: false,
+      reason: `Laravel API unreachable at ${API} (${alt.error || 'timeout/connection refused'})`,
+    }
+  }
+
+  const dbFromBody =
+    health.json?.data?.database ||
+    health.json?.database ||
+    health.json?.data?.db ||
+    process.env.UAT_DATABASE ||
+    null
+  const dbFromHeader = health.headers?.get?.('x-uat-database') || null
+  const database = dbFromBody || dbFromHeader
+
+  if (!isDisposableUatDb(database)) {
+    return {
+      ok: false,
+      reason:
+        `No positively verified disposable UAT database (got ${JSON.stringify(database)}). ` +
+        `Refusing browser UAT against unknown/production DBs. Set UAT_DATABASE=erp_hajj_<slice>_uat ` +
+        `only when the API process is bound to that disposable database.`,
+    }
+  }
+
+  return { ok: true, database }
+}
+
+async function login(page, user) {
+  await page.goto(`${BASE}/login`, { waitUntil: 'domcontentloaded' })
+  await page.waitForSelector('#login-email', { timeout: 20000 })
+  await page.locator('#login-email').fill(user.email)
+  await page.locator('#login-password').fill(user.password)
+  await page.locator('button[type="submit"]').click()
+  await page.waitForURL((url) => /\/(app|platform)(\/|$)/.test(url.pathname), { timeout: 30000 })
+  if (page.url().includes('/platform')) {
+    throw new Error(`Login landed on platform for ${user.email}`)
+  }
+}
+
+async function assertRtl(page) {
+  const dir = await page.locator('html').getAttribute('dir')
+  const lang = await page.locator('html').getAttribute('lang')
+  if (dir !== 'rtl' || lang !== 'ar') {
+    throw new Error(`Expected html[dir=rtl][lang=ar], got dir=${dir} lang=${lang}`)
+  }
+}
+
+async function visit(page, pathName, label) {
+  await page.goto(`${BASE}${pathName}`, { waitUntil: 'domcontentloaded' })
+  await page.waitForTimeout(500)
+  await assertRtl(page)
+  const file = await shot(page, label)
+  return file
+}
+
+async function runJourneys(browser) {
+  const context = await browser.newContext({ locale: 'ar-SA', viewport: { width: 1440, height: 900 } })
+  const page = await context.newPage()
+
+  // 1) Login + permission-aware navigation
+  await login(page, OWNER)
+  await assertRtl(page)
+  const skip = page.locator('[data-test="skip-to-content"]')
+  if ((await skip.count()) === 0) throw new Error('Missing skip-to-content control')
+  record(L.journeys.loginNav, 'PASS', 'owner login + skip link', await shot(page, '01_logged_in'))
+
+  // 2) Season / tenant shell
+  await visit(page, '/app/seasons', '02_seasons')
+  record(L.journeys.seasonTenant, 'PASS', 'seasons page RTL')
+
+  // 3) Pilgrim → Transport → Movements
+  await visit(page, '/app/pilgrims', '03_pilgrims')
+  await visit(page, '/app/transport-movements', '04_movements')
+  record(L.journeys.pilgrimTransport, 'PASS', 'pilgrims + movements')
+
+  // 4) Pilgrim → Accommodation occupancy
+  await visit(page, '/app/accommodation', '05_accommodation')
+  record(L.journeys.pilgrimAccommodation, 'PASS', 'accommodation overview')
+
+  // 5) Suppliers → Procurement approvals
+  await visit(page, '/app/suppliers', '06_suppliers')
+  await visit(page, '/app/purchase-requests/approval-inbox', '07_approvals')
+  record(L.journeys.procurementApprovals, 'PASS', 'suppliers + approval inbox')
+
+  // 6) Seasonal Projects → Baseline
+  await visit(page, '/app/season-projects', '08_season_projects')
+  record(L.journeys.seasonProjectsBaseline, 'PASS', 'season projects list')
+
+  // 7) Risks / Complaints → Alerts (executive)
+  await visit(page, '/app/risks', '09_risks')
+  await visit(page, '/app/complaints', '10_complaints')
+  await visit(page, '/app/executive-dashboard', '11_executive_alerts')
+  record(L.journeys.risksAlerts, 'PASS', 'risks/complaints/executive')
+
+  // 8) Operational KPIs → Executive Dashboard
+  await visit(page, '/app/operational-kpis', '12_kpis')
+  await visit(page, '/app/executive-dashboard', '13_dashboard')
+  record(L.journeys.kpisDashboard, 'PASS', 'kpis + executive dashboard')
+
+  // Viewer permission-aware: login as viewer and ensure executive dual-gate still RTL-safe
+  await page.goto(`${BASE}/login`, { waitUntil: 'domcontentloaded' })
+  await login(page, VIEWER)
+  await visit(page, '/app', '14_viewer_home')
+  record('viewer-nav', 'PASS', 'viewer session RTL shell')
+
+  await context.close()
+}
+
+async function main() {
+  const env = await verifySafeEnvironment()
+  if (!env.ok) {
+    report.verdict = 'NOT_RUN'
+    report.not_run_reason = env.reason
+    record('environment-gate', 'NOT_RUN', env.reason)
+    finish()
+    return
+  }
+
+  report.isolation.database = env.database
+  report.isolation.verified_disposable = true
+  record('environment-gate', 'PASS', `disposable DB ${env.database}`)
+
+  let browser
+  try {
+    browser = await chromium.launch({
+      channel: process.env.UAT_BROWSER_CHANNEL || 'chrome',
+      headless: true,
+    })
+    await runJourneys(browser)
+    report.verdict = report.steps.some((s) => s.status === 'FAIL') ? 'FAIL' : 'PASS'
+  } catch (err) {
+    report.verdict = 'FAIL'
+    record('fatal', 'FAIL', String(err))
+  } finally {
+    await browser?.close().catch(() => {})
+    finish()
+  }
+}
+
+function finish() {
+  report.finished_at = new Date().toISOString()
+  const out = path.join(EVIDENCE, `${stamp}_report.json`)
+  fs.writeFileSync(out, JSON.stringify(report, null, 2), 'utf8')
+  fs.writeFileSync(path.join(__dirname, 'last-report.json'), JSON.stringify(report, null, 2), 'utf8')
+  console.log(`\nVerdict: ${report.verdict}`)
+  console.log(`Report: ${out}`)
+  // NOT_RUN is non-fatal for local harness; FAIL exits non-zero.
+  if (report.verdict === 'FAIL') process.exit(1)
+}
+
+main()

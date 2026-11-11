@@ -1,0 +1,10 @@
+{
+  "name": "s11-p4-browser-uat",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "S11-P4 operational journey + RTL/a11y browser UAT harness",
+  "dependencies": {
+    "playwright-core": "^1.56.0"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "loginTitle": "تسجيل الدخول",
+  "logout": "تسجيل الخروج",
+  "nav": {
+    "pilgrims": "الحجاج",
+    "movements": "الحركات",
+    "accommodation": "الإسكان والمخيمات",
+    "suppliers": "الموردون",
+    "purchaseApprovals": "صندوق اعتماد الطلبات",
+    "seasonProjects": "المشاريع الموسمية",
+    "risks": "المخاطر",
+    "complaints": "الشكاوى",
+    "operationalKpis": "المؤشرات التشغيلية",
+    "executiveDashboard": "لوحة التحكم التنفيذية"
+  },
+  "journeys": {
+    "loginNav": "تسجيل الدخول والتنقل حسب الصلاحيات",
+    "seasonTenant": "اختيار الموسم وعزل المستأجر",
+    "pilgrimTransport": "الحجاج → النقل → الحركات",
+    "pilgrimAccommodation": "الحجاج → الإقامة → الإشغال",
+    "procurementApprovals": "الموردون → اعتمادات المشتريات",
+    "seasonProjectsBaseline": "المشاريع الموسمية → خط الأساس",
+    "risksAlerts": "المخاطر والشكاوى → التنبيهات",
+    "kpisDashboard": "المؤشرات التشغيلية → اللوحة التنفيذية"
+  }
+}
