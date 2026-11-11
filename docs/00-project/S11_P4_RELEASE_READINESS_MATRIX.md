@@ -57,7 +57,9 @@
 
 | Guarantee | Mechanism | Evidence |
 |---|---|---|
-| Live UAT never trusts `UAT_DATABASE` alone | `GET /api/v1/browser-uat/attestation` returns the **live** Laravel connection database name only when `BROWSER_UAT_ATTESTATION_ENABLED=true` and `APP_ENV` ∈ {local, testing}; production always 404 | Pest `BrowserUatAttestationTest`; harness `uat-attestation.mjs` + `uat-attestation.test.mjs` |
+| Live UAT never trusts `UAT_DATABASE` alone | `GET /api/v1/browser-uat/attestation` returns the **live** Laravel connection database name only when `BROWSER_UAT_ATTESTATION_ENABLED=true`, `APP_ENV` ∈ {local, testing}, non-empty `BROWSER_UAT_ATTESTATION_TOKEN`, and matching `X-Browser-Uat-Token` (timing-safe); production/staging always 404 | Pest `BrowserUatAttestationTest`; harness `uat-attestation.mjs` + `uat-attestation.test.mjs` |
+| Shared UAT token required | Empty/missing/wrong token ⇒ 404; token never logged or returned; harness sends token only to the configured attestation URL | Pest missing/wrong/valid token cases; `attestationRequestHeaders()` unit tests |
+| Cache busting on success | Successful attestation sets `Cache-Control: no-store` | Pest cache assertion |
 | Public `/api/v1/health` unchanged | No database fields added to health | Pest health assertion in attestation suite |
 | Disposable naming policy | Attested name must match `/^erp_hajj_.+_uat$/`; optional `UAT_DATABASE` is expected-value only | `evaluateAttestation()` rejects `erp_hajj` even if env claims `erp_hajj_s11_uat` |
 | Fail closed | Timeouts, redirects, non-JSON, 4xx/5xx, missing marker → NOT_RUN / refuse | `run-uat.mjs` uses `redirect: 'manual'` + attestation evaluator |

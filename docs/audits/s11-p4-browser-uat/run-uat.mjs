@@ -5,7 +5,8 @@
  *   - Frontend at UAT_BASE_URL (default http://127.0.0.1:5173)
  *   - Laravel API at UAT_API_URL (default http://127.0.0.1:8000)
  *   - GET /api/v1/browser-uat/attestation must return the live connection database
- *     (BROWSER_UAT_ATTESTATION_ENABLED=true, APP_ENV local|testing). Health never attests DB.
+ *     (BROWSER_UAT_ATTESTATION_ENABLED=true, APP_ENV local|testing, shared token).
+ *     Health never attests DB. Token is sent only to that attestation URL.
  *   - Attested name must match /^erp_hajj_.+_uat$/
  *   - Optional UAT_DATABASE is only an expected-value check against the attestation
  *
@@ -15,13 +16,19 @@ import { chromium } from 'playwright-core'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { evaluateAttestation } from './uat-attestation.mjs'
+import {
+  ATTESTATION_PATH,
+  attestationRequestHeaders,
+  evaluateAttestation,
+} from './uat-attestation.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const EVIDENCE = path.join(__dirname, 'evidence')
 const L = JSON.parse(fs.readFileSync(path.join(__dirname, 'labels.json'), 'utf8'))
 const BASE = process.env.UAT_BASE_URL || 'http://127.0.0.1:5173'
 const API = process.env.UAT_API_URL || 'http://127.0.0.1:8000'
+const ATTESTATION_TOKEN =
+  process.env.BROWSER_UAT_ATTESTATION_TOKEN || process.env.UAT_ATTESTATION_TOKEN || ''
 const OWNER = {
   email: process.env.UAT_OWNER_EMAIL || 'uat.owner@example.com',
   password: process.env.UAT_OWNER_PASSWORD || 'Admin@12345',
@@ -55,11 +62,15 @@ async function shot(page, name) {
   return file
 }
 
-async function probeJson(url, timeoutMs = 4000) {
+async function probeJson(url, timeoutMs = 4000, extraHeaders = {}) {
   const ctrl = new AbortController()
   const timer = setTimeout(() => ctrl.abort(), timeoutMs)
   try {
-    const res = await fetch(url, { signal: ctrl.signal, redirect: 'manual' })
+    const res = await fetch(url, {
+      signal: ctrl.signal,
+      redirect: 'manual',
+      headers: { ...extraHeaders },
+    })
     if (res.status >= 300 && res.status < 400) {
       return {
         ok: false,
@@ -105,8 +116,23 @@ async function verifySafeEnvironment() {
   }
 
   // Never trust UAT_DATABASE or health for DB identity. Attestation only.
-  const attestationUrl = `${API}/api/v1/browser-uat/attestation`
-  const attestation = await probeJson(attestationUrl)
+  // Token header is attached solely for the attestation URL under the configured API origin.
+  if (!ATTESTATION_TOKEN) {
+    return {
+      ok: false,
+      reason:
+        'BROWSER_UAT_ATTESTATION_TOKEN (or UAT_ATTESTATION_TOKEN) is required for live UAT. Fail closed.',
+    }
+  }
+  const attestationUrl = `${API.replace(/\/$/, '')}${ATTESTATION_PATH}`
+  const tokenHeaders = attestationRequestHeaders(attestationUrl, API, ATTESTATION_TOKEN)
+  if (!Object.keys(tokenHeaders).length) {
+    return {
+      ok: false,
+      reason: 'Refusing to send attestation token outside the configured attestation endpoint.',
+    }
+  }
+  const attestation = await probeJson(attestationUrl, 4000, tokenHeaders)
   if (attestation.error?.includes('Redirect')) {
     return { ok: false, reason: `Attestation redirect — fail closed (${attestation.error})` }
   }

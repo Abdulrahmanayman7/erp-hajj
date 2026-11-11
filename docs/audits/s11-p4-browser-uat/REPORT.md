@@ -32,7 +32,8 @@
 
 ## Safety gate
 
-`run-uat.mjs` exits **NOT_RUN** unless `GET /api/v1/browser-uat/attestation` succeeds and the **attested** live database matches `/^erp_hajj_.+_uat$/`.  
+`run-uat.mjs` exits **NOT_RUN** unless `GET /api/v1/browser-uat/attestation` succeeds (opt-in + local/testing + shared token header) and the **attested** live database matches `/^erp_hajj_.+_uat$/`.  
+`BROWSER_UAT_ATTESTATION_TOKEN` is required for live UAT and is sent only to that attestation URL.  
 `UAT_DATABASE` is optional and only compared to the attestation — never treated as proof.  
 `/api/v1/health` is not used for database identity.  
 Mock harness classifies `/api` and `/sanctum` (including same-origin) before any FE `continue()`, so traffic never depends on `VITE_API_URL`.  

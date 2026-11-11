@@ -4,9 +4,44 @@
  */
 
 export const DISPOSABLE_UAT_DB = /^erp_hajj_.+_uat$/
+export const ATTESTATION_TOKEN_HEADER = 'X-Browser-Uat-Token'
+export const ATTESTATION_PATH = '/api/v1/browser-uat/attestation'
 
 export function isDisposableUatDatabase(name) {
   return typeof name === 'string' && DISPOSABLE_UAT_DB.test(name)
+}
+
+/**
+ * Attach the UAT token only for the configured attestation endpoint.
+ * Never returns a token header for FE assets or arbitrary origins.
+ *
+ * @param {string} requestUrl
+ * @param {string} apiBase e.g. http://127.0.0.1:8000
+ * @param {string} token
+ * @returns {Record<string, string>}
+ */
+export function attestationRequestHeaders(requestUrl, apiBase, token) {
+  if (typeof token !== 'string' || token.trim() === '') {
+    return {}
+  }
+
+  let request
+  let api
+  try {
+    request = new URL(requestUrl)
+    api = new URL(apiBase)
+  } catch {
+    return {}
+  }
+
+  if (request.origin !== api.origin) {
+    return {}
+  }
+  if (request.pathname !== ATTESTATION_PATH) {
+    return {}
+  }
+
+  return { [ATTESTATION_TOKEN_HEADER]: token }
 }
 
 /**

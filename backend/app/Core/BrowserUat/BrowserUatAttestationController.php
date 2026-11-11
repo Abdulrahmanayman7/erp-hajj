@@ -4,20 +4,28 @@ namespace App\Core\BrowserUat;
 
 use App\Core\Shared\ApiResponse;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 /**
  * Returns the live Laravel connection database name for Browser UAT gates.
  *
- * Disabled unless APP_ENV is local|testing AND BROWSER_UAT_ATTESTATION_ENABLED=true.
- * Never returns credentials, hosts, or connection strings.
+ * Requires ALL of:
+ * - BROWSER_UAT_ATTESTATION_ENABLED=true
+ * - APP_ENV in {local, testing} (production/staging always denied)
+ * - Non-empty configured token
+ * - Request header X-Browser-Uat-Token matching the configured token (timing-safe)
+ *
+ * Never returns credentials, hosts, connection strings, or the token itself.
  */
 final class BrowserUatAttestationController
 {
-    public function __invoke(): JsonResponse
+    public const TOKEN_HEADER = 'X-Browser-Uat-Token';
+
+    public function __invoke(Request $request): JsonResponse
     {
-        if (! $this->isAttestationAllowed()) {
-            // Fail closed — indistinguishable from a missing route in production.
+        if (! $this->isAttestationAllowed($request)) {
+            // Fail closed — same shape for disabled / wrong env / missing/invalid token.
             return ApiResponse::error(
                 message: 'غير موجود',
                 code: 'BROWSER_UAT_ATTESTATION_UNAVAILABLE',
@@ -37,10 +45,10 @@ final class BrowserUatAttestationController
                 'database' => $database,
             ],
             message: 'Browser UAT attestation',
-        );
+        )->header('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     }
 
-    private function isAttestationAllowed(): bool
+    private function isAttestationAllowed(Request $request): bool
     {
         if (! (bool) config('browser_uat.attestation_enabled', false)) {
             return false;
@@ -56,7 +64,17 @@ final class BrowserUatAttestationController
             return false;
         }
 
-        return true;
+        $expected = (string) config('browser_uat.attestation_token', '');
+        if ($expected === '') {
+            return false;
+        }
+
+        $provided = (string) $request->header(self::TOKEN_HEADER, '');
+        if ($provided === '') {
+            return false;
+        }
+
+        return hash_equals($expected, $provided);
     }
 
     private function resolveDatabaseName(string $driver): string

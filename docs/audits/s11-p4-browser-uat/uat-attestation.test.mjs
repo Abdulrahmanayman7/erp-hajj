@@ -1,6 +1,11 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { evaluateAttestation, isDisposableUatDatabase } from './uat-attestation.mjs'
+import {
+  ATTESTATION_TOKEN_HEADER,
+  attestationRequestHeaders,
+  evaluateAttestation,
+  isDisposableUatDatabase,
+} from './uat-attestation.mjs'
 
 describe('Browser UAT attestation evaluation', () => {
   it('rejects non-disposable attested databases even when UAT_DATABASE looks valid', () => {
@@ -73,5 +78,20 @@ describe('Browser UAT attestation evaluation', () => {
     assert.equal(verdict.database, 'erp_hajj_s11_uat')
     assert.equal(isDisposableUatDatabase('erp_hajj'), false)
     assert.equal(isDisposableUatDatabase('erp_hajj_s11_uat'), true)
+  })
+
+  it('sends the token only to the configured attestation endpoint', () => {
+    const api = 'http://127.0.0.1:8000'
+    const token = 'secret-uat-token'
+    const ok = attestationRequestHeaders(`${api}/api/v1/browser-uat/attestation`, api, token)
+    assert.deepEqual(ok, { [ATTESTATION_TOKEN_HEADER]: token })
+
+    assert.deepEqual(attestationRequestHeaders(`${api}/api/v1/health`, api, token), {})
+    assert.deepEqual(attestationRequestHeaders('http://127.0.0.1:5173/src/main.ts', api, token), {})
+    assert.deepEqual(
+      attestationRequestHeaders('https://evil.example/api/v1/browser-uat/attestation', api, token),
+      {},
+    )
+    assert.deepEqual(attestationRequestHeaders(`${api}/api/v1/browser-uat/attestation`, api, ''), {})
   })
 })
