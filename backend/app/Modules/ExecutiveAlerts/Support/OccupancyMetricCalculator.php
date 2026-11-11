@@ -55,9 +55,12 @@ final class OccupancyMetricCalculator
             return $this->unavailable($a03, 'no_active_units');
         }
 
+        // Batch position-mode capacity counts — avoid per-unit COUNT N+1 on dashboard/alerts paths.
+        $capacities = $this->capacityGuard->effectiveCapacitiesForUnits($units);
+
         $denominator = 0;
         foreach ($units as $unit) {
-            $cap = $this->capacityGuard->effectiveCapacity($unit);
+            $cap = $capacities[(int) $unit->id] ?? null;
             if ($cap === null) {
                 return $this->unavailable($a03, 'null_capacity');
             }

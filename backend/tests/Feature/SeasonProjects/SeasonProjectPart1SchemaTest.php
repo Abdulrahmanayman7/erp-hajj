@@ -168,6 +168,34 @@ test('Part1 generator is sequential under lock for same season', function (): vo
     expect($numbers)->toBe(['SPJ-000001', 'SPJ-000002', 'SPJ-000003']);
 });
 
+test('Part1 generator stays consistent across two seasons inside one outer transaction', function (): void {
+    $tenant = Tenant::factory()->create();
+
+    [$seasonANumbers, $seasonBNumbers] = withTenant($tenant, function () {
+        $seasonA = Season::factory()->active()->create();
+        $seasonB = Season::factory()->create();
+        $generator = app(SeasonProjectNumberGenerator::class);
+
+        return DB::transaction(function () use ($generator, $seasonA, $seasonB) {
+            $a = [
+                $generator->next($seasonA->id),
+                $generator->next($seasonA->id),
+                $generator->next($seasonA->id),
+            ];
+            $b = [
+                $generator->next($seasonB->id),
+                $generator->next($seasonB->id),
+                $generator->next($seasonB->id),
+            ];
+
+            return [$a, $b];
+        });
+    });
+
+    expect($seasonANumbers)->toBe(['SPJ-000001', 'SPJ-000002', 'SPJ-000003'])
+        ->and($seasonBNumbers)->toBe(['SPJ-000001', 'SPJ-000002', 'SPJ-000003']);
+});
+
 test('Part1 soft delete allows draft only and rejects dependents', function (): void {
     $tenant = Tenant::factory()->create();
 
