@@ -2,6 +2,7 @@
 
 use App\Core\Auth\Controllers\AuthController;
 use App\Core\Auth\Middleware\EnsureUserIsActive;
+use App\Core\BrowserUat\BrowserUatAttestationController;
 use App\Core\Health\HealthController;
 use App\Modules\Accommodation\Controllers\AccommodationAllocationController;
 use App\Modules\Accommodation\Controllers\AccommodationAssignmentController;
@@ -100,6 +101,10 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->name('api.v1.')->group(function (): void {
     Route::get('/health', HealthController::class)->name('health');
+
+    // Local/testing Browser UAT only — fails closed (404) unless explicitly opted in.
+    Route::get('/browser-uat/attestation', BrowserUatAttestationController::class)
+        ->name('browser-uat.attestation');
 
     Route::prefix('platform')->name('platform.')->group(function (): void {
         Route::get('/setup/status', [PlatformSetupController::class, 'status'])->name('setup.status');

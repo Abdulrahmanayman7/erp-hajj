@@ -4,8 +4,10 @@
  * Required safe environment:
  *   - Frontend at UAT_BASE_URL (default http://127.0.0.1:5173)
  *   - Laravel API at UAT_API_URL (default http://127.0.0.1:8000)
- *   - Disposable DB name advertised by GET /api/v1/health or X-Uat-Database header
- *     matching /^erp_hajj_.+_uat$/ (never production / erp_hajj without _uat)
+ *   - GET /api/v1/browser-uat/attestation must return the live connection database
+ *     (BROWSER_UAT_ATTESTATION_ENABLED=true, APP_ENV local|testing). Health never attests DB.
+ *   - Attested name must match /^erp_hajj_.+_uat$/
+ *   - Optional UAT_DATABASE is only an expected-value check against the attestation
  *
  * If the environment is missing or not verified disposable → writes NOT_RUN report and exits 0.
  */
@@ -13,6 +15,7 @@ import { chromium } from 'playwright-core'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { evaluateAttestation } from './uat-attestation.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const EVIDENCE = path.join(__dirname, 'evidence')
@@ -56,7 +59,16 @@ async function probeJson(url, timeoutMs = 4000) {
   const ctrl = new AbortController()
   const timer = setTimeout(() => ctrl.abort(), timeoutMs)
   try {
-    const res = await fetch(url, { signal: ctrl.signal })
+    const res = await fetch(url, { signal: ctrl.signal, redirect: 'manual' })
+    if (res.status >= 300 && res.status < 400) {
+      return {
+        ok: false,
+        status: res.status,
+        json: null,
+        headers: res.headers,
+        error: `Redirect ${res.status} to ${res.headers.get('location') || '(none)'} — fail closed`,
+      }
+    }
     const text = await res.text()
     let json = null
     try {
@@ -64,16 +76,12 @@ async function probeJson(url, timeoutMs = 4000) {
     } catch {
       json = null
     }
-    return { ok: res.ok, status: res.status, json, headers: res.headers }
+    return { ok: res.ok, status: res.status, json, headers: res.headers, rawText: text }
   } catch (err) {
     return { ok: false, status: 0, json: null, headers: null, error: String(err) }
   } finally {
     clearTimeout(timer)
   }
-}
-
-function isDisposableUatDb(name) {
-  return typeof name === 'string' && /^erp_hajj_.+_uat$/.test(name)
 }
 
 async function verifySafeEnvironment() {
@@ -86,34 +94,46 @@ async function verifySafeEnvironment() {
   }
 
   const health = await probeJson(`${API}/api/v1/health`)
-  const alt = health.ok ? health : await probeJson(`${API}/up`)
-  if (!alt.ok && alt.status === 0) {
+  if (!health.ok && health.status === 0) {
     return {
       ok: false,
-      reason: `Laravel API unreachable at ${API} (${alt.error || 'timeout/connection refused'})`,
+      reason: `Laravel API unreachable at ${API} (${health.error || 'timeout/connection refused'})`,
+    }
+  }
+  if (health.error?.includes('Redirect')) {
+    return { ok: false, reason: `Health probe redirect — fail closed (${health.error})` }
+  }
+
+  // Never trust UAT_DATABASE or health for DB identity. Attestation only.
+  const attestationUrl = `${API}/api/v1/browser-uat/attestation`
+  const attestation = await probeJson(attestationUrl)
+  if (attestation.error?.includes('Redirect')) {
+    return { ok: false, reason: `Attestation redirect — fail closed (${attestation.error})` }
+  }
+  if (attestation.status === 0) {
+    return {
+      ok: false,
+      reason: `Attestation unreachable (${attestation.error || 'timeout'}). Fail closed.`,
+    }
+  }
+  if (attestation.json === null && attestation.status !== 0) {
+    return {
+      ok: false,
+      reason: `Attestation non-JSON response (status=${attestation.status}). Fail closed.`,
     }
   }
 
-  const dbFromBody =
-    health.json?.data?.database ||
-    health.json?.database ||
-    health.json?.data?.db ||
-    process.env.UAT_DATABASE ||
-    null
-  const dbFromHeader = health.headers?.get?.('x-uat-database') || null
-  const database = dbFromBody || dbFromHeader
+  const verdict = evaluateAttestation(attestation.json, {
+    ok: attestation.ok,
+    status: attestation.status,
+    expectedDatabase: process.env.UAT_DATABASE || null,
+  })
 
-  if (!isDisposableUatDb(database)) {
-    return {
-      ok: false,
-      reason:
-        `No positively verified disposable UAT database (got ${JSON.stringify(database)}). ` +
-        `Refusing browser UAT against unknown/production DBs. Set UAT_DATABASE=erp_hajj_<slice>_uat ` +
-        `only when the API process is bound to that disposable database.`,
-    }
+  if (!verdict.ok) {
+    return { ok: false, reason: verdict.reason }
   }
 
-  return { ok: true, database }
+  return { ok: true, database: verdict.database }
 }
 
 async function login(page, user) {

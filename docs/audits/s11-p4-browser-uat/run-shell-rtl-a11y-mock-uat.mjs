@@ -9,11 +9,13 @@ import { mkdirSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createRequire } from 'node:module'
+import { classifyRequest } from './network-policy.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const EVIDENCE = join(__dirname, 'evidence')
 const BASE = process.env.UAT_BASE_URL || 'http://127.0.0.1:5173'
 const FE_ORIGIN = BASE.replace(/\/$/, '')
+const networkLog = { continued: [], mocked: [], denied: [] }
 
 const require = createRequire(import.meta.url)
 let chromium
@@ -146,8 +148,27 @@ async function handleApi(route, url) {
     )
     return
   }
+  if (pathName === '/api/v1/browser-uat/attestation') {
+    // Mock UAT never talks to a live DB — attestation is unavailable here.
+    await fulfillJson(
+      route,
+      { success: false, message: 'غير موجود', code: 'BROWSER_UAT_ATTESTATION_UNAVAILABLE' },
+      404,
+    )
+    return
+  }
+  // Intended module list/detail reads: empty mock (still never hits the network).
   if (pathName.startsWith('/api/v1/')) {
     await fulfillJson(route, okEnvelope([], pageMeta(0)))
+    return
+  }
+  // Explicit reject for unexpected API/sanctum paths (do not forward to network).
+  if (pathName.startsWith('/api/') || pathName.startsWith('/sanctum/')) {
+    await fulfillJson(
+      route,
+      { success: false, message: 'mock rejected', code: 'MOCK_API_REJECTED' },
+      404,
+    )
     return
   }
   await route.abort()
@@ -185,28 +206,23 @@ async function main() {
     })
     const page = await context.newPage()
 
+    // Classify BEFORE any continue() so same-origin /api never hits the network
+    // (independent of VITE_API_URL).
     await page.route('**/*', async (route) => {
-      const url = new URL(route.request().url())
-      if (url.origin === FE_ORIGIN || url.pathname.startsWith('/@') || url.pathname.startsWith('/src')) {
+      const requestUrl = route.request().url()
+      const decision = classifyRequest(requestUrl, { feOrigin: FE_ORIGIN })
+      if (decision === 'mock-api') {
+        networkLog.mocked.push(requestUrl)
+        await handleApi(route, new URL(requestUrl))
+        return
+      }
+      if (decision === 'allow-fe') {
+        networkLog.continued.push(requestUrl)
         await route.continue()
         return
       }
-      if (
-        url.pathname.startsWith('/api/') ||
-        url.pathname.startsWith('/sanctum/') ||
-        ((url.hostname === 'localhost' || url.hostname === '127.0.0.1') &&
-          (url.port === '8000' || url.port === '') &&
-          (url.pathname.startsWith('/api/') || url.pathname.startsWith('/sanctum/')))
-      ) {
-        await handleApi(route, url)
-        return
-      }
-      // Allow fonts/CDN; block unknown hosts
-      if (url.hostname.includes('googleapis') || url.hostname.includes('gstatic')) {
-        await route.continue()
-        return
-      }
-      await route.abort()
+      networkLog.denied.push(requestUrl)
+      await route.abort('blockedbyclient')
     })
 
     await page.goto(`${FE_ORIGIN}/app`, { waitUntil: 'domcontentloaded', timeout: 45000 })
@@ -266,6 +282,59 @@ async function main() {
       record(`route-${label}`, 'PASS', pathName)
     }
 
+    // In-page network isolation probes (same-origin /api must be mocked, not continued).
+    const probe = await page.evaluate(async (origin) => {
+      const out = { sameOriginApi: null, sanctum: null, external: null }
+      try {
+        const r = await fetch(`${origin}/api/v1/auth/me`, { credentials: 'include' })
+        out.sameOriginApi = { status: r.status, ok: r.ok }
+      } catch (e) {
+        out.sameOriginApi = { error: String(e) }
+      }
+      try {
+        const r = await fetch(`${origin}/sanctum/csrf-cookie`, { credentials: 'include' })
+        out.sanctum = { status: r.status }
+      } catch (e) {
+        out.sanctum = { error: String(e) }
+      }
+      try {
+        const r = await fetch('https://evil.example/api/v1/secrets', { redirect: 'manual' })
+        out.external = { status: r.status, ok: r.ok }
+      } catch (e) {
+        out.external = { blocked: true, error: String(e) }
+      }
+      return out
+    }, FE_ORIGIN)
+
+    if (!probe.sameOriginApi?.ok) throw new Error(`same-origin /api not mocked: ${JSON.stringify(probe.sameOriginApi)}`)
+    record('isolation-same-origin-api', 'PASS', JSON.stringify(probe.sameOriginApi))
+    if (probe.sanctum?.error && !probe.sanctum?.status) {
+      throw new Error(`same-origin /sanctum not mocked: ${JSON.stringify(probe.sanctum)}`)
+    }
+    record('isolation-same-origin-sanctum', 'PASS', JSON.stringify(probe.sanctum))
+    if (probe.external && probe.external.ok) {
+      throw new Error('external API request was not blocked')
+    }
+    record('isolation-external-deny', 'PASS', JSON.stringify(probe.external))
+
+    const leaked = networkLog.continued.filter((u) => {
+      try {
+        const pathName = new URL(u).pathname
+        return pathName.startsWith('/api/') || pathName.startsWith('/sanctum/')
+      } catch {
+        return false
+      }
+    })
+    if (leaked.length > 0) {
+      throw new Error(`API/sanctum requests were continued to network: ${leaked.join(', ')}`)
+    }
+    record('isolation-no-api-continue', 'PASS', `mocked=${networkLog.mocked.length} denied=${networkLog.denied.length}`)
+
+    report.network = {
+      mocked: networkLog.mocked.length,
+      denied: networkLog.denied.length,
+      continued: networkLog.continued.length,
+    }
     report.verdict = results.some((r) => r.status === 'FAIL') ? 'FAIL' : 'PASS'
   } catch (err) {
     report.verdict = 'FAIL'

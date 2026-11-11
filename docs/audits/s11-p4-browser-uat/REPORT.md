@@ -32,7 +32,10 @@
 
 ## Safety gate
 
-`run-uat.mjs` exits **NOT_RUN** unless `UAT_DATABASE` / health payload matches `/^erp_hajj_.+_uat$/`.  
+`run-uat.mjs` exits **NOT_RUN** unless `GET /api/v1/browser-uat/attestation` succeeds and the **attested** live database matches `/^erp_hajj_.+_uat$/`.  
+`UAT_DATABASE` is optional and only compared to the attestation — never treated as proof.  
+`/api/v1/health` is not used for database identity.  
+Mock harness classifies `/api` and `/sanctum` (including same-origin) before any FE `continue()`, so traffic never depends on `VITE_API_URL`.  
 No migrations or browser UAT are run against production or unnamed databases.
 
 ## Evidence

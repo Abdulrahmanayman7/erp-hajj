@@ -53,6 +53,18 @@
 - CI MySQL concurrency observability + split Accommodation steps + orphan worker cleanup
 - This readiness matrix (evidence-separated statuses only)
 
+## Browser UAT safety guarantees (PR #60 remediation)
+
+| Guarantee | Mechanism | Evidence |
+|---|---|---|
+| Live UAT never trusts `UAT_DATABASE` alone | `GET /api/v1/browser-uat/attestation` returns the **live** Laravel connection database name only when `BROWSER_UAT_ATTESTATION_ENABLED=true` and `APP_ENV` ∈ {local, testing}; production always 404 | Pest `BrowserUatAttestationTest`; harness `uat-attestation.mjs` + `uat-attestation.test.mjs` |
+| Public `/api/v1/health` unchanged | No database fields added to health | Pest health assertion in attestation suite |
+| Disposable naming policy | Attested name must match `/^erp_hajj_.+_uat$/`; optional `UAT_DATABASE` is expected-value only | `evaluateAttestation()` rejects `erp_hajj` even if env claims `erp_hajj_s11_uat` |
+| Fail closed | Timeouts, redirects, non-JSON, 4xx/5xx, missing marker → NOT_RUN / refuse | `run-uat.mjs` uses `redirect: 'manual'` + attestation evaluator |
+| Mock UAT network isolation | Classify API/sanctum (including same-origin) **before** allowing FE assets; deny other origins by default; no dependency on `VITE_API_URL` | `network-policy.mjs` + `network-policy.test.mjs`; mock runner probes + `networkLog` asserts no `/api`/`/sanctum` continues |
+
+**Live operational Browser UAT:** **NOT_RUN** unless executed against an API that attests a disposable `erp_hajj_*_uat` database.
+
 ## Release claim
 
 **Phase 2 is not release-complete.** S11-P4 improves readiness evidence and hardening but does **not** clear Owner/security/GPS/SLA gates above.
