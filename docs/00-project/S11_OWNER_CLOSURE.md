@@ -73,7 +73,7 @@ Supporting readiness matrix: [S11_P4_RELEASE_READINESS_MATRIX.md](S11_P4_RELEASE
 | PR #57 | `f3b0efe…` | [42907163367](https://github.com/Abdulrahmanayman7/erp-hajj/actions/runs/42907163367) | **SUCCESS** |
 | PR #58 | `e7e1351…` | [42921531725](https://github.com/Abdulrahmanayman7/erp-hajj/actions/runs/42921531725) | **SUCCESS** |
 | PR #59 | `c7b4f54…` | [42954460746](https://github.com/Abdulrahmanayman7/erp-hajj/actions/runs/42954460746) | **SUCCESS** |
-| PR #60 | `de90c5f…` | [42966539217](https://github.com/Abdulrahmanayman7/erp-hajj/actions/runs/42966539217) | **PENDING** (see §5) |
+| PR #60 | `de90c5f…` | [42966539217](https://github.com/Abdulrahmanayman7/erp-hajj/actions/runs/42966539217) | **SUCCESS** (see §5) |
 
 ---
 
@@ -84,13 +84,14 @@ Supporting readiness matrix: [S11_P4_RELEASE_READINESS_MATRIX.md](S11_P4_RELEASE
 | Run | [42966539217](https://github.com/Abdulrahmanayman7/erp-hajj/actions/runs/42966539217) |
 | Event | `push` after merge of PR #60 |
 | Head SHA | `de90c5fd1c040c02051d92a2aa8855fdaa4eff12` |
-| Status at package time | **`in_progress`** |
-| Conclusion at package time | **empty / not SUCCESS** |
+| Status (final) | **`completed`** |
+| Conclusion (final) | **`success`** |
+| Jobs | Frontend (Vue) **SUCCESS**; Backend (Laravel) **SUCCESS**; Backend (MySQL 8 — Transport + Accommodation + S04) **SUCCESS** |
 
-**Recorded status for this package: PENDING.**  
-Do **not** treat as SUCCESS until GitHub reports `conclusion=success`.
+**Recorded status for this package: SUCCESS.**  
+Verified via GitHub Actions run [42966539217](https://github.com/Abdulrahmanayman7/erp-hajj/actions/runs/42966539217) on head SHA `de90c5fd1c040c02051d92a2aa8855fdaa4eff12`.
 
-Partial observation at package time (not a final verdict): Frontend (Vue) had completed SUCCESS; Backend (Laravel) and Backend (MySQL 8) were still running.
+Owner acceptance of this closure package remains **PENDING_APPROVAL** (CI SUCCESS ≠ Owner acceptance).
 
 ---
 
@@ -133,7 +134,7 @@ Automated security tests and PR CI SUCCESS do **not** replace human Owner/securi
 | ID | Item | Status | Notes |
 |---|---|---|---|
 | C-S05 | S05 Owner acceptance paperwork | **PENDING_APPROVAL** | Certificate not located — do not invent |
-| C-S08 | S08 documentation drift / merge–deploy posture | **BLOCKED** / docs conflict | Matrix historically **OWNER_ACCEPTED / NOT_MERGED / NOT_DEPLOYED**; ROADMAP also records PR #46 ancestry — reconcile under Owner direction; do not invent deploy authorization |
+| C-S08 | S08 documentation drift / merge–deploy posture | **RECONCILED in S12 docs** (merge evidence) | Living status now **OWNER_ACCEPTED / MERGED / NOT_DEPLOYED** via PR #46 @ `3a18b16`; deploy still **not** authorized |
 | C-S09 | S09 independent security Approve | **PENDING_APPROVAL** | Technical APPROVE_RECOMMENDED; GitHub Approve NOT_RECORDED |
 | C-S10-SEC | S10 independent human security review (#52–#55) | **PENDING_APPROVAL** | Remains open after S10 admin closure |
 | C-S10-UAT | S10 Browser UAT | **NOT_RUN** / **PENDING** | Carryover |
@@ -142,7 +143,7 @@ Automated security tests and PR CI SUCCESS do **not** replace human Owner/securi
 | C-U03 | Production SLA activation | **BLOCKED** | `EXECUTIVE_COMPLAINT_SLA_ACTIVATED_AT` unset |
 | C-S11-LIVE-UAT | S11 live operational Browser UAT | **NOT_RUN** | Harness present; disposable attested stack not executed |
 | C-S11-OWNER | S11 Owner approval of this closure | **PENDING_APPROVAL** | — |
-| C-S12 | Phase 2 UAT & handoff (S12) | **NOT_STARTED** | Separate sprint |
+| C-S12 | Phase 2 UAT & handoff (S12) | **IN_PROGRESS** (handoff package) | See [S12_SPRINT_STATUS.md](S12_SPRINT_STATUS.md); Owner acceptance still PENDING |
 
 ---
 
@@ -150,7 +151,7 @@ Automated security tests and PR CI SUCCESS do **not** replace human Owner/securi
 
 **NOT_AUTHORIZED.**
 
-S11 merges onto `develop` do **not** authorize production deploy, go-live, or Phase 2 completion claims. Carryovers in §9 remain open. Post-merge CI for PR #60 (`42966539217`) was **PENDING** at package time.
+S11 merges onto `develop` do **not** authorize production deploy, go-live, or Phase 2 completion claims. Carryovers in §9 remain open. Post-merge CI for PR #60 (`42966539217`) concluded **SUCCESS**; Owner acceptance remains **PENDING**.
 
 ---
 
