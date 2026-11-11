@@ -65,7 +65,10 @@ function runSpjNumberWorkers(array $jobs, float $barrierDelay = 2.0): array
         $raw = trim($process->getOutput());
         expect($process->isSuccessful())->toBeTrue($process->getErrorOutput().$raw);
         $decoded = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
-        expect($decoded['ok'])->toBeTrue($raw)
+        // Regression: catch(Throwable) around INSERT must not swallow deadlocks and
+        // then commit a transaction MySQL already rolled back.
+        expect($decoded['message'] ?? null)->not->toBe('There is no active transaction')
+            ->and($decoded['ok'])->toBeTrue($raw)
             ->and($decoded['db'] ?? null)->toBe('erp_hajj_testing');
         $outcomes[] = $decoded;
     }
