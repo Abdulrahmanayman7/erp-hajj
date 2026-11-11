@@ -60,6 +60,7 @@ describe('SeasonStatusPanel', () => {
   it('renders season id, name and authorized status label in RTL', async () => {
     const host = await mountPanel()
     expect(host.querySelector('[dir="rtl"]')).not.toBeNull()
+    expect(host.querySelector('[aria-label="لوحة حالة الموسم"]')).not.toBeNull()
     expect(host.textContent).toContain('حالة الموسم')
     expect(host.textContent).toContain('42')
     expect(host.textContent).toContain('موسم الاختبار')

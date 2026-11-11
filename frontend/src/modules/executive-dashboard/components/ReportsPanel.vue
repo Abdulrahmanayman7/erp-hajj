@@ -37,7 +37,11 @@ async function onDownload(report: ExecutiveReportId): Promise<void> {
 </script>
 
 <template>
-  <section class="app-surface-flat space-y-3 p-4" aria-label="executive reports panel" dir="rtl">
+  <section
+    class="app-surface-flat space-y-3 p-4"
+    :aria-label="t('executiveDashboard.a11y.reportsPanel')"
+    dir="rtl"
+  >
     <div class="space-y-1">
       <h2 class="text-sm font-bold text-brand-text">{{ t('executiveDashboard.reports.title') }}</h2>
       <p class="text-xs text-brand-text-secondary">{{ t('executiveDashboard.reports.hint') }}</p>

@@ -180,7 +180,7 @@ const showReports = computed(() =>
     <section
       v-if="canPickSeasons"
       class="app-surface-flat space-y-3 p-4"
-      aria-label="season picker"
+      :aria-label="t('executiveDashboard.a11y.seasonPicker')"
     >
       <div class="flex flex-col gap-3 md:flex-row md:items-end">
         <div class="min-w-0 flex-1 space-y-1.5">
@@ -226,7 +226,7 @@ const showReports = computed(() =>
     <section
       v-else
       class="app-surface-flat space-y-3 p-4"
-      aria-label="manual season id"
+      :aria-label="t('executiveDashboard.a11y.manualSeason')"
     >
       <p class="text-sm text-brand-text-secondary">{{ t('executiveDashboard.manualSeasonHint') }}</p>
       <div class="flex flex-col gap-3 md:flex-row md:items-end">
@@ -292,7 +292,7 @@ const showReports = computed(() =>
     <section
       v-if="showGps && payload?.gps"
       class="app-surface-flat space-y-3 p-4"
-      aria-label="gps map panel"
+      :aria-label="t('executiveDashboard.a11y.gpsPanel')"
     >
       <div class="flex items-start gap-3">
         <MapPin class="mt-0.5 h-5 w-5 shrink-0 text-brand-text-muted" aria-hidden="true" />

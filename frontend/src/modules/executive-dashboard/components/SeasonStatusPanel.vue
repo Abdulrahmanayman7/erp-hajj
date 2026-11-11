@@ -13,7 +13,7 @@ const { t } = useI18n()
 <template>
   <section
     class="app-surface-flat space-y-3 p-4"
-    aria-label="season status panel"
+    :aria-label="t('executiveDashboard.a11y.seasonStatusPanel')"
     dir="rtl"
   >
     <h2 class="text-sm font-bold text-brand-text">{{ t('executiveDashboard.panels.seasonTitle') }}</h2>
