@@ -27,18 +27,18 @@
 | S05 Procurement cycle | PASS (MySQL concurrency in CI) | NOT_RUN | Merged (PR #41/#42) | — | PENDING_APPROVAL (certificate not located) | PENDING_APPROVAL |
 | S06 Season projects | PASS (SQLite Feature; MySQL number concurrency via S11-P3) | NOT_RUN (prior S06 E2E deferred; S11-P4 live UAT NOT_RUN) | Merged (PR #45) | Historical MySQL deferral mostly lifted by S11-P3 CI wire | PENDING_APPROVAL (not Owner COMPLETE) | PENDING_APPROVAL |
 | S07 Risks & complaints | PASS (module tests; MySQL number concurrency) | NOT_RUN (S11-P4 live UAT NOT_RUN) | Merged (PR #44) | — | PENDING_APPROVAL (not assumed) | PENDING_APPROVAL |
-| S08 Seasonal templates | PASS on feature branch MySQL CI historically; docs drift vs merge state | UAT-09/10 PASS (historical); UAT-04/08 exceptions | PENDING_APPROVAL / NOT_MERGED stream docs | Documentation drift; merge/deploy not authorized by acceptance alone | PASS Owner 2026-11-08 on feature branch | BLOCKED (NOT_MERGED / NOT_DEPLOYED per docs) |
+| S08 Seasonal templates | PASS on feature branch MySQL CI historically; PR #46 MERGED @ `3a18b16` | UAT-09/10 PASS (historical); UAT-04/08 exceptions | Owner Accepted 2026-11-08; living status **MERGED / NOT_DEPLOYED** | Deploy still not authorized | PASS Owner 2026-11-08 | **OWNER_ACCEPTED / MERGED / NOT_DEPLOYED** |
 | S09 Operational KPIs | PASS (Phase 1 merged tests) | NOT_RUN | Technical APPROVE_RECOMMENDED; GitHub Approve NOT_RECORDED | Independent approval gap | PENDING_APPROVAL | PENDING_APPROVAL |
 | S10 Executive dashboard | PASS (CI GPS ingest + alerts; Vitest panels) | NOT_RUN / PENDING (S10 Browser UAT still open) | PENDING_APPROVAL (human review PRs #52–#55) | G4_LIVE, G5, U03 SLA unset | Admin CLOSED_WITH_CARRYOVER | BLOCKED for full GPS/SLA claims |
 | S11 Integration / hardening | PASS S11-P1/P2/P3 automated; S11-P4 Vitest a11y + CI observability | Live journeys NOT_RUN; shell mock see suite folder | Relies on prior PR reviews | Remaining Phase 2 blockers listed below | PENDING_APPROVAL for S11 closure | NOT_RUN / PARTIAL |
-| S12 Phase handoff | NOT_RUN | NOT_RUN | — | No Phase 2 UAT minutes | PENDING_APPROVAL | NOT_RUN |
+| S12 Phase handoff | Harness + docs on PR #61 | Mock PASS; Live **NOT_RUN** | PENDING_OWNER_APPROVAL | Live attested stack unavailable | PENDING_APPROVAL | `HANDOFF_PREPARED — LIVE_UAT_NOT_RUN` |
 
 ## Cross-cutting gates (must stay unresolved without evidence)
 
 | Gate | Status |
 |---|---|
 | S05 Owner acceptance paperwork | PENDING_APPROVAL |
-| S08 documentation drift / merge posture | BLOCKED / docs conflict — do not invent merge |
+| S08 documentation drift / merge posture | RECONCILED to MERGED / NOT_DEPLOYED (PR #46 evidence); deploy still not authorized |
 | S09 independent security approval | PENDING_APPROVAL |
 | S10 independent human security review (#52–#55) | PENDING_APPROVAL |
 | S10 Browser UAT | NOT_RUN / PENDING |

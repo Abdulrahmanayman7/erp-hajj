@@ -1,8 +1,8 @@
 # S12 — Phase 2 Completion Report (Handoff Package)
 
-> **Proposed S12 status:** `IN_PROGRESS — HANDOFF_PACKAGE_PREPARED` (Owner acceptance **PENDING**)  
-> **Phase 2 product completion:** **NOT CLAIMED** (`S10_FULL_SCOPE_COMPLETED=false`; G4/G5 BLOCKED; approvals pending)  
-> **Production release:** **NOT_AUTHORIZED**  
+> **Proposed S12 status:** `HANDOFF_PREPARED — LIVE_UAT_NOT_RUN` (Owner acceptance **PENDING**)  
+> **Phase 2 product completion:** **NOT CLAIMED** (`S10_FULL_SCOPE_COMPLETED=false`; G4/G5 **BLOCKED**; U03 **BLOCKED**; approvals pending)  
+> **Production release:** **NOT_AUTHORIZED** / **NOT_PRODUCTION_AUTHORIZED**  
 > **Package date:** 2026-11-11  
 > **Baseline tip (feature branch parent):** `origin/develop` @ `de90c5fd1c040c02051d92a2aa8855fdaa4eff12` (PR #60 merge)
 

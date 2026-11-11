@@ -1,11 +1,13 @@
 # S12 — Sprint Status
 
-> **Status:** `IN_PROGRESS — HANDOFF_PACKAGE_PREPARED`  
+> **Status:** `HANDOFF_PREPARED — LIVE_UAT_NOT_RUN`  
 > **Owner acceptance:** **PENDING** (not invented)  
-> **Production:** **NOT_AUTHORIZED**  
+> **PR #61 engineering posture:** **READY_FOR_OWNER_REVIEW** (merge still requires explicit Owner authorization)  
+> **Production:** **NOT_AUTHORIZED** / Phase 2 **NOT_PRODUCTION_AUTHORIZED**  
 > **Date:** 2026-11-11  
 > **Branch:** `feature/s12-uat-phase-handoff`  
-> **Scope source:** ADR-0020 §S12; ROADMAP; PHASE2_SCOPE_MATRIX
+> **Scope source:** ADR-0020 §S12; ROADMAP; PHASE2_SCOPE_MATRIX  
+> **Merge readiness:** [S12_PR61_MERGE_READINESS.md](S12_PR61_MERGE_READINESS.md)
 
 ## Scope (official)
 
