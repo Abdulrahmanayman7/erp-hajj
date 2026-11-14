@@ -2,11 +2,10 @@
 
 > **Status:** `HANDOFF_PREPARED — LIVE_UAT_NOT_RUN`  
 > **Owner acceptance:** **PENDING** (not invented)  
-> **PR #61:** Owner-authorized merge into `develop` (2026-11-14); S12 / Phase 2 final acceptance **not** granted  
+> **PR #61:** **MERGED** 2026-11-14 into `develop` @ `384592ca3f1c71b97f078008f5210eca9ce35f9c`; S12 / Phase 2 final acceptance **not** granted  
 > **S11:** Owner admin closure **`CLOSED_WITH_CARRYOVER`** APPROVED 2026-11-14  
 > **Production:** **NOT_AUTHORIZED** / Phase 2 **NOT_PRODUCTION_AUTHORIZED**  
-> **Date:** 2026-11-11  
-> **Branch:** `feature/s12-uat-phase-handoff`  
+> **Date:** 2026-11-14  
 > **Scope source:** ADR-0020 §S12; ROADMAP; PHASE2_SCOPE_MATRIX  
 > **Merge readiness:** [S12_PR61_MERGE_READINESS.md](S12_PR61_MERGE_READINESS.md)
 
