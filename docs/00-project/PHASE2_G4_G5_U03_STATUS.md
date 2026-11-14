@@ -8,18 +8,20 @@
 
 | Field | Value |
 |---|---|
-| Status | **BLOCKED** |
+| Status | **BLOCKED** (technical prep delivered; live binding absent) |
 | Delivered foundation | G0–G3: `NullGpsProvider`, HMAC ingest, last-known, freshness, dashboard markers |
+| Technical prep | Unknown `GPS_PROVIDER` keys fail closed via `GpsProviderNotApprovedException`; checklist in [G4_G5_TECHNICAL_PREPARATION.md](../09-modules/23-executive-dashboard/G4_G5_TECHNICAL_PREPARATION.md) |
 | Missing for G4 | Approved real GPS/location vendor or API contract; credentials; accuracy/update timing docs; live verification |
 | Invented vendor | **Forbidden** |
-| Evidence | [S10_COMPLETION_STATUS.md](../09-modules/23-executive-dashboard/S10_COMPLETION_STATUS.md); `config/gps.php` `provider=null` default |
+| Evidence | `config/gps.php` `provider=null` default; PR #64 follow-up |
 
 ## G5 — GPS history / legal retention
 
 | Field | Value |
 |---|---|
-| Status | **BLOCKED** |
+| Status | **BLOCKED** (writer seam only; no history table) |
 | Current design | Last-known only; `gps_vehicle_location_history` intentionally absent |
+| Technical prep | Unbound `GpsLocationHistoryWriterInterface`; tests assert table absent |
 | Missing for G5 | Explicit legal retention period, consent, access, deletion/erasure requirements |
 | Invented retention | **Forbidden** |
 
@@ -30,13 +32,14 @@
 | Status | **BLOCKED** (code present; production activation unset) |
 | Code | Complaint SLA evaluator + ALT-COMP-SLA scanner paths exist |
 | Activation | `EXECUTIVE_COMPLAINT_SLA_ACTIVATED_AT` **unset** → fail-closed |
+| Non-production | `php artisan executive-alerts:verify-complaint-sla-readiness [--smoke-activate]` refuses production; in-process smoke only |
 | Runbook | [S10_COMPLAINT_SLA_ACTIVATION_RUNBOOK.md](../09-modules/23-executive-dashboard/S10_COMPLAINT_SLA_ACTIVATION_RUNBOOK.md) |
-| Non-production | Safe to smoke only on disposable env with explicit temporary activation |
 
 ## Live Browser UAT (related gate)
 
 | Field | Value |
 |---|---|
-| Status | **NOT_RUN** (this delivery cycle) |
-| Blocker | No positively attested disposable `erp_hajj_*_uat` Laravel stack; workspace `.env` points at `erp_hajj` (non-disposable) |
-| Mock | S12 mock operational UAT **PASS** (not a substitute) |
+| Status | **PASS** (2026-11-14 attested disposable run) |
+| Stack | `erp_hajj_phase2_uat` + attestation token |
+| Does not authorize | Production deploy or Owner final acceptance by itself |
+| Detail | [PHASE2_LIVE_UAT_ATTEMPT_2026-11-14.md](PHASE2_LIVE_UAT_ATTEMPT_2026-11-14.md) |
