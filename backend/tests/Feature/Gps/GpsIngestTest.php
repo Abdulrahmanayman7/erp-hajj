@@ -1,5 +1,6 @@
 <?php
 
+use App\Core\Authorization\Events\AuthorizationSecurityEvent;
 use App\Core\Tenancy\Models\Tenant;
 use App\Modules\Gps\Models\GpsDeviceBinding;
 use App\Modules\Gps\Models\GpsVehicleLastKnown;
@@ -10,6 +11,7 @@ use App\Modules\Transportation\Models\TransportSeasonVehicle;
 use App\Modules\Transportation\Models\TransportVehicle;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Testing\TestResponse;
 
@@ -127,6 +129,35 @@ it('rejects replayed nonces', function (): void {
 
     gpsSignedPost($payload, $fx['secret'])->assertCreated();
     gpsSignedPost($payload, $fx['secret'])->assertStatus(409);
+});
+
+it('audits GPS_INGEST_ACCEPTED without coordinates or webhook secrets', function (): void {
+    $fx = gpsIngestFixture();
+    Event::fake([AuthorizationSecurityEvent::class]);
+
+    gpsSignedPost(gpsIngestPayload($fx), $fx['secret'])->assertCreated();
+
+    Event::assertDispatched(
+        AuthorizationSecurityEvent::class,
+        function (AuthorizationSecurityEvent $e) use ($fx): bool {
+            if ($e->name !== AuthorizationSecurityEvent::GPS_INGEST_ACCEPTED) {
+                return false;
+            }
+
+            $ctx = $e->context;
+
+            return ($ctx['tenant_id'] ?? null) === $fx['tenant']->id
+                && ($ctx['season_id'] ?? null) === $fx['season']->id
+                && ($ctx['transport_season_vehicle_id'] ?? null) === $fx['vehicle']->id
+                && ($ctx['device_id'] ?? null) === $fx['device_id']
+                && ! array_key_exists('lat', $ctx)
+                && ! array_key_exists('lng', $ctx)
+                && ! array_key_exists('latitude', $ctx)
+                && ! array_key_exists('longitude', $ctx)
+                && ! array_key_exists('nonce', $ctx)
+                && ! str_contains(json_encode($ctx), $fx['secret']);
+        },
+    );
 });
 
 it('upserts gps_vehicle_last_known only and never invents history', function (): void {
@@ -388,4 +419,35 @@ it('fails closed when the claimed tenant has no webhook secret', function (): vo
     Config::set('gps.webhook_secrets', []);
 
     gpsSignedPost(gpsIngestPayload($fx), $fx['secret'])->assertForbidden();
+});
+
+it('returns an identical GPS_INGEST_DENIED body for unknown tenant, missing secret, and bad signature', function (): void {
+    $fx = gpsIngestFixture();
+
+    $unknownTenant = gpsSignedPost(gpsIngestPayload($fx, [
+        'tenant_id' => 9_999_999,
+    ]), $fx['secret'])->assertForbidden();
+
+    Config::set('gps.webhook_secrets', []);
+    $missingSecret = gpsSignedPost(gpsIngestPayload($fx, [
+        'nonce' => 'nonce-oracle-missing-'.uniqid(),
+    ]), $fx['secret'])->assertForbidden();
+
+    Config::set('gps.webhook_secrets', [
+        (string) $fx['tenant']->id => $fx['secret'],
+    ]);
+    $badSignature = gpsSignedPost(gpsIngestPayload($fx, [
+        'nonce' => 'nonce-oracle-badsig-'.uniqid(),
+    ]), $fx['secret'], 'deadbeef')->assertForbidden();
+
+    $expected = [
+        'message' => 'Invalid device.',
+        'code' => 'GPS_INGEST_DENIED',
+    ];
+
+    expect($unknownTenant->json())->toMatchArray($expected)
+        ->and($missingSecret->json())->toMatchArray($expected)
+        ->and($badSignature->json())->toMatchArray($expected)
+        ->and($unknownTenant->json())->toBe($missingSecret->json())
+        ->and($missingSecret->json())->toBe($badSignature->json());
 });

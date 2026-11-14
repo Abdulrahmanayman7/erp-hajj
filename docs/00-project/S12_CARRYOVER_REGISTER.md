@@ -11,8 +11,8 @@
 | C-S06 | S06 final Owner acceptance | Owner | **PENDING** | Stream = FUNCTIONALLY_ACCEPTED / TECHNICAL_VALIDATION_DEFERRED |
 | C-S07 | S07 final Owner acceptance | Owner | **PENDING** | Merge ≠ acceptance |
 | C-S08 | S08 documentation reconciliation | Docs | **RESOLVED in S12 docs** (merge evidence) | Status now `OWNER_ACCEPTED / MERGED / NOT_DEPLOYED`; deploy still **not** authorized |
-| C-S09 | S09 independent security Approve | Security | **PENDING** | GitHub Approve not recorded |
-| C-S10-SEC | S10 human security review #52–#55 | Security | **PENDING** | Open after admin closure |
+| C-S09 | S09 independent security Approve | Security | **PENDING** | Evidence pack ready — [S09_SECURITY_REVIEW_EVIDENCE.md](../09-modules/22-operational-kpis/S09_SECURITY_REVIEW_EVIDENCE.md); GitHub Approve not recorded |
+| C-S10-SEC | S10 human security review #52–#55 | Security | **PENDING** | Evidence + GPS oracle fix — [S10_SECURITY_REVIEW_EVIDENCE_2026-11-14.md](../09-modules/23-executive-dashboard/S10_SECURITY_REVIEW_EVIDENCE_2026-11-14.md); human Approve not recorded |
 | C-S10-UAT | S10 Browser UAT | UAT | **NOT_RUN / PENDING** | Carryover |
 | C-S11-LIVE-UAT | S11 live Browser UAT | UAT | **NOT_RUN** | Harness existed; attested stack often unavailable |
 | C-S11-OWNER | S11 Owner administrative closure | Owner | **APPROVED** (2026-11-14) | `CLOSED_WITH_CARRYOVER`; production / Phase 2 final acceptance not granted |

@@ -43,6 +43,7 @@ use App\Modules\ExecutiveAlerts\Policies\ExecutiveAlertPolicy;
 use App\Modules\ExecutiveDashboard\Policies\ExecutiveDashboardPolicy;
 use App\Modules\ExecutiveReports\Policies\ExecutiveReportPolicy;
 use App\Modules\Gps\Contracts\GpsProviderInterface;
+use App\Modules\Gps\Exceptions\GpsProviderNotApprovedException;
 use App\Modules\Gps\Providers\NullGpsProvider;
 use App\Modules\Inventory\Models\InventoryBalance;
 use App\Modules\Inventory\Models\InventoryCategory;
@@ -112,13 +113,16 @@ class AppServiceProvider extends ServiceProvider
         $this->app->scoped(EffectivePermissions::class);
         $this->app->scoped(EffectivePlatformPermissions::class);
 
-        // G0: default NullGpsProvider. G4 Live vendor binding remains BLOCKED.
+        // G0: default NullGpsProvider. G4 Live vendor binding remains BLOCKED —
+        // unknown GPS_PROVIDER keys fail closed (do not silently degrade to null).
         $this->app->bind(GpsProviderInterface::class, function (): GpsProviderInterface {
-            $provider = (string) config('gps.provider', 'null');
+            $provider = strtolower(trim((string) config('gps.provider', 'null')));
 
             return match ($provider) {
                 'null', '' => new NullGpsProvider,
-                default => new NullGpsProvider,
+                default => throw new GpsProviderNotApprovedException(
+                    "GPS provider [{$provider}] is not an Owner-approved live binding (G4 BLOCKED).",
+                ),
             };
         });
     }

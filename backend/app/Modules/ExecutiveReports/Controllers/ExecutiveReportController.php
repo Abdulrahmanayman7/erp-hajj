@@ -2,7 +2,10 @@
 
 namespace App\Modules\ExecutiveReports\Controllers;
 
+use App\Core\Authorization\Events\AuthorizationSecurityEvent;
+use App\Core\Authorization\Support\AuthorizationSecurity;
 use App\Core\Shared\ApiResponse;
+use App\Core\Tenancy\TenantContext;
 use App\Modules\ExecutiveReports\Enums\ExecutiveReportId;
 use App\Modules\ExecutiveReports\Requests\GetExecutiveReportRequest;
 use App\Modules\ExecutiveReports\Support\ExecutiveReportsService;
@@ -12,10 +15,23 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class ExecutiveReportController
 {
-    public function show(GetExecutiveReportRequest $request, ExecutiveReportsService $reports, string $report): JsonResponse
-    {
+    public function show(
+        GetExecutiveReportRequest $request,
+        ExecutiveReportsService $reports,
+        AuthorizationSecurity $security,
+        TenantContext $tenantContext,
+        string $report,
+    ): JsonResponse {
         $reportId = $this->resolveReport($report);
-        $payload = $reports->build($request->user(), $reportId, $request->seasonId());
+        $seasonId = $request->seasonId();
+        $payload = $reports->build($request->user(), $reportId, $seasonId);
+
+        $security->record(AuthorizationSecurityEvent::EXECUTIVE_REPORT_VIEWED, [
+            'tenant_id' => $tenantContext->require()->id,
+            'actor_id' => $request->user()->id,
+            'report_id' => $reportId->value,
+            'season_id' => $seasonId,
+        ], $request);
 
         return ApiResponse::success(data: $payload);
     }
