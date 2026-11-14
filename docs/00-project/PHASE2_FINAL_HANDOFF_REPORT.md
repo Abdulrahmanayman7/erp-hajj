@@ -24,7 +24,7 @@
 |---|---|---|---|
 | [#62](https://github.com/Abdulrahmanayman7/erp-hajj/pull/62) | (docs) | Record #61 merge SHA | Docs only |
 | [#63](https://github.com/Abdulrahmanayman7/erp-hajj/pull/63) | `15480364bf0f655306f9ff0459da76f60a4691b1` | S05–S07 acceptance + executive_alerts MariaDB fix | Laravel/FE/MySQL 8 **PASS**; **do not merge** without authorization |
-| [#64](https://github.com/Abdulrahmanayman7/erp-hajj/pull/64) | follow-up includes `c7b2c48` after `b3d99c7` | GPS denial oracle + audits + G4/G5/U03 prep + Live UAT report | Independent security Approve **PENDING**; MySQL 8 on prior HEAD was still in progress at handoff drafting — verify latest HEAD before merge |
+| [#64](https://github.com/Abdulrahmanayman7/erp-hajj/pull/64) | follow-up includes `c7b2c48` after `b3d99c7` | GPS denial oracle + audits + G4/G5/U03 prep + Live UAT report | Laravel/FE/MySQL 8 **PASS** on latest HEAD `c7b2c48`; independent security Approve **PENDING**; **do not merge** without authorization |
 | [#65](https://github.com/Abdulrahmanayman7/erp-hajj/pull/65) | this branch | Final engineering handoff docs | Draft; not Owner acceptance |
 
 ## 3. Gates
