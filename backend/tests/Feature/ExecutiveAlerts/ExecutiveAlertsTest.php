@@ -8,6 +8,7 @@ use App\Modules\ExecutiveAlerts\Support\ExecutiveAlertScanner;
 use App\Modules\RisksAndComplaints\Enums\RiskSeverity;
 use App\Modules\RisksAndComplaints\Enums\RiskStatus;
 use App\Modules\RisksAndComplaints\Models\OperationalRisk;
+use Illuminate\Support\Facades\Schema;
 
 it('returns 401 for unauthenticated executive alerts list', function (): void {
     spaGetJson('/api/v1/executive-alerts?season_id=1')->assertUnauthorized();
@@ -170,8 +171,8 @@ it('exposes Owner-approved OCC PROJ COMP alert rules in the scannable set', func
 it('creates executive_alerts with non-null opened_at and last_seen_at under strict SQL modes', function (): void {
     // Regression: two bare NOT NULL TIMESTAMPs caused MariaDB NO_ZERO_DATE migrate failures
     // (second column defaulted to 0000-00-00). Schema must exist after RefreshDatabase.
-    expect(\Illuminate\Support\Facades\Schema::hasTable('executive_alerts'))->toBeTrue()
-        ->and(\Illuminate\Support\Facades\Schema::hasColumns('executive_alerts', [
+    expect(Schema::hasTable('executive_alerts'))->toBeTrue()
+        ->and(Schema::hasColumns('executive_alerts', [
             'opened_at',
             'last_seen_at',
             'acknowledged_at',
