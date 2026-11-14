@@ -389,3 +389,34 @@ it('fails closed when the claimed tenant has no webhook secret', function (): vo
 
     gpsSignedPost(gpsIngestPayload($fx), $fx['secret'])->assertForbidden();
 });
+
+it('returns an identical GPS_INGEST_DENIED body for unknown tenant, missing secret, and bad signature', function (): void {
+    $fx = gpsIngestFixture();
+
+    $unknownTenant = gpsSignedPost(gpsIngestPayload($fx, [
+        'tenant_id' => 9_999_999,
+    ]), $fx['secret'])->assertForbidden();
+
+    Config::set('gps.webhook_secrets', []);
+    $missingSecret = gpsSignedPost(gpsIngestPayload($fx, [
+        'nonce' => 'nonce-oracle-missing-'.uniqid(),
+    ]), $fx['secret'])->assertForbidden();
+
+    Config::set('gps.webhook_secrets', [
+        (string) $fx['tenant']->id => $fx['secret'],
+    ]);
+    $badSignature = gpsSignedPost(gpsIngestPayload($fx, [
+        'nonce' => 'nonce-oracle-badsig-'.uniqid(),
+    ]), $fx['secret'], 'deadbeef')->assertForbidden();
+
+    $expected = [
+        'message' => 'Invalid device.',
+        'code' => 'GPS_INGEST_DENIED',
+    ];
+
+    expect($unknownTenant->json())->toMatchArray($expected)
+        ->and($missingSecret->json())->toMatchArray($expected)
+        ->and($badSignature->json())->toMatchArray($expected)
+        ->and($unknownTenant->json())->toBe($missingSecret->json())
+        ->and($missingSecret->json())->toBe($badSignature->json());
+});
