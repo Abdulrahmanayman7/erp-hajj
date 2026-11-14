@@ -185,8 +185,11 @@ async function visit(page, pathName, label) {
 }
 
 async function runJourneys(browser) {
-  const context = await browser.newContext({ locale: 'ar-SA', viewport: { width: 1440, height: 900 } })
-  const page = await context.newPage()
+  const ownerContext = await browser.newContext({
+    locale: 'ar-SA',
+    viewport: { width: 1440, height: 900 },
+  })
+  const page = await ownerContext.newPage()
 
   await login(page, OWNER)
   await assertRtl(page)
@@ -226,12 +229,19 @@ async function runJourneys(browser) {
   await visit(page, '/app/season-safe-copy', '17_safe_copy')
   record(L.journeys.templatesSafeCopy, 'PASS', 'templates + safe copy')
 
-  await page.goto(`${BASE}/login`, { waitUntil: 'domcontentloaded' })
-  await login(page, VIEWER)
-  await visit(page, '/app', '18_viewer_home')
+  await ownerContext.close()
+
+  // Fresh context so owner Sanctum cookies cannot block the viewer login form.
+  const viewerContext = await browser.newContext({
+    locale: 'ar-SA',
+    viewport: { width: 1440, height: 900 },
+  })
+  const viewerPage = await viewerContext.newPage()
+  await login(viewerPage, VIEWER)
+  await visit(viewerPage, '/app', '18_viewer_home')
   record(L.journeys.viewerPermissions, 'PASS', 'viewer session RTL shell')
 
-  await context.close()
+  await viewerContext.close()
 }
 
 async function main() {
