@@ -16,8 +16,8 @@
 | Gate | Result |
 |---|---|
 | AC-S05-R\* / O\* / P\* / G\* / C\* / N\* (automated) | **PASS** — mapped in evidence matrix |
-| CI MySQL 8 `tests/Feature/SuppliersAndProcurement` (includes S05) | **PASS** — develop run [42966539217](https://github.com/Abdulrahmanayman7/erp-hajj/actions/runs/42966539217) |
-| CI S05 procurement concurrency | **PASS** — same run |
+| CI MySQL 8 `tests/Feature/SuppliersAndProcurement` (includes S05) | **PASS** — PR #63 run [43580842495](https://github.com/Abdulrahmanayman7/erp-hajj/actions/runs/43580842495) (+ prior develop `42966539217`) |
+| CI S05 procurement concurrency | **PASS** — same PR run |
 | Local S05 Pest (MariaDB 10.4 `erp_hajj_testing`) | Executed on closure branch after `executive_alerts` timestamp fix |
 | Frontend Vitest RFQ/PO/GRN | **10 PASS** (2026-11-14) |
 | Browser UAT | **NOT_RUN** |

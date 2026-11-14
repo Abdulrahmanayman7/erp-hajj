@@ -19,7 +19,7 @@
 | SQLite Feature Pest | **PASS** — **78 passed** (2026-11-14) |
 | Part 6 automated UAT scenarios | **PASS** — historical Part6 report + local re-run |
 | MySQL number concurrency | **PASS** — CI run `42966539217` |
-| MySQL Feature suite | **PASS** (CI step added on closure branch) |
+| MySQL Feature suite | **PASS** — CI step `S07 RisksAndComplaints Feature tests (MySQL)` SUCCESS on [43580842495](https://github.com/Abdulrahmanayman7/erp-hajj/actions/runs/43580842495); local MariaDB **78 passed** |
 | Frontend Vitest (risks-complaints) | **PASS** |
 | Browser / Hostinger manual UAT | **NOT_RUN** |
 

@@ -18,15 +18,25 @@
 | FE Vitest RFQ/PO/GRN | Vitest | **10 passed** | |
 | ExecutiveAlerts schema regression | SQLite | **PASS** | Dual TIMESTAMP migrate fix |
 
-## CI evidence (already on develop @ pre-closure merge ancestry)
+## CI evidence
 
-| Job step (run `42966539217` @ `de90c5f`) | Result |
+### Closure Draft PR #63 (run `43580842495` @ `5553267`) — **SUCCESS**
+
+| Job step | Result |
 |---|---|
-| S04 Suppliers and Procurement Feature tests (MySQL) — includes S05 | **success** |
+| Backend (Laravel) / Frontend (Vue) | **success** |
+| S04 Suppliers Feature (MySQL; includes S05) | **success** |
 | S05 procurement concurrency | **success** |
+| **S06 SeasonProjects Feature tests (MySQL)** — new | **success** |
+| **S07 RisksAndComplaints Feature tests (MySQL)** — new | **success** |
 | S06/S07 number concurrency | **success** |
-| Backend Laravel Pest (SQLite full) | **success** |
-| Frontend Vitest + type-check/build | **success** |
+| S08 / S10 MySQL steps | **success** |
+
+### Prior develop baseline (run `42966539217` @ `de90c5f`)
+
+| Job step | Result |
+|---|---|
+| S04 Feature + S05 concurrency + S06/S07 number concurrency | **success** |
 
 ## Defects fixed this branch
 

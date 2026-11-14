@@ -18,7 +18,7 @@
 | Parts 0–6 functional (SQLite Pest) | **PASS** — **59 passed / 1 skipped** (2026-11-14) |
 | F-Q04 posted-GRN unlink guard | **PASS** |
 | MySQL number concurrency | **PASS** — CI run `42966539217` |
-| MySQL Feature suite | **PASS** (CI step added on closure branch); local MariaDB execution recorded in audit folder |
+| MySQL Feature suite | **PASS** — CI step `S06 SeasonProjects Feature tests (MySQL)` SUCCESS on [43580842495](https://github.com/Abdulrahmanayman7/erp-hajj/actions/runs/43580842495); local MariaDB **60 passed** |
 | Frontend Vitest | **PASS** (season-projects validation 14) |
 | Browser E2E | **NOT_RUN** |
 | Production `tasks:recompute-delay` activation | **NOT_DEPLOYED** |
