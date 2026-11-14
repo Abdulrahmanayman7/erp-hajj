@@ -208,6 +208,29 @@ it('omits risk alerts domain in operational-alerts without risks.view', function
     expect($rows)->toBe([]);
 });
 
+it('audits EXECUTIVE_REPORT_VIEWED on successful JSON report GET without exporting CSV', function (): void {
+    $tenant = actingAsTenantOwner()->tenant;
+    $season = kpiSeason($tenant, 'active');
+    execDashActingAs(execReportsPerms(['transportation.view']), $tenant);
+
+    Event::fake([AuthorizationSecurityEvent::class]);
+
+    execReportGet('transport-movements', $season->id)->assertOk();
+
+    Event::assertDispatched(
+        AuthorizationSecurityEvent::class,
+        fn (AuthorizationSecurityEvent $e): bool => $e->name === AuthorizationSecurityEvent::EXECUTIVE_REPORT_VIEWED
+            && ($e->context['report_id'] ?? null) === 'transport-movements'
+            && ($e->context['season_id'] ?? null) === $season->id
+            && ($e->context['tenant_id'] ?? null) === $tenant->id
+            && ! array_key_exists('row_count', $e->context),
+    );
+    Event::assertNotDispatched(
+        AuthorizationSecurityEvent::class,
+        fn (AuthorizationSecurityEvent $e): bool => $e->name === AuthorizationSecurityEvent::EXECUTIVE_REPORT_EXPORTED,
+    );
+});
+
 it('exports CSV with UTF-8 BOM, formula-injection prefix, and EXECUTIVE_REPORT_EXPORTED audit', function (): void {
     Event::fake([AuthorizationSecurityEvent::class]);
     $tenant = actingAsTenantOwner()->tenant;

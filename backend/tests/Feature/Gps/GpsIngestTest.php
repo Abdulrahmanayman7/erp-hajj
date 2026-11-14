@@ -1,5 +1,6 @@
 <?php
 
+use App\Core\Authorization\Events\AuthorizationSecurityEvent;
 use App\Core\Tenancy\Models\Tenant;
 use App\Modules\Gps\Models\GpsDeviceBinding;
 use App\Modules\Gps\Models\GpsVehicleLastKnown;
@@ -10,6 +11,7 @@ use App\Modules\Transportation\Models\TransportSeasonVehicle;
 use App\Modules\Transportation\Models\TransportVehicle;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Testing\TestResponse;
 
@@ -127,6 +129,35 @@ it('rejects replayed nonces', function (): void {
 
     gpsSignedPost($payload, $fx['secret'])->assertCreated();
     gpsSignedPost($payload, $fx['secret'])->assertStatus(409);
+});
+
+it('audits GPS_INGEST_ACCEPTED without coordinates or webhook secrets', function (): void {
+    $fx = gpsIngestFixture();
+    Event::fake([AuthorizationSecurityEvent::class]);
+
+    gpsSignedPost(gpsIngestPayload($fx), $fx['secret'])->assertCreated();
+
+    Event::assertDispatched(
+        AuthorizationSecurityEvent::class,
+        function (AuthorizationSecurityEvent $e) use ($fx): bool {
+            if ($e->name !== AuthorizationSecurityEvent::GPS_INGEST_ACCEPTED) {
+                return false;
+            }
+
+            $ctx = $e->context;
+
+            return ($ctx['tenant_id'] ?? null) === $fx['tenant']->id
+                && ($ctx['season_id'] ?? null) === $fx['season']->id
+                && ($ctx['transport_season_vehicle_id'] ?? null) === $fx['vehicle']->id
+                && ($ctx['device_id'] ?? null) === $fx['device_id']
+                && ! array_key_exists('lat', $ctx)
+                && ! array_key_exists('lng', $ctx)
+                && ! array_key_exists('latitude', $ctx)
+                && ! array_key_exists('longitude', $ctx)
+                && ! array_key_exists('nonce', $ctx)
+                && ! str_contains(json_encode($ctx), $fx['secret']);
+        },
+    );
 });
 
 it('upserts gps_vehicle_last_known only and never invents history', function (): void {
