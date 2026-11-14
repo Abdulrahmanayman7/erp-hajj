@@ -222,7 +222,7 @@ it('forward migration keeps executive_alerts timestamp defaults on mysql-family 
                 MODIFY `opened_at` TIMESTAMP NOT NULL,
                 MODIFY `last_seen_at` TIMESTAMP NOT NULL'
         );
-    } catch (\Throwable) {
+    } catch (Throwable) {
         // MariaDB NO_ZERO_DATE may reject stripping defaults; upgrade path still re-applies ALTER.
     }
 
