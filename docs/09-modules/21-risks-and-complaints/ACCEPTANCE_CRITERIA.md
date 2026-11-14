@@ -1,7 +1,6 @@
 # Risks & Complaints — Acceptance Criteria
 
-> **Status:** PART 6 — criteria verified via automated Pest/Vitest UAT (SQLite `:memory:`)
-> Owner merge review + MySQL 8 staging still required before production.
+> **Status:** PART 6 — criteria verified via automated Pest/Vitest UAT (SQLite `:memory:`); MySQL Feature CI wired (2026-11-14). Living package [S07_ACCEPTANCE_STATUS.md](../../00-project/S07_ACCEPTANCE_STATUS.md) = `READY_FOR_OWNER_REVIEW` (Owner final act **PENDING_APPROVAL**; Browser UAT **NOT_RUN**).
 
 ## Module
 

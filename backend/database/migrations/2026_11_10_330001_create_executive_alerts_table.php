@@ -30,8 +30,11 @@ return new class extends Migration
             $table->string('source_entity_type', 64)->nullable();
             $table->unsignedBigInteger('source_entity_id')->nullable();
             $table->json('meta')->nullable();
-            $table->timestamp('opened_at');
-            $table->timestamp('last_seen_at');
+            // useCurrent(): MariaDB/MySQL reject a second NOT NULL TIMESTAMP without an
+            // explicit default under NO_ZERO_DATE (implicit 0000-00-00). Both fields are
+            // always written by the scanner on insert; CURRENT_TIMESTAMP is a safe default.
+            $table->timestamp('opened_at')->useCurrent();
+            $table->timestamp('last_seen_at')->useCurrent();
             $table->timestamp('acknowledged_at')->nullable();
             $table->foreignId('acknowledged_by')->nullable()->constrained('users', indexName: 'exec_alerts_ack_by_fk')->nullOnDelete();
             $table->timestamp('cleared_at')->nullable();

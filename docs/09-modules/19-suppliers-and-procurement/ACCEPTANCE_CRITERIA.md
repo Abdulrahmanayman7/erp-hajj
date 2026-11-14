@@ -1,7 +1,7 @@
 # Suppliers & Procurement (S04) — Acceptance Criteria
 
-> **Status:** Phase I–V **all Owner-functionally accepted**; S04 **FINAL FUNCTIONAL CLOSURE — OWNER GRANTED (2026-11-02)**. Accepted non-blocking follow-ups preserved. **S05 AC drafted in §G (Part 0) — not met until Parts 1–6 implemented & accepted.** S05 coding / Git release unauthorized without separate Owner acts.  
-> **Last updated:** 2026-11-02
+> **Status:** Phase I–V **all Owner-functionally accepted**; S04 **FINAL FUNCTIONAL CLOSURE — OWNER GRANTED (2026-11-02)**. **S05 Parts 1–6 implemented + merged**; AC-S05-\* automated evidence **PASS** — living package [S05_ACCEPTANCE_STATUS.md](../../00-project/S05_ACCEPTANCE_STATUS.md) = `READY_FOR_OWNER_REVIEW` (Owner final act **PENDING_APPROVAL**; Browser UAT **NOT_RUN**).  
+> **Last updated:** 2026-11-14
 > Traceability: ADR-0022 **101–130** (S04) · ADR-0020 §S05 · [PHASE_S05_PROCUREMENT_CYCLE_DESIGN.md](PHASE_S05_PROCUREMENT_CYCLE_DESIGN.md)
 
 A criterion is met only with automated and/or recorded UAT evidence under DEFINITION_OF_DONE. This file does **not** authorize coding.
@@ -93,7 +93,7 @@ A criterion is met only with automated and/or recorded UAT evidence under DEFINI
 
 ---
 
-## G. S05 — Acceptance criteria (DESIGN — unmet until implemented)
+## G. S05 — Acceptance criteria (implemented — Owner final acceptance PENDING)
 
 Plan mapping: [S05_IMPLEMENTATION_PLAN.md](S05_IMPLEMENTATION_PLAN.md).
 

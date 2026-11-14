@@ -7,9 +7,9 @@
 
 | ID | Item | Category | Status | Notes |
 |---|---|---|---|---|
-| C-S05 | S05 Owner paperwork / acceptance certificate | Owner | **PENDING** | Certificate not located |
-| C-S06 | S06 final Owner acceptance | Owner | **PENDING** | Stream = FUNCTIONALLY_ACCEPTED / TECHNICAL_VALIDATION_DEFERRED |
-| C-S07 | S07 final Owner acceptance | Owner | **PENDING** | Merge ≠ acceptance |
+| C-S05 | S05 Owner paperwork / acceptance certificate | Owner | **READY_FOR_OWNER_REVIEW** / **PENDING_APPROVAL** | Package: [S05_ACCEPTANCE_STATUS.md](S05_ACCEPTANCE_STATUS.md) + decision packet; Owner act not recorded |
+| C-S06 | S06 final Owner acceptance | Owner | **READY_FOR_OWNER_REVIEW** / **PENDING_APPROVAL** | Package: [S06_ACCEPTANCE_STATUS.md](S06_ACCEPTANCE_STATUS.md); prior FUNCTIONALLY_ACCEPTED / TECHNICAL_VALIDATION_DEFERRED; MySQL Feature CI wired |
+| C-S07 | S07 final Owner acceptance | Owner | **READY_FOR_OWNER_REVIEW** / **PENDING_APPROVAL** | Package: [S07_ACCEPTANCE_STATUS.md](S07_ACCEPTANCE_STATUS.md); merge ≠ acceptance |
 | C-S08 | S08 documentation reconciliation | Docs | **RESOLVED in S12 docs** (merge evidence) | Status now `OWNER_ACCEPTED / MERGED / NOT_DEPLOYED`; deploy still **not** authorized |
 | C-S09 | S09 independent security Approve | Security | **PENDING** | GitHub Approve not recorded |
 | C-S10-SEC | S10 human security review #52–#55 | Security | **PENDING** | Open after admin closure |

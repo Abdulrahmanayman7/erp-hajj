@@ -166,3 +166,39 @@ it('exposes Owner-approved OCC PROJ COMP alert rules in the scannable set', func
         ->and(ExecutiveAlertRule::values())->toContain(ExecutiveAlertRule::ProjectLag->value)
         ->and(ExecutiveAlertRule::values())->toContain(ExecutiveAlertRule::ComplaintSla->value);
 });
+
+it('creates executive_alerts with non-null opened_at and last_seen_at under strict SQL modes', function (): void {
+    // Regression: two bare NOT NULL TIMESTAMPs caused MariaDB NO_ZERO_DATE migrate failures
+    // (second column defaulted to 0000-00-00). Schema must exist after RefreshDatabase.
+    expect(\Illuminate\Support\Facades\Schema::hasTable('executive_alerts'))->toBeTrue()
+        ->and(\Illuminate\Support\Facades\Schema::hasColumns('executive_alerts', [
+            'opened_at',
+            'last_seen_at',
+            'acknowledged_at',
+            'cleared_at',
+        ]))->toBeTrue();
+
+    $tenant = actingAsTenantOwner()->tenant;
+    $season = kpiSeason($tenant, 'active');
+
+    $alert = withTenant($tenant, function () use ($season): ExecutiveAlert {
+        $row = new ExecutiveAlert;
+        $row->forceFill([
+            'season_id' => $season->id,
+            'rule_code' => ExecutiveAlertRule::RiskHigh,
+            'dedupe_key' => 'ALT-RISK-HIGH:risk:schema-'.uniqid(),
+            'status' => ExecutiveAlertStatus::Open,
+            'title' => 'تنبيه مخطط',
+            'body' => null,
+            'severity' => ExecutiveAlertSeverity::Warning,
+            'opened_at' => now(),
+            'last_seen_at' => now(),
+        ]);
+        $row->save();
+
+        return $row->fresh();
+    });
+
+    expect($alert->opened_at)->not->toBeNull()
+        ->and($alert->last_seen_at)->not->toBeNull();
+});
