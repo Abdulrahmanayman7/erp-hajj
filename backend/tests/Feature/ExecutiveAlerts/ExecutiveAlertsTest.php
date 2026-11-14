@@ -8,6 +8,8 @@ use App\Modules\ExecutiveAlerts\Support\ExecutiveAlertScanner;
 use App\Modules\RisksAndComplaints\Enums\RiskSeverity;
 use App\Modules\RisksAndComplaints\Enums\RiskStatus;
 use App\Modules\RisksAndComplaints\Models\OperationalRisk;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 it('returns 401 for unauthenticated executive alerts list', function (): void {
@@ -202,4 +204,38 @@ it('creates executive_alerts with non-null opened_at and last_seen_at under stri
 
     expect($alert->opened_at)->not->toBeNull()
         ->and($alert->last_seen_at)->not->toBeNull();
+});
+
+it('forward migration keeps executive_alerts timestamp defaults on mysql-family drivers', function (): void {
+    $driver = DB::connection()->getDriverName();
+    if (! in_array($driver, ['mysql', 'mariadb'], true)) {
+        test()->markTestSkipped('Timestamp DEFAULT CURRENT_TIMESTAMP assert requires MySQL/MariaDB.');
+    }
+
+    expect(Schema::hasTable('executive_alerts'))->toBeTrue();
+
+    // Simulate pre-fix create (no explicit DEFAULT) when the engine allows it; otherwise
+    // the create migration already applied useCurrent() and we only re-assert after ALTER.
+    try {
+        DB::statement(
+            'ALTER TABLE `executive_alerts`
+                MODIFY `opened_at` TIMESTAMP NOT NULL,
+                MODIFY `last_seen_at` TIMESTAMP NOT NULL'
+        );
+    } catch (\Throwable) {
+        // MariaDB NO_ZERO_DATE may reject stripping defaults; upgrade path still re-applies ALTER.
+    }
+
+    expect(Artisan::call('migrate', [
+        '--path' => 'database/migrations/2026_11_14_360001_fix_executive_alerts_timestamp_defaults.php',
+        '--force' => true,
+    ]))->toBe(0);
+
+    $opened = DB::selectOne("SHOW COLUMNS FROM `executive_alerts` LIKE 'opened_at'");
+    $lastSeen = DB::selectOne("SHOW COLUMNS FROM `executive_alerts` LIKE 'last_seen_at'");
+
+    expect(strtoupper((string) ($opened->Null ?? '')))->toBe('NO')
+        ->and(strtoupper((string) ($lastSeen->Null ?? '')))->toBe('NO')
+        ->and(strtoupper((string) ($opened->Default ?? '')))->toContain('CURRENT_TIMESTAMP')
+        ->and(strtoupper((string) ($lastSeen->Default ?? '')))->toContain('CURRENT_TIMESTAMP');
 });
