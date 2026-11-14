@@ -1,0 +1,14 @@
+{
+  "journeys": {
+    "authPermissions": "S12-J01 Authentication & permissions shell",
+    "seasonsPilgrims": "S12-J02 Seasons & pilgrims",
+    "fleetTransport": "S12-J03 Fleet & transport movements",
+    "accommodationCamps": "S12-J04 Accommodation & camps",
+    "suppliersProcurement": "S12-J05 Suppliers & procurement",
+    "seasonProjects": "S12-J06 Seasonal projects",
+    "risksComplaints": "S12-J07 Risks & complaints",
+    "executiveKpis": "S12-J08 Executive dashboard & KPIs",
+    "templatesSafeCopy": "S12-J09 Seasonal templates & safe copy (shell)",
+    "viewerPermissions": "S12-J10 Viewer permission-aware navigation"
+  }
+}

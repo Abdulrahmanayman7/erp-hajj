@@ -1,0 +1,5 @@
+node_modules/
+evidence/
+last-report.json
+last-shell-report.json
+last-live-report.json

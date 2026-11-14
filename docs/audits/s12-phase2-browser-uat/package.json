@@ -1,0 +1,15 @@
+{
+  "name": "s12-phase2-browser-uat",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "S12 Phase 2 operational Browser UAT: mock shell journeys and live attested disposable DB gate",
+  "scripts": {
+    "test:policy": "node --test network-policy.test.mjs uat-attestation.test.mjs",
+    "uat:mock": "node run-operational-mock-uat.mjs",
+    "uat:live": "node run-live-uat.mjs"
+  },
+  "dependencies": {
+    "playwright-core": "^1.56.0"
+  }
+}
