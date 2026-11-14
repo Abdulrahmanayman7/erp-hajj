@@ -33,7 +33,7 @@ Deliver the maximum safely executable S12 scope: operational UAT harnesses, evid
 | S05–S07 | Merged | Final Owner certificates incomplete / not assumed |
 | S08 | **MERGED** (PR #46) | Owner Accepted 2026-11-08; **NOT_DEPLOYED** |
 | S09–S10 | Merged; S10 admin closed with carryover | Security/UAT/GPS carryovers open |
-| S11 | P1–P4 MERGED (#57–#60) | `CLOSED_WITH_CARRYOVER — PENDING_OWNER_APPROVAL` |
+| S11 | P1–P4 MERGED (#57–#60) | Owner admin **`CLOSED_WITH_CARRYOVER`** APPROVED 2026-11-14 |
 | S12 | Handoff package on feature branch | Owner acceptance **PENDING** |
 
 ## 4. Remaining blockers to client delivery / production

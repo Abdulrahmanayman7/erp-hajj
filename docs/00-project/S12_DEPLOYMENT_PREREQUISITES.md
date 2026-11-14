@@ -22,7 +22,7 @@
 | `develop` baseline with S01–S11 merges | Yes | Evidence-based on GitHub |
 | CI SUCCESS on release candidate SHA | Yes | Record actual run; do not invent |
 | Live Browser UAT PASS on attested disposable DB | Strongly yes for acceptance | Often **NOT_RUN** until stack provided |
-| Owner acceptance of S11 closure | Yes for S11 admin close | **PENDING_OWNER_APPROVAL** |
+| Owner acceptance of S11 closure | Yes for S11 admin close | **APPROVED** 2026-11-14 (`CLOSED_WITH_CARRYOVER`) |
 | Owner acceptance of S12 / Phase 2 handoff | Yes for phase close | Pending |
 | Independent security approvals (S09/S10/S11 as required) | Yes where governance requires | Pending / not recorded |
 | G4 live GPS provider | Blocks “ops map Live complete” | **BLOCKED** |

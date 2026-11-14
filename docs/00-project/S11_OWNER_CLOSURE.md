@@ -1,10 +1,12 @@
 # S11 Owner Closure Package — Integration & Hardened Tests
 
-> **Proposed sprint status:** `CLOSED_WITH_CARRYOVER` — **PENDING_OWNER_APPROVAL**  
+> **Sprint status:** `CLOSED_WITH_CARRYOVER`  
+> **Owner administrative closure:** **APPROVED** (2026-11-14)  
 > **Production release:** **NOT_AUTHORIZED**  
-> **Package date:** 2026-11-11  
+> **Phase 2 final acceptance:** **NOT GRANTED** by this act  
+> **Package date:** 2026-11-11 (Owner approval recorded 2026-11-14)  
 > **Baseline:** `origin/develop` @ `de90c5fd1c040c02051d92a2aa8855fdaa4eff12` (merge of PR #60)  
-> **Evidence rule:** No invented Owner acceptance, independent security approvals, or live Browser UAT results.
+> **Evidence rule:** No invented independent security Approves; Live Browser UAT remains **NOT_RUN**; G4/G5/U03 remain **BLOCKED**.
 
 ---
 
@@ -41,15 +43,15 @@ All four merged into `develop`.
 | Concern | Status | Evidence (non-exhaustive) |
 |---|---|---|
 | Integration | **PASS** (automated) | S11-P1 Pest integration suites; FE `s11CrossModuleNavContract.test.ts` |
-| Security / tenancy / RBAC | **PASS** (automated) + **PENDING_APPROVAL** (independent human review of S11 as a closure act) | S11-P2 Feature attack tests; S11-P4 attestation token gate + public health unchanged |
+| Security / tenancy / RBAC | **PASS** (automated) + independent human review of S11 as a closure act still **PENDING** where separately required | S11-P2 Feature attack tests; S11-P4 attestation token gate + public health unchanged |
 | Concurrency | **PASS** (MySQL CI on merged PRs) | Transport/Accommodation/S04/S05 + S06/S07 number races; SPJ deadlock-safe allocator fix on #59 |
 | Performance | **PASS** (automated) | Occupancy batching; executive dashboard query-budget regression (S11-P3) |
 | RTL / Arabic | **PASS** (Vitest + mock Browser UAT) | `html[dir=rtl][lang=ar]`; Arabic executive `aria-label`s; skip-to-content |
 | Accessibility | **PASS** (Vitest + mock Browser UAT) | Skip link → `#app-main-content`; confirm dialog focus + focus-visible close |
 | Live Browser UAT (operational journeys) | **NOT_RUN** | No positively verified disposable `erp_hajj_*_uat` API stack exercised for S11 journeys in this package |
 | Mock Browser UAT (shell RTL/a11y) | **PASS** (local harness; **not** a substitute for live UAT) | `docs/audits/s11-p4-browser-uat/run-shell-rtl-a11y-mock-uat.mjs` — mocked `/api`+`/sanctum`, network isolation probes |
-| Independent human security review (S11 closure) | **PENDING_APPROVAL** | Not recorded as a formal Owner/security sign-off for S11 |
-| Owner acceptance (S11) | **PENDING_APPROVAL** | This package proposes `CLOSED_WITH_CARRYOVER`; Owner has not approved |
+| Independent human security review (S11 closure) | **PENDING_APPROVAL** (not cleared by Owner admin closure alone) | Distinct from Owner administrative closure |
+| Owner administrative closure (S11) | **APPROVED** (2026-11-14) | This package as `CLOSED_WITH_CARRYOVER` |
 
 Supporting readiness matrix: [S11_P4_RELEASE_READINESS_MATRIX.md](S11_P4_RELEASE_READINESS_MATRIX.md).
 
@@ -73,7 +75,7 @@ Supporting readiness matrix: [S11_P4_RELEASE_READINESS_MATRIX.md](S11_P4_RELEASE
 | PR #57 | `f3b0efe…` | [42907163367](https://github.com/Abdulrahmanayman7/erp-hajj/actions/runs/42907163367) | **SUCCESS** |
 | PR #58 | `e7e1351…` | [42921531725](https://github.com/Abdulrahmanayman7/erp-hajj/actions/runs/42921531725) | **SUCCESS** |
 | PR #59 | `c7b4f54…` | [42954460746](https://github.com/Abdulrahmanayman7/erp-hajj/actions/runs/42954460746) | **SUCCESS** |
-| PR #60 | `de90c5f…` | [42966539217](https://github.com/Abdulrahmanayman7/erp-hajj/actions/runs/42966539217) | **SUCCESS** (see §5) |
+| PR #60 | `de90c5f…` | [42966539217](https://github.com/Abdulrahmanayman7/erp-hajj/actions/runs/42966539217) | **SUCCESS** |
 
 ---
 
@@ -88,10 +90,9 @@ Supporting readiness matrix: [S11_P4_RELEASE_READINESS_MATRIX.md](S11_P4_RELEASE
 | Conclusion (final) | **`success`** |
 | Jobs | Frontend (Vue) **SUCCESS**; Backend (Laravel) **SUCCESS**; Backend (MySQL 8 — Transport + Accommodation + S04) **SUCCESS** |
 
-**Recorded status for this package: SUCCESS.**  
-Verified via GitHub Actions run [42966539217](https://github.com/Abdulrahmanayman7/erp-hajj/actions/runs/42966539217) on head SHA `de90c5fd1c040c02051d92a2aa8855fdaa4eff12`.
+**Recorded status for this package: SUCCESS.**
 
-Owner acceptance of this closure package remains **PENDING_APPROVAL** (CI SUCCESS ≠ Owner acceptance).
+Owner administrative closure does **not** authorize production deploy.
 
 ---
 
@@ -120,12 +121,20 @@ Live harness `run-uat.mjs` remains gated by attestation and disposable DB policy
 
 | Gate | Status |
 |---|---|
-| Independent human security approval of S11 as a closed sprint | **PENDING_APPROVAL** (not recorded) |
-| Owner acceptance of S11 (`CLOSED_WITH_CARRYOVER` or stronger) | **PENDING_APPROVAL** (this document is a **proposal** only) |
+| Independent human security approval of S11 as a closed sprint | **PENDING_APPROVAL** (not recorded; not fabricated) |
+| Owner administrative closure of S11 as `CLOSED_WITH_CARRYOVER` | **APPROVED** (Project Owner, **2026-11-14**) |
 | Prior S10 human security review of PRs #52–#55 | **PENDING_APPROVAL** (carryover; not cleared by S11) |
 | S09 independent GitHub security Approve | **NOT_RECORDED** / **PENDING_APPROVAL** (carryover) |
 
-Automated security tests and PR CI SUCCESS do **not** replace human Owner/security acceptance.
+Automated security tests and PR CI SUCCESS do **not** replace independent security Approves where governance still requires them.
+
+### Owner decision record (2026-11-14)
+
+The Project Owner explicitly approved:
+
+1. S11 administrative closure as **`CLOSED_WITH_CARRYOVER`**.
+2. Merging PR [#61](https://github.com/Abdulrahmanayman7/erp-hajj/pull/61) into `develop` (S12 handoff package carrying this closure evidence).
+3. **No** production deployment and **no** Phase 2 final acceptance by this act.
 
 ---
 
@@ -134,16 +143,16 @@ Automated security tests and PR CI SUCCESS do **not** replace human Owner/securi
 | ID | Item | Status | Notes |
 |---|---|---|---|
 | C-S05 | S05 Owner acceptance paperwork | **PENDING_APPROVAL** | Certificate not located — do not invent |
-| C-S08 | S08 documentation drift / merge–deploy posture | **RECONCILED in S12 docs** (merge evidence) | Living status now **OWNER_ACCEPTED / MERGED / NOT_DEPLOYED** via PR #46 @ `3a18b16`; deploy still **not** authorized |
+| C-S08 | S08 documentation drift / merge–deploy posture | **RECONCILED** | Living status **OWNER_ACCEPTED / MERGED / NOT_DEPLOYED** via PR #46 @ `3a18b16`; deploy still **not** authorized |
 | C-S09 | S09 independent security Approve | **PENDING_APPROVAL** | Technical APPROVE_RECOMMENDED; GitHub Approve NOT_RECORDED |
 | C-S10-SEC | S10 independent human security review (#52–#55) | **PENDING_APPROVAL** | Remains open after S10 admin closure |
 | C-S10-UAT | S10 Browser UAT | **NOT_RUN** / **PENDING** | Carryover |
-| C-G4 | Live GPS provider (G4_LIVE) | **BLOCKED** | Phase 2 product incomplete |
-| C-G5 | GPS history + legal retention | **BLOCKED** | Phase 2 product incomplete |
-| C-U03 | Production SLA activation | **BLOCKED** | `EXECUTIVE_COMPLAINT_SLA_ACTIVATED_AT` unset |
+| C-G4 | Live GPS provider (G4_LIVE) | **BLOCKED** | Phase 2 product incomplete — not activated by this act |
+| C-G5 | GPS history + legal retention | **BLOCKED** | Phase 2 product incomplete — not activated by this act |
+| C-U03 | Production SLA activation | **BLOCKED** | `EXECUTIVE_COMPLAINT_SLA_ACTIVATED_AT` unset — not activated by this act |
 | C-S11-LIVE-UAT | S11 live operational Browser UAT | **NOT_RUN** | Harness present; disposable attested stack not executed |
-| C-S11-OWNER | S11 Owner approval of this closure | **PENDING_APPROVAL** | — |
-| C-S12 | Phase 2 UAT & handoff (S12) | **IN_PROGRESS** (handoff package) | See [S12_SPRINT_STATUS.md](S12_SPRINT_STATUS.md); Owner acceptance still PENDING |
+| C-S11-OWNER | S11 Owner administrative closure | **APPROVED** (2026-11-14) | `CLOSED_WITH_CARRYOVER` |
+| C-S12 | Phase 2 UAT & handoff (S12) | **HANDOFF_PREPARED — LIVE_UAT_NOT_RUN** | Owner final acceptance of S12 / Phase 2 **not** granted |
 
 ---
 
@@ -151,21 +160,21 @@ Automated security tests and PR CI SUCCESS do **not** replace human Owner/securi
 
 **NOT_AUTHORIZED.**
 
-S11 merges onto `develop` do **not** authorize production deploy, go-live, or Phase 2 completion claims. Carryovers in §9 remain open. Post-merge CI for PR #60 (`42966539217`) concluded **SUCCESS**; Owner acceptance remains **PENDING**.
+Owner administrative closure and PR #61 merge authorization do **not** authorize production deploy, go-live, GPS G4/G5 activation, U03 activation, Live UAT PASS claims, or Phase 2 final acceptance.
 
 ---
 
-## 11. Proposed sprint status
+## 11. Sprint status
 
 ```
-CLOSED_WITH_CARRYOVER — PENDING_OWNER_APPROVAL
+CLOSED_WITH_CARRYOVER
 ```
 
 Interpretation:
 
-- **CLOSED_WITH_CARRYOVER** — technical S11 delivery slices P1–P4 are merged; remaining work is explicit carryover (§9), not silent scope.
-- **PENDING_OWNER_APPROVAL** — Owner has not yet accepted this package.
-- Until Owner acceptance: do not mark S11 as Owner-Accepted / COMPLETE / deploy-ready.
+- **CLOSED_WITH_CARRYOVER** — technical S11 delivery slices P1–P4 are merged; Owner approved administrative closure with explicit carryovers (§9).
+- Remaining open items stay Phase 2 obligations (or governance Approves) — not silent scope.
+- Production / Phase 2 final acceptance remain **not** authorized.
 
 ---
 
@@ -174,5 +183,6 @@ Interpretation:
 - [S11_P4_RELEASE_READINESS_MATRIX.md](S11_P4_RELEASE_READINESS_MATRIX.md)
 - [PHASE2_SCOPE_MATRIX.md](PHASE2_SCOPE_MATRIX.md)
 - [ROADMAP.md](ROADMAP.md)
+- [S12_PR61_MERGE_READINESS.md](S12_PR61_MERGE_READINESS.md)
 - [DEFINITION_OF_DONE.md](DEFINITION_OF_DONE.md)
 - ADR-0020 §S11 / §9 sprint closure rules

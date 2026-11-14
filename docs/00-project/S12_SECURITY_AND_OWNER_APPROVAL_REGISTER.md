@@ -19,7 +19,7 @@
 | S08 | Owner Accepted 2026-11-08; merge later evidence PR #46 | `S08-OWNER-ACCEPTANCE-2026-11-08.md` |
 | S09 | Owner/security GitHub Approve **NOT_RECORDED** | `S09_POST_MERGE_CLOSURE` |
 | S10 | Admin `CLOSED_WITH_CARRYOVER` 2026-11-10 | `S10_OWNER_CLOSURE_2026-11-10.md` |
-| S11 | **PENDING_OWNER_APPROVAL** | `S11_OWNER_CLOSURE.md` |
+| S11 | **APPROVED** admin closure `CLOSED_WITH_CARRYOVER` (2026-11-14) | `S11_OWNER_CLOSURE.md` — not Phase 2 final acceptance; not production |
 | S12 / Phase 2 handoff | **PENDING** | This register + completion report |
 
 ## Independent security review

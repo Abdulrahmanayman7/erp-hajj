@@ -15,7 +15,7 @@
 | C-S10-SEC | S10 human security review #52–#55 | Security | **PENDING** | Open after admin closure |
 | C-S10-UAT | S10 Browser UAT | UAT | **NOT_RUN / PENDING** | Carryover |
 | C-S11-LIVE-UAT | S11 live Browser UAT | UAT | **NOT_RUN** | Harness existed; attested stack often unavailable |
-| C-S11-OWNER | S11 Owner closure approval | Owner | **PENDING** | `S11_OWNER_CLOSURE.md` proposal only |
+| C-S11-OWNER | S11 Owner administrative closure | Owner | **APPROVED** (2026-11-14) | `CLOSED_WITH_CARRYOVER`; production / Phase 2 final acceptance not granted |
 | C-S12-LIVE-UAT | S12 live operational Browser UAT | UAT | See live report | Mock ≠ live |
 | C-S12-OWNER | S12 / Phase 2 handoff Owner acceptance | Owner | **PENDING** | |
 | C-G4 | Live GPS provider (G4_LIVE) | Product | **BLOCKED** | Phase 2 incomplete |

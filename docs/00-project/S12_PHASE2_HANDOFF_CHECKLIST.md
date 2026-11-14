@@ -23,7 +23,7 @@
 |---|---|---|
 | Foundation–S04 Owner acceptance docs | Yes for functional streams | Present (S05 certificate missing) |
 | S05–S11 code merged to `develop` | Yes for code handoff | Evidence-based merges recorded |
-| S11 proposed closure | Yes | `CLOSED_WITH_CARRYOVER — PENDING_OWNER_APPROVAL` |
+| S11 Owner admin closure | Yes | `CLOSED_WITH_CARRYOVER` (Owner APPROVED 2026-11-14) |
 | Live Phase 2 Browser UAT | Required for UAT PASSED claim | See live report / often **NOT_RUN** |
 | Mock shell UAT | Useful shell evidence only | See mock report |
 | Automated CI green on baseline | Strongly required | Record actual runs; do not invent |
