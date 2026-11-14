@@ -1,7 +1,7 @@
 # Roadmap
 
 > **Status:** Draft (delivery order aligned to completed / next sprints)
-> **Last updated:** 2026-11-10 (S10 **ADMIN CLOSED_WITH_CARRYOVER**; product incomplete — **G4_LIVE/G5 BLOCKED** Phase 2 carryover; not FULLY COMPLETED / not deployed)
+> **Last updated:** 2026-11-14 (Phase 2 engineering handoff — [PHASE2_FINAL_HANDOFF_REPORT.md](PHASE2_FINAL_HANDOFF_REPORT.md); S11 Owner **CLOSED_WITH_CARRYOVER**; S12 **HANDOFF_PREPARED — LIVE_UAT_NOT_RUN**; G4/G5/U03 **BLOCKED**; production **NOT_AUTHORIZED**)
 > **Phase 2 product scope:** [ADR-0020](../10-decisions/ADR-0020-FULL-PHASE2-OPERATIONAL-SCOPE.md) (Full Phase 2 Operational Scope Adoption). Matrix: [PHASE2_SCOPE_MATRIX.md](PHASE2_SCOPE_MATRIX.md). Reconciliation: [PHASE2_SCOPE_RECONCILIATION.md](PHASE2_SCOPE_RECONCILIATION.md).
 > **Status vocabulary (S08-D09):** distinguish **Implemented** / **Merged** / **Tested** / **Owner Accepted** — merge ≠ automatic Owner acceptance.
 
