@@ -214,8 +214,7 @@ it('forward migration keeps executive_alerts timestamp defaults on mysql-family 
 
     expect(Schema::hasTable('executive_alerts'))->toBeTrue();
 
-    // Simulate pre-fix create (no explicit DEFAULT) when the engine allows it; otherwise
-    // the create migration already applied useCurrent() and we only re-assert after ALTER.
+    // Simulate pre-fix create (no explicit DEFAULT) when the engine allows it.
     try {
         DB::statement(
             'ALTER TABLE `executive_alerts`
@@ -226,6 +225,11 @@ it('forward migration keeps executive_alerts timestamp defaults on mysql-family 
         // MariaDB NO_ZERO_DATE may reject stripping defaults; upgrade path still re-applies ALTER.
     }
 
+    // RefreshDatabase already recorded 360001 — force re-run of the upgrade path.
+    DB::table('migrations')
+        ->where('migration', '2026_11_14_360001_fix_executive_alerts_timestamp_defaults')
+        ->delete();
+
     expect(Artisan::call('migrate', [
         '--path' => 'database/migrations/2026_11_14_360001_fix_executive_alerts_timestamp_defaults.php',
         '--force' => true,
@@ -234,8 +238,10 @@ it('forward migration keeps executive_alerts timestamp defaults on mysql-family 
     $opened = DB::selectOne("SHOW COLUMNS FROM `executive_alerts` LIKE 'opened_at'");
     $lastSeen = DB::selectOne("SHOW COLUMNS FROM `executive_alerts` LIKE 'last_seen_at'");
 
+    $normalizeDefault = static fn (?string $default): string => strtoupper(str_replace(['(', ')'], '', (string) $default));
+
     expect(strtoupper((string) ($opened->Null ?? '')))->toBe('NO')
         ->and(strtoupper((string) ($lastSeen->Null ?? '')))->toBe('NO')
-        ->and(strtoupper((string) ($opened->Default ?? '')))->toContain('CURRENT_TIMESTAMP')
-        ->and(strtoupper((string) ($lastSeen->Default ?? '')))->toContain('CURRENT_TIMESTAMP');
+        ->and($normalizeDefault($opened->Default ?? null))->toContain('CURRENT_TIMESTAMP')
+        ->and($normalizeDefault($lastSeen->Default ?? null))->toContain('CURRENT_TIMESTAMP');
 });
