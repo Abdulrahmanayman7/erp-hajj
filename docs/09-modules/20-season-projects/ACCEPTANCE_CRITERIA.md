@@ -1,7 +1,7 @@
 # Season Projects — Acceptance Criteria & Gates
 
-> **Status:** FUNCTIONALLY_ACCEPTED / TECHNICAL_VALIDATION_DEFERRED (2026-11-07)
-> Does **not** claim MERGE READY, DEPLOY READY, or MySQL 8 validation PASS.
+> **Status:** FUNCTIONALLY_ACCEPTED; MySQL Feature CI **wired** (2026-11-14 closure branch). Owner COMPLETE / deploy-ready **not** claimed — see [S06_ACCEPTANCE_STATUS.md](../../00-project/S06_ACCEPTANCE_STATUS.md).
+> Does **not** invent Owner final acceptance. Browser E2E remains **NOT_RUN**.
 
 ## A. Part 0 (documentation)
 
@@ -25,8 +25,8 @@
 
 ## C. Technical / release gates (still open)
 
-- [ ] MySQL 8 dialect validation (`phpunit.mysql.xml` / `erp_hajj_testing`) — **NOT RUN / DEFERRED**
-- [ ] S05 PO/GRN MySQL-dependent suites — **SKIPPED / NOT RUN** in S06 Part 6
+- [x] MySQL 8 Feature suite wired in CI (`S06 SeasonProjects Feature tests (MySQL)`) — closure branch 2026-11-14; historical DEFERRED lift in progress via CI evidence
+- [x] S05 PO/GRN MySQL suites covered by CI `tests/Feature/SuppliersAndProcurement` (includes S05) on develop
 - [ ] Browser E2E — **NOT RUN**
 - [ ] Production scheduler activation for `tasks:recompute-delay` — **NOT DEPLOYED** (app schedule registered only)
 - [ ] Soft-delete restore policy — unresolved (E-Q14 restore)

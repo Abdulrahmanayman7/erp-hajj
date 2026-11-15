@@ -13,9 +13,9 @@
 | S02 | Accepted 2026-10-30 | `S02_ACCEPTANCE_STATUS.md` |
 | S03 | Accepted 2026-10-31 | `S03_ACCEPTANCE_STATUS.md` |
 | S04 | Final functional closure 2026-11-02 | S04-FINAL-FUNCTIONAL-CLOSURE |
-| S05 | **PENDING** — certificate not located | Do not invent |
-| S06 | Functional stream label only; final Owner Accepted **not claimed** | `S06_FINAL_CLOSURE_REPORT.md` |
-| S07 | Final Owner Accepted **not assumed** | Merge ≠ acceptance |
+| S05 | **READY_FOR_OWNER_REVIEW** / **PENDING_APPROVAL** | [S05_ACCEPTANCE_STATUS.md](S05_ACCEPTANCE_STATUS.md) — do not invent |
+| S06 | **READY_FOR_OWNER_REVIEW** / **PENDING_APPROVAL** | [S06_ACCEPTANCE_STATUS.md](S06_ACCEPTANCE_STATUS.md); prior functional label only |
+| S07 | **READY_FOR_OWNER_REVIEW** / **PENDING_APPROVAL** | [S07_ACCEPTANCE_STATUS.md](S07_ACCEPTANCE_STATUS.md); merge ≠ acceptance |
 | S08 | Owner Accepted 2026-11-08; merge later evidence PR #46 | `S08-OWNER-ACCEPTANCE-2026-11-08.md` |
 | S09 | Owner/security GitHub Approve **NOT_RECORDED** | `S09_POST_MERGE_CLOSURE` |
 | S10 | Admin `CLOSED_WITH_CARRYOVER` 2026-11-10 | `S10_OWNER_CLOSURE_2026-11-10.md` |
