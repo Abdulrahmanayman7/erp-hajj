@@ -4,7 +4,7 @@
 > **PR:** https://github.com/Abdulrahmanayman7/erp-hajj/pull/64  
 > **HEAD at packet prep:** `c7b2c4836c7b498284aa204f54659d3736fd76a6` (refresh after this docs commit)  
 > **CI on `c7b2c48`:** run [43597561359](https://github.com/Abdulrahmanayman7/erp-hajj/actions/runs/43597561359) — Laravel / Frontend / MySQL 8 **SUCCESS**  
-> **Engineering posture:** **ENGINEERING_READY / SECURITY_APPROVE_PENDING**  
+> **Engineering posture:** **READY_FOR_OWNER_REVIEW** / security Approve **PENDING** (CI SUCCESS on exact HEAD)  
 > **READY_FOR_MERGE:** **No** until independent human security Approve on this PR  
 > Production / G4 Live / G5 / U03 activation: **NOT AUTHORIZED**
 
