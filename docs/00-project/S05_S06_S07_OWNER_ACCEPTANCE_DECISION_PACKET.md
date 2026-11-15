@@ -31,7 +31,7 @@ Engineering closure branch also fixed a MariaDB `executive_alerts` dual-TIMESTAM
 
 | Item | Classification |
 |---|---|
-| S05/S06/S07 Browser UAT | **NOT_RUN** — not claimed PASS |
+| S05/S06/S07 module Browser UAT | **NOT_RUN** — not claimed PASS (Phase 2 Live UAT shell PASS 2026-11-14 is **not** a substitute) |
 | S06 production scheduler activation | **NOT_DEPLOYED** |
 | S06 E-Q02 reopen / soft-delete restore | Deferred product items |
 | S06 post-GRN financial adjustment | Out of S06 (F-Q04) |
