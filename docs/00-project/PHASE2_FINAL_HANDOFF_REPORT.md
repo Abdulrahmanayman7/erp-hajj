@@ -1,10 +1,11 @@
 # Phase 2 — Final Handoff Report (Engineering)
 
-> **Date:** 2026-11-14  
-> **Develop tip at S12 merge:** `384592ca3f1c71b97f078008f5210eca9ce35f9c` (PR #61)  
+> **Date:** 2026-11-14 (consolidation refresh 2026-11-15)  
+> **Develop tip at S12 merge:** `384592ca3f1c71b97f078008f5210eca9ce35f9c` (PR #61; post-merge CI `43577953728` **SUCCESS**)  
 > **Production / go-live:** **NOT_AUTHORIZED**  
 > **Phase 2 final Owner acceptance:** **NOT GRANTED** by this report  
-> **Rule:** CI SUCCESS ≠ production readiness. Mock UAT ≠ Live UAT (Live now PASS on disposable stack; still not production auth).
+> **Rule:** CI SUCCESS ≠ production readiness. Mock UAT ≠ Live UAT. Live UAT PASS = **shell only**.  
+> **Consolidation:** [PHASE2_PR_CONSOLIDATION_MERGE_READINESS_2026-11-15.md](PHASE2_PR_CONSOLIDATION_MERGE_READINESS_2026-11-15.md)
 
 ## 1. Delivery posture (evidence-based)
 
@@ -22,16 +23,16 @@
 
 | PR | HEAD (verified) | Purpose | Engineering posture |
 |---|---|---|---|
-| [#62](https://github.com/Abdulrahmanayman7/erp-hajj/pull/62) | (docs) | Record #61 merge SHA | Docs only |
-| [#63](https://github.com/Abdulrahmanayman7/erp-hajj/pull/63) | `15480364bf0f655306f9ff0459da76f60a4691b1` | S05–S07 acceptance + executive_alerts MariaDB fix | Laravel/FE/MySQL 8 **PASS**; **do not merge** without authorization |
-| [#64](https://github.com/Abdulrahmanayman7/erp-hajj/pull/64) | follow-up includes `c7b2c48` after `b3d99c7` | GPS denial oracle + audits + G4/G5/U03 prep + Live UAT report | Laravel/FE/MySQL 8 **PASS** on latest HEAD `c7b2c48`; independent security Approve **PENDING**; **do not merge** without authorization |
-| [#65](https://github.com/Abdulrahmanayman7/erp-hajj/pull/65) | this branch | Final engineering handoff docs | Draft; not Owner acceptance |
+| [#62](https://github.com/Abdulrahmanayman7/erp-hajj/pull/62) | `3356c6d` | Record #61 merge SHA | **SUPERSEDED_BY_#65** (unique files absorbed); close after #65 push |
+| [#63](https://github.com/Abdulrahmanayman7/erp-hajj/pull/63) | `15480364bf0f655306f9ff0459da76f60a4691b1` | S05–S07 acceptance + executive_alerts MariaDB fix | CI **PASS**; Owner acceptance **PENDING** — **not READY_FOR_MERGE** |
+| [#64](https://github.com/Abdulrahmanayman7/erp-hajj/pull/64) | `c7b2c4836c7b498284aa204f54659d3736fd76a6` | GPS hardening + G4/G5/U03 prep + Live UAT report | CI **PASS**; security Approve **PENDING** — **not READY_FOR_MERGE** |
+| [#65](https://github.com/Abdulrahmanayman7/erp-hajj/pull/65) | this branch | Final engineering handoff + consolidation | Draft docs; Owner review still required |
 
 ## 3. Gates
 
 | Item | Status | Dependency |
 |---|---|---|
-| Live Browser UAT (Phase 2 operational) | **PASS** | Attested `erp_hajj_phase2_uat`; evidence in S12 REPORT |
+| Live Browser UAT (Phase 2 operational shell) | **PASS** | Attested `erp_hajj_phase2_uat`; **not** S05–S07 module-deep UAT |
 | G4 Live GPS provider | **BLOCKED** | Approved vendor/API contract + credentials |
 | G5 GPS history + retention | **BLOCKED** | Explicit legal retention/consent/deletion policy |
 | U03 production SLA activation | **BLOCKED** | Owner auth + `EXECUTIVE_COMPLAINT_SLA_ACTIVATED_AT`; non-prod readiness command only |

@@ -5,7 +5,8 @@
 > **Production release:** **NOT_AUTHORIZED**  
 > **Phase 2 final acceptance:** **NOT GRANTED** by this act  
 > **Package date:** 2026-11-11 (Owner approval recorded 2026-11-14)  
-> **Baseline:** `origin/develop` @ `de90c5fd1c040c02051d92a2aa8855fdaa4eff12` (merge of PR #60)  
+> **Baseline at S11 code close:** `de90c5fd1c040c02051d92a2aa8855fdaa4eff12` (merge of PR #60)  
+> **Closure evidence merge:** PR [#61](https://github.com/Abdulrahmanayman7/erp-hajj/pull/61) **MERGED** 2026-11-14 → `develop` @ `384592ca3f1c71b97f078008f5210eca9ce35f9c`  
 > **Evidence rule:** No invented independent security Approves; Live Browser UAT remains **NOT_RUN**; G4/G5/U03 remain **BLOCKED**.
 
 ---
@@ -133,7 +134,7 @@ Automated security tests and PR CI SUCCESS do **not** replace independent securi
 The Project Owner explicitly approved:
 
 1. S11 administrative closure as **`CLOSED_WITH_CARRYOVER`**.
-2. Merging PR [#61](https://github.com/Abdulrahmanayman7/erp-hajj/pull/61) into `develop` (S12 handoff package carrying this closure evidence).
+2. Merging PR [#61](https://github.com/Abdulrahmanayman7/erp-hajj/pull/61) into `develop` (S12 handoff package carrying this closure evidence) — **completed** @ merge commit `384592ca3f1c71b97f078008f5210eca9ce35f9c`.
 3. **No** production deployment and **no** Phase 2 final acceptance by this act.
 
 ---

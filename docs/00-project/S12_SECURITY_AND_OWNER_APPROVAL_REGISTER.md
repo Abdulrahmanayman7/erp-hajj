@@ -1,8 +1,9 @@
 # S12 — Security & Owner Approval Register
 
-> **Package date:** 2026-11-11  
+> **Package date:** 2026-11-11 (updated 2026-11-15)  
 > **Rule:** Never invent Owner acceptance or independent security Approves.  
-> **Production:** **NOT_AUTHORIZED**
+> **Production:** **NOT_AUTHORIZED**  
+> **Living detail:** [PHASE2_OUTSTANDING_APPROVALS_2026-11-15.md](PHASE2_OUTSTANDING_APPROVALS_2026-11-15.md)
 
 ## Owner acceptance
 
@@ -13,9 +14,9 @@
 | S02 | Accepted 2026-10-30 | `S02_ACCEPTANCE_STATUS.md` |
 | S03 | Accepted 2026-10-31 | `S03_ACCEPTANCE_STATUS.md` |
 | S04 | Final functional closure 2026-11-02 | S04-FINAL-FUNCTIONAL-CLOSURE |
-| S05 | **PENDING** — certificate not located | Do not invent |
-| S06 | Functional stream label only; final Owner Accepted **not claimed** | `S06_FINAL_CLOSURE_REPORT.md` |
-| S07 | Final Owner Accepted **not assumed** | Merge ≠ acceptance |
+| S05 | **PENDING** — decision packet on PR #63 | `S05_ACCEPTANCE_STATUS.md` / Owner packet |
+| S06 | **PENDING** — final Owner Accepted **not claimed** | `S06_ACCEPTANCE_STATUS.md` |
+| S07 | **PENDING** — final Owner Accepted **not assumed** | `S07_ACCEPTANCE_STATUS.md` |
 | S08 | Owner Accepted 2026-11-08; merge later evidence PR #46 | `S08-OWNER-ACCEPTANCE-2026-11-08.md` |
 | S09 | Owner/security GitHub Approve **NOT_RECORDED** | `S09_POST_MERGE_CLOSURE` |
 | S10 | Admin `CLOSED_WITH_CARRYOVER` 2026-11-10 | `S10_OWNER_CLOSURE_2026-11-10.md` |
@@ -28,6 +29,7 @@
 |---|---|---|
 | S09 independent GitHub security Approve | **NOT_RECORDED / PENDING** | Technical APPROVE_RECOMMENDED ≠ recorded Approve |
 | S10 human security review PRs #52–#55 | **PENDING** | Carryover after admin closure |
+| PR #64 hardening packet | **PENDING** | [S10_SECURITY_REVIEW_PACKET_2026-11-15.md](../09-modules/23-executive-dashboard/S10_SECURITY_REVIEW_PACKET_2026-11-15.md) |
 | S11 independent human security closure review | **PENDING** | Automated tests ≠ human Approve |
 | S12 security sign-off | **PENDING** | Not recorded by this package |
 

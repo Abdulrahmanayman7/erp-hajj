@@ -19,7 +19,18 @@
 
 ## Journeys
 
-S12-J01…J10 **PASS** (owner RTL shells across seasons/pilgrims/fleet/transport/accommodation/suppliers/procurement/projects/risks/complaints/KPIs/executive/templates/safe-copy; viewer fresh browser context).
+S12-J01…J10 **PASS** (owner RTL **route shells** across seasons/pilgrims/fleet/transport/accommodation/suppliers/procurement/projects/risks/complaints/KPIs/executive/templates/safe-copy; viewer fresh browser context).
+
+### Scope boundary (binding)
+
+| Covered | Not covered |
+|---|---|
+| Login, RTL, skip-link, page shells load under attested API | S05 RFQ→PO→GRN deep transactional Browser UAT |
+| Navigation to listed `/app/*` routes | S06 project lifecycle Browser E2E |
+| Viewer separate session shell | S07 risk/complaint workflow Browser UAT |
+| Disposable DB attestation gate | Production authorization / Owner final acceptance |
+
+S05/S06/S07 module-specific Browser UAT remain **NOT_RUN** on PR #63 acceptance packets.
 
 ## Earlier NOT_RUN inspection (superseded)
 

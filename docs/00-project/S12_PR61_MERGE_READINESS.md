@@ -2,8 +2,8 @@
 
 > **PR:** [#61](https://github.com/Abdulrahmanayman7/erp-hajj/pull/61) (`feature/s12-uat-phase-handoff` → `develop`)  
 > **Date:** 2026-11-11  
-> **Engineering posture:** **READY_FOR_OWNER_REVIEW**  
-> **Merge:** **NOT AUTHORIZED** without explicit Owner act  
+> **Engineering posture:** Owner-authorized merge **COMPLETED**  
+> **Merge:** PR #61 **MERGED** 2026-11-14 → `develop` @ `384592ca3f1c71b97f078008f5210eca9ce35f9c`  
 > **Deploy / production:** **NOT_AUTHORIZED**
 
 ## Preserved statuses (binding)
