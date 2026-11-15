@@ -337,7 +337,16 @@ test('Part1 rollback drops season project schema and task extensions', function 
         test()->markTestSkipped('Part1 migration rollback of tasks FK columns requires MySQL/MariaDB (phpunit.mysql.xml).');
     }
 
-    expect(Artisan::call('migrate:rollback', ['--step' => 5, '--force' => true]))->toBe(0);
+    // S06 Part1 shipped five migrations; later sprints added dependent tables (checkpoints, etc.).
+    // Rollback from tip through the first S06 migration — not a hard-coded --step=5.
+    $firstS06 = '2026_11_07_300001_create_season_project_number_sequences_table';
+    $applied = DB::table('migrations')->orderBy('id')->pluck('migration');
+    $firstIndex = $applied->search($firstS06);
+    expect($firstIndex)->not->toBeFalse();
+    $steps = $applied->count() - (int) $firstIndex;
+    expect($steps)->toBeGreaterThanOrEqual(5);
+
+    expect(Artisan::call('migrate:rollback', ['--step' => $steps, '--force' => true]))->toBe(0);
 
     expect(Schema::hasTable('season_projects'))->toBeFalse()
         ->and(Schema::hasTable('season_project_phases'))->toBeFalse()
