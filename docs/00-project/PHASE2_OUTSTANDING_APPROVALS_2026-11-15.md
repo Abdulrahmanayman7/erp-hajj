@@ -18,6 +18,8 @@
 
 Already recorded (preserve): Foundation–S04; S08 Owner Accepted; S10 admin `CLOSED_WITH_CARRYOVER`; S11 admin `CLOSED_WITH_CARRYOVER` (2026-11-14); PR #61 merge authorized and completed.
 
+**Engineering note (not Owner acceptance):** S05/S06/S07 Live Browser UAT **PASS** 2026-11-15 — [REPORT](../audits/s05-s06-s07-browser-uat/REPORT.md).
+
 ## Independent security approvals required
 
 | ID | Scope | Status |
@@ -32,3 +34,4 @@ Already recorded (preserve): Foundation–S04; S08 Owner Accepted; S10 admin `CL
 - Owner S05–S07: `S05_S06_S07_OWNER_ACCEPTANCE_DECISION_PACKET.md` (PR #63)  
 - Security #64: `docs/09-modules/23-executive-dashboard/S10_SECURITY_REVIEW_PACKET_2026-11-15.md`  
 - Handoff: `PHASE2_FINAL_HANDOFF_REPORT.md`  
+- Consolidated Owner decision package: [../audits/s05-s06-s07-browser-uat/OWNER_DECISION_PACKAGE_2026-11-15.md](../audits/s05-s06-s07-browser-uat/OWNER_DECISION_PACKAGE_2026-11-15.md)  
