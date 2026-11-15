@@ -10,9 +10,9 @@
 
 | PR | URL | HEAD | CI (Laravel/FE/MySQL8) | Engineering posture | Merge authorized? |
 |---|---|---|---|---|---|
-| [#62](https://github.com/Abdulrahmanayman7/erp-hajj/pull/62) | docs post-#61 SHA | `3356c6db42bd4fa51de3d75e8f14c764e5e0ead1` | SUCCESS | **SUPERSEDED_BY_#65** (unique files absorbed) | Do not merge; close after #65 includes content |
-| [#63](https://github.com/Abdulrahmanayman7/erp-hajj/pull/63) | S05–S07 + alerts migrate | `15480364bf0f655306f9ff0459da76f60a4691b1` | SUCCESS | **ENGINEERING_READY / OWNER_ACCEPTANCE_PENDING** | **No** until Owner accepts S05–S07 |
-| [#64](https://github.com/Abdulrahmanayman7/erp-hajj/pull/64) | Security + G4/G5/U03 prep + Live UAT report | `c7b2c4836c7b498284aa204f54659d3736fd76a6` | SUCCESS | **ENGINEERING_READY / SECURITY_APPROVE_PENDING** | **No** until independent security Approve |
+| [#62](https://github.com/Abdulrahmanayman7/erp-hajj/pull/62) | docs post-#61 SHA | `3356c6db42bd4fa51de3d75e8f14c764e5e0ead1` | SUCCESS | **CLOSED — SUPERSEDED_BY_#65** | Closed 2026-11-15; unique files absorbed |
+| [#63](https://github.com/Abdulrahmanayman7/erp-hajj/pull/63) | S05–S07 + alerts migrate | `8a34629ffb8004b56936f844ba6ffacfb61d664b` | SUCCESS | **ENGINEERING_READY / OWNER_ACCEPTANCE_PENDING** | **No** until Owner accepts S05–S07 |
+| [#64](https://github.com/Abdulrahmanayman7/erp-hajj/pull/64) | Security + G4/G5/U03 prep + Live UAT report | `7571dc41f8ac9e36d1031d2c0d3db3df7ff848a5` | SUCCESS | **ENGINEERING_READY / SECURITY_APPROVE_PENDING** | **No** until independent security Approve |
 | [#65](https://github.com/Abdulrahmanayman7/erp-hajj/pull/65) | Final handoff + consolidation | (this branch) | SUCCESS on `db2635a`; refresh after this push | **ENGINEERING_DOCS_READY** (Draft) | **No** until Owner docs review; prefer after #63/#64 or rebase |
 
 ## Shared-file conflict map
