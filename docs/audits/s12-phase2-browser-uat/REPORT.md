@@ -27,7 +27,16 @@
 | FE | `http://127.0.0.1:5173` |
 | API | `http://127.0.0.1:8000` |
 | Evidence | `evidence/2026-11-14T12-58-04-599Z_live_report.json` + journey screenshots |
-| Journeys | S12-J01…J10 all **PASS** (owner shells + viewer fresh context) |
+| Journeys | S12-J01…J10 all **PASS** (owner **route shells** + viewer fresh context) |
+
+### Scope boundary
+
+| Covered | Not covered / not claimed |
+|---|---|
+| Login, RTL, skip-link, `/app/*` route shells under attested API | S05 RFQ→PO→GRN deep Browser UAT |
+| Viewer separate-session shell | S06 project lifecycle Browser E2E |
+| Disposable DB attestation gate | S07 risk/complaint workflow Browser UAT |
+| | Production auth / Owner final acceptance / security Approve |
 
 ### Provisioning notes (local disposable only)
 
