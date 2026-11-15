@@ -11,8 +11,8 @@
 |---|---|---|---|---|---|
 | [#62](https://github.com/Abdulrahmanayman7/erp-hajj/pull/62) | — | — | — | **CLOSED — SUPERSEDED_BY_#65** | Closed |
 | [#63](https://github.com/Abdulrahmanayman7/erp-hajj/pull/63) | merge `a743a80` | post-merge **SUCCESS** | — | **MERGED**; Owner acceptance **PENDING_APPROVAL** | Merged (code/docs packages only) |
-| [#64](https://github.com/Abdulrahmanayman7/erp-hajj/pull/64) | `8c097447ee9a0af17b118b049851d0ab1306e390` | **SUCCESS** 5/5 | **MERGEABLE / CLEAN** | Security Approve **PENDING** | **No** until independent Approve + Owner |
-| [#65](https://github.com/Abdulrahmanayman7/erp-hajj/pull/65) | post-`origin/develop` merge on this branch | verify after push | was **CONFLICTING**; resolve then re-check | Docs/handoff + UAT evidence | **No** until Owner review; merge **after #64** |
+| [#64](https://github.com/Abdulrahmanayman7/erp-hajj/pull/64) | `ce9a0ff5efedb7729ae79b7075ecc1b12ec8af64` | re-verify CI after develop sync | sync + docs | **READY_FOR_OWNER_MERGE** (technical); security Approve **PENDING** | **No** until Owner auth (Approve optional per Owner governance) |
+| [#65](https://github.com/Abdulrahmanayman7/erp-hajj/pull/65) | `bb86725f0491b7c46969f6b14e7095442af9f758` | **SUCCESS** 5/5 | **MERGEABLE / CLEAN** | Docs/handoff + UAT evidence | **No** until Owner review; merge **after #64** |
 
 ## #65 conflict resolution (vs develop after #63)
 
