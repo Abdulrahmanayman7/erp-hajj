@@ -2,9 +2,9 @@
 
 > **Date:** 2026-11-15  
 > **PR:** https://github.com/Abdulrahmanayman7/erp-hajj/pull/63  
-> **HEAD:** `15480364bf0f655306f9ff0459da76f60a4691b1`  
-> **CI:** run [43593619626](https://github.com/Abdulrahmanayman7/erp-hajj/actions/runs/43593619626) — Laravel / Frontend / MySQL 8 **SUCCESS**  
-> **Engineering posture:** **ENGINEERING_READY / OWNER_ACCEPTANCE_PENDING**  
+> **HEAD:** `8a34629ffb8004b56936f844ba6ffacfb61d664b`  
+> **CI:** run [43690384223](https://github.com/Abdulrahmanayman7/erp-hajj/actions/runs/43690384223) — Laravel / Frontend / MySQL 8 **SUCCESS**  
+> **Engineering posture:** **READY_FOR_OWNER_REVIEW** (Owner acceptance still PENDING; CI SUCCESS on exact HEAD)  
 > **READY_FOR_MERGE:** **No** — Owner final acceptance of S05/S06/S07 not recorded  
 > Merge / deploy **not** performed by engineering.
 
