@@ -1,33 +1,34 @@
 # Phase 2 — Final Handoff Report (Engineering)
 
-> **Date:** 2026-11-14 (refresh 2026-11-15 — S05/S06/S07 Live Browser UAT)  
-> **Develop tip at S12 merge:** `384592ca3f1c71b97f078008f5210eca9ce35f9c` (PR #61; post-merge CI `43577953728` **SUCCESS**)  
+> **Date:** 2026-11-14 (refresh 2026-11-15 — post-#63 merge conflict resolution on #65)  
+> **Develop tip:** `a743a80a862fd38ed060aaf28042c7399a2a30d5` (PR #63 merge)  
 > **Production / go-live:** **NOT_AUTHORIZED**  
 > **Phase 2 final Owner acceptance:** **NOT GRANTED** by this report  
 > **Rule:** CI SUCCESS ≠ production readiness. Mock UAT ≠ Live UAT. Owner acceptance is separate.  
 > **Consolidation:** [PHASE2_PR_CONSOLIDATION_MERGE_READINESS_2026-11-15.md](PHASE2_PR_CONSOLIDATION_MERGE_READINESS_2026-11-15.md)  
-> **Owner decision package:** [../audits/s05-s06-s07-browser-uat/OWNER_DECISION_PACKAGE_2026-11-15.md](../audits/s05-s06-s07-browser-uat/OWNER_DECISION_PACKAGE_2026-11-15.md)
+> **Owner decision package:** [../audits/s05-s06-s07-browser-uat/OWNER_DECISION_PACKAGE_2026-11-15.md](../audits/s05-s06-s07-browser-uat/OWNER_DECISION_PACKAGE_2026-11-15.md)  
+> **#64 security handoff:** [../audits/s09-s10-security/PR64_INDEPENDENT_REVIEWER_HANDOFF_2026-11-15.md](../audits/s09-s10-security/PR64_INDEPENDENT_REVIEWER_HANDOFF_2026-11-15.md)
 
 ## 1. Delivery posture (evidence-based)
 
 | Stream | Status | Notes |
 |---|---|---|
 | Foundation–S04 | Owner accepted / functional closure (prior records) | Historical UAT evidence for Foundation–S03 |
-| S05–S07 | **READY_FOR_OWNER_REVIEW** via PR [#63](https://github.com/Abdulrahmanayman7/erp-hajj/pull/63) @ `bbf46ff` | Live Browser UAT **PASS** 2026-11-15 on `erp_hajj_phase2_uat` — [REPORT](../audits/s05-s06-s07-browser-uat/REPORT.md). Owner final acceptance **PENDING**; **do not merge** without auth |
+| S05–S07 | Packages **MERGED** via PR [#63](https://github.com/Abdulrahmanayman7/erp-hajj/pull/63) @ `a743a80`; **READY_FOR_OWNER_REVIEW** | Live Browser UAT **PASS** 2026-11-15 — [REPORT](../audits/s05-s06-s07-browser-uat/REPORT.md). Owner final acceptance **PENDING_APPROVAL** |
 | S08 | **OWNER_ACCEPTED / MERGED / NOT_DEPLOYED** | PR #46 |
 | S09 | Merged Phase 1; independent security Approve **PENDING** | Evidence + remediations on PR #64 |
 | S10 | Admin `CLOSED_WITH_CARRYOVER`; product incomplete | G4/G5 **BLOCKED**; U03 unset; Live shell UAT **PASS** |
 | S11 | Owner admin **`CLOSED_WITH_CARRYOVER` APPROVED 2026-11-14** | Carryovers remain |
 | S12 | **`HANDOFF_PREPARED`** — shell Live UAT **PASS** + S05–S07 module Live UAT **PASS** | Final S12/Phase 2 Owner acceptance **PENDING**; production **NOT_AUTHORIZED** |
 
-## 2. Open PRs (engineering) — exact HEADs verified 2026-11-15
+## 2. Open PRs (engineering)
 
 | PR | HEAD (verified) | CI | Engineering posture |
 |---|---|---|---|
 | [#62](https://github.com/Abdulrahmanayman7/erp-hajj/pull/62) | — | — | **CLOSED — SUPERSEDED_BY_#65** |
-| [#63](https://github.com/Abdulrahmanayman7/erp-hajj/pull/63) | `bbf46ff4b525c234ce40c7ff40a5b5b12358ce2e` | [43695492180](https://github.com/Abdulrahmanayman7/erp-hajj/actions/runs/43695492180) **SUCCESS** | **READY_FOR_OWNER_REVIEW**; Owner acceptance **PENDING** — **not READY_FOR_MERGE** |
-| [#64](https://github.com/Abdulrahmanayman7/erp-hajj/pull/64) | `8c097447ee9a0af17b118b049851d0ab1306e390` | [43695526033](https://github.com/Abdulrahmanayman7/erp-hajj/actions/runs/43695526033) **SUCCESS** | **READY_FOR_OWNER_REVIEW**; security Approve **PENDING** — **not READY_FOR_MERGE** |
-| [#65](https://github.com/Abdulrahmanayman7/erp-hajj/pull/65) | this branch | CI re-runs after this docs refresh | **READY_FOR_OWNER_REVIEW** (docs); merge last |
+| [#63](https://github.com/Abdulrahmanayman7/erp-hajj/pull/63) | merge `a743a80` | post-merge **SUCCESS** | **MERGED** — Owner acceptance still **PENDING_APPROVAL** |
+| [#64](https://github.com/Abdulrahmanayman7/erp-hajj/pull/64) | `8c097447ee9a0af17b118b049851d0ab1306e390` | **SUCCESS** 5/5 | **READY_FOR_OWNER_REVIEW**; security Approve **PENDING** — **not READY_FOR_MERGE** |
+| [#65](https://github.com/Abdulrahmanayman7/erp-hajj/pull/65) | this branch (post-develop merge) | verify after push | **READY_FOR_OWNER_REVIEW** (docs); merge **after #64** |
 
 ## 3. Gates
 

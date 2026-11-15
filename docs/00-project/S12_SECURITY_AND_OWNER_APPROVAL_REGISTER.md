@@ -14,9 +14,9 @@
 | S02 | Accepted 2026-10-30 | `S02_ACCEPTANCE_STATUS.md` |
 | S03 | Accepted 2026-10-31 | `S03_ACCEPTANCE_STATUS.md` |
 | S04 | Final functional closure 2026-11-02 | S04-FINAL-FUNCTIONAL-CLOSURE |
-| S05 | **PENDING** — decision packet on PR #63 | `S05_ACCEPTANCE_STATUS.md` / Owner packet |
-| S06 | **PENDING** — final Owner Accepted **not claimed** | `S06_ACCEPTANCE_STATUS.md` |
-| S07 | **PENDING** — final Owner Accepted **not assumed** | `S07_ACCEPTANCE_STATUS.md` |
+| S05 | **READY_FOR_OWNER_REVIEW** / **PENDING_APPROVAL** | [S05_ACCEPTANCE_STATUS.md](S05_ACCEPTANCE_STATUS.md); Live Browser UAT **PASS** — [REPORT](../audits/s05-s06-s07-browser-uat/REPORT.md) — do not invent Owner accept |
+| S06 | **READY_FOR_OWNER_REVIEW** / **PENDING_APPROVAL** | [S06_ACCEPTANCE_STATUS.md](S06_ACCEPTANCE_STATUS.md); prior functional label only; Live Browser UAT **PASS** |
+| S07 | **READY_FOR_OWNER_REVIEW** / **PENDING_APPROVAL** | [S07_ACCEPTANCE_STATUS.md](S07_ACCEPTANCE_STATUS.md); merge ≠ acceptance; Live Browser UAT **PASS** |
 | S08 | Owner Accepted 2026-11-08; merge later evidence PR #46 | `S08-OWNER-ACCEPTANCE-2026-11-08.md` |
 | S09 | Owner/security GitHub Approve **NOT_RECORDED** | `S09_POST_MERGE_CLOSURE` |
 | S10 | Admin `CLOSED_WITH_CARRYOVER` 2026-11-10 | `S10_OWNER_CLOSURE_2026-11-10.md` |

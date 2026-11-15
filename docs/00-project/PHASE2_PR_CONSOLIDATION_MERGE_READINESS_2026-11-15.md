@@ -1,43 +1,41 @@
 # Phase 2 — PR Consolidation & Merge Readiness (2026-11-15)
 
 > **Workspace:** `D:\erp-hajj-1`  
-> **Develop tip (fetched):** `384592ca3f1c71b97f078008f5210eca9ce35f9c` (PR #61 merge)  
-> **Post-merge CI #61:** run `43577953728` **SUCCESS**  
-> **Production / merges:** **NOT AUTHORIZED** by this document  
+> **Develop tip:** `a743a80a862fd38ed060aaf28042c7399a2a30d5` (PR #63 **MERGED**)  
+> **Production / merges of #64/#65:** **NOT AUTHORIZED** by this document  
 > **Rule:** Technical CI green ≠ Owner acceptance ≠ security Approve ≠ production
 
-## Snapshot (exact HEADs verified 2026-11-15)
+## Snapshot
 
-| PR | URL | HEAD | CI (Laravel/FE/MySQL8) | Engineering posture | Merge authorized? |
+| PR | HEAD | CI | Mergeability | Engineering posture | Merge authorized? |
 |---|---|---|---|---|---|
-| [#62](https://github.com/Abdulrahmanayman7/erp-hajj/pull/62) | docs post-#61 SHA | — | — | **CLOSED — SUPERSEDED_BY_#65** | Closed |
-| [#63](https://github.com/Abdulrahmanayman7/erp-hajj/pull/63) | S05–S07 + alerts migrate | `bbf46ff4b525c234ce40c7ff40a5b5b12358ce2e` | **SUCCESS** [43695492180](https://github.com/Abdulrahmanayman7/erp-hajj/actions/runs/43695492180) | **READY_FOR_OWNER_REVIEW** (Owner acceptance still PENDING) | **No** until Owner accepts S05–S07 |
-| [#64](https://github.com/Abdulrahmanayman7/erp-hajj/pull/64) | Security + G4/G5/U03 prep | `8c097447ee9a0af17b118b049851d0ab1306e390` | **SUCCESS** [43695526033](https://github.com/Abdulrahmanayman7/erp-hajj/actions/runs/43695526033) | **READY_FOR_OWNER_REVIEW** / security Approve **PENDING** | **No** until independent security Approve |
-| [#65](https://github.com/Abdulrahmanayman7/erp-hajj/pull/65) | Final handoff + consolidation | this branch | re-verify after docs push | **READY_FOR_OWNER_REVIEW** (docs) | **No** until Owner docs review; merge last |
+| [#62](https://github.com/Abdulrahmanayman7/erp-hajj/pull/62) | — | — | — | **CLOSED — SUPERSEDED_BY_#65** | Closed |
+| [#63](https://github.com/Abdulrahmanayman7/erp-hajj/pull/63) | merge `a743a80` | post-merge **SUCCESS** | — | **MERGED**; Owner acceptance **PENDING_APPROVAL** | Merged (code/docs packages only) |
+| [#64](https://github.com/Abdulrahmanayman7/erp-hajj/pull/64) | `8c097447ee9a0af17b118b049851d0ab1306e390` | **SUCCESS** 5/5 | **MERGEABLE / CLEAN** | Security Approve **PENDING** | **No** until independent Approve + Owner |
+| [#65](https://github.com/Abdulrahmanayman7/erp-hajj/pull/65) | post-`origin/develop` merge on this branch | verify after push | was **CONFLICTING**; resolve then re-check | Docs/handoff + UAT evidence | **No** until Owner review; merge **after #64** |
 
-## Shared-file conflict map
+## #65 conflict resolution (vs develop after #63)
 
-| File | PRs | Resolution |
-|---|---|---|
-| `PHASE2_SCOPE_MATRIX.md` / `ROADMAP.md` | #63, #64, #65 | Prefer #65 narrative after #63/#64 merge; keep Owner PENDING |
-| `S12_CARRYOVER_REGISTER.md` | #63, #64, #65 | Prefer #65 verified Live UAT + blocked gates; keep S05–S07 Owner PENDING |
-| `2026_11_10_330001_create_executive_alerts_table.php` | #63, #64 | Same `useCurrent()` intent; **merge #63 before #64** so upgrade migration `360001` lands first |
+| File | Resolution |
+|---|---|
+| `PHASE2_SCOPE_MATRIX.md` | Combined #63 `READY_FOR_OWNER_REVIEW` packages + #65 Live Browser UAT **PASS**; Owner **PENDING_APPROVAL** |
+| `ROADMAP.md` | Same combine; preserve acceptance status links from #63 |
+| `S12_SECURITY_AND_OWNER_APPROVAL_REGISTER.md` | Prefer develop vocabulary + UAT PASS evidence |
+| `S12_CARRYOVER_REGISTER.md` | Auto-merged then refreshed: UAT PASS + #64 security evidence pointers; G4/G5/U03 **BLOCKED** |
 
-## Recommended merge order (when Owner authorizes each step)
+## #64 dependency (do not overwrite security fixes)
 
-1. ~~Close #62~~ — **done** (SUPERSEDED_BY_#65).  
-2. Merge **#63** only after Owner S05/S06/S07 acceptance acts.  
-3. Merge **#64** only after independent security Approve (rebase onto develop post-#63).  
-4. Merge **#65** last (rebase onto develop) for final handoff matrix.
+- #65 is **docs/evidence only** relative to GPS/security code on #64.  
+- Shared docs (`S12_CARRYOVER_REGISTER`, outstanding approvals) overlap; **merge #64 before #65**.  
+- After #64 merges, if GitHub reports #65 dirty again, re-sync carryover/approvals only — do not revert GPS code.  
+- Reviewer handoff: [../audits/s09-s10-security/PR64_INDEPENDENT_REVIEWER_HANDOFF_2026-11-15.md](../audits/s09-s10-security/PR64_INDEPENDENT_REVIEWER_HANDOFF_2026-11-15.md)
 
-## Live UAT scope (binding)
+## Recommended merge order (when authorized)
 
-| Scope | Status | Evidence |
-|---|---|---|
-| Phase 2 operational shell (S12-J01…J10) | **PASS** (2026-11-14) | `erp_hajj_phase2_uat` |
-| S05 / S06 / S07 module Browser UAT | **PASS** (2026-11-15) | [s05-s06-s07-browser-uat/REPORT.md](../audits/s05-s06-s07-browser-uat/REPORT.md) · JSON `2026-11-15T09-38-13-722Z_report.json` |
-
-Does **not** replace: Owner acceptance, production authorization, G4/G5/U03 activation, independent security Approves.
+1. ~~#62~~ closed.  
+2. ~~#63~~ merged.  
+3. **#64** after independent security Approve + Owner merge auth.  
+4. **#65** last (docs handoff); re-verify CI + CLEAN after #64.
 
 ## External blockers (unchanged)
 

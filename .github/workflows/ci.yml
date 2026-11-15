@@ -244,6 +244,13 @@ jobs:
           echo "elapsed=$((SECONDS-START))s"
           echo "::endgroup::"
 
+      # S06/S07 Feature suites on MySQL 8 (closes historical TECHNICAL_VALIDATION_DEFERRED gap).
+      - name: S06 SeasonProjects Feature tests (MySQL)
+        run: php vendor/bin/pest -c phpunit.mysql.xml tests/Feature/SeasonProjects
+
+      - name: S07 RisksAndComplaints Feature tests (MySQL)
+        run: php vendor/bin/pest -c phpunit.mysql.xml tests/Feature/RisksAndComplaints
+
       # S11-P3: S06/S07 number allocation races (MySQL locking only — skipped on SQLite).
       - name: S06/S07 number concurrency tests (MySQL, sequential)
         run: |
