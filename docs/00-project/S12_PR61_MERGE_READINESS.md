@@ -11,7 +11,7 @@
 | Item | Status |
 |---|---|
 | S11 | `CLOSED_WITH_CARRYOVER` (Owner APPROVED 2026-11-14) |
-| S12 | `HANDOFF_PREPARED — LIVE_UAT_NOT_RUN` |
+| S12 (at PR #61 merge) | \HANDOFF_PREPARED — LIVE_UAT_NOT_RUN\ (later Live shell UAT PASS 2026-11-14 recorded separately) |
 | Phase 2 | **NOT_PRODUCTION_AUTHORIZED** |
 | G4 / G5 | **BLOCKED** |
 | U03 | **BLOCKED** |
