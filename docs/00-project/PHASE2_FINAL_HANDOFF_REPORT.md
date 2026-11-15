@@ -24,9 +24,9 @@
 | PR | HEAD (verified) | Purpose | Engineering posture |
 |---|---|---|---|
 | [#62](https://github.com/Abdulrahmanayman7/erp-hajj/pull/62) | `3356c6d` | Record #61 merge SHA | **SUPERSEDED_BY_#65** (unique files absorbed); close after #65 push |
-| [#63](https://github.com/Abdulrahmanayman7/erp-hajj/pull/63) | `15480364bf0f655306f9ff0459da76f60a4691b1` | S05–S07 acceptance + executive_alerts MariaDB fix | CI **PASS**; Owner acceptance **PENDING** — **not READY_FOR_MERGE** |
-| [#64](https://github.com/Abdulrahmanayman7/erp-hajj/pull/64) | `c7b2c4836c7b498284aa204f54659d3736fd76a6` | GPS hardening + G4/G5/U03 prep + Live UAT report | CI **PASS**; security Approve **PENDING** — **not READY_FOR_MERGE** |
-| [#65](https://github.com/Abdulrahmanayman7/erp-hajj/pull/65) | this branch | Final engineering handoff + consolidation | Draft docs; Owner review still required |
+| [#63](https://github.com/Abdulrahmanayman7/erp-hajj/pull/63) | `8a34629ffb8004b56936f844ba6ffacfb61d664b` | S05–S07 acceptance + executive_alerts MariaDB fix | CI **SUCCESS**; **READY_FOR_OWNER_REVIEW**; Owner acceptance **PENDING** — **not READY_FOR_MERGE** |
+| [#64](https://github.com/Abdulrahmanayman7/erp-hajj/pull/64) | `7571dc41f8ac9e36d1031d2c0d3db3df7ff848a5` | GPS hardening + G4/G5/U03 prep + Live UAT report | CI **SUCCESS**; **READY_FOR_OWNER_REVIEW**; security Approve **PENDING** — **not READY_FOR_MERGE** |
+| [#65](https://github.com/Abdulrahmanayman7/erp-hajj/pull/65) | this branch | Final engineering handoff + consolidation | CI **SUCCESS**; **READY_FOR_OWNER_REVIEW** (docs); merge last |
 
 ## 3. Gates
 

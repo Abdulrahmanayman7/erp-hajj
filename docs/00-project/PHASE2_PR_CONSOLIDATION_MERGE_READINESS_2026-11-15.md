@@ -11,9 +11,9 @@
 | PR | URL | HEAD | CI (Laravel/FE/MySQL8) | Engineering posture | Merge authorized? |
 |---|---|---|---|---|---|
 | [#62](https://github.com/Abdulrahmanayman7/erp-hajj/pull/62) | docs post-#61 SHA | `3356c6db42bd4fa51de3d75e8f14c764e5e0ead1` | SUCCESS | **CLOSED — SUPERSEDED_BY_#65** | Closed 2026-11-15; unique files absorbed |
-| [#63](https://github.com/Abdulrahmanayman7/erp-hajj/pull/63) | S05–S07 + alerts migrate | `8a34629ffb8004b56936f844ba6ffacfb61d664b` | SUCCESS | **ENGINEERING_READY / OWNER_ACCEPTANCE_PENDING** | **No** until Owner accepts S05–S07 |
-| [#64](https://github.com/Abdulrahmanayman7/erp-hajj/pull/64) | Security + G4/G5/U03 prep + Live UAT report | `7571dc41f8ac9e36d1031d2c0d3db3df7ff848a5` | SUCCESS | **ENGINEERING_READY / SECURITY_APPROVE_PENDING** | **No** until independent security Approve |
-| [#65](https://github.com/Abdulrahmanayman7/erp-hajj/pull/65) | Final handoff + consolidation | (this branch) | SUCCESS on `db2635a`; refresh after this push | **ENGINEERING_DOCS_READY** (Draft) | **No** until Owner docs review; prefer after #63/#64 or rebase |
+| [#63](https://github.com/Abdulrahmanayman7/erp-hajj/pull/63) | S05–S07 + alerts migrate | `8a34629ffb8004b56936f844ba6ffacfb61d664b` | **SUCCESS** run `43690384223` | **READY_FOR_OWNER_REVIEW** (Owner acceptance still PENDING) | **No** until Owner accepts S05–S07 |
+| [#64](https://github.com/Abdulrahmanayman7/erp-hajj/pull/64) | Security + G4/G5/U03 prep + Live UAT report | `7571dc41f8ac9e36d1031d2c0d3db3df7ff848a5` | **SUCCESS** run `43690474335` | **READY_FOR_OWNER_REVIEW** / security Approve **PENDING** | **No** until independent security Approve |
+| [#65](https://github.com/Abdulrahmanayman7/erp-hajj/pull/65) | Final handoff + consolidation | `59a1cf2ff4062f3f8c23816ddf7f64321136ea08` (+ follow-up) | **SUCCESS** run `43690538930` | **READY_FOR_OWNER_REVIEW** (docs) | **No** until Owner docs review; merge last / rebase |
 
 ## Shared-file conflict map
 
@@ -35,10 +35,12 @@ ROADMAP/matrix lines from #62 are superseded by #65 verified Live UAT + handoff 
 
 ## Recommended merge order (when Owner authorizes each step)
 
-1. Close #62 as superseded (or merge #62 first if Owner prefers tiny SHA-only PR before #65).  
+1. ~~Close #62~~ — **done** (SUPERSEDED_BY_#65).  
 2. Merge **#63** only after Owner S05/S06/S07 acceptance acts.  
 3. Merge **#64** only after independent security Approve (rebase onto develop post-#63 to resolve alerts migration + carryover docs).  
 4. Merge **#65** last (rebase onto develop) for final handoff matrix.
+
+CI detail: [PHASE2_CI_VERIFICATION_2026-11-15.md](PHASE2_CI_VERIFICATION_2026-11-15.md).
 
 ## Live UAT scope (binding)
 
