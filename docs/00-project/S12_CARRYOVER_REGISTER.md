@@ -13,13 +13,13 @@
 | C-S08 | S08 documentation reconciliation | Docs | **RESOLVED in S12 docs** (merge evidence) | Status now `OWNER_ACCEPTED / MERGED / NOT_DEPLOYED`; deploy still **not** authorized |
 | C-S09 | S09 independent security Approve | Security | **PENDING** | Evidence pack ready — [S09_SECURITY_REVIEW_EVIDENCE.md](../09-modules/22-operational-kpis/S09_SECURITY_REVIEW_EVIDENCE.md); GitHub Approve not recorded |
 | C-S10-SEC | S10 human security review #52–#55 | Security | **PENDING** | Evidence + GPS oracle fix — [S10_SECURITY_REVIEW_EVIDENCE_2026-11-14.md](../09-modules/23-executive-dashboard/S10_SECURITY_REVIEW_EVIDENCE_2026-11-14.md); human Approve not recorded |
-| C-S10-UAT | S10 Browser UAT | UAT | **NOT_RUN / PENDING** | Carryover |
-| C-S11-LIVE-UAT | S11 live Browser UAT | UAT | **NOT_RUN** | Harness existed; attested stack often unavailable |
+| C-S10-UAT | S10 Browser UAT | UAT | Covered by Phase 2 Live shell UAT **PASS** (2026-11-14) | Not production auth; see PR #65 evidence |
+| C-S11-LIVE-UAT | S11 live Browser UAT | UAT | Covered by Phase 2 Live shell UAT **PASS** (2026-11-14) | Not production auth |
 | C-S11-OWNER | S11 Owner administrative closure | Owner | **APPROVED** (2026-11-14) | `CLOSED_WITH_CARRYOVER`; production / Phase 2 final acceptance not granted |
-| C-S12-LIVE-UAT | S12 live operational Browser UAT | UAT | See live report | Mock ≠ live |
+| C-S12-LIVE-UAT | S12 live operational Browser UAT | UAT | **PASS** 2026-11-14 (shell) | Production still **NOT_AUTHORIZED** |
 | C-S12-OWNER | S12 / Phase 2 handoff Owner acceptance | Owner | **PENDING** | |
-| C-G4 | Live GPS provider (G4_LIVE) | Product | **BLOCKED** | Phase 2 incomplete |
-| C-G5 | GPS history + legal retention | Product | **BLOCKED** | Phase 2 incomplete |
+| C-G4 | Live GPS provider (G4_LIVE) | Product | **BLOCKED** | PR #64 fail-closed prep only — not Live |
+| C-G5 | GPS history + legal retention | Product | **BLOCKED** | History writer unbound; legal policy required |
 | C-U03 | Production SLA authorization | Product/Ops | **BLOCKED** | `EXECUTIVE_COMPLAINT_SLA_ACTIVATED_AT` unset |
 | C-S04-RES | S04 residual follow-ups | Engineering | Open | Preserved from S04 closure |
 | C-MVP-UAT | MVP interactive browser UAT / production deploy | MVP track | Pending in ROADMAP | Distinct from Phase 2 Workflow |
