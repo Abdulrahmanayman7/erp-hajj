@@ -43,7 +43,7 @@ const EXPECTED_GROUP_ORDER = [
 
 const EXPECTED_GROUP_MEMBERSHIP: Record<(typeof EXPECTED_GROUP_ORDER)[number], readonly string[]> = {
   home: ['dashboard', 'operational-kpis', 'executive-dashboard'],
-  system: ['users', 'roles', 'audit', 'settings', 'gps-providers'],
+  system: ['users', 'roles', 'audit', 'settings', 'gps-providers', 'gps-devices'],
   hr: ['organization-structure', 'employees'],
   'seasons-pilgrims': [
     'seasons',
@@ -62,6 +62,7 @@ const EXPECTED_GROUP_MEMBERSHIP: Record<(typeof EXPECTED_GROUP_ORDER)[number], r
     'transport-drivers',
     'transport-season-fleet',
     'transport-points',
+    'gps-fleet-map',
     'transport-movements',
     'transport-breakdowns',
   ],
@@ -163,11 +164,11 @@ describe('buildTenantNavGroups', () => {
     expect(groups).toHaveLength(11)
   })
 
-  it('exposes exactly 47 sidebar links without duplication', () => {
+  it('exposes exactly the approved sidebar links without duplication', () => {
     const groups = buildTenantNavGroups(allowAll)
     const keys = groups.flatMap((group) => group.items.map((item) => item.key))
     expect(keys).toEqual([...EXPECTED_LINK_KEYS])
-    expect(new Set(keys).size).toBe(48)
+    expect(new Set(keys).size).toBe(EXPECTED_LINK_KEYS.length)
   })
 
   it('keeps exact membership and order inside every approved group', () => {
@@ -192,6 +193,8 @@ describe('buildTenantNavGroups', () => {
     expect(byKey.audit).toBe('/app/audit')
     expect(byKey.settings).toBe('/app/settings')
     expect(byKey['gps-providers']).toBe('/app/gps-providers')
+    expect(byKey['gps-devices']).toBe('/app/gps-devices')
+    expect(byKey['gps-fleet-map']).toBe('/app/gps-fleet-map')
     expect(byKey['organization-structure']).toBe('/app/organization')
     expect(byKey.employees).toBe('/app/employees')
     expect(byKey.seasons).toBe('/app/seasons')

@@ -56,13 +56,22 @@ Process-wide `GpsProviderInterface` remains default `NullGpsProvider`; unknown `
 ### Device mapping
 
 Admin API `/api/v1/gps/device-bindings` enforces one device and one vehicle binding per tenant (no conflicts).
+List responses include provider health and last-known freshness for the devices admin UI (`/app/gps-devices`).
+
+### Interactive fleet map
+
+- `GET /api/v1/gps/fleet-map?season_id=` requires `gps.map.view`.
+- Arabic RTL UI: `/app/gps-fleet-map` (Leaflet + OpenStreetMap attribution) and executive dashboard GPS panel.
+- Filters: vehicle / plate / provider / status; auto-refresh on the map page.
+- Simulated markers always show a DEMO banner and never claim operational truth.
 
 ### Demo / simulator
 
 1. Non-production only.  
 2. `GPS_SIMULATOR_ENABLED=true`.  
 3. Markers with `is_simulated=true` / `marker_status=simulated` show DEMO banner.  
-4. Never treat simulated coordinates as operational truth.
+4. Provider admin exposes DEMO controls (failure, offline devices, radius, poll).  
+5. Never treat simulated coordinates as operational truth.
 
 ## Security
 

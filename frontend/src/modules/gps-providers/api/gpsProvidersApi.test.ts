@@ -1,6 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { apiGet, apiPost } from '@/shared/api/http'
-import { createGpsProvider, listGpsProviders, testGpsProvider } from './gpsProvidersApi'
+import {
+  createGpsProvider,
+  fetchGpsFleetMap,
+  listGpsDeviceBindings,
+  listGpsProviders,
+  testGpsProvider,
+} from './gpsProvidersApi'
 
 vi.mock('@/shared/api/http', () => ({
   apiGet: vi.fn(),
@@ -64,5 +70,34 @@ describe('gpsProvidersApi', () => {
     const result = await testGpsProvider(1)
     expect(apiPost).toHaveBeenCalledWith('/api/v1/gps/providers/1/test')
     expect(result.live_contact_made).toBe(false)
+  })
+
+  it('lists device bindings with search filters', async () => {
+    vi.mocked(apiGet).mockResolvedValue({
+      success: true,
+      message: '',
+      data: [{ id: 9, device_id: 'bus-1' }],
+    } as never)
+
+    const rows = await listGpsDeviceBindings({ search: 'bus', providerId: 3, isActive: true })
+    expect(apiGet).toHaveBeenCalledWith(
+      '/api/v1/gps/device-bindings?gps_provider_id=3&search=bus&is_active=1',
+    )
+    expect(rows[0]?.device_id).toBe('bus-1')
+  })
+
+  it('loads fleet map markers for a season', async () => {
+    vi.mocked(apiGet).mockResolvedValue({
+      success: true,
+      message: '',
+      data: {
+        freshness_class: 'unavailable',
+        markers: [{ transport_season_vehicle_id: 1, lat: 21.4, lng: 39.8, is_simulated: true }],
+      },
+    } as never)
+
+    const panel = await fetchGpsFleetMap(12)
+    expect(apiGet).toHaveBeenCalledWith('/api/v1/gps/fleet-map?season_id=12')
+    expect(panel.markers[0]?.is_simulated).toBe(true)
   })
 })

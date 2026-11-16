@@ -61,13 +61,54 @@ const providersQuery = useQuery({
 
 const bindingsQuery = useQuery({
   queryKey: computed(() => ['gps-device-bindings', selectedId.value]),
-  queryFn: () => listGpsDeviceBindings(selectedId.value ?? undefined),
+  queryFn: () => listGpsDeviceBindings({ providerId: selectedId.value ?? undefined }),
   enabled: computed(() => canView.value && selectedId.value != null),
 })
 
 const selected = computed(
   () => providersQuery.data.value?.find((row) => row.id === selectedId.value) ?? null,
 )
+
+const simFailure = ref(false)
+const simOfflineDevices = ref('')
+const simRadius = ref('3')
+const simPoll = ref('60')
+
+watch(selected, (row) => {
+  if (!row || row.connection_method !== 'simulator') return
+  simFailure.value = Boolean(row.settings.simulate_failure)
+  const offline = row.settings.offline_device_ids
+  simOfflineDevices.value = Array.isArray(offline) ? offline.map(String).join(', ') : ''
+  simRadius.value = row.settings.radius_km != null ? String(row.settings.radius_km) : '3'
+  simPoll.value = row.poll_interval_seconds != null ? String(row.poll_interval_seconds) : '60'
+})
+
+const simulatorMutation = useMutation({
+  mutationFn: async () => {
+    if (selectedId.value == null) throw new Error('no provider')
+    const offline = simOfflineDevices.value
+      .split(',')
+      .map((part) => part.trim())
+      .filter(Boolean)
+    return updateGpsProvider(selectedId.value, {
+      name: selected.value?.name ?? 'simulator',
+      connection_method: 'simulator',
+      is_enabled: selected.value?.is_enabled ?? true,
+      poll_interval_seconds: Number(simPoll.value) || 60,
+      settings: {
+        base_latitude: Number(selected.value?.settings.base_latitude ?? 21.4225),
+        base_longitude: Number(selected.value?.settings.base_longitude ?? 39.8262),
+        radius_km: Number(simRadius.value) || 3,
+        simulate_failure: simFailure.value,
+        offline_device_ids: offline,
+      },
+    })
+  },
+  onSuccess: async () => {
+    flash.value = t('gpsProviders.simulatorSaved')
+    await queryClient.invalidateQueries({ queryKey: ['gps-providers'] })
+  },
+})
 
 watch(
   () => providersQuery.data.value,
@@ -333,6 +374,41 @@ const unbindMutation = useMutation({
             @click="deleteMutation.mutate(selected.id)"
           >
             {{ t('gpsProviders.delete') }}
+          </button>
+        </div>
+
+        <div
+          v-if="selected.connection_method === 'simulator' && canManage"
+          class="space-y-2 border-t border-[var(--border-subtle)] pt-3"
+          data-test="gps-simulator-controls"
+        >
+          <h3 class="text-sm font-bold">{{ t('gpsProviders.simulatorTitle') }}</h3>
+          <p class="text-xs text-amber-800">{{ t('gpsProviders.simulatorHint') }}</p>
+          <label class="flex items-center gap-2 text-sm">
+            <input v-model="simFailure" type="checkbox" data-test="gps-sim-failure" />
+            {{ t('gpsProviders.simulateFailure') }}
+          </label>
+          <label class="block text-sm">
+            <span class="mb-1 block text-brand-text-muted">{{ t('gpsProviders.offlineDevices') }}</span>
+            <input v-model="simOfflineDevices" class="w-full rounded-md border px-2 py-1.5" data-test="gps-sim-offline" />
+          </label>
+          <div class="grid gap-2 md:grid-cols-2">
+            <label class="block text-sm">
+              <span class="mb-1 block text-brand-text-muted">{{ t('gpsProviders.radiusKm') }}</span>
+              <input v-model="simRadius" type="number" min="0.1" step="0.1" class="w-full rounded-md border px-2 py-1.5" />
+            </label>
+            <label class="block text-sm">
+              <span class="mb-1 block text-brand-text-muted">{{ t('gpsProviders.pollSeconds') }}</span>
+              <input v-model="simPoll" type="number" min="30" class="w-full rounded-md border px-2 py-1.5" />
+            </label>
+          </div>
+          <button
+            type="button"
+            class="rounded-md border px-3 py-1.5 text-sm"
+            :disabled="simulatorMutation.isPending.value"
+            @click="simulatorMutation.mutate()"
+          >
+            {{ t('gpsProviders.saveSimulator') }}
           </button>
         </div>
 

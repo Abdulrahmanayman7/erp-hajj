@@ -25,6 +25,10 @@ export interface ExecutiveDashboardGpsMarker {
   source?: string | null
   is_simulated?: boolean
   vehicle_label?: string | null
+  vehicle_number?: string | null
+  plate_number?: string | null
+  vehicle_class?: string | null
+  device_id?: string | null
 }
 
 export interface ExecutiveDashboardGps {

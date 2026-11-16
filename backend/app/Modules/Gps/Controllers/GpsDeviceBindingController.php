@@ -23,9 +23,34 @@ final class GpsDeviceBindingController
     public function index(Request $request): JsonResponse
     {
         $this->authorize('viewAny', GpsDeviceBinding::class);
-        $query = GpsDeviceBinding::query()->orderBy('id');
+        $query = GpsDeviceBinding::query()
+            ->with(['provider', 'seasonVehicle.vehicle', 'lastKnown'])
+            ->orderBy('id');
+
         if ($request->filled('gps_provider_id')) {
             $query->where('gps_provider_id', (int) $request->query('gps_provider_id'));
+        }
+
+        if ($request->filled('is_active')) {
+            $query->where('is_active', filter_var($request->query('is_active'), FILTER_VALIDATE_BOOLEAN));
+        }
+
+        if ($request->filled('search')) {
+            $search = trim((string) $request->query('search'));
+            if ($search !== '') {
+                $like = '%'.$search.'%';
+                $query->where(function ($inner) use ($like): void {
+                    $inner->where('device_id', 'like', $like)
+                        ->orWhere('external_device_id', 'like', $like)
+                        ->orWhereHas('provider', function ($providerQuery) use ($like): void {
+                            $providerQuery->where('code', 'like', $like)->orWhere('name', 'like', $like);
+                        })
+                        ->orWhereHas('seasonVehicle.vehicle', function ($vehicleQuery) use ($like): void {
+                            $vehicleQuery->where('plate_number', 'like', $like)
+                                ->orWhere('vehicle_number', 'like', $like);
+                        });
+                });
+            }
         }
 
         return ApiResponse::success(data: GpsDeviceBindingResource::collection($query->get()));
@@ -83,7 +108,10 @@ final class GpsDeviceBindingController
             'action' => 'created',
         ], $request);
 
-        return ApiResponse::success(data: new GpsDeviceBindingResource($binding->fresh()), status: 201);
+        return ApiResponse::success(
+            data: new GpsDeviceBindingResource($binding->fresh()->load(['provider', 'seasonVehicle.vehicle', 'lastKnown'])),
+            status: 201,
+        );
     }
 
     public function update(
@@ -138,7 +166,11 @@ final class GpsDeviceBindingController
             'action' => 'updated',
         ], $request);
 
-        return ApiResponse::success(data: new GpsDeviceBindingResource($gps_device_binding->fresh()));
+        return ApiResponse::success(
+            data: new GpsDeviceBindingResource(
+                $gps_device_binding->fresh()->load(['provider', 'seasonVehicle.vehicle', 'lastKnown']),
+            ),
+        );
     }
 
     public function destroy(

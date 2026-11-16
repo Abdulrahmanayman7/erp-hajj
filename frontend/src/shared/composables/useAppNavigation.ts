@@ -216,7 +216,17 @@ export function buildTenantNavGroups(can: (permission: string) => boolean): AppN
       to: '/app/gps-providers',
       icon: Satellite,
       permission: 'gps.providers.view',
-      match: 'prefix',
+      match: 'exact',
+    })
+  }
+  if (can('gps.devices.manage') || can('gps.providers.view') || can('gps.providers.manage')) {
+    systemItems.push({
+      key: 'gps-devices',
+      labelKey: 'nav.gpsDevices',
+      to: '/app/gps-devices',
+      icon: Satellite,
+      permission: 'gps.devices.manage',
+      match: 'exact',
     })
   }
   pushGroup(groups, { key: 'system', labelKey: 'nav.systemAdmin', items: systemItems })
@@ -400,6 +410,20 @@ export function buildTenantNavGroups(can: (permission: string) => boolean): AppN
         permission: 'transportation.view',
         match: 'prefix',
       },
+    )
+  }
+  if (can('gps.map.view')) {
+    transportItems.push({
+      key: 'gps-fleet-map',
+      labelKey: 'nav.gpsFleetMap',
+      to: '/app/gps-fleet-map',
+      icon: MapPinned,
+      permission: 'gps.map.view',
+      match: 'exact',
+    })
+  }
+  if (can('transportation.view')) {
+    transportItems.push(
       {
         key: 'transport-movements',
         labelKey: 'nav.transportMovements',

@@ -363,3 +363,121 @@ it('does not bind a G5 history writer and keeps history table absent', function 
     expect(app()->bound(GpsLocationHistoryWriterInterface::class))->toBeFalse()
         ->and(Schema::hasTable('gps_vehicle_location_history'))->toBeFalse();
 });
+
+it('returns enriched device bindings with last-known health metadata', function (): void {
+    [$tenant] = gpsHubActingAs();
+    $season = kpiSeason($tenant, 'active');
+
+    withTenant($tenant, function () use ($season, $tenant): void {
+        $ownerId = $tenant->users()->first()->id;
+        $provider = new GpsProvider;
+        $provider->forceFill([
+            'name' => 'Bind Meta',
+            'code' => 'bind-meta',
+            'connection_method' => 'webhook',
+            'is_enabled' => true,
+            'settings_json' => [],
+            'last_health_status' => GpsProviderHealthStatus::Healthy->value,
+        ]);
+        $provider->save();
+
+        $vehicle = TransportVehicle::query()->create([
+            'vehicle_number' => 'V-META-'.uniqid(),
+            'plate_number' => 'META-'.uniqid(),
+            'vehicle_class' => VehicleClass::Bus,
+            'is_active' => true,
+            'created_by' => $ownerId,
+        ]);
+        $tsv = new TransportSeasonVehicle;
+        $tsv->forceFill([
+            'season_id' => $season->id,
+            'transport_vehicle_id' => $vehicle->id,
+            'operational_capacity' => 40,
+            'service_level' => ServiceLevel::Standard,
+            'is_active' => true,
+            'created_by' => $ownerId,
+        ]);
+        $tsv->save();
+
+        $binding = new GpsDeviceBinding;
+        $binding->forceFill([
+            'device_id' => 'meta-dev-1',
+            'external_device_id' => 'meta-dev-1',
+            'transport_season_vehicle_id' => $tsv->id,
+            'gps_provider_id' => $provider->id,
+            'is_active' => true,
+        ]);
+        $binding->save();
+
+        $last = new GpsVehicleLastKnown;
+        $last->forceFill([
+            'season_id' => $season->id,
+            'transport_season_vehicle_id' => $tsv->id,
+            'latitude' => '21.4000000',
+            'longitude' => '39.8000000',
+            'recorded_at' => now()->subMinute(),
+            'device_id' => 'meta-dev-1',
+            'is_simulated' => false,
+            'source' => 'webhook',
+        ]);
+        $last->save();
+    });
+
+    $row = spaGetJson('/api/v1/gps/device-bindings?search=meta-dev')->assertOk()->json('data.0');
+    expect($row['device_id'])->toBe('meta-dev-1')
+        ->and($row['provider_code'])->toBe('bind-meta')
+        ->and($row['last_known']['latitude'])->toBe(21.4)
+        ->and($row['last_known']['is_simulated'])->toBeFalse();
+});
+
+it('serves fleet-map markers with gps.map.view and denies without it', function (): void {
+    $tenant = actingAsTenantOwner()->tenant;
+    $season = kpiSeason($tenant, 'active');
+
+    withTenant($tenant, function () use ($season, $tenant): void {
+        $ownerId = $tenant->users()->first()->id;
+        $vehicle = TransportVehicle::query()->create([
+            'vehicle_number' => 'V-FMAP-'.uniqid(),
+            'plate_number' => 'FMAP-'.uniqid(),
+            'vehicle_class' => VehicleClass::Minibus,
+            'is_active' => true,
+            'created_by' => $ownerId,
+        ]);
+        $tsv = new TransportSeasonVehicle;
+        $tsv->forceFill([
+            'season_id' => $season->id,
+            'transport_vehicle_id' => $vehicle->id,
+            'operational_capacity' => 20,
+            'service_level' => ServiceLevel::Standard,
+            'is_active' => true,
+            'created_by' => $ownerId,
+        ]);
+        $tsv->save();
+
+        $last = new GpsVehicleLastKnown;
+        $last->forceFill([
+            'season_id' => $season->id,
+            'transport_season_vehicle_id' => $tsv->id,
+            'latitude' => '21.4500000',
+            'longitude' => '39.8500000',
+            'recorded_at' => now()->subMinutes(1),
+            'device_id' => 'fmap-1',
+            'is_simulated' => true,
+            'source' => 'simulator',
+            'speed_kph' => 30,
+            'heading_deg' => 90,
+        ]);
+        $last->save();
+    });
+
+    kpiActingAsUserWith(['gps.map.view'], $tenant);
+    $gps = spaGetJson('/api/v1/gps/fleet-map?season_id='.$season->id)->assertOk()->json('data');
+    expect($gps['markers'])->toHaveCount(1)
+        ->and($gps['markers'][0]['is_simulated'])->toBeTrue()
+        ->and($gps['markers'][0]['marker_status'])->toBe('simulated')
+        ->and($gps['markers'][0]['vehicle_class'])->toBe('minibus')
+        ->and($gps['markers'][0]['plate_number'])->not->toBeNull();
+
+    kpiActingAsUserWith(['gps.providers.view'], $tenant);
+    spaGetJson('/api/v1/gps/fleet-map?season_id='.$season->id)->assertForbidden();
+});

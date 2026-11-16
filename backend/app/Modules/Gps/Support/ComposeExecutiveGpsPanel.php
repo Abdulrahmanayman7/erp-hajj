@@ -33,7 +33,11 @@ final class ComposeExecutiveGpsPanel
      *     provider_code: string|null,
      *     source: string|null,
      *     is_simulated: bool,
-     *     vehicle_label: string|null
+     *     vehicle_label: string|null,
+     *     vehicle_number: string|null,
+     *     plate_number: string|null,
+     *     vehicle_class: string|null,
+     *     device_id: string|null
      *   }>
      * }
      */
@@ -101,14 +105,14 @@ final class ComposeExecutiveGpsPanel
             $tsvId = (int) $vehicle->id;
             $binding = $bindingsByVehicle[$tsvId] ?? null;
             $row = $lastKnownByVehicle[$tsvId] ?? null;
-            $label = $this->vehicleLabel($vehicle);
+            $identity = $this->vehicleIdentity($vehicle);
 
             if ($row === null) {
                 $status = $binding === null
                     ? GpsMarkerStatus::NoDevice
                     : $this->providerUnavailableOrOffline($binding, $providers);
 
-                $markers[] = [
+                $markers[] = array_merge($identity, [
                     'transport_season_vehicle_id' => $tsvId,
                     'lat' => null,
                     'lng' => null,
@@ -122,8 +126,8 @@ final class ComposeExecutiveGpsPanel
                         : null,
                     'source' => null,
                     'is_simulated' => false,
-                    'vehicle_label' => $label,
-                ];
+                    'device_id' => $binding?->device_id,
+                ]);
 
                 continue;
             }
@@ -145,7 +149,7 @@ final class ComposeExecutiveGpsPanel
                     ? GpsMarkerStatus::Online
                     : GpsMarkerStatus::Stale);
 
-            $markers[] = [
+            $markers[] = array_merge($identity, [
                 'transport_season_vehicle_id' => $tsvId,
                 'lat' => (float) $row->latitude,
                 'lng' => (float) $row->longitude,
@@ -158,8 +162,8 @@ final class ComposeExecutiveGpsPanel
                 'provider_code' => $row->provider_code,
                 'source' => $row->source,
                 'is_simulated' => $isSimulated,
-                'vehicle_label' => $label,
-            ];
+                'device_id' => $row->device_id ?? $binding?->device_id,
+            ]);
         }
 
         $section = $hasReal
@@ -189,13 +193,32 @@ final class ComposeExecutiveGpsPanel
         return GpsMarkerStatus::Offline;
     }
 
-    private function vehicleLabel(TransportSeasonVehicle $vehicle): ?string
+    /**
+     * @return array{
+     *   vehicle_label: string|null,
+     *   vehicle_number: string|null,
+     *   plate_number: string|null,
+     *   vehicle_class: string|null
+     * }
+     */
+    private function vehicleIdentity(TransportSeasonVehicle $vehicle): array
     {
-        $plate = $vehicle->vehicle->plate_number ?? null;
-        if (is_string($plate) && $plate !== '') {
-            return $plate;
-        }
+        $registry = $vehicle->vehicle;
+        $plate = is_string($registry?->plate_number) && $registry->plate_number !== ''
+            ? $registry->plate_number
+            : null;
+        $number = is_string($registry?->vehicle_number) && $registry->vehicle_number !== ''
+            ? $registry->vehicle_number
+            : null;
+        $class = $registry?->vehicle_class?->value;
 
-        return 'مركبة #'.$vehicle->id;
+        $label = $plate ?? ($number !== null ? $number : ('مركبة #'.$vehicle->id));
+
+        return [
+            'vehicle_label' => $label,
+            'vehicle_number' => $number,
+            'plate_number' => $plate,
+            'vehicle_class' => $class,
+        ];
     }
 }

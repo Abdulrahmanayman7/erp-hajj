@@ -7,6 +7,7 @@ use App\Core\Tenancy\UsesTenantScope;
 use App\Modules\Transportation\Models\TransportSeasonVehicle;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * Authorized GPS device identity for one season vehicle within a tenant.
@@ -46,5 +47,10 @@ class GpsDeviceBinding extends Model implements TenantOwned
     public function provider(): BelongsTo
     {
         return $this->belongsTo(GpsProvider::class, 'gps_provider_id');
+    }
+
+    public function lastKnown(): HasOne
+    {
+        return $this->hasOne(GpsVehicleLastKnown::class, 'transport_season_vehicle_id', 'transport_season_vehicle_id');
     }
 }

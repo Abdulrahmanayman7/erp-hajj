@@ -678,6 +678,26 @@ export const router = createRouter({
       },
     },
     {
+      path: '/app/gps-devices',
+      name: 'gps-devices',
+      component: () => import('@/modules/gps-providers/pages/GpsDevicesPage.vue'),
+      meta: {
+        requiresAuth: true,
+        layout: 'app',
+        permissionsAny: ['gps.devices.manage', 'gps.providers.view', 'gps.providers.manage'],
+      },
+    },
+    {
+      path: '/app/gps-fleet-map',
+      name: 'gps-fleet-map',
+      component: () => import('@/modules/gps-providers/pages/GpsFleetMapPage.vue'),
+      meta: {
+        requiresAuth: true,
+        layout: 'app',
+        permission: 'gps.map.view',
+      },
+    },
+    {
       path: '/app/roles/:id/permissions',
       name: 'role-permissions',
       component: () => import('@/modules/roles/pages/RolePermissionsPage.vue'),

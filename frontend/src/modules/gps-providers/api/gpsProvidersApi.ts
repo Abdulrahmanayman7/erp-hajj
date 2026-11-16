@@ -1,5 +1,10 @@
 import { apiDelete, apiGet, apiPatch, apiPost } from '@/shared/api/http'
-import type { GpsDeviceBinding, GpsProvider, GpsProviderUpsertPayload } from '../types/gpsProviders'
+import type {
+  GpsDeviceBinding,
+  GpsFleetMapPanel,
+  GpsProvider,
+  GpsProviderUpsertPayload,
+} from '../types/gpsProviders'
 
 export async function listGpsProviders(): Promise<GpsProvider[]> {
   const response = await apiGet<GpsProvider[]>('/api/v1/gps/providers')
@@ -55,9 +60,16 @@ export async function syncGpsProvider(id: number): Promise<{
   return response.data
 }
 
-export async function listGpsDeviceBindings(providerId?: number): Promise<GpsDeviceBinding[]> {
-  const suffix =
-    providerId != null ? `?gps_provider_id=${encodeURIComponent(String(providerId))}` : ''
+export async function listGpsDeviceBindings(params?: {
+  providerId?: number
+  search?: string
+  isActive?: boolean
+}): Promise<GpsDeviceBinding[]> {
+  const query = new URLSearchParams()
+  if (params?.providerId != null) query.set('gps_provider_id', String(params.providerId))
+  if (params?.search) query.set('search', params.search)
+  if (params?.isActive != null) query.set('is_active', params.isActive ? '1' : '0')
+  const suffix = query.toString() ? `?${query.toString()}` : ''
   const response = await apiGet<GpsDeviceBinding[]>(`/api/v1/gps/device-bindings${suffix}`)
   return response.data
 }
@@ -75,4 +87,11 @@ export async function createGpsDeviceBinding(payload: {
 
 export async function deleteGpsDeviceBinding(id: number): Promise<void> {
   await apiDelete(`/api/v1/gps/device-bindings/${id}`)
+}
+
+export async function fetchGpsFleetMap(seasonId: number): Promise<GpsFleetMapPanel> {
+  const response = await apiGet<GpsFleetMapPanel>(
+    `/api/v1/gps/fleet-map?season_id=${encodeURIComponent(String(seasonId))}`,
+  )
+  return response.data
 }

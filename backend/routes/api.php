@@ -27,6 +27,7 @@ use App\Modules\ExecutiveAlerts\Controllers\ExecutiveAlertController;
 use App\Modules\ExecutiveDashboard\Controllers\ExecutiveDashboardController;
 use App\Modules\ExecutiveReports\Controllers\ExecutiveReportController;
 use App\Modules\Gps\Controllers\GpsDeviceBindingController;
+use App\Modules\Gps\Controllers\GpsFleetMapController;
 use App\Modules\Gps\Controllers\GpsIngestController;
 use App\Modules\Gps\Controllers\GpsProviderController;
 use App\Modules\Inventory\Controllers\InventoryBalanceController;
@@ -183,6 +184,7 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::post('/gps/device-bindings', [GpsDeviceBindingController::class, 'store'])->name('gps.device-bindings.store');
         Route::patch('/gps/device-bindings/{gps_device_binding}', [GpsDeviceBindingController::class, 'update'])->name('gps.device-bindings.update');
         Route::delete('/gps/device-bindings/{gps_device_binding}', [GpsDeviceBindingController::class, 'destroy'])->name('gps.device-bindings.destroy');
+        Route::get('/gps/fleet-map', [GpsFleetMapController::class, 'show'])->name('gps.fleet-map.show');
 
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
         Route::post('/users', [UserController::class, 'store'])->name('users.store');

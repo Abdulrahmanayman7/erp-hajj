@@ -13,6 +13,16 @@ export type GpsProviderHealthStatus =
   | 'blocked'
   | 'disabled'
 
+export type GpsFreshnessClass = 'real' | 'stale' | 'unavailable'
+
+export type GpsMarkerStatus =
+  | 'online'
+  | 'offline'
+  | 'stale'
+  | 'no_device'
+  | 'provider_unavailable'
+  | 'simulated'
+
 export interface GpsProvider {
   id: number
   name: string
@@ -30,13 +40,31 @@ export interface GpsProvider {
   updated_at: string | null
 }
 
+export interface GpsDeviceLastKnown {
+  latitude: number
+  longitude: number
+  recorded_at: string | null
+  freshness_class: GpsFreshnessClass
+  is_simulated: boolean
+  speed_kph: number | null
+  heading_deg: number | null
+  source: string | null
+}
+
 export interface GpsDeviceBinding {
   id: number
   device_id: string
   external_device_id: string | null
   transport_season_vehicle_id: number
   gps_provider_id: number | null
+  provider_code?: string | null
+  provider_name?: string | null
+  provider_health?: GpsProviderHealthStatus | null
+  vehicle_number?: string | null
+  plate_number?: string | null
+  vehicle_class?: string | null
   is_active: boolean
+  last_known?: GpsDeviceLastKnown | null
   created_at: string | null
   updated_at: string | null
 }
@@ -49,4 +77,28 @@ export interface GpsProviderUpsertPayload {
   poll_interval_seconds?: number | null
   settings?: Record<string, unknown>
   credentials?: Record<string, string>
+}
+
+export interface GpsFleetMapMarker {
+  transport_season_vehicle_id: number
+  lat: number | null
+  lng: number | null
+  freshness_class: GpsFreshnessClass
+  marker_status?: GpsMarkerStatus
+  recorded_at: string | null
+  speed_kph?: number | null
+  heading_deg?: number | null
+  provider_code?: string | null
+  source?: string | null
+  is_simulated?: boolean
+  vehicle_label?: string | null
+  vehicle_number?: string | null
+  plate_number?: string | null
+  vehicle_class?: string | null
+  device_id?: string | null
+}
+
+export interface GpsFleetMapPanel {
+  freshness_class: GpsFreshnessClass
+  markers: GpsFleetMapMarker[]
 }
