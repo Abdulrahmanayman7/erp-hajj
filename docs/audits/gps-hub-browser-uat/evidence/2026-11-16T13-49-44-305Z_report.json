@@ -1,0 +1,131 @@
+{
+  "suite": "gps-hub-live-browser-uat",
+  "started_at": "2026-11-16T13:49:44.306Z",
+  "isolation": {
+    "database": "erp_hajj_gps_uat",
+    "verified_disposable": true,
+    "engine_note": "mysql"
+  },
+  "env": {
+    "base": "http://127.0.0.1:5173",
+    "api": "http://127.0.0.1:8000"
+  },
+  "gates": {
+    "g4_live": "BLOCKED",
+    "g5_history": "BLOCKED",
+    "production": "NOT_AUTHORIZED"
+  },
+  "steps": [
+    {
+      "step": "auth.owner",
+      "status": "PASS",
+      "detail": "owner login RTL",
+      "screenshot": "2026-11-16T13-49-44-305Z_01_logged_in.png"
+    },
+    {
+      "step": "providers.page",
+      "status": "PASS",
+      "detail": "providers admin RTL",
+      "screenshot": "2026-11-16T13-49-44-305Z_02_providers.png"
+    },
+    {
+      "step": "providers.create_rest",
+      "status": "PASS",
+      "detail": "REST provider created",
+      "screenshot": null
+    },
+    {
+      "step": "providers.create_webhook",
+      "status": "PASS",
+      "detail": "Webhook provider created",
+      "screenshot": null
+    },
+    {
+      "step": "providers.create_traccar",
+      "status": "PASS",
+      "detail": "Traccar configured (test mode / not live claim)",
+      "screenshot": null
+    },
+    {
+      "step": "providers.secrets_masked",
+      "status": "PASS",
+      "detail": "raw secrets absent from DOM",
+      "screenshot": "2026-11-16T13-49-44-305Z_03_providers_created.png"
+    },
+    {
+      "step": "providers.test_webhook",
+      "status": "PASS",
+      "detail": "تم حفظ مزود GPS.",
+      "screenshot": null
+    },
+    {
+      "step": "providers.test_traccar_gate",
+      "status": "PASS",
+      "detail": "webhook provider is configured for secure push ingest. live push requires device bindings and hmac.",
+      "screenshot": null
+    },
+    {
+      "step": "simulator.controls",
+      "status": "PASS",
+      "detail": "DEMO simulator controls visible",
+      "screenshot": "2026-11-16T13-49-44-305Z_04_simulator.png"
+    },
+    {
+      "step": "devices.link_valid",
+      "status": "PASS",
+      "detail": "linked device to vehicle 1",
+      "screenshot": null
+    },
+    {
+      "step": "devices.duplicate_rejected",
+      "status": "PASS",
+      "detail": "duplicate vehicle assignment attempted",
+      "screenshot": "2026-11-16T13-49-44-305Z_05_devices.png"
+    },
+    {
+      "step": "devices.link_second",
+      "status": "PASS",
+      "detail": "linked second vehicle 2",
+      "screenshot": null
+    },
+    {
+      "step": "simulator.sync",
+      "status": "PASS",
+      "detail": "Applied 2 position(s).",
+      "screenshot": "2026-11-16T13-49-44-305Z_06_sim_synced.png"
+    },
+    {
+      "step": "map.leaflet_demo",
+      "status": "PASS",
+      "detail": "Leaflet + DEMO banner",
+      "screenshot": "2026-11-16T13-49-44-305Z_07_fleet_map.png"
+    },
+    {
+      "step": "map.filters",
+      "status": "PASS",
+      "detail": "refresh + vehicle filter applied",
+      "screenshot": "2026-11-16T13-49-44-305Z_08_map_filters.png"
+    },
+    {
+      "step": "map.mobile_rtl",
+      "status": "PASS",
+      "detail": "mobile RTL map",
+      "screenshot": "2026-11-16T13-49-44-305Z_09_map_mobile.png"
+    },
+    {
+      "step": "rbac.viewer_providers",
+      "status": "PASS",
+      "detail": "viewer lacks manage controls",
+      "screenshot": "2026-11-16T13-49-44-305Z_10_viewer_providers.png"
+    },
+    {
+      "step": "rbac.viewer_map",
+      "status": "PASS",
+      "detail": "viewer can open map with gps.map.view",
+      "screenshot": "2026-11-16T13-49-44-305Z_11_viewer_map.png"
+    }
+  ],
+  "verdict": "PASS",
+  "not_run_reason": null,
+  "finished_at": "2026-11-16T13:51:09.372Z"
+}

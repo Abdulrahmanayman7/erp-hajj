@@ -83,6 +83,13 @@ List responses include provider health and last-known freshness for the devices 
 - Live outbound fail-closed (`GpsOutboundGate`).  
 - G5 history writer remains unbound.
 
+## Browser UAT
+
+Live attested disposable Browser UAT for the hub is recorded in
+[`docs/audits/gps-hub-browser-uat/REPORT.md`](../../audits/gps-hub-browser-uat/REPORT.md)
+(`erp_hajj_gps_uat`, Playwright journeys PASS on PR #66). GPS permissions remain
+**explicit-assignment-only** (not auto-granted via Tenant Owner template).
+
 ## Remaining blockers
 
 1. Named live vendor + Owner G4 authorization.  

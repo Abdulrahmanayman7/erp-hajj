@@ -208,7 +208,10 @@ const saveMutation = useMutation({
 })
 
 const testMutation = useMutation({
-  mutationFn: (id: number) => testGpsProvider(id),
+  mutationFn: (id: number) => {
+    flash.value = null
+    return testGpsProvider(id)
+  },
   onSuccess: async (result) => {
     flash.value = result.message
     await queryClient.invalidateQueries({ queryKey: ['gps-providers'] })
@@ -216,7 +219,10 @@ const testMutation = useMutation({
 })
 
 const syncMutation = useMutation({
-  mutationFn: (id: number) => syncGpsProvider(id),
+  mutationFn: (id: number) => {
+    flash.value = null
+    return syncGpsProvider(id)
+  },
   onSuccess: async (result) => {
     flash.value = result.message
     await queryClient.invalidateQueries({ queryKey: ['gps-providers'] })

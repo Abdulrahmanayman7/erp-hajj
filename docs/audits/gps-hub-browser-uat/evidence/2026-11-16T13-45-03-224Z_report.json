@@ -1,0 +1,21 @@
+{
+  "suite": "gps-hub-live-browser-uat",
+  "started_at": "2026-11-16T13:45:03.225Z",
+  "isolation": {
+    "database": null,
+    "verified_disposable": false,
+    "engine_note": null
+  },
+  "env": {
+    "base": "http://127.0.0.1:5173",
+    "api": "http://127.0.0.1:8000"
+  },
+  "gates": {
+    "g4_live": "BLOCKED",
+    "g5_history": "BLOCKED",
+    "production": "NOT_AUTHORIZED"
+  },
+  "steps": [],
+  "verdict": "NOT_RUN",
+  "not_run_reason": "Frontend unreachable at http://127.0.0.1:5173"
+}

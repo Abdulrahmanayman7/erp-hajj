@@ -1,0 +1,42 @@
+{
+  "suite": "gps-hub-live-browser-uat",
+  "started_at": "2026-11-16T13:48:12.540Z",
+  "isolation": {
+    "database": "erp_hajj_gps_uat",
+    "verified_disposable": true,
+    "engine_note": "mysql"
+  },
+  "env": {
+    "base": "http://127.0.0.1:5173",
+    "api": "http://127.0.0.1:8000"
+  },
+  "gates": {
+    "g4_live": "BLOCKED",
+    "g5_history": "BLOCKED",
+    "production": "NOT_AUTHORIZED"
+  },
+  "steps": [
+    {
+      "step": "auth.owner",
+      "status": "PASS",
+      "detail": "owner login RTL",
+      "screenshot": "2026-11-16T13-48-12-540Z_01_logged_in.png"
+    },
+    {
+      "step": "providers.page",
+      "status": "PASS",
+      "detail": "providers admin RTL",
+      "screenshot": "2026-11-16T13-48-12-540Z_02_providers.png"
+    },
+    {
+      "step": "fatal",
+      "status": "FAIL",
+      "detail": "TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for getByTestId('gps-add-provider')\n",
+      "screenshot": null
+    }
+  ],
+  "verdict": "FAIL",
+  "not_run_reason": null,
+  "fatal": "TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for getByTestId('gps-add-provider')\n",
+  "finished_at": "2026-11-16T13:48:54.326Z"
+}

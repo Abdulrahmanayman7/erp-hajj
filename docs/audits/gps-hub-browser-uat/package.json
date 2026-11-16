@@ -1,0 +1,14 @@
+{
+  "name": "gps-hub-browser-uat",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "GPS Integration Hub live Browser UAT against attested disposable erp_hajj_*_uat DB",
+  "scripts": {
+    "test:policy": "node --test uat-attestation.test.mjs",
+    "uat:live": "node run-live-uat.mjs"
+  },
+  "dependencies": {
+    "playwright-core": "^1.56.0"
+  }
+}
