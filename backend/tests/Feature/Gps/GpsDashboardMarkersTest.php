@@ -53,7 +53,8 @@ it('returns real last-known markers on the executive dashboard for the season fl
         ->and($gps['markers'])->toHaveCount(1)
         ->and($gps['markers'][0]['transport_season_vehicle_id'])->toBe($tsvId)
         ->and($gps['markers'][0]['freshness_class'])->toBe('real')
-        ->and(json_encode($gps))->not->toContain('simulated');
+        ->and($gps['markers'][0]['is_simulated'] ?? false)->toBeFalse()
+        ->and($gps['markers'][0]['marker_status'] ?? null)->not->toBe('simulated');
 });
 
 it('marks last-known older than 5 minutes as stale', function (): void {

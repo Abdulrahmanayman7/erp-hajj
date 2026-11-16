@@ -318,6 +318,9 @@ final class PermissionCatalog
             ['name' => 'executive_alerts.view', 'display_name' => 'عرض التنبيهات التنفيذية', 'module' => 'executive_alerts', 'description' => 'عرض تنبيهات لوحة التحكم التنفيذية (مسجّلة؛ لا واجهة في الشريحة الأولى)'],
             ['name' => 'executive_reports.view', 'display_name' => 'عرض التقارير التنفيذية', 'module' => 'executive_reports', 'description' => 'عرض وتصدير التقارير التنفيذية (مسجّلة؛ لا واجهة في الشريحة الأولى)'],
             ['name' => 'gps.map.view', 'display_name' => 'عرض خريطة المواقع', 'module' => 'gps', 'description' => 'عرض قسم الخريطة في اللوحة التنفيذية؛ بدون إحداثيات حية حتى بوابة التكامل'],
+            ['name' => 'gps.providers.view', 'display_name' => 'عرض مزودي GPS', 'module' => 'gps', 'description' => 'عرض إعدادات مزودي GPS دون كشف الأسرار'],
+            ['name' => 'gps.providers.manage', 'display_name' => 'إدارة مزودي GPS', 'module' => 'gps', 'description' => 'إضافة وتعديل وتمكين مزودي GPS واختبار الاتصال'],
+            ['name' => 'gps.devices.manage', 'display_name' => 'إدارة أجهزة GPS', 'module' => 'gps', 'description' => 'ربط وفك وربط أجهزة GPS بالمركبات'],
             ['name' => 'tenant_settings.view', 'display_name' => 'عرض إعدادات المنشأة', 'module' => 'tenant_settings', 'description' => 'عرض إعدادات المنشأة'],
             ['name' => 'tenant_settings.update', 'display_name' => 'تحديث إعدادات المنشأة', 'module' => 'tenant_settings', 'description' => 'تحديث إعدادات المنشأة'],
         ];
@@ -400,6 +403,9 @@ final class PermissionCatalog
             'executive_alerts.view',
             'executive_reports.view',
             'gps.map.view',
+            'gps.providers.view',
+            'gps.providers.manage',
+            'gps.devices.manage',
         ];
 
         $all = array_values(array_filter(

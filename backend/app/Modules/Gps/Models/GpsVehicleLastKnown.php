@@ -24,6 +24,14 @@ use Illuminate\Support\Carbon;
  * @property string $longitude
  * @property Carbon $recorded_at
  * @property string|null $device_id
+ * @property int|null $gps_provider_id
+ * @property string|null $provider_code
+ * @property string|null $source
+ * @property string|null $speed_kph
+ * @property string|null $heading_deg
+ * @property string|null $accuracy_m
+ * @property bool $is_simulated
+ * @property Carbon|null $received_at
  */
 class GpsVehicleLastKnown extends Model implements SeasonOwned, TenantOwned
 {
@@ -41,6 +49,8 @@ class GpsVehicleLastKnown extends Model implements SeasonOwned, TenantOwned
     {
         return [
             'recorded_at' => 'datetime',
+            'received_at' => 'datetime',
+            'is_simulated' => 'boolean',
         ];
     }
 
@@ -57,5 +67,10 @@ class GpsVehicleLastKnown extends Model implements SeasonOwned, TenantOwned
     public function seasonVehicle(): BelongsTo
     {
         return $this->belongsTo(TransportSeasonVehicle::class, 'transport_season_vehicle_id');
+    }
+
+    public function provider(): BelongsTo
+    {
+        return $this->belongsTo(GpsProvider::class, 'gps_provider_id');
     }
 }

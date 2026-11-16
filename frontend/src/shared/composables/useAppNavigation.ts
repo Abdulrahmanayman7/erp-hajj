@@ -33,6 +33,7 @@ import {
   UserCog,
   Truck,
   MapPinned,
+  Satellite,
   Route,
   TriangleAlert,
   MessageSquare,
@@ -205,6 +206,16 @@ export function buildTenantNavGroups(can: (permission: string) => boolean): AppN
       to: '/app/settings',
       icon: Settings,
       permission: 'tenant_settings.view',
+      match: 'prefix',
+    })
+  }
+  if (can('gps.providers.view') || can('gps.providers.manage')) {
+    systemItems.push({
+      key: 'gps-providers',
+      labelKey: 'nav.gpsProviders',
+      to: '/app/gps-providers',
+      icon: Satellite,
+      permission: 'gps.providers.view',
       match: 'prefix',
     })
   }

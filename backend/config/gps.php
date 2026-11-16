@@ -11,30 +11,71 @@ $decodeWebhookSecrets = static function (): array {
     return is_array($decoded) ? $decoded : [];
 };
 
+$decodeAllowlist = static function (): array {
+    $raw = env('GPS_OUTBOUND_HOST_ALLOWLIST', '');
+    if (! is_string($raw) || trim($raw) === '') {
+        return [];
+    }
+
+    return array_values(array_filter(array_map('trim', explode(',', $raw))));
+};
+
 return [
 
     /*
     |--------------------------------------------------------------------------
-    | GPS provider
+    | GPS provider (legacy process-wide pull binding)
     |--------------------------------------------------------------------------
     |
     | Bound implementation of GpsProviderInterface. `null` selects NullGpsProvider
-    | (no live fetch). G4 Live vendor binding remains BLOCKED until a real source
-    | is approved (ADR-0021).
+    | (no live fetch). G4 Live vendor binding remains BLOCKED until authorized.
+    | Tenant-configurable hub providers live in `gps_providers` and use adapters.
     |
     */
     'provider' => env('GPS_PROVIDER', 'null'),
 
     /*
     |--------------------------------------------------------------------------
-    | Per-tenant ingest webhook HMAC secrets
+    | Live outbound authorization (G4)
+    |--------------------------------------------------------------------------
+    |
+    | REST/Traccar live HTTP remains fail-closed unless explicitly authorized.
+    | Production additionally requires GPS_LIVE_OUTBOUND_AUTHORIZED_IN_PRODUCTION.
+    | Owner authorization to claim G4 Live COMPLETE is still a separate act.
+    |
+    */
+    'live_outbound_authorized' => (bool) env('GPS_LIVE_OUTBOUND_AUTHORIZED', false),
+    'live_outbound_authorized_in_production' => (bool) env('GPS_LIVE_OUTBOUND_AUTHORIZED_IN_PRODUCTION', false),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Simulator / DEMO mode
+    |--------------------------------------------------------------------------
+    |
+    | Disabled by default. Always blocked in production regardless of this flag.
+    |
+    */
+    'simulator_enabled' => (bool) env('GPS_SIMULATOR_ENABLED', false),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Outbound HTTPS host allowlist (SSRF)
+    |--------------------------------------------------------------------------
+    |
+    | Comma-separated hosts/suffixes. Empty = any public HTTPS host (still
+    | rejects private/reserved IPs and non-HTTPS). Prefer an explicit allowlist
+    | before enabling live outbound.
+    |
+    */
+    'outbound_host_allowlist' => $decodeAllowlist(),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Per-tenant ingest webhook HMAC secrets (legacy env map)
     |--------------------------------------------------------------------------
     |
     | Fail-closed: missing/empty secret for the claimed tenant rejects ingest.
-    | Keys may be tenant_id (string) or tenant_code. No shared global secret —
-    | a single GPS_WEBHOOK_SECRET must not authorize cross-tenant updates.
-    |
-    | Env JSON example: {"1":"secret-for-tenant-1","rafee":"secret-for-rafee"}
+    | Hub webhook providers may also store encrypted per-provider secrets.
     |
     */
     'webhook_secrets' => $decodeWebhookSecrets(),
@@ -43,10 +84,6 @@ return [
     |--------------------------------------------------------------------------
     | Freshness thresholds (G2)
     |--------------------------------------------------------------------------
-    |
-    | REAL when age <= freshness_real_seconds; otherwise STALE. UNAVAILABLE when
-    | no last-known row exists.
-    |
     */
     'freshness_real_seconds' => (int) env('GPS_FRESHNESS_REAL_SECONDS', 300),
 
@@ -54,12 +91,6 @@ return [
     |--------------------------------------------------------------------------
     | Ingest replay nonce TTL
     |--------------------------------------------------------------------------
-    |
-    | Nominal TTL. Effective nonce retention is
-    | nonce_ttl_seconds + max_recorded_at_future_seconds + 1 so future-skewed
-    | recorded_at values cannot be replayed after the nominal TTL while still
-    | inside the acceptance window. Values below 60 are floored to 60 at runtime.
-    |
     */
     'nonce_ttl_seconds' => (int) env('GPS_NONCE_TTL_SECONDS', 600),
 
@@ -67,10 +98,6 @@ return [
     |--------------------------------------------------------------------------
     | recorded_at acceptance window
     |--------------------------------------------------------------------------
-    |
-    | Reject stale or future device clocks. Effective max age is capped at the
-    | nominal nonce TTL. Negative future skew is treated as 0 at runtime.
-    |
     */
     'max_recorded_at_age_seconds' => (int) env('GPS_MAX_RECORDED_AT_AGE_SECONDS', 600),
     'max_recorded_at_future_seconds' => (int) env('GPS_MAX_RECORDED_AT_FUTURE_SECONDS', 60),

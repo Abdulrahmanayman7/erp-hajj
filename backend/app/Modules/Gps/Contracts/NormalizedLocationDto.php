@@ -5,7 +5,11 @@ namespace App\Modules\Gps\Contracts;
 use Illuminate\Support\Carbon;
 
 /**
- * Provider-normalized vehicle location (G0). Never invent coordinates.
+ * Provider-neutral normalized vehicle location for the GPS Integration Hub.
+ *
+ * Tenant is never taken from provider payloads — it is resolved server-side via
+ * TenantContext / authenticated admin actions / HMAC ingest tenant resolution.
+ * Never invent coordinates. Simulated fixes must set $isSimulated = true.
  */
 final readonly class NormalizedLocationDto
 {
@@ -15,5 +19,14 @@ final readonly class NormalizedLocationDto
         public float $longitude,
         public Carbon $recordedAt,
         public ?string $deviceId = null,
+        public ?string $providerCode = null,
+        public ?string $externalDeviceId = null,
+        public ?float $speedKph = null,
+        public ?float $headingDeg = null,
+        public ?float $accuracyM = null,
+        public ?Carbon $receivedAt = null,
+        public string $source = 'unknown',
+        public bool $isSimulated = false,
+        public ?int $gpsProviderId = null,
     ) {}
 }

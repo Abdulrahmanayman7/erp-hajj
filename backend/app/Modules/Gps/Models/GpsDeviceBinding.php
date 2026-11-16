@@ -14,7 +14,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $id
  * @property int $tenant_id
  * @property string $device_id
+ * @property string|null $external_device_id
  * @property int $transport_season_vehicle_id
+ * @property int|null $gps_provider_id
+ * @property bool $is_active
  */
 class GpsDeviceBinding extends Model implements TenantOwned
 {
@@ -25,8 +28,23 @@ class GpsDeviceBinding extends Model implements TenantOwned
     /** @var list<string> */
     protected $fillable = [];
 
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'is_active' => 'boolean',
+        ];
+    }
+
     public function seasonVehicle(): BelongsTo
     {
         return $this->belongsTo(TransportSeasonVehicle::class, 'transport_season_vehicle_id');
+    }
+
+    public function provider(): BelongsTo
+    {
+        return $this->belongsTo(GpsProvider::class, 'gps_provider_id');
     }
 }

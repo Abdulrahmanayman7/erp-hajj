@@ -668,6 +668,16 @@ export const router = createRouter({
       meta: { requiresAuth: true, layout: 'app', permission: 'tenant_settings.view' },
     },
     {
+      path: '/app/gps-providers',
+      name: 'gps-providers',
+      component: () => import('@/modules/gps-providers/pages/GpsProvidersPage.vue'),
+      meta: {
+        requiresAuth: true,
+        layout: 'app',
+        permissionsAny: ['gps.providers.view', 'gps.providers.manage'],
+      },
+    },
+    {
       path: '/app/roles/:id/permissions',
       name: 'role-permissions',
       component: () => import('@/modules/roles/pages/RolePermissionsPage.vue'),

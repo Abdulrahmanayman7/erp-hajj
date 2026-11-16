@@ -312,6 +312,13 @@ const showReports = computed(() =>
             </span>
           </div>
           <p
+            v-if="payload.gps.markers.some((m) => m.is_simulated)"
+            class="rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-900"
+            data-test="gps-simulated-banner"
+          >
+            {{ t('executiveDashboard.gpsSimulatedBanner') }}
+          </p>
+          <p
             v-if="payload.gps.markers.length === 0"
             class="text-sm text-brand-text-secondary"
             data-test="gps-unavailable"
@@ -325,21 +332,26 @@ const showReports = computed(() =>
               class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-brand-border/80 bg-[var(--surface-subtle)] px-3 py-2 text-sm"
             >
               <span class="font-bold text-brand-text">
-                {{ t('executiveDashboard.gpsMarkerVehicle') }} #{{ marker.transport_season_vehicle_id }}
+                {{ marker.vehicle_label || `${t('executiveDashboard.gpsMarkerVehicle')} #${marker.transport_season_vehicle_id}` }}
               </span>
-              <span class="font-mono text-xs text-brand-text-secondary">
+              <span v-if="marker.lat != null && marker.lng != null" class="font-mono text-xs text-brand-text-secondary">
                 {{ marker.lat.toFixed(5) }}, {{ marker.lng.toFixed(5) }}
               </span>
+              <span v-else class="text-xs text-brand-text-muted">—</span>
               <span
                 class="inline-flex rounded px-1.5 py-0.5 text-[10px] font-bold uppercase"
                 :class="{
-                  'bg-emerald-50 text-emerald-800': marker.freshness_class === 'real',
-                  'bg-amber-50 text-amber-800': marker.freshness_class === 'stale',
-                  'bg-[var(--surface-subtle)] text-brand-text-muted': marker.freshness_class === 'unavailable',
+                  'bg-emerald-50 text-emerald-800': marker.marker_status === 'online' || marker.freshness_class === 'real',
+                  'bg-amber-50 text-amber-800': marker.marker_status === 'stale' || marker.marker_status === 'simulated' || marker.freshness_class === 'stale',
+                  'bg-[var(--surface-subtle)] text-brand-text-muted': !marker.marker_status || ['offline', 'no_device', 'provider_unavailable'].includes(marker.marker_status),
                 }"
                 data-test="gps-marker-freshness"
               >
-                {{ t(`executiveDashboard.gpsFreshness.${marker.freshness_class}`) }}
+                {{
+                  marker.marker_status
+                    ? t(`executiveDashboard.gpsMarkerStatus.${marker.marker_status}`)
+                    : t(`executiveDashboard.gpsFreshness.${marker.freshness_class}`)
+                }}
               </span>
             </li>
           </ul>
