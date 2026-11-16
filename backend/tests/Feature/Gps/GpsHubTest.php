@@ -105,6 +105,16 @@ it('rejects private SSRF destinations for GPS outbound URLs', function (): void 
         ->toThrow(GpsLiveOutboundBlockedException::class);
 });
 
+it('rejects outbound hosts outside the configured allowlist', function (): void {
+    Config::set('gps.outbound_host_allowlist', ['allowed.example.com']);
+
+    expect(fn () => app(GpsSsrfGuard::class)->assertSafeHttpsUrl('https://other.example.com/api'))
+        ->toThrow(GpsLiveOutboundBlockedException::class);
+
+    expect(app(GpsSsrfGuard::class)->assertSafeHttpsUrl('https://allowed.example.com/api'))
+        ->toBe('https://allowed.example.com/api');
+});
+
 it('normalizes Traccar positions when live outbound is authorized in non-production', function (): void {
     Config::set('gps.live_outbound_authorized', true);
     Config::set('gps.live_outbound_authorized_in_production', false);

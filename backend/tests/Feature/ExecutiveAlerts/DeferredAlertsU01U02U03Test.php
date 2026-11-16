@@ -81,6 +81,41 @@ it('U03 breaches open complaints after 48 calendar hours from clock start', func
         ->and($after['breached'])->toBeTrue();
 });
 
+it('U03 restarts the SLA clock from reopened_at', function (): void {
+    $activated = now()->subDays(10);
+    Config::set('executive_alerts.complaint_sla_activated_at', $activated->toIso8601String());
+
+    $tenant = actingAsTenantOwner()->tenant;
+    $season = kpiSeason($tenant, 'active');
+    $complaint = kpiComplaint($tenant, $season);
+    $reopened = $activated->copy()->addDays(2);
+
+    withTenant($tenant, function () use ($complaint, $activated, $reopened): void {
+        $complaint->forceFill([
+            'created_at' => $activated->copy()->addHour(),
+            'reopened_at' => $reopened,
+            'status' => ComplaintStatus::UnderReview,
+            'resolved_at' => null,
+        ])->save();
+    });
+
+    $evaluator = app(ComplaintSlaEvaluator::class);
+    $fresh = $complaint->fresh();
+    $before = $evaluator->evaluate($fresh, $reopened->copy()->addHours(47));
+    $after = $evaluator->evaluate($fresh, $reopened->copy()->addHours(48)->addMinute());
+
+    expect($before['breached'])->toBeFalse()
+        ->and($after['breached'])->toBeTrue()
+        ->and($evaluator->clockStart($fresh)?->toIso8601String())->toBe($reopened->toIso8601String());
+});
+
+it('U03 treats malformed activation timestamps as inactive', function (): void {
+    Config::set('executive_alerts.complaint_sla_activated_at', 'not-a-real-timestamp');
+
+    expect(app(ComplaintSlaEvaluator::class)->isPolicyActive())->toBeFalse()
+        ->and(app(ComplaintSlaEvaluator::class)->activationAt())->toBeNull();
+});
+
 it('U02 rejects baseline approve without sensitive permission', function (): void {
     $tenant = actingAsTenantOwner()->tenant;
     $season = kpiSeason($tenant, 'active');

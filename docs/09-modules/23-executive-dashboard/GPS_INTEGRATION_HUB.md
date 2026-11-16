@@ -49,9 +49,11 @@ Process-wide `GpsProviderInterface` remains default `NullGpsProvider`; unknown `
 
 ### Webhook
 
-1. Method `webhook` + encrypted `webhook_secret` (and/or env `GPS_WEBHOOK_SECRETS`).  
-2. Bind `device_id` ↔ season vehicle.  
-3. Provider posts to `/api/v1/gps/ingest` with HMAC (`X-Gps-Signature`).
+1. Method `webhook` + encrypted `webhook_secret` (and/or legacy env `GPS_WEBHOOK_SECRETS`).  
+2. Bind `device_id` ↔ season vehicle (preferably with `gps_provider_id`).  
+3. Provider posts to `/api/v1/gps/ingest` with HMAC (`X-Gps-Signature`).  
+4. Ingest accepts any enabled hub webhook secret for the tenant (plus env map fallback) and stamps last-known `source=webhook` / `gps_provider_id` when bound.  
+5. Disabled providers’ secrets are ignored (fail-closed).
 
 ### Device mapping
 

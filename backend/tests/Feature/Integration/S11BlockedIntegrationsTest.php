@@ -18,14 +18,18 @@ it('S11 BLOCKED: U03 complaint SLA remains inactive without Owner activation', f
 });
 
 it('S11 BLOCKED: GPS history retention table is absent (G5)', function (): void {
-    expect(Schema::hasTable('gps_vehicle_location_history'))->toBeFalse();
+    expect(Schema::hasTable('gps_vehicle_location_history'))->toBeFalse()
+        ->and((bool) config('gps.history.enabled', false))->toBeFalse()
+        ->and(config('gps.history.retention_days'))->toBeNull();
 });
 
 it('S11 BLOCKED: live GPS provider is not configured as a real vendor binding (G4)', function (): void {
     $provider = (string) config('gps.provider', 'null');
 
     expect($provider)->toBe('null')
-        ->and(app(GpsProviderInterface::class))->toBeInstanceOf(NullGpsProvider::class);
+        ->and(app(GpsProviderInterface::class))->toBeInstanceOf(NullGpsProvider::class)
+        ->and((bool) config('gps.live_outbound_authorized', false))->toBeFalse()
+        ->and((bool) config('gps.live_outbound_authorized_in_production', false))->toBeFalse();
 });
 
 it('S11 BLOCKED: no live-stream or vendor GPS history routes beyond ingest', function (): void {
