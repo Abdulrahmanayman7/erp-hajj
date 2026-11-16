@@ -4,12 +4,31 @@ export type ExecutiveDashboardResponseState = 'ok' | 'no_domain'
 
 export type GpsFreshnessClass = 'real' | 'stale' | 'unavailable'
 
+export type GpsMarkerStatus =
+  | 'online'
+  | 'offline'
+  | 'stale'
+  | 'no_device'
+  | 'provider_unavailable'
+  | 'simulated'
+
 export interface ExecutiveDashboardGpsMarker {
   transport_season_vehicle_id: number
-  lat: number
-  lng: number
+  lat: number | null
+  lng: number | null
   freshness_class: GpsFreshnessClass
-  recorded_at: string
+  marker_status?: GpsMarkerStatus
+  recorded_at: string | null
+  speed_kph?: number | null
+  heading_deg?: number | null
+  provider_code?: string | null
+  source?: string | null
+  is_simulated?: boolean
+  vehicle_label?: string | null
+  vehicle_number?: string | null
+  plate_number?: string | null
+  vehicle_class?: string | null
+  device_id?: string | null
 }
 
 export interface ExecutiveDashboardGps {

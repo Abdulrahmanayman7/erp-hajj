@@ -44,6 +44,10 @@ use App\Modules\ExecutiveDashboard\Policies\ExecutiveDashboardPolicy;
 use App\Modules\ExecutiveReports\Policies\ExecutiveReportPolicy;
 use App\Modules\Gps\Contracts\GpsProviderInterface;
 use App\Modules\Gps\Exceptions\GpsProviderNotApprovedException;
+use App\Modules\Gps\Models\GpsDeviceBinding;
+use App\Modules\Gps\Models\GpsProvider;
+use App\Modules\Gps\Policies\GpsDeviceBindingPolicy;
+use App\Modules\Gps\Policies\GpsProviderPolicy;
 use App\Modules\Gps\Providers\NullGpsProvider;
 use App\Modules\Inventory\Models\InventoryBalance;
 use App\Modules\Inventory\Models\InventoryCategory;
@@ -214,6 +218,8 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(SeasonCopyRun::class, SeasonCopyPolicy::class);
         Gate::policy(SeasonReminderRule::class, SeasonReminderRulePolicy::class);
         Gate::policy(ExecutiveAlert::class, ExecutiveAlertPolicy::class);
+        Gate::policy(GpsProvider::class, GpsProviderPolicy::class);
+        Gate::policy(GpsDeviceBinding::class, GpsDeviceBindingPolicy::class);
 
         Gate::define('viewDashboard', [DashboardPolicy::class, 'view']);
         Gate::define('viewOperationalKpis', [OperationalKpiPolicy::class, 'view']);

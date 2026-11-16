@@ -26,7 +26,10 @@ use App\Modules\Employees\Controllers\PositionController;
 use App\Modules\ExecutiveAlerts\Controllers\ExecutiveAlertController;
 use App\Modules\ExecutiveDashboard\Controllers\ExecutiveDashboardController;
 use App\Modules\ExecutiveReports\Controllers\ExecutiveReportController;
+use App\Modules\Gps\Controllers\GpsDeviceBindingController;
+use App\Modules\Gps\Controllers\GpsFleetMapController;
 use App\Modules\Gps\Controllers\GpsIngestController;
+use App\Modules\Gps\Controllers\GpsProviderController;
 use App\Modules\Inventory\Controllers\InventoryBalanceController;
 use App\Modules\Inventory\Controllers\InventoryCategoryController;
 use App\Modules\Inventory\Controllers\InventoryItemController;
@@ -168,6 +171,20 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::get('/tenant-settings', [TenantSettingsController::class, 'show'])->name('tenant-settings.show');
         Route::patch('/tenant-settings', [TenantSettingsController::class, 'update'])->name('tenant-settings.update');
         Route::post('/tenant-settings/test-email', [TenantSettingsController::class, 'testEmail'])->name('tenant-settings.test-email');
+
+        // GPS Integration Hub — provider admin + device mapping (G4 Live outbound still gated).
+        Route::get('/gps/providers', [GpsProviderController::class, 'index'])->name('gps.providers.index');
+        Route::post('/gps/providers', [GpsProviderController::class, 'store'])->name('gps.providers.store');
+        Route::get('/gps/providers/{gps_provider}', [GpsProviderController::class, 'show'])->name('gps.providers.show');
+        Route::patch('/gps/providers/{gps_provider}', [GpsProviderController::class, 'update'])->name('gps.providers.update');
+        Route::delete('/gps/providers/{gps_provider}', [GpsProviderController::class, 'destroy'])->name('gps.providers.destroy');
+        Route::post('/gps/providers/{gps_provider}/test', [GpsProviderController::class, 'test'])->name('gps.providers.test');
+        Route::post('/gps/providers/{gps_provider}/sync', [GpsProviderController::class, 'sync'])->name('gps.providers.sync');
+        Route::get('/gps/device-bindings', [GpsDeviceBindingController::class, 'index'])->name('gps.device-bindings.index');
+        Route::post('/gps/device-bindings', [GpsDeviceBindingController::class, 'store'])->name('gps.device-bindings.store');
+        Route::patch('/gps/device-bindings/{gps_device_binding}', [GpsDeviceBindingController::class, 'update'])->name('gps.device-bindings.update');
+        Route::delete('/gps/device-bindings/{gps_device_binding}', [GpsDeviceBindingController::class, 'destroy'])->name('gps.device-bindings.destroy');
+        Route::get('/gps/fleet-map', [GpsFleetMapController::class, 'show'])->name('gps.fleet-map.show');
 
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
         Route::post('/users', [UserController::class, 'store'])->name('users.store');

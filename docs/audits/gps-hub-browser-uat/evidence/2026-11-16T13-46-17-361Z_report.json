@@ -1,0 +1,36 @@
+{
+  "suite": "gps-hub-live-browser-uat",
+  "started_at": "2026-11-16T13:46:17.362Z",
+  "isolation": {
+    "database": "erp_hajj_gps_uat",
+    "verified_disposable": true,
+    "engine_note": "mysql"
+  },
+  "env": {
+    "base": "http://127.0.0.1:5173",
+    "api": "http://127.0.0.1:8000"
+  },
+  "gates": {
+    "g4_live": "BLOCKED",
+    "g5_history": "BLOCKED",
+    "production": "NOT_AUTHORIZED"
+  },
+  "steps": [
+    {
+      "step": "auth.owner",
+      "status": "PASS",
+      "detail": "owner login RTL",
+      "screenshot": "2026-11-16T13-46-17-361Z_01_logged_in.png"
+    },
+    {
+      "step": "fatal",
+      "status": "FAIL",
+      "detail": "TimeoutError: page.waitForSelector: Timeout 15000ms exceeded.\nCall log:\n  - waiting for locator('[data-test=\"gps-add-provider\"]') to be visible\n",
+      "screenshot": null
+    }
+  ],
+  "verdict": "FAIL",
+  "not_run_reason": null,
+  "fatal": "TimeoutError: page.waitForSelector: Timeout 15000ms exceeded.\nCall log:\n  - waiting for locator('[data-test=\"gps-add-provider\"]') to be visible\n",
+  "finished_at": "2026-11-16T13:46:45.699Z"
+}

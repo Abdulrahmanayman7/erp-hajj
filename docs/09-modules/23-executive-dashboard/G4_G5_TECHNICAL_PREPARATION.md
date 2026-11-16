@@ -11,8 +11,10 @@
 | Contract | `GpsProviderInterface` + `NormalizedLocationDto` (G0) |
 | Default binding | `NullGpsProvider` via `GPS_PROVIDER=null` |
 | Fail-closed registry | Unknown `GPS_PROVIDER` keys throw `GpsProviderNotApprovedException` (no silent Null fallback) |
-| Approved vendor adapter | **Absent** — Owner must name vendor/API + credentials before any adapter class is added |
-| Invented vendor | **Forbidden** |
+| Configurable hub adapters | Engineering prep present (`rest_pull`, `traccar`, `webhook`, `mobile_driver`, `simulator`) — see [GPS_INTEGRATION_HUB.md](GPS_INTEGRATION_HUB.md) |
+| Live outbound | **Fail-closed** via `GpsOutboundGate` / `GPS_LIVE_OUTBOUND_AUTHORIZED` (default false) |
+| Approved live vendor binding | **Absent** — Owner must name vendor/API + credentials and authorize G4 Live before production claims |
+| Invented live production vendor | **Forbidden** |
 
 ### Owner gate checklist (before any live adapter)
 
