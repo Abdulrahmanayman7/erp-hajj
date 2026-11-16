@@ -1,0 +1,9 @@
+{
+    "database": "erp_hajj_phase2_uat",
+    "tenant_id": 1,
+    "other_tenant_id": 2,
+    "owner_user_id": 1,
+    "unit_id": 1,
+    "season_id": 1,
+    "employee_id": 1
+}

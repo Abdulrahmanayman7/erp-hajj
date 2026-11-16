@@ -1,0 +1,127 @@
+{
+  "suite": "s05-s06-s07-live-browser-uat",
+  "started_at": "2026-11-15T09:38:13.723Z",
+  "isolation": {
+    "database": "erp_hajj_phase2_uat",
+    "verified_disposable": true,
+    "fixtures": {
+      "database": "erp_hajj_phase2_uat",
+      "tenant_id": 1,
+      "other_tenant_id": 2,
+      "owner_user_id": 1,
+      "unit_id": 1,
+      "season_id": 1,
+      "employee_id": 1
+    }
+  },
+  "env": {
+    "base": "http://127.0.0.1:5173",
+    "api": "http://127.0.0.1:8000"
+  },
+  "steps": [
+    {
+      "step": "environment-gate",
+      "status": "PASS",
+      "detail": "erp_hajj_phase2_uat",
+      "screenshot": null
+    },
+    {
+      "step": "auth-owner",
+      "status": "PASS",
+      "detail": "uat.owner@example.com",
+      "screenshot": "2026-11-15T09-38-13-722Z_00_owner.png"
+    },
+    {
+      "step": "S05-create-pr",
+      "status": "PASS",
+      "detail": "id=9 status=draft",
+      "screenshot": "2026-11-15T09-38-13-722Z_s05_pr_after_create.png"
+    },
+    {
+      "step": "S05-submit-pr",
+      "status": "PASS",
+      "detail": "status=submitted http=200",
+      "screenshot": "2026-11-15T09-38-13-722Z_s05_pr_submitted.png"
+    },
+    {
+      "step": "S05-isolation-unknown-id",
+      "status": "PASS",
+      "detail": "404 for unknown PR id",
+      "screenshot": null
+    },
+    {
+      "step": "S06-create-project",
+      "status": "PASS",
+      "detail": "id=8 status=draft",
+      "screenshot": "2026-11-15T09-38-13-722Z_s06_project_after_create.png"
+    },
+    {
+      "step": "S06-activate-project",
+      "status": "PASS",
+      "detail": "status=active activateHttp=200",
+      "screenshot": "2026-11-15T09-38-13-722Z_s06_activated.png"
+    },
+    {
+      "step": "S07-create-risk",
+      "status": "PASS",
+      "detail": "id=11 title=UAT-RSK-1794735558814 persisted",
+      "screenshot": "2026-11-15T09-38-13-722Z_s07_risk_created.png"
+    },
+    {
+      "step": "S07-assess-risk",
+      "status": "PASS",
+      "detail": "status=under_assessment http=200",
+      "screenshot": null
+    },
+    {
+      "step": "S07-create-complaint",
+      "status": "PASS",
+      "detail": "id=5 status=new persisted",
+      "screenshot": "2026-11-15T09-38-13-722Z_s07_complaint_created.png"
+    },
+    {
+      "step": "S07-assign-complaint",
+      "status": "PASS",
+      "detail": "assignee=1 http=200",
+      "screenshot": null
+    },
+    {
+      "step": "S07-resolve-complaint",
+      "status": "PASS",
+      "detail": "status=resolved http=200",
+      "screenshot": null
+    },
+    {
+      "step": "S05-viewer-create-denied",
+      "status": "PASS",
+      "detail": "url=http://127.0.0.1:5173/app/403 denied=false noSubmit=true",
+      "screenshot": "2026-11-15T09-38-13-722Z_viewer_pr_create.png"
+    },
+    {
+      "step": "S07-viewer-create-hidden",
+      "status": "PASS",
+      "detail": "risk-create-btn count=0",
+      "screenshot": "2026-11-15T09-38-13-722Z_viewer_risks.png"
+    }
+  ],
+  "modules": {
+    "s05": {
+      "verdict": "PASS",
+      "notes": []
+    },
+    "s06": {
+      "verdict": "PASS",
+      "notes": []
+    },
+    "s07": {
+      "verdict": "PASS",
+      "notes": [
+        "risk POST status=201",
+        "complaint POST status=201"
+      ]
+    }
+  },
+  "verdict": "PASS",
+  "not_run_reason": null,
+  "finished_at": "2026-11-15T09:40:22.897Z"
+}

@@ -2,8 +2,8 @@
 
 > **PR:** [#61](https://github.com/Abdulrahmanayman7/erp-hajj/pull/61) (`feature/s12-uat-phase-handoff` → `develop`)  
 > **Date:** 2026-11-11  
-> **Engineering posture:** **READY_FOR_OWNER_REVIEW**  
-> **Merge:** **NOT AUTHORIZED** without explicit Owner act  
+> **Engineering posture:** Owner-authorized merge **COMPLETED**  
+> **Merge:** PR #61 **MERGED** 2026-11-14 → `develop` @ `384592ca3f1c71b97f078008f5210eca9ce35f9c`  
 > **Deploy / production:** **NOT_AUTHORIZED**
 
 ## Preserved statuses (binding)
@@ -11,7 +11,7 @@
 | Item | Status |
 |---|---|
 | S11 | `CLOSED_WITH_CARRYOVER` (Owner APPROVED 2026-11-14) |
-| S12 | `HANDOFF_PREPARED — LIVE_UAT_NOT_RUN` |
+| S12 (at PR #61 merge) | \HANDOFF_PREPARED — LIVE_UAT_NOT_RUN\ (later Live shell UAT PASS 2026-11-14 recorded separately) |
 | Phase 2 | **NOT_PRODUCTION_AUTHORIZED** |
 | G4 / G5 | **BLOCKED** |
 | U03 | **BLOCKED** |

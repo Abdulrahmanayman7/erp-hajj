@@ -1,0 +1,10 @@
+node_modules/
+_debug-*.mjs
+_inspect-state.php
+evidence/debug_*
+# Intermediate harness runs stay local; commit only the final PASS evidence set explicitly.
+evidence/2026-11-15T08-*
+evidence/2026-11-15T09-0*
+evidence/2026-11-15T09-1*
+evidence/2026-11-15T09-2*
+evidence/2026-11-15T09-3[0-5]*
