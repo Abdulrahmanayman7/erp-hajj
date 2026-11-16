@@ -182,6 +182,88 @@ it('normalizes Traccar positions when live outbound is authorized in non-product
     });
 });
 
+it('normalizes REST pull positions when live outbound is authorized in non-production', function (): void {
+    Config::set('gps.live_outbound_authorized', true);
+    Config::set('gps.live_outbound_authorized_in_production', false);
+    Http::fake([
+        'https://vendor.example.com/api/positions' => Http::response([
+            [
+                'device_id' => 'bus-1',
+                'lat' => 21.6,
+                'lng' => 39.7,
+                'recorded_at' => now()->toIso8601String(),
+            ],
+        ], 200),
+    ]);
+
+    [$tenant] = gpsHubActingAs();
+    $season = kpiSeason($tenant, 'active');
+
+    [$providerId, $tsvId] = withTenant($tenant, function () use ($season, $tenant): array {
+        $ownerId = $tenant->users()->first()->id;
+        $provider = new GpsProvider;
+        $provider->forceFill([
+            'name' => 'REST UAT',
+            'code' => 'rest-uat',
+            'connection_method' => 'rest_pull',
+            'is_enabled' => true,
+            'settings_json' => [
+                'endpoint_url' => 'https://vendor.example.com/api/positions',
+                'field_map' => [
+                    'device_id' => 'device_id',
+                    'latitude' => 'lat',
+                    'longitude' => 'lng',
+                    'recorded_at' => 'recorded_at',
+                ],
+            ],
+            'credentials_ciphertext' => ['token' => 'tok'],
+        ]);
+        $provider->save();
+
+        $vehicle = TransportVehicle::query()->create([
+            'vehicle_number' => 'V-REST-'.uniqid(),
+            'plate_number' => 'RS-'.uniqid(),
+            'vehicle_class' => VehicleClass::Bus,
+            'is_active' => true,
+            'created_by' => $ownerId,
+        ]);
+        $tsv = new TransportSeasonVehicle;
+        $tsv->forceFill([
+            'season_id' => $season->id,
+            'transport_vehicle_id' => $vehicle->id,
+            'operational_capacity' => 40,
+            'service_level' => ServiceLevel::Standard,
+            'is_active' => true,
+            'created_by' => $ownerId,
+        ]);
+        $tsv->save();
+
+        $binding = new GpsDeviceBinding;
+        $binding->forceFill([
+            'device_id' => 'bus-1',
+            'external_device_id' => 'bus-1',
+            'transport_season_vehicle_id' => $tsv->id,
+            'gps_provider_id' => $provider->id,
+            'is_active' => true,
+        ]);
+        $binding->save();
+
+        return [$provider->id, $tsv->id];
+    });
+
+    $sync = spaPostJson("/api/v1/gps/providers/{$providerId}/sync")->assertOk()->json('data');
+    expect($sync['applied'])->toBe(1);
+
+    withTenant($tenant, function () use ($tsvId): void {
+        $row = GpsVehicleLastKnown::query()->where('transport_season_vehicle_id', $tsvId)->first();
+        expect($row)->not->toBeNull()
+            ->and((float) $row->latitude)->toBe(21.6)
+            ->and($row->source)->toBe('rest_pull')
+            ->and($row->is_simulated)->toBeFalse()
+            ->and(Schema::hasTable('gps_vehicle_location_history'))->toBeFalse();
+    });
+});
+
 it('runs the simulator only when enabled outside production and marks fixes as simulated', function (): void {
     Config::set('gps.simulator_enabled', true);
     [$tenant] = gpsHubActingAs();

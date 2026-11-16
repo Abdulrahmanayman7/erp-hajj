@@ -5,9 +5,13 @@ use Illuminate\Support\Facades\Config;
 it('verifies U03 readiness without activating when unset', function (): void {
     Config::set('app.env', 'local');
     Config::set('executive_alerts.complaint_sla_activated_at', null);
+    Config::set('executive_alerts.complaint_sla_hours', 48);
 
     $this->artisan('executive-alerts:verify-complaint-sla-readiness')
         ->expectsOutputToContain('policy_active_default=false')
+        ->expectsOutputToContain('alert_code=ALT-COMP-SLA')
+        ->expectsOutputToContain('prospective_only=true')
+        ->expectsOutputToContain('deactivation=unset EXECUTIVE_COMPLAINT_SLA_ACTIVATED_AT')
         ->expectsOutputToContain('Production activation NOT authorized')
         ->assertSuccessful();
 });

@@ -18,8 +18,8 @@
 | C-S11-OWNER | S11 Owner administrative closure | Owner | **APPROVED** (2026-11-14) | `CLOSED_WITH_CARRYOVER`; production / Phase 2 final acceptance not granted |
 | C-S12-LIVE-UAT | S12 live operational Browser UAT | UAT | **PASS** 2026-11-14 | Attested `erp_hajj_phase2_uat`; [PHASE2_LIVE_UAT_ATTEMPT_2026-11-14.md](PHASE2_LIVE_UAT_ATTEMPT_2026-11-14.md) — production still **NOT_AUTHORIZED** |
 | C-S12-OWNER | S12 / Phase 2 handoff Owner acceptance | Owner | **PENDING** | |
-| C-G4 | Live GPS provider (G4_LIVE) | Product | **BLOCKED** | See [PHASE2_G4_G5_U03_STATUS.md](PHASE2_G4_G5_U03_STATUS.md); #64 fail-closed prep on develop only |
-| C-G5 | GPS history + legal retention | Product | **BLOCKED** | See [PHASE2_G4_G5_U03_STATUS.md](PHASE2_G4_G5_U03_STATUS.md); history writer unbound |
+| C-G4 | Live GPS provider (G4_LIVE) | Product | **BLOCKED** | Hub + G4 readiness prep MERGED (#66); live vendor still absent — [PHASE2_G4_G5_U03_STATUS.md](PHASE2_G4_G5_U03_STATUS.md) |
+| C-G5 | GPS history + legal retention | Product | **BLOCKED** | Contracts + unbound writer; legal policy required — [G5_RETENTION_POLICY_CONTRACT.md](../09-modules/23-executive-dashboard/G5_RETENTION_POLICY_CONTRACT.md) |
 | C-U03 | Production SLA authorization | Product/Ops | **BLOCKED** | Runbook only; activation unset — [PHASE2_G4_G5_U03_STATUS.md](PHASE2_G4_G5_U03_STATUS.md) |
 | C-S04-RES | S04 residual follow-ups | Engineering | Open | Preserved from S04 closure |
 | C-MVP-UAT | MVP interactive browser UAT / production deploy | MVP track | Pending in ROADMAP | Distinct from Phase 2 Workflow |

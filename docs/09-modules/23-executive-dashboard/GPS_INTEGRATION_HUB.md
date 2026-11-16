@@ -90,6 +90,12 @@ Live attested disposable Browser UAT for the hub is recorded in
 (`erp_hajj_gps_uat`, Playwright journeys PASS on PR #66). GPS permissions remain
 **explicit-assignment-only** (not auto-granted via Tenant Owner template).
 
+## Readiness prep (not Live)
+
+- php artisan gps:verify-g4-readiness
+- [G4_VENDOR_ONBOARDING_RUNBOOK.md](G4_VENDOR_ONBOARDING_RUNBOOK.md)
+- [G5_RETENTION_POLICY_CONTRACT.md](G5_RETENTION_POLICY_CONTRACT.md)
+
 ## Remaining blockers
 
 1. Named live vendor + Owner G4 authorization.  

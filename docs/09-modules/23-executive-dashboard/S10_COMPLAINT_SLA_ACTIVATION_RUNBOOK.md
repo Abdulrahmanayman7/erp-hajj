@@ -52,7 +52,8 @@ php artisan executive-alerts:verify-complaint-sla-readiness --smoke-activate
 
 - Refuses `APP_ENV=production`.
 - `--smoke-activate` sets an **in-process** activation timestamp only (never writes `.env`).
-- Pest coverage: `tests/Feature/ExecutiveAlerts/DeferredAlertsU01U02U03Test.php`.
+- Readiness output includes ALT-COMP-SLA checklist, prospective-only flag, and deactivation guidance.
+- Pest coverage: `tests/Feature/ExecutiveAlerts/DeferredAlertsU01U02U03Test.php`, `VerifyComplaintSlaReadinessCommandTest.php`.
 - Does **not** authorize production activation.
 
 ## Explicit non-goals

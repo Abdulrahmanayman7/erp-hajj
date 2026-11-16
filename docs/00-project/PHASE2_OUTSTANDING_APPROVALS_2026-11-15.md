@@ -1,14 +1,14 @@
-# Phase 2 — Outstanding Approvals (2026-11-15)
+# Phase 2 — Outstanding Approvals (2026-11-16 refresh)
 
 > Living register. **Do not invent** Owner, security, or legal approvals.  
 > Technical completion ≠ final Owner acceptance ≠ production authorization.  
-> **Refresh:** 2026-11-16 — PR #64 MERGED into `develop` (`23412db`); independent security Approve remains **PENDING**.
+> Develop tip at refresh: `f3c4c44` (PR #66 merged).
 
 ## Owner approvals required
 
 | ID | Decision | Status | Blocking for |
 |---|---|---|---|
-| O-S05 | S05 final functional acceptance | **PENDING** | S05 COMPLETE claim (PR #63 packages merged; UAT PASS ≠ Owner accept) |
+| O-S05 | S05 final functional acceptance | **PENDING** | S05 COMPLETE claim |
 | O-S06 | S06 final functional acceptance | **PENDING** | Same |
 | O-S07 | S07 final functional acceptance | **PENDING** | Same |
 | O-S12 | S12 / Phase 2 handoff acceptance | **PENDING** | Phase 2 COMPLETE claim |
@@ -17,9 +17,7 @@
 | O-G5 | GPS history legal retention policy | **BLOCKED** | G5 history claims |
 | O-U03 | `EXECUTIVE_COMPLAINT_SLA_ACTIVATED_AT` production set | **BLOCKED** | SLA-on claims |
 
-Already recorded (preserve): Foundation–S04; S08 Owner Accepted; S10 admin `CLOSED_WITH_CARRYOVER`; S11 admin `CLOSED_WITH_CARRYOVER` (2026-11-14); PR #61 merge; PR #63 merge (`a743a80`); PR #64 merge (`23412db`) — security code on develop; Owner final acts and independent security Approve still PENDING.
-
-**Engineering note (not Owner acceptance):** S05/S06/S07 Live Browser UAT **PASS** 2026-11-15 — [REPORT](../audits/s05-s06-s07-browser-uat/REPORT.md).
+Already recorded (preserve): Foundation–S04; S08 Owner Accepted; S10 admin `CLOSED_WITH_CARRYOVER`; S11 admin `CLOSED_WITH_CARRYOVER` (2026-11-14); PRs #61/#63/#64/#65/#66 merged as engineering acts (merge ≠ functional acceptance where still PENDING).
 
 ## Independent security approvals required
 
@@ -27,12 +25,15 @@ Already recorded (preserve): Foundation–S04; S08 Owner Accepted; S10 admin `CL
 |---|---|---|
 | SEC-S09 | Independent GitHub security Approve | **PENDING** |
 | SEC-S10 | Human review #52–#55 | **PENDING** |
-| SEC-S64 | PR #64 hardening packet | **PENDING** (code merged; Approve not recorded) |
+| SEC-S64 | PR #64 hardening packet | **PENDING** |
+| SEC-S66 | GPS Integration Hub (#66) human security review | **PENDING** |
 | SEC-S11 | Optional human closure review | **PENDING** (automated ≠ Approve) |
 
 ## Packet pointers
 
-- Owner S05–S07: `S05_S06_S07_OWNER_ACCEPTANCE_DECISION_PACKET.md` (PR #63)  
-- Security #64: [S10_SECURITY_REVIEW_PACKET_2026-11-15.md](../09-modules/23-executive-dashboard/S10_SECURITY_REVIEW_PACKET_2026-11-15.md) · [PR64_INDEPENDENT_REVIEWER_HANDOFF_2026-11-15.md](../audits/s09-s10-security/PR64_INDEPENDENT_REVIEWER_HANDOFF_2026-11-15.md) · [PR64_OWNER_SELF_REVIEW_2026-11-16.md](../audits/s09-s10-security/PR64_OWNER_SELF_REVIEW_2026-11-16.md)  
-- Handoff: `PHASE2_FINAL_HANDOFF_REPORT.md`  
-- Consolidated Owner decision package: [../audits/s05-s06-s07-browser-uat/OWNER_DECISION_PACKAGE_2026-11-15.md](../audits/s05-s06-s07-browser-uat/OWNER_DECISION_PACKAGE_2026-11-15.md)  
+- Owner S05–S07: `S05_S06_S07_OWNER_ACCEPTANCE_DECISION_PACKET.md`  
+- Production readiness package: `PHASE2_PRODUCTION_READINESS_PACKAGE_2026-11-16.md`  
+- Security #64: `docs/09-modules/23-executive-dashboard/S10_SECURITY_REVIEW_PACKET_2026-11-15.md`  
+- Security readiness: `docs/audits/s09-s10-security/PHASE2_SECURITY_READINESS_PACKET_2026-11-16.md`  
+- G4/G5/U03: `PHASE2_G4_G5_U03_STATUS.md`  
+- Handoff: `PHASE2_FINAL_HANDOFF_REPORT.md`
