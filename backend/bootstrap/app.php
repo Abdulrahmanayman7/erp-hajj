@@ -14,6 +14,7 @@ use App\Modules\Contracts\Exceptions\ContractDomainException;
 use App\Modules\Decisions\Exceptions\DecisionDomainException;
 use App\Modules\Documents\Exceptions\DocumentDomainException;
 use App\Modules\Employees\Exceptions\EmployeeDomainException;
+use App\Modules\Gps\Exceptions\GpsIngestDeniedException;
 use App\Modules\Meetings\Exceptions\MeetingDomainException;
 use App\Modules\Notifications\Exceptions\NotificationDomainException;
 use App\Modules\OrganizationStructure\Exceptions\OrganizationDomainException;
@@ -112,6 +113,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(fn (EmployeeDomainException $e): JsonResponse => $e->render());
         $exceptions->render(fn (ContractDomainException $e): JsonResponse => $e->render());
         $exceptions->render(fn (SupplierDomainException $e): JsonResponse => $e->render());
+        $exceptions->render(fn (GpsIngestDeniedException $e): JsonResponse => $e->render());
         $exceptions->render(fn (MeetingDomainException $e): JsonResponse => $e->render());
         $exceptions->render(fn (DecisionDomainException $e): JsonResponse => $e->render());
         $exceptions->render(fn (TaskDomainException $e): JsonResponse => $e->render());

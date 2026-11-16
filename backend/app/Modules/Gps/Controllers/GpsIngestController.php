@@ -2,6 +2,8 @@
 
 namespace App\Modules\Gps\Controllers;
 
+use App\Core\Authorization\Events\AuthorizationSecurityEvent;
+use App\Core\Authorization\Support\AuthorizationSecurity;
 use App\Core\Shared\ApiResponse;
 use App\Modules\Gps\Support\GpsIngestService;
 use Illuminate\Http\JsonResponse;
@@ -11,8 +13,11 @@ use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class GpsIngestController
 {
-    public function store(Request $request, GpsIngestService $ingest): JsonResponse
-    {
+    public function store(
+        Request $request,
+        GpsIngestService $ingest,
+        AuthorizationSecurity $security,
+    ): JsonResponse {
         $raw = $request->getContent();
         $data = json_decode($raw, true);
         if (! is_array($data)) {
@@ -33,8 +38,17 @@ class GpsIngestController
             throw new UnprocessableEntityHttpException('Invalid ingest payload.');
         }
 
+        $validated = $validator->validated();
         $signature = $request->header('X-Gps-Signature') ?? $request->header('X-Signature');
-        $row = $ingest->ingest($raw, $signature, $validator->validated());
+        $row = $ingest->ingest($raw, $signature, $validated);
+
+        // Security-event audit without coordinates, secrets, or raw payloads.
+        $security->record(AuthorizationSecurityEvent::GPS_INGEST_ACCEPTED, [
+            'tenant_id' => (int) $validated['tenant_id'],
+            'season_id' => (int) $row->season_id,
+            'transport_season_vehicle_id' => (int) $row->transport_season_vehicle_id,
+            'device_id' => (string) $row->device_id,
+        ], $request);
 
         return ApiResponse::success(data: [
             'transport_season_vehicle_id' => $row->transport_season_vehicle_id,

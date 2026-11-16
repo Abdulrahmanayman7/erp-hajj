@@ -4,6 +4,7 @@ namespace App\Modules\Gps\Support;
 
 use App\Core\Tenancy\Models\Tenant;
 use App\Core\Tenancy\TenantContext;
+use App\Modules\Gps\Exceptions\GpsIngestDeniedException;
 use App\Modules\Gps\Models\GpsDeviceBinding;
 use App\Modules\Gps\Models\GpsVehicleLastKnown;
 use App\Modules\Transportation\Models\TransportSeasonVehicle;
@@ -11,7 +12,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
@@ -46,7 +47,7 @@ final class GpsIngestService
 
         $tenant = Tenant::query()->whereKey($tenantId)->first();
         if ($tenant === null) {
-            throw new AccessDeniedHttpException('Invalid device.');
+            $this->denyIngest('unknown_tenant', ['tenant_id' => $tenantId]);
         }
 
         $this->assertValidSignature($rawBody, $signatureHeader, $tenant);
@@ -66,7 +67,10 @@ final class GpsIngestService
                 /** @var TransportSeasonVehicle|null $vehicle */
                 $vehicle = TransportSeasonVehicle::query()->whereKey($tsvId)->lockForUpdate()->first();
                 if ($vehicle === null || ! $vehicle->is_active) {
-                    throw new AccessDeniedHttpException('Invalid device.');
+                    $this->denyIngest('vehicle_inactive_or_missing', [
+                        'tenant_id' => (int) $this->tenantContext->id(),
+                        'transport_season_vehicle_id' => $tsvId,
+                    ]);
                 }
 
                 /** @var GpsDeviceBinding|null $binding */
@@ -76,7 +80,10 @@ final class GpsIngestService
                     ->first();
 
                 if ($binding === null || (int) $binding->transport_season_vehicle_id !== (int) $vehicle->id) {
-                    throw new AccessDeniedHttpException('Invalid device.');
+                    $this->denyIngest('device_binding_mismatch', [
+                        'tenant_id' => (int) $this->tenantContext->id(),
+                        'transport_season_vehicle_id' => $tsvId,
+                    ]);
                 }
 
                 $row = GpsVehicleLastKnown::query()
@@ -111,11 +118,11 @@ final class GpsIngestService
     {
         $secret = $this->resolveTenantWebhookSecret($tenant);
         if ($secret === null) {
-            throw new AccessDeniedHttpException('GPS webhook secret is not configured.');
+            $this->denyIngest('webhook_secret_missing', ['tenant_id' => (int) $tenant->id]);
         }
 
         if ($signatureHeader === null || $signatureHeader === '') {
-            throw new AccessDeniedHttpException('Invalid signature.');
+            $this->denyIngest('signature_missing', ['tenant_id' => (int) $tenant->id]);
         }
 
         $provided = $signatureHeader;
@@ -125,8 +132,19 @@ final class GpsIngestService
 
         $expected = hash_hmac('sha256', $rawBody, $secret);
         if (! hash_equals($expected, $provided)) {
-            throw new AccessDeniedHttpException('Invalid signature.');
+            $this->denyIngest('signature_mismatch', ['tenant_id' => (int) $tenant->id]);
         }
+    }
+
+    /**
+     * @param  array<string, int|string|null>  $context
+     */
+    private function denyIngest(string $reason, array $context = []): never
+    {
+        // Internal reason only — never echo to the client (tenant/secret oracle).
+        Log::notice('gps.ingest.denied', array_merge(['reason' => $reason], $context));
+
+        throw new GpsIngestDeniedException;
     }
 
     private function resolveTenantWebhookSecret(Tenant $tenant): ?string
@@ -162,11 +180,11 @@ final class GpsIngestService
 
         $now = now();
         if ($recordedAt->lt($now->copy()->subSeconds($maxAge))) {
-            throw new AccessDeniedHttpException('Stale recorded_at.');
+            $this->denyIngest('recorded_at_too_old');
         }
 
         if ($recordedAt->gt($now->copy()->addSeconds($maxFuture))) {
-            throw new AccessDeniedHttpException('Future recorded_at.');
+            $this->denyIngest('recorded_at_too_future');
         }
 
         return $recordedAt;

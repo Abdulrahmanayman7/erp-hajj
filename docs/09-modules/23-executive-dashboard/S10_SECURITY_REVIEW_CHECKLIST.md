@@ -2,7 +2,8 @@
 
 > **Human approval gate:** **PENDING**  
 > Automated Cursor / agent reviews **do not** qualify as independent non-author human approval.  
-> Do not fabricate approval signatures.
+> Do not fabricate approval signatures.  
+> **Engineering evidence (2026-11-14):** [S10_SECURITY_REVIEW_EVIDENCE_2026-11-14.md](S10_SECURITY_REVIEW_EVIDENCE_2026-11-14.md) — GPS ingest denial oracle fixed; Approve still PENDING.
 
 ## In-scope merged PRs (retrospective)
 

@@ -1,12 +1,12 @@
 # PR #64 — Independent Security Reviewer Handoff
 
 > **PR:** https://github.com/Abdulrahmanayman7/erp-hajj/pull/64  
-> **Exact HEAD:** `8c097447ee9a0af17b118b049851d0ab1306e390`  
-> **Base:** `develop` (includes PR #63 merge `a743a80`)  
-> **CI:** 5/5 **SUCCESS** (Laravel + Frontend + MySQL 8 + Vercel comments)  
-> **GitHub mergeability:** **MERGEABLE / CLEAN**  
+> **State:** **MERGED** into `develop` @ `23412db7b179f7cf6ceb602f585e8ced57b086f2` (2026-11-15)  
+> **Pre-merge HEAD:** `ce9a0ff5efedb7729ae79b7075ecc1b12ec8af64` (baseline before develop sync: `8c097447ee9a0af17b118b049851d0ab1306e390`)  
+> **Post-merge develop CI:** run `43773095685` **SUCCESS**  
 > **Independent security Approve:** **PENDING** — this handoff does **not** grant Approve  
-> **Merge/deploy:** **NOT AUTHORIZED** by this document
+> **Merge/deploy production:** **NOT AUTHORIZED** by this document  
+> **Owner self-review:** [PR64_OWNER_SELF_REVIEW_2026-11-16.md](PR64_OWNER_SELF_REVIEW_2026-11-16.md)
 
 ## Changed files (security-relevant)
 
@@ -32,7 +32,7 @@
 |---|---|
 | `backend/tests/Feature/Gps/GpsIngestTest.php` | Denial oracle uniformity; accepted audit without coords/secrets; replay/staleness/tenant secret |
 | `backend/tests/Feature/Gps/GpsProviderBindingTest.php` | Null default; unapproved provider; history writer unbound |
-| `backend/tests/Feature/ExecutiveReports/ExecutiveReportsTest.php` | Report JSON view audit |
+| `backend/tests/Feature/ExecutiveReports/ExecutiveReportsTest.php` | Report JSON view audit + RBAC/404 |
 | `backend/tests/Feature/ExecutiveAlerts/VerifyComplaintSlaReadinessCommandTest.php` | U03 readiness refuse production |
 
 ### Docs / FE labels
@@ -44,6 +44,7 @@
 | `docs/09-modules/23-executive-dashboard/G4_G5_TECHNICAL_PREPARATION.md` | Fail-closed prep; still BLOCKED |
 | `docs/09-modules/22-operational-kpis/S09_SECURITY_REVIEW_EVIDENCE.md` | S09 evidence |
 | `docs/audits/s09-s10-security/PR64_MERGE_READINESS.md` | Engineering readiness (Approve PENDING) |
+| `docs/audits/s09-s10-security/PR64_OWNER_SELF_REVIEW_2026-11-16.md` | Owner engineering self-review |
 | `frontend/src/locales/ar.ts` | Arabic labels for new audit events |
 
 ## Findings → remediations (summary)
@@ -59,11 +60,11 @@
 
 ## Remaining risks (explicit)
 
-1. **Independent human Approve not granted** — required before merge claim as security-cleared.  
+1. **Independent human Approve not granted** — code merge of #64 does **not** close this.  
 2. **G4 Live vendor** — engineering fail-closed only; no live provider authorized.  
 3. **G5 retention/legal** — no history writer; legal policy still required.  
 4. **U03 production SLA** — activation timestamp unset; Owner/ops act required.  
-5. Shared doc `S12_CARRYOVER_REGISTER.md` also touched by #65 — merge **#64 before #65** or re-sync docs after each merge.
+5. Retrospective #52–#55 human reviews still PENDING.
 
 ## Exact tests for reviewer
 
@@ -74,14 +75,12 @@ php vendor/bin/pest tests/Feature/ExecutiveAlerts/VerifyComplaintSlaReadinessCom
 php vendor/bin/pest --filter="ExecutiveReports|GpsIngest|GpsProvider|cross-tenant|VerifyComplaint"
 ```
 
-Local regression (2026-11-15): GPS + executive-alerts suites **PASS**; broader isolation filter **109 passed / 40 skipped** (MySQL dialect skips).
-
 ## Required human decision
 
-On GitHub PR #64, a **non-author** security reviewer must:
+A **non-author** security reviewer must still:
 
-1. Review the changed files and Pest evidence above.  
-2. Record **Approve** or **Request changes** on the PR.  
+1. Review the changed files and Pest evidence above (now on `develop`).  
+2. Record **Approve** or **Request changes** (retrospective acceptable after merge).  
 3. Complete the approver block in [S10_SECURITY_REVIEW_CHECKLIST.md](../../09-modules/23-executive-dashboard/S10_SECURITY_REVIEW_CHECKLIST.md).  
 
-Automation must **not** fill Approve. Owner merge authorization is a **separate** act after Approve.
+Automation must **not** fill Approve. Production authorization remains a **separate** Owner act.

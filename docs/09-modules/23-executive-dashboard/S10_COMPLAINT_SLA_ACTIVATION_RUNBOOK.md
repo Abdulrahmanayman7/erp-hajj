@@ -41,6 +41,20 @@
 3. Do **not** delete audit history.
 4. Record rollback reason and Owner acknowledgment.
 
+## Non-production readiness (safe)
+
+On disposable local/testing environments only:
+
+```bash
+php artisan executive-alerts:verify-complaint-sla-readiness
+php artisan executive-alerts:verify-complaint-sla-readiness --smoke-activate
+```
+
+- Refuses `APP_ENV=production`.
+- `--smoke-activate` sets an **in-process** activation timestamp only (never writes `.env`).
+- Pest coverage: `tests/Feature/ExecutiveAlerts/DeferredAlertsU01U02U03Test.php`.
+- Does **not** authorize production activation.
+
 ## Explicit non-goals
 
 - No automatic activation on deploy.
