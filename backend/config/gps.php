@@ -27,12 +27,16 @@ return [
     | GPS provider (legacy process-wide pull binding)
     |--------------------------------------------------------------------------
     |
-    | Bound implementation of GpsProviderInterface. `null` selects NullGpsProvider
-    | (no live fetch). G4 Live vendor binding remains BLOCKED until authorized.
-    | Tenant-configurable hub providers live in `gps_providers` and use adapters.
+    | Bound implementation of GpsProviderInterface. The stable disabled key is the
+    | string "null" (selects NullGpsProvider — no live fetch). Dotenv converts an
+    | unquoted GPS_PROVIDER=null into PHP null; normalize that back to "null" so
+    | CI/local/prod share one representation. G4 Live remains BLOCKED until
+    | authorized. Tenant hub providers live in `gps_providers` and use adapters.
     |
     */
-    'provider' => env('GPS_PROVIDER', 'null'),
+    'provider' => (($gpsProvider = env('GPS_PROVIDER', 'null')) === null || $gpsProvider === '')
+        ? 'null'
+        : strtolower(trim((string) $gpsProvider)),
 
     /*
     |--------------------------------------------------------------------------
