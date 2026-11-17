@@ -19,11 +19,13 @@ import {
 import { useTasksQuery } from '@/modules/tasks/queries/useTasksQuery'
 import type { Task, TaskPriority } from '@/modules/tasks/types/tasks'
 import { ApiError } from '@/shared/api/http'
+import AppFormDrawer from '@/shared/components/AppFormDrawer.vue'
 import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
 import { useConfirm } from '@/shared/composables/useConfirm'
+import { useCaptureOnOpen, useFormDirty } from '@/shared/composables/useFormDirty'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import { useToast } from '@/shared/composables/useToast'
 import { employeeSelectOption } from '@/shared/lookups/selectOptions'
@@ -192,6 +194,9 @@ const editOpen = ref(false)
 const editForm = reactive(emptyProjectForm())
 const editError = ref('')
 const editFieldErrors = reactive<Record<string, string>>({})
+const { dirty: editFormDirty, capture: captureEditForm, reset: resetEditForm } =
+  useFormDirty(() => ({ ...editForm }))
+useCaptureOnOpen(editOpen, captureEditForm, { onClose: resetEditForm })
 
 function openEdit(): void {
   if (!project.value) return
@@ -325,6 +330,12 @@ const phaseEditing = ref<SeasonProjectPhase | null>(null)
 const phaseError = ref('')
 const phaseFieldErrors = reactive<Record<string, string>>({})
 const phaseDrawer = ref(false)
+const { dirty: phaseFormDirty, capture: capturePhaseForm, reset: resetPhaseForm } =
+  useFormDirty(() => ({ ...phaseForm }))
+useCaptureOnOpen(phaseDrawer, capturePhaseForm, { onClose: resetPhaseForm })
+const phaseDrawerTitle = computed(() =>
+  phaseEditing.value ? t('seasonProjects.edit') : t('seasonProjects.phases.add'),
+)
 
 const phaseStatusOptions = computed<AppSelectOption[]>(() =>
   SEASON_PROJECT_PHASE_STATUSES.map((s) => ({
@@ -470,6 +481,12 @@ const taskTitle = ref('')
 const taskPhaseId = ref<number | ''>('')
 const taskPriority = ref<TaskPriority>('medium')
 const taskDrawer = ref(false)
+const { dirty: taskFormDirty, capture: captureTaskForm, reset: resetTaskForm } = useFormDirty(() => ({
+  title: taskTitle.value,
+  phase_id: taskPhaseId.value,
+  priority: taskPriority.value,
+}))
+useCaptureOnOpen(taskDrawer, captureTaskForm, { onClose: resetTaskForm })
 
 const phaseOptions = computed<AppSelectOption[]>(() => [
   { value: '', label: '—' },
@@ -996,141 +1013,101 @@ watch(
       </section>
     </template>
 
-    <!-- Edit drawer -->
-    <div
-      v-if="editOpen"
-      class="fixed inset-0 z-40 flex justify-end bg-black/30"
-      role="dialog"
-      aria-modal="true"
-      @click.self="editOpen = false"
+    <AppFormDrawer
+      v-model:open="editOpen"
+      :title="t('seasonProjects.editTitle')"
+      size="sm"
+      :dirty="editFormDirty"
+      :submitting="updateMutation.isPending.value"
+      :cancel-label="t('seasonProjects.cancel')"
+      :submit-label="t('seasonProjects.editCta')"
+      @submit="submitEdit"
     >
-      <div class="flex h-full w-full max-w-md flex-col bg-white shadow-xl">
-        <header class="border-b px-4 py-3">
-          <h2 class="text-lg font-semibold">{{ t('seasonProjects.editTitle') }}</h2>
-        </header>
-        <form class="flex flex-1 flex-col gap-3 overflow-y-auto p-4" @submit.prevent="submitEdit">
-          <label class="block text-sm">
-            <span class="mb-1 block">{{ t('seasonProjects.fields.title') }}</span>
-            <input v-model="editForm.title" class="w-full rounded-lg border px-3 py-2">
-            <span v-if="editFieldErrors.title" class="text-xs text-red-600">{{ editFieldErrors.title }}</span>
-          </label>
-          <label class="block text-sm">
-            <span class="mb-1 block">{{ t('seasonProjects.fields.description') }}</span>
-            <textarea v-model="editForm.description" rows="3" class="w-full rounded-lg border px-3 py-2" />
-          </label>
-          <label class="block text-sm">
-            <span class="mb-1 block">{{ t('seasonProjects.fields.owner') }}</span>
-            <AppRemoteSelect
-              v-model="editForm.owner_employee_id"
-              :query-key="['season-project-edit-owner']"
-              :fetcher="fetchActiveEmployees"
-              :map-option="(row: Employee) => employeeSelectOption(row)"
-              :selected-option="
-                project?.owner_employee ? employeeSelectOption(project.owner_employee) : null
-              "
-              clearable
-            />
-          </label>
-          <p v-if="editError" class="rounded bg-red-50 px-3 py-2 text-sm text-red-700">{{ editError }}</p>
-          <div class="mt-auto flex gap-2 border-t pt-3">
-            <button type="button" class="rounded-lg border px-3 py-2 text-sm" @click="editOpen = false">
-              {{ t('seasonProjects.cancel') }}
-            </button>
-            <button type="submit" class="rounded-lg bg-brand-primary px-3 py-2 text-sm text-white">
-              {{ t('seasonProjects.editCta') }}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+      <label class="block text-sm">
+        <span class="mb-1 block">{{ t('seasonProjects.fields.title') }}</span>
+        <input v-model="editForm.title" class="w-full rounded-lg border px-3 py-2">
+        <span v-if="editFieldErrors.title" class="text-xs text-red-600">{{ editFieldErrors.title }}</span>
+      </label>
+      <label class="block text-sm">
+        <span class="mb-1 block">{{ t('seasonProjects.fields.description') }}</span>
+        <textarea v-model="editForm.description" rows="3" class="w-full rounded-lg border px-3 py-2" />
+      </label>
+      <label class="block text-sm">
+        <span class="mb-1 block">{{ t('seasonProjects.fields.owner') }}</span>
+        <AppRemoteSelect
+          v-model="editForm.owner_employee_id"
+          :query-key="['season-project-edit-owner']"
+          :fetcher="fetchActiveEmployees"
+          :map-option="(row: Employee) => employeeSelectOption(row)"
+          :selected-option="
+            project?.owner_employee ? employeeSelectOption(project.owner_employee) : null
+          "
+          clearable
+        />
+      </label>
+      <p v-if="editError" class="rounded bg-red-50 px-3 py-2 text-sm text-red-700">{{ editError }}</p>
+    </AppFormDrawer>
 
-    <!-- Phase drawer -->
-    <div
-      v-if="phaseDrawer"
-      class="fixed inset-0 z-40 flex justify-end bg-black/30"
-      role="dialog"
-      aria-modal="true"
-      @click.self="phaseDrawer = false"
+    <AppFormDrawer
+      v-model:open="phaseDrawer"
+      :title="phaseDrawerTitle"
+      size="sm"
+      :dirty="phaseFormDirty"
+      :cancel-label="t('seasonProjects.cancel')"
+      :submit-label="t('seasonProjects.save')"
+      @submit="submitPhase"
     >
-      <div class="flex h-full w-full max-w-md flex-col bg-white shadow-xl">
-        <header class="border-b px-4 py-3">
-          <h2 class="text-lg font-semibold">{{ t('seasonProjects.phases.add') }}</h2>
-        </header>
-        <form class="flex flex-1 flex-col gap-3 overflow-y-auto p-4" @submit.prevent="submitPhase">
-          <label class="block text-sm">
-            <span class="mb-1 block">{{ t('seasonProjects.fields.phaseTitle') }}</span>
-            <input v-model="phaseForm.title" class="w-full rounded-lg border px-3 py-2">
-            <span v-if="phaseFieldErrors.title" class="text-xs text-red-600">{{ phaseFieldErrors.title }}</span>
-          </label>
-          <label class="block text-sm">
-            <span class="mb-1 block">{{ t('seasonProjects.fields.sortOrder') }}</span>
-            <input v-model="phaseForm.sort_order" type="number" class="w-full rounded-lg border px-3 py-2">
-          </label>
-          <label class="block text-sm">
-            <span class="mb-1 block">{{ t('seasonProjects.fields.startsOn') }}</span>
-            <input v-model="phaseForm.starts_on" type="date" class="w-full rounded-lg border px-3 py-2">
-          </label>
-          <label class="block text-sm">
-            <span class="mb-1 block">{{ t('seasonProjects.fields.endsOn') }}</span>
-            <input v-model="phaseForm.ends_on" type="date" class="w-full rounded-lg border px-3 py-2">
-            <span v-if="phaseFieldErrors.ends_on" class="text-xs text-red-600">{{ phaseFieldErrors.ends_on }}</span>
-          </label>
-          <label class="block text-sm">
-            <span class="mb-1 block">{{ t('seasonProjects.fields.phaseStatus') }}</span>
-            <AppSelect v-model="phaseForm.status" :options="phaseStatusOptions" />
-          </label>
-          <p v-if="phaseError" class="rounded bg-red-50 px-3 py-2 text-sm text-red-700">{{ phaseError }}</p>
-          <div class="mt-auto flex gap-2 border-t pt-3">
-            <button type="button" class="rounded-lg border px-3 py-2 text-sm" @click="phaseDrawer = false">
-              {{ t('seasonProjects.cancel') }}
-            </button>
-            <button type="submit" class="rounded-lg bg-brand-primary px-3 py-2 text-sm text-white">
-              {{ t('seasonProjects.save') }}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+      <label class="block text-sm">
+        <span class="mb-1 block">{{ t('seasonProjects.fields.phaseTitle') }}</span>
+        <input v-model="phaseForm.title" class="w-full rounded-lg border px-3 py-2">
+        <span v-if="phaseFieldErrors.title" class="text-xs text-red-600">{{ phaseFieldErrors.title }}</span>
+      </label>
+      <label class="block text-sm">
+        <span class="mb-1 block">{{ t('seasonProjects.fields.sortOrder') }}</span>
+        <input v-model="phaseForm.sort_order" type="number" class="w-full rounded-lg border px-3 py-2">
+      </label>
+      <label class="block text-sm">
+        <span class="mb-1 block">{{ t('seasonProjects.fields.startsOn') }}</span>
+        <input v-model="phaseForm.starts_on" type="date" class="w-full rounded-lg border px-3 py-2">
+      </label>
+      <label class="block text-sm">
+        <span class="mb-1 block">{{ t('seasonProjects.fields.endsOn') }}</span>
+        <input v-model="phaseForm.ends_on" type="date" class="w-full rounded-lg border px-3 py-2">
+        <span v-if="phaseFieldErrors.ends_on" class="text-xs text-red-600">{{ phaseFieldErrors.ends_on }}</span>
+      </label>
+      <label class="block text-sm">
+        <span class="mb-1 block">{{ t('seasonProjects.fields.phaseStatus') }}</span>
+        <AppSelect v-model="phaseForm.status" :options="phaseStatusOptions" />
+      </label>
+      <p v-if="phaseError" class="rounded bg-red-50 px-3 py-2 text-sm text-red-700">{{ phaseError }}</p>
+    </AppFormDrawer>
 
-    <!-- Task drawer -->
-    <div
-      v-if="taskDrawer"
-      class="fixed inset-0 z-40 flex justify-end bg-black/30"
-      role="dialog"
-      aria-modal="true"
-      @click.self="taskDrawer = false"
+    <AppFormDrawer
+      v-model:open="taskDrawer"
+      :title="t('seasonProjects.tasks.add')"
+      size="sm"
+      :dirty="taskFormDirty"
+      :submit-disabled="!taskTitle.trim()"
+      :cancel-label="t('seasonProjects.cancel')"
+      :submit-label="t('seasonProjects.save')"
+      @submit="submitTask"
     >
-      <div class="flex h-full w-full max-w-md flex-col bg-white shadow-xl">
-        <header class="border-b px-4 py-3">
-          <h2 class="text-lg font-semibold">{{ t('seasonProjects.tasks.add') }}</h2>
-        </header>
-        <form class="flex flex-1 flex-col gap-3 overflow-y-auto p-4" @submit.prevent="submitTask">
-          <label class="block text-sm">
-            <span class="mb-1 block">{{ t('seasonProjects.fields.taskTitle') }}</span>
-            <input v-model="taskTitle" required class="w-full rounded-lg border px-3 py-2">
-          </label>
-          <label class="block text-sm">
-            <span class="mb-1 block">{{ t('seasonProjects.fields.taskPhase') }}</span>
-            <AppSelect v-model="taskPhaseId" :options="phaseOptions" />
-          </label>
-          <label class="block text-sm">
-            <span class="mb-1 block">{{ t('seasonProjects.fields.taskPriority') }}</span>
-            <select v-model="taskPriority" class="w-full rounded-lg border px-3 py-2">
-              <option value="low">low</option>
-              <option value="medium">medium</option>
-              <option value="high">high</option>
-            </select>
-          </label>
-          <div class="mt-auto flex gap-2 border-t pt-3">
-            <button type="button" class="rounded-lg border px-3 py-2 text-sm" @click="taskDrawer = false">
-              {{ t('seasonProjects.cancel') }}
-            </button>
-            <button type="submit" class="rounded-lg bg-brand-primary px-3 py-2 text-sm text-white">
-              {{ t('seasonProjects.save') }}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+      <label class="block text-sm">
+        <span class="mb-1 block">{{ t('seasonProjects.fields.taskTitle') }}</span>
+        <input v-model="taskTitle" required class="w-full rounded-lg border px-3 py-2">
+      </label>
+      <label class="block text-sm">
+        <span class="mb-1 block">{{ t('seasonProjects.fields.taskPhase') }}</span>
+        <AppSelect v-model="taskPhaseId" :options="phaseOptions" />
+      </label>
+      <label class="block text-sm">
+        <span class="mb-1 block">{{ t('seasonProjects.fields.taskPriority') }}</span>
+        <select v-model="taskPriority" class="w-full rounded-lg border px-3 py-2">
+          <option value="low">low</option>
+          <option value="medium">medium</option>
+          <option value="high">high</option>
+        </select>
+      </label>
+    </AppFormDrawer>
   </div>
 </template>

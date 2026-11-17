@@ -7,8 +7,10 @@ import type { Asset } from '@/modules/assets/types/assets'
 import { listContracts } from '@/modules/contracts/api/contractsApi'
 import type { Contract } from '@/modules/contracts/types/contracts'
 import { ApiError } from '@/shared/api/http'
+import AppFormDrawer from '@/shared/components/AppFormDrawer.vue'
 import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import type { AppSelectOption } from '@/shared/components/AppSelect.vue'
+import { useFormDirty } from '@/shared/composables/useFormDirty'
 import { useToast } from '@/shared/composables/useToast'
 import { toSelectNullableId } from '@/shared/lookups/selectOptions'
 
@@ -29,6 +31,7 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const toast = useToast()
+const drawerRef = ref<InstanceType<typeof AppFormDrawer> | null>(null)
 const mutation = useUpdateVehicleLinksMutation()
 const submitting = computed(() => mutation.isPending.value)
 const form = reactive<VehicleLinksFormState>(emptyVehicleLinksForm())
@@ -38,6 +41,13 @@ const { data: vehicle, isLoading, isError, refetch } = useTransportVehicleQuery(
   computed(() => (props.open ? props.vehicleId : null)),
 )
 
+const { dirty, capture, reset: resetDirty } = useFormDirty(
+  () => ({ asset_id: form.asset_id, contract_id: form.contract_id }),
+  {
+    enabled: () => props.open && !isLoading.value && vehicle.value != null,
+  },
+)
+
 watch(
   () => [props.open, vehicle.value?.id, vehicle.value?.asset_id, vehicle.value?.contract_id] as const,
   () => {
@@ -45,6 +55,17 @@ watch(
     form.asset_id = vehicle.value.asset_id ?? ''
     form.contract_id = vehicle.value.contract_id ?? ''
     formError.value = ''
+    capture()
+  },
+)
+
+watch(
+  () => props.open,
+  (isOpen) => {
+    if (isOpen) return
+    resetDirty()
+    formError.value = ''
+    Object.assign(form, emptyVehicleLinksForm())
   },
 )
 
@@ -69,6 +90,11 @@ const emptyContract = computed<AppSelectOption>(() => ({
   label: t('transportation.vehicles.fields.noContract'),
 }))
 
+const drawerDescription = computed(() => {
+  if (!vehicle.value) return ''
+  return `${vehicle.value.vehicle_number} · ${vehicle.value.plate_number}`
+})
+
 const fetchAssets = (params: { search?: string; page: number; per_page: number }) =>
   listAssets(params)
 const fetchContracts = (params: { search?: string; page: number; per_page: number }) =>
@@ -81,8 +107,12 @@ function mapContract(row: Contract): AppSelectOption {
   return { value: row.id, label: row.title, hint: row.contract_number }
 }
 
-function close(): void {
-  emit('update:open', false)
+function onOpenUpdate(value: boolean): void {
+  emit('update:open', value)
+}
+
+function requestDismiss(): void {
+  void drawerRef.value?.requestClose()
 }
 
 function apiMessage(error: unknown): string {
@@ -107,7 +137,7 @@ async function submit(): Promise<void> {
     })
     toast.success(t('transportation.vehicles.toasts.linksUpdated'))
     emit('saved', updated)
-    close()
+    emit('update:open', false)
   } catch (error) {
     formError.value = apiMessage(error)
   }
@@ -115,86 +145,79 @@ async function submit(): Promise<void> {
 </script>
 
 <template>
-  <Teleport to="body">
-    <div v-if="open" class="fixed inset-0 z-50">
-      <div class="absolute inset-0 bg-[rgba(15,23,20,0.32)]" @click="close" />
-      <aside
-        class="absolute inset-y-0 start-0 flex h-dvh w-full max-w-[440px] flex-col bg-brand-surface"
-        role="dialog"
-        aria-modal="true"
-      >
-        <header class="border-b border-brand-border px-5 py-4">
-          <h3 class="text-lg font-bold">{{ t('transportation.vehicles.linksTitle') }}</h3>
-          <p v-if="vehicle" class="mt-1 text-xs text-brand-text-muted" dir="ltr">
-            {{ vehicle.vehicle_number }} · {{ vehicle.plate_number }}
-          </p>
-        </header>
-
-        <div class="flex-1 space-y-4 overflow-y-auto px-5 py-4">
-          <p v-if="isLoading" class="text-sm text-brand-text-muted">
-            {{ t('transportation.vehicles.loading') }}
-          </p>
-          <div v-else-if="isError" class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
-            <p>{{ t('transportation.vehicles.errors.load') }}</p>
-            <button type="button" class="mt-2 font-semibold underline" @click="() => refetch()">
-              {{ t('transportation.vehicles.retry') }}
-            </button>
-          </div>
-          <template v-else>
-            <p v-if="formError" class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
-              {{ formError }}
-            </p>
-            <div>
-              <label class="mb-1 block text-sm font-medium">{{
-                t('transportation.vehicles.fields.asset')
-              }}</label>
-              <AppRemoteSelect
-                v-model="form.asset_id"
-                :query-key="['transport-vehicle-assets']"
-                :fetcher="fetchAssets"
-                :map-option="mapAsset"
-                :empty-option="emptyAsset"
-                :selected-option="assetSelected"
-                clearable
-                searchable
-              />
-            </div>
-            <div>
-              <label class="mb-1 block text-sm font-medium">{{
-                t('transportation.vehicles.fields.contract')
-              }}</label>
-              <AppRemoteSelect
-                v-model="form.contract_id"
-                :query-key="['transport-vehicle-contracts']"
-                :fetcher="fetchContracts"
-                :map-option="mapContract"
-                :empty-option="emptyContract"
-                :selected-option="contractSelected"
-                clearable
-                searchable
-              />
-            </div>
-          </template>
-        </div>
-
-        <footer class="flex gap-2 border-t border-brand-border px-5 py-4">
-          <button
-            type="button"
-            class="h-11 flex-1 rounded-xl border border-brand-border text-sm font-semibold"
-            @click="close"
-          >
-            {{ t('transportation.vehicles.cancel') }}
-          </button>
-          <button
-            type="button"
-            class="h-11 flex-1 rounded-xl bg-brand-primary-dark text-sm font-semibold text-white disabled:opacity-50"
-            :disabled="submitting || isLoading || isError"
-            @click="submit"
-          >
-            {{ t('transportation.vehicles.linksSave') }}
-          </button>
-        </footer>
-      </aside>
+  <AppFormDrawer
+    ref="drawerRef"
+    :open="open"
+    :title="t('transportation.vehicles.linksTitle')"
+    :description="drawerDescription"
+    size="sm"
+    :loading="isLoading"
+    :dirty="dirty"
+    :submitting="submitting"
+    :submit-disabled="isError"
+    :cancel-label="t('transportation.vehicles.cancel')"
+    :submit-label="t('transportation.vehicles.linksSave')"
+    @update:open="onOpenUpdate"
+    @submit="submit"
+  >
+    <div v-if="isError" class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+      <p>{{ t('transportation.vehicles.errors.load') }}</p>
+      <button type="button" class="mt-2 font-semibold underline" @click="() => refetch()">
+        {{ t('transportation.vehicles.retry') }}
+      </button>
     </div>
-  </Teleport>
+    <template v-else-if="vehicle">
+      <p v-if="formError" class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+        {{ formError }}
+      </p>
+      <div>
+        <label class="mb-1 block text-sm font-medium">{{
+          t('transportation.vehicles.fields.asset')
+        }}</label>
+        <AppRemoteSelect
+          v-model="form.asset_id"
+          :query-key="['transport-vehicle-assets']"
+          :fetcher="fetchAssets"
+          :map-option="mapAsset"
+          :empty-option="emptyAsset"
+          :selected-option="assetSelected"
+          clearable
+          searchable
+        />
+      </div>
+      <div>
+        <label class="mb-1 block text-sm font-medium">{{
+          t('transportation.vehicles.fields.contract')
+        }}</label>
+        <AppRemoteSelect
+          v-model="form.contract_id"
+          :query-key="['transport-vehicle-contracts']"
+          :fetcher="fetchContracts"
+          :map-option="mapContract"
+          :empty-option="emptyContract"
+          :selected-option="contractSelected"
+          clearable
+          searchable
+        />
+      </div>
+    </template>
+
+    <template #footer>
+      <button
+        type="button"
+        class="inline-flex h-11 flex-1 items-center justify-center rounded-xl border border-brand-border text-sm font-semibold disabled:opacity-50"
+        :disabled="submitting"
+        @click="requestDismiss"
+      >
+        {{ t('transportation.vehicles.cancel') }}
+      </button>
+      <button
+        type="submit"
+        class="inline-flex h-11 flex-1 items-center justify-center rounded-xl bg-brand-primary-dark text-sm font-semibold text-white disabled:opacity-50"
+        :disabled="submitting || isLoading || isError"
+      >
+        {{ t('transportation.vehicles.linksSave') }}
+      </button>
+    </template>
+  </AppFormDrawer>
 </template>

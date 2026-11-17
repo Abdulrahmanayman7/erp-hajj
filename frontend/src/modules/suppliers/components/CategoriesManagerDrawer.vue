@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { computed, nextTick, onUnmounted, reactive, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Loader2, Pencil, Plus, Power, PowerOff, Trash2, X } from 'lucide-vue-next'
+import { Pencil, Plus, Power, PowerOff, Trash2 } from 'lucide-vue-next'
 
 import { ApiError } from '@/shared/api/http'
+import AppFormDrawer from '@/shared/components/AppFormDrawer.vue'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
 import { useConfirm } from '@/shared/composables/useConfirm'
+import { useFormDirty } from '@/shared/composables/useFormDirty'
 import { useToast } from '@/shared/composables/useToast'
 
 import {
@@ -52,40 +54,31 @@ const formError = ref('')
 const form = reactive<CategoryFormState>({ name: '', code: '' })
 const fieldErrors = reactive<Record<string, string>>({})
 
+const { dirty: formDirty, capture: captureFormDirty, reset: resetFormDirty } = useFormDirty(form, {
+  enabled: formOpen,
+})
+
 const isSubmitting = computed(
   () => createMutation.isPending.value || updateMutation.isPending.value,
 )
 
-let previouslyFocused: HTMLElement | null = null
-
-function onKeydown(event: KeyboardEvent): void {
-  if (event.key === 'Escape' && props.open && !isSubmitting.value && !formOpen.value) {
-    event.preventDefault()
-    emit('close')
-  }
-}
-
 watch(
   () => props.open,
-  async (isOpen) => {
-    if (isOpen) {
-      previouslyFocused =
-        document.activeElement instanceof HTMLElement ? document.activeElement : null
-      document.addEventListener('keydown', onKeydown)
-      await nextTick()
-      return
-    }
-    formOpen.value = false
-    document.removeEventListener('keydown', onKeydown)
-    await nextTick()
-    previouslyFocused?.focus?.()
-    previouslyFocused = null
+  (isOpen) => {
+    if (!isOpen) formOpen.value = false
   },
 )
 
-onUnmounted(() => {
-  document.removeEventListener('keydown', onKeydown)
-})
+function onOuterOpenUpdate(value: boolean): void {
+  if (!value) emit('close')
+}
+
+function onFormOpenUpdate(value: boolean): void {
+  if (!value) {
+    formOpen.value = false
+    resetFormDirty()
+  }
+}
 
 function openCreate(): void {
   editing.value = null
@@ -94,6 +87,7 @@ function openCreate(): void {
   formError.value = ''
   Object.keys(fieldErrors).forEach((k) => delete fieldErrors[k])
   formOpen.value = true
+  captureFormDirty()
 }
 
 function openEdit(category: SupplierCategory): void {
@@ -103,10 +97,7 @@ function openEdit(category: SupplierCategory): void {
   formError.value = ''
   Object.keys(fieldErrors).forEach((k) => delete fieldErrors[k])
   formOpen.value = true
-}
-
-function closeForm(): void {
-  formOpen.value = false
+  captureFormDirty()
 }
 
 function apiMessage(error: unknown): string {
@@ -142,7 +133,8 @@ async function submitForm(): Promise<void> {
       })
       toast.success(t('suppliers.toasts.categoryCreated'))
     }
-    closeForm()
+    formOpen.value = false
+    resetFormDirty()
   } catch (error) {
     formError.value = apiMessage(error)
   }
@@ -196,163 +188,113 @@ async function confirmDelete(category: SupplierCategory): Promise<void> {
 </script>
 
 <template>
-  <Teleport to="body">
-    <Transition name="ctr-drawer">
-      <div v-if="open" class="fixed inset-0 z-[70] flex justify-start">
-        <button
-          type="button"
-          class="absolute inset-0 bg-black/40"
-          :aria-label="t('suppliers.closeDrawer')"
-          @click="emit('close')"
-        />
-        <aside
-          class="relative z-10 flex h-full w-full max-w-xl flex-col bg-brand-surface shadow-2xl"
-          role="dialog"
-          aria-modal="true"
-        >
-          <header class="flex items-start justify-between border-b border-brand-border px-5 py-4">
-            <div>
-              <h2 class="text-lg font-bold text-brand-text">{{ t('suppliers.categoriesTitle') }}</h2>
-              <p class="mt-1 text-sm text-brand-text-secondary">{{ t('suppliers.categoriesSubtitle') }}</p>
-            </div>
-            <button type="button" class="rounded-lg p-1 hover:bg-brand-bg" @click="emit('close')">
-              <X class="h-5 w-5" />
+  <AppFormDrawer
+    :open="open"
+    :title="t('suppliers.categoriesTitle')"
+    :description="t('suppliers.categoriesSubtitle')"
+    size="md"
+    hide-default-footer
+    @update:open="onOuterOpenUpdate"
+  >
+    <div class="mb-4 border-b border-brand-border pb-3 -mt-1">
+      <input
+        v-model="search"
+        type="search"
+        class="w-full rounded-xl border border-brand-border px-3 py-2 text-sm"
+        :placeholder="t('suppliers.categoriesSearch')"
+      />
+    </div>
+
+    <PermissionGuard permission="suppliers.update">
+      <button
+        type="button"
+        class="mb-4 inline-flex items-center gap-2 rounded-xl bg-brand-primary px-3 py-2 text-sm font-semibold text-white"
+        @click="openCreate"
+      >
+        <Plus class="h-4 w-4" />
+        {{ t('suppliers.addCategory') }}
+      </button>
+    </PermissionGuard>
+
+    <div v-if="isLoading" class="py-8 text-center text-sm text-brand-text-muted">
+      {{ t('suppliers.categoriesLoading') }}
+    </div>
+    <div v-else-if="isError" class="py-8 text-center">
+      <p class="text-sm text-red-600">{{ t('suppliers.errors.generic') }}</p>
+      <button
+        type="button"
+        class="mt-2 text-sm font-semibold text-brand-primary"
+        @click="() => { void refetch() }"
+      >
+        {{ t('suppliers.retry') }}
+      </button>
+    </div>
+    <div v-else-if="categories.length === 0" class="py-8 text-center text-sm text-brand-text-muted">
+      {{ t('suppliers.categoriesEmpty') }}
+    </div>
+    <ul v-else class="space-y-2">
+      <li
+        v-for="category in categories"
+        :key="category.id"
+        class="flex items-center justify-between gap-3 rounded-xl border border-brand-border px-3 py-3"
+      >
+        <div class="min-w-0">
+          <p class="font-semibold text-brand-text">{{ category.name }}</p>
+          <p class="text-xs text-brand-text-muted">
+            {{ category.code || '—' }}
+            ·
+            {{
+              category.is_active ? t('suppliers.categoryActive') : t('suppliers.categoryInactive')
+            }}
+          </p>
+        </div>
+        <PermissionGuard permission="suppliers.update">
+          <div class="flex shrink-0 items-center gap-1">
+            <button
+              type="button"
+              class="rounded-lg p-2 hover:bg-brand-bg"
+              :aria-label="t('suppliers.editCategoryTitle')"
+              @click="openEdit(category)"
+            >
+              <Pencil class="h-4 w-4" />
             </button>
-          </header>
-
-          <div class="border-b border-brand-border px-5 py-3">
-            <input
-              v-model="search"
-              type="search"
-              class="w-full rounded-xl border border-brand-border px-3 py-2 text-sm"
-              :placeholder="t('suppliers.categoriesSearch')"
-            />
+            <button type="button" class="rounded-lg p-2 hover:bg-brand-bg" @click="toggleStatus(category)">
+              <PowerOff v-if="category.is_active" class="h-4 w-4" />
+              <Power v-else class="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              class="rounded-lg p-2 text-red-600 hover:bg-red-50"
+              @click="confirmDelete(category)"
+            >
+              <Trash2 class="h-4 w-4" />
+            </button>
           </div>
+        </PermissionGuard>
+      </li>
+    </ul>
+  </AppFormDrawer>
 
-          <div class="flex-1 overflow-y-auto px-5 py-4">
-            <PermissionGuard permission="suppliers.update">
-              <button
-                type="button"
-                class="mb-4 inline-flex items-center gap-2 rounded-xl bg-brand-primary px-3 py-2 text-sm font-semibold text-white"
-                @click="openCreate"
-              >
-                <Plus class="h-4 w-4" />
-                {{ t('suppliers.addCategory') }}
-              </button>
-            </PermissionGuard>
-
-            <div v-if="isLoading" class="py-8 text-center text-sm text-brand-text-muted">
-              {{ t('suppliers.categoriesLoading') }}
-            </div>
-            <div v-else-if="isError" class="py-8 text-center">
-              <p class="text-sm text-red-600">{{ t('suppliers.errors.generic') }}</p>
-              <button
-                type="button"
-                class="mt-2 text-sm font-semibold text-brand-primary"
-                @click="() => { void refetch() }"
-              >
-                {{ t('suppliers.retry') }}
-              </button>
-            </div>
-            <div v-else-if="categories.length === 0" class="py-8 text-center text-sm text-brand-text-muted">
-              {{ t('suppliers.categoriesEmpty') }}
-            </div>
-            <ul v-else class="space-y-2">
-              <li
-                v-for="category in categories"
-                :key="category.id"
-                class="flex items-center justify-between gap-3 rounded-xl border border-brand-border px-3 py-3"
-              >
-                <div class="min-w-0">
-                  <p class="font-semibold text-brand-text">{{ category.name }}</p>
-                  <p class="text-xs text-brand-text-muted">
-                    {{ category.code || '—' }}
-                    ·
-                    {{
-                      category.is_active ? t('suppliers.categoryActive') : t('suppliers.categoryInactive')
-                    }}
-                  </p>
-                </div>
-                <PermissionGuard permission="suppliers.update">
-                  <div class="flex shrink-0 items-center gap-1">
-                    <button
-                      type="button"
-                      class="rounded-lg p-2 hover:bg-brand-bg"
-                      :aria-label="t('suppliers.editCategoryTitle')"
-                      @click="openEdit(category)"
-                    >
-                      <Pencil class="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      class="rounded-lg p-2 hover:bg-brand-bg"
-                      @click="toggleStatus(category)"
-                    >
-                      <PowerOff v-if="category.is_active" class="h-4 w-4" />
-                      <Power v-else class="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      class="rounded-lg p-2 text-red-600 hover:bg-red-50"
-                      @click="confirmDelete(category)"
-                    >
-                      <Trash2 class="h-4 w-4" />
-                    </button>
-                  </div>
-                </PermissionGuard>
-              </li>
-            </ul>
-          </div>
-
-          <div
-            v-if="formOpen"
-            class="absolute inset-0 z-20 flex items-end bg-black/30 sm:items-center sm:justify-center"
-          >
-            <div class="w-full max-w-md rounded-t-2xl bg-brand-surface p-5 shadow-xl sm:rounded-2xl">
-              <h3 class="text-base font-bold text-brand-text">
-                {{ editing ? t('suppliers.editCategoryTitle') : t('suppliers.createCategoryTitle') }}
-              </h3>
-              <p v-if="formError" class="mt-2 text-sm text-red-600">{{ formError }}</p>
-              <div class="mt-4 space-y-3">
-                <div>
-                  <label class="mb-1 block text-sm font-semibold">{{ t('suppliers.fields.categoryName') }}</label>
-                  <input v-model="form.name" type="text" class="w-full rounded-xl border border-brand-border px-3 py-2 text-sm" />
-                  <p v-if="fieldErrors.name" class="mt-1 text-xs text-red-600">{{ fieldErrors.name }}</p>
-                </div>
-                <div v-if="!editing">
-                  <label class="mb-1 block text-sm font-semibold">{{ t('suppliers.fields.categoryCode') }}</label>
-                  <input v-model="form.code" type="text" class="w-full rounded-xl border border-brand-border px-3 py-2 text-sm" />
-                </div>
-              </div>
-              <div class="mt-4 flex justify-end gap-2">
-                <button type="button" class="rounded-xl border px-4 py-2 text-sm font-semibold" @click="closeForm">
-                  {{ t('suppliers.cancel') }}
-                </button>
-                <button
-                  type="button"
-                  class="inline-flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
-                  :disabled="isSubmitting"
-                  @click="submitForm"
-                >
-                  <Loader2 v-if="isSubmitting" class="h-4 w-4 animate-spin" />
-                  {{ t('suppliers.save') }}
-                </button>
-              </div>
-            </div>
-          </div>
-        </aside>
-      </div>
-    </Transition>
-  </Teleport>
+  <AppFormDrawer
+    :open="formOpen"
+    :title="editing ? t('suppliers.editCategoryTitle') : t('suppliers.createCategoryTitle')"
+    size="sm"
+    :dirty="formDirty"
+    :submitting="isSubmitting"
+    :cancel-label="t('suppliers.cancel')"
+    :submit-label="t('suppliers.save')"
+    @update:open="onFormOpenUpdate"
+    @submit="submitForm"
+  >
+    <p v-if="formError" class="text-sm text-red-600">{{ formError }}</p>
+    <div>
+      <label class="mb-1 block text-sm font-semibold">{{ t('suppliers.fields.categoryName') }}</label>
+      <input v-model="form.name" type="text" class="w-full rounded-xl border border-brand-border px-3 py-2 text-sm" />
+      <p v-if="fieldErrors.name" class="mt-1 text-xs text-red-600">{{ fieldErrors.name }}</p>
+    </div>
+    <div v-if="!editing">
+      <label class="mb-1 block text-sm font-semibold">{{ t('suppliers.fields.categoryCode') }}</label>
+      <input v-model="form.code" type="text" class="w-full rounded-xl border border-brand-border px-3 py-2 text-sm" />
+    </div>
+  </AppFormDrawer>
 </template>
-
-<style scoped>
-.ctr-drawer-enter-active,
-.ctr-drawer-leave-active {
-  transition: opacity 0.2s ease;
-}
-.ctr-drawer-enter-from,
-.ctr-drawer-leave-to {
-  opacity: 0;
-}
-</style>

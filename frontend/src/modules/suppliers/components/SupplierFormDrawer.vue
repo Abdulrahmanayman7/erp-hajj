@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 
 import { listSupplierCategories } from '../api/categoriesApi'
 import AppFormDrawer from '@/shared/components/AppFormDrawer.vue'
+import { useCaptureOnOpen, useFormDirty } from '@/shared/composables/useFormDirty'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 
 import type { Supplier, SupplierFormState, SupplierType } from '../types/suppliers'
@@ -64,6 +65,9 @@ function toggleCategory(id: number): void {
   patch({ category_ids: [...set] })
 }
 
+const { dirty, capture, reset: resetDirty } = useFormDirty(() => props.form)
+useCaptureOnOpen(() => props.open, capture, { onClose: () => resetDirty() })
+
 function onOpenUpdate(value: boolean): void {
   if (!value) emit('close')
 }
@@ -84,6 +88,7 @@ watch(
     :title="title"
     :description="subtitle"
     size="md"
+    :dirty="dirty"
     :submitting="submitting"
     :cancel-label="t('suppliers.cancel')"
     :submit-label="primaryLabel"

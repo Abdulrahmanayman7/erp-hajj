@@ -10,11 +10,13 @@ import type { Employee } from '@/modules/employees/types/employees'
 import SeasonWorkspaceBar from '@/modules/season-pilgrims/components/SeasonWorkspaceBar.vue'
 import { useSeasonsQuery } from '@/modules/season-pilgrims/queries/useSeasonsQuery'
 import { ApiError } from '@/shared/api/http'
+import AppFormDrawer from '@/shared/components/AppFormDrawer.vue'
 import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
 import { useConfirm } from '@/shared/composables/useConfirm'
+import { useCaptureOnOpen, useFormDirty } from '@/shared/composables/useFormDirty'
 import { useToast } from '@/shared/composables/useToast'
 import { employeeSelectOption } from '@/shared/lookups/selectOptions'
 
@@ -144,6 +146,21 @@ const submitting = computed(
   () => createMutation.isPending.value || updateMutation.isPending.value,
 )
 const crewSubmitting = computed(() => crewMutation.isPending.value)
+
+const { dirty: formDirty, capture: captureFormDirty, reset: resetFormDirty } = useFormDirty(
+  () => ({ ...form }),
+)
+useCaptureOnOpen(drawerOpen, captureFormDirty, { onClose: () => resetFormDirty() })
+
+const { dirty: crewFormDirty, capture: captureCrewFormDirty, reset: resetCrewFormDirty } =
+  useFormDirty(() => ({ ...crewForm }))
+useCaptureOnOpen(crewOpen, captureCrewFormDirty, { onClose: () => resetCrewFormDirty() })
+
+const crewDrawerDescription = computed(() => {
+  const v = crewRow.value?.vehicle
+  if (!v) return ''
+  return `${v.vehicle_number} · ${v.plate_number}`
+})
 
 const driversQuery = useTransportDriversQuery(computed(() => ({ is_active: true, per_page: 100 })))
 const externalDriverOptions = computed<AppSelectOption[]>(() => [
@@ -521,193 +538,142 @@ async function onUnlink(row: TransportSeasonVehicle): Promise<void> {
       </div>
     </div>
 
-    <Teleport to="body">
-      <div v-if="drawerOpen" class="fixed inset-0 z-50">
-        <div class="absolute inset-0 bg-[rgba(15,23,20,0.32)]" @click="drawerOpen = false" />
-        <aside
-          class="absolute inset-y-0 start-0 flex h-dvh w-full max-w-[440px] flex-col bg-brand-surface"
-          role="dialog"
-          aria-modal="true"
-        >
-          <header class="border-b border-brand-border px-5 py-4">
-            <h3 class="text-lg font-bold">
-              {{
-                editing
-                  ? t('transportation.seasonFleet.editTitle')
-                  : t('transportation.seasonFleet.createTitle')
-              }}
-            </h3>
-          </header>
-          <div class="flex-1 space-y-4 overflow-y-auto px-5 py-4">
-            <p v-if="formError" class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
-              {{ formError }}
-            </p>
-            <div v-if="!editing">
-              <label class="mb-1 block text-sm font-medium">{{
-                t('transportation.seasonFleet.fields.vehicle')
-              }}</label>
-              <AppSelect
-                v-model="form.transport_vehicle_id"
-                :options="vehicleOptions"
-                searchable
-              />
-              <p v-if="fieldMessage('transport_vehicle_id')" class="mt-1 text-xs text-red-600">
-                {{ fieldMessage('transport_vehicle_id') }}
-              </p>
-            </div>
-            <div>
-              <label class="mb-1 block text-sm font-medium">{{
-                t('transportation.seasonFleet.fields.capacity')
-              }}</label>
-              <input
-                v-model="form.operational_capacity"
-                type="text"
-                inputmode="numeric"
-                class="h-11 w-full rounded-xl border border-brand-border px-3 text-sm"
-              />
-              <p v-if="fieldMessage('operational_capacity')" class="mt-1 text-xs text-red-600">
-                {{ fieldMessage('operational_capacity') }}
-              </p>
-            </div>
-            <div>
-              <label class="mb-1 block text-sm font-medium">{{
-                t('transportation.seasonFleet.fields.serviceLevel')
-              }}</label>
-              <AppSelect v-model="form.service_level" :options="serviceOptions" />
-              <p v-if="fieldMessage('service_level')" class="mt-1 text-xs text-red-600">
-                {{ fieldMessage('service_level') }}
-              </p>
-            </div>
-            <div>
-              <label class="mb-1 block text-sm font-medium">{{
-                t('transportation.seasonFleet.fields.notes')
-              }}</label>
-              <textarea
-                v-model="form.notes"
-                rows="3"
-                class="w-full rounded-xl border border-brand-border px-3 py-2 text-sm"
-              />
-            </div>
-          </div>
-          <footer class="flex gap-2 border-t border-brand-border px-5 py-4">
-            <button
-              type="button"
-              class="h-11 flex-1 rounded-xl border border-brand-border text-sm font-semibold"
-              @click="drawerOpen = false"
-            >
-              {{ t('transportation.seasonFleet.cancel') }}
-            </button>
-            <button
-              type="button"
-              class="h-11 flex-1 rounded-xl bg-brand-primary-dark text-sm font-semibold text-white disabled:opacity-50"
-              :disabled="submitting"
-              @click="submit"
-            >
-              {{ t('transportation.seasonFleet.save') }}
-            </button>
-          </footer>
-        </aside>
+    <AppFormDrawer
+      v-model:open="drawerOpen"
+      :title="
+        editing
+          ? t('transportation.seasonFleet.editTitle')
+          : t('transportation.seasonFleet.createTitle')
+      "
+      size="sm"
+      :dirty="formDirty"
+      :submitting="submitting"
+      :cancel-label="t('transportation.seasonFleet.cancel')"
+      :submit-label="t('transportation.seasonFleet.save')"
+      @submit="submit"
+    >
+      <p v-if="formError" class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+        {{ formError }}
+      </p>
+      <div v-if="!editing">
+        <label class="mb-1 block text-sm font-medium">{{
+          t('transportation.seasonFleet.fields.vehicle')
+        }}</label>
+        <AppSelect v-model="form.transport_vehicle_id" :options="vehicleOptions" searchable />
+        <p v-if="fieldMessage('transport_vehicle_id')" class="mt-1 text-xs text-red-600">
+          {{ fieldMessage('transport_vehicle_id') }}
+        </p>
       </div>
-    </Teleport>
+      <div>
+        <label class="mb-1 block text-sm font-medium">{{
+          t('transportation.seasonFleet.fields.capacity')
+        }}</label>
+        <input
+          v-model="form.operational_capacity"
+          type="text"
+          inputmode="numeric"
+          class="h-11 w-full rounded-xl border border-brand-border px-3 text-sm"
+        />
+        <p v-if="fieldMessage('operational_capacity')" class="mt-1 text-xs text-red-600">
+          {{ fieldMessage('operational_capacity') }}
+        </p>
+      </div>
+      <div>
+        <label class="mb-1 block text-sm font-medium">{{
+          t('transportation.seasonFleet.fields.serviceLevel')
+        }}</label>
+        <AppSelect v-model="form.service_level" :options="serviceOptions" />
+        <p v-if="fieldMessage('service_level')" class="mt-1 text-xs text-red-600">
+          {{ fieldMessage('service_level') }}
+        </p>
+      </div>
+      <div>
+        <label class="mb-1 block text-sm font-medium">{{
+          t('transportation.seasonFleet.fields.notes')
+        }}</label>
+        <textarea
+          v-model="form.notes"
+          rows="3"
+          class="w-full rounded-xl border border-brand-border px-3 py-2 text-sm"
+        />
+      </div>
+    </AppFormDrawer>
 
-    <Teleport to="body">
-      <div v-if="crewOpen" class="fixed inset-0 z-50">
-        <div class="absolute inset-0 bg-[rgba(15,23,20,0.32)]" @click="crewOpen = false" />
-        <aside
-          class="absolute inset-y-0 start-0 flex h-dvh w-full max-w-[440px] flex-col bg-brand-surface"
-          role="dialog"
-          aria-modal="true"
-        >
-          <header class="border-b border-brand-border px-5 py-4">
-            <h3 class="text-lg font-bold">{{ t('transportation.seasonFleet.crewTitle') }}</h3>
-            <p v-if="crewRow?.vehicle" class="mt-1 text-xs text-brand-text-muted" dir="ltr">
-              {{ crewRow.vehicle.vehicle_number }} · {{ crewRow.vehicle.plate_number }}
-            </p>
-          </header>
-          <div class="flex-1 space-y-4 overflow-y-auto px-5 py-4">
-            <p v-if="crewError" class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
-              {{ crewError }}
-            </p>
-            <div>
-              <label class="mb-1 block text-sm font-medium">{{
-                t('transportation.seasonFleet.fields.driverKind')
-              }}</label>
-              <AppSelect v-model="crewForm.driver_kind" :options="driverKindOptions" />
-            </div>
-            <div v-if="crewForm.driver_kind === 'employee'">
-              <label class="mb-1 block text-sm font-medium">{{
-                t('transportation.seasonFleet.fields.driverEmployee')
-              }}</label>
-              <AppRemoteSelect
-                v-model="crewForm.default_driver_employee_id"
-                :query-key="['transport-default-driver-employees']"
-                :fetcher="fetchEmployees"
-                :map-option="(row: Employee) => employeeSelectOption(row)"
-                :empty-option="emptyEmployee"
-                :selected-option="
-                  crewRow?.default_driver_employee
-                    ? employeeSelectOption(crewRow.default_driver_employee)
-                    : null
-                "
-                clearable
-                searchable
-              />
-              <p v-if="crewFieldErrors.driver" class="mt-1 text-xs text-red-600">
-                {{ t(`transportation.seasonFleet.errors.validation.${crewFieldErrors.driver}`) }}
-              </p>
-            </div>
-            <div v-else-if="crewForm.driver_kind === 'external'">
-              <label class="mb-1 block text-sm font-medium">{{
-                t('transportation.seasonFleet.fields.externalDriver')
-              }}</label>
-              <AppSelect
-                v-model="crewForm.default_external_driver_id"
-                :options="externalDriverOptions"
-                searchable
-              />
-              <p v-if="crewFieldErrors.driver" class="mt-1 text-xs text-red-600">
-                {{ t(`transportation.seasonFleet.errors.validation.${crewFieldErrors.driver}`) }}
-              </p>
-            </div>
-            <div>
-              <label class="mb-1 block text-sm font-medium">{{
-                t('transportation.seasonFleet.fields.supervisor')
-              }}</label>
-              <AppRemoteSelect
-                v-model="crewForm.default_supervisor_employee_id"
-                :query-key="['transport-default-supervisor-employees']"
-                :fetcher="fetchEmployees"
-                :map-option="(row: Employee) => employeeSelectOption(row)"
-                :empty-option="emptyEmployee"
-                :selected-option="
-                  crewRow?.default_supervisor_employee
-                    ? employeeSelectOption(crewRow.default_supervisor_employee)
-                    : null
-                "
-                clearable
-                searchable
-              />
-            </div>
-          </div>
-          <footer class="flex gap-2 border-t border-brand-border px-5 py-4">
-            <button
-              type="button"
-              class="h-11 flex-1 rounded-xl border border-brand-border text-sm font-semibold"
-              @click="crewOpen = false"
-            >
-              {{ t('transportation.seasonFleet.cancel') }}
-            </button>
-            <button
-              type="button"
-              class="h-11 flex-1 rounded-xl bg-brand-primary-dark text-sm font-semibold text-white disabled:opacity-50"
-              :disabled="crewSubmitting || !seasonWritable"
-              @click="submitCrew"
-            >
-              {{ t('transportation.seasonFleet.crewSave') }}
-            </button>
-          </footer>
-        </aside>
+    <AppFormDrawer
+      v-model:open="crewOpen"
+      :title="t('transportation.seasonFleet.crewTitle')"
+      :description="crewDrawerDescription"
+      size="sm"
+      :dirty="crewFormDirty"
+      :submitting="crewSubmitting"
+      :submit-disabled="!seasonWritable"
+      :cancel-label="t('transportation.seasonFleet.cancel')"
+      :submit-label="t('transportation.seasonFleet.crewSave')"
+      @submit="submitCrew"
+    >
+      <p v-if="crewError" class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+        {{ crewError }}
+      </p>
+      <div>
+        <label class="mb-1 block text-sm font-medium">{{
+          t('transportation.seasonFleet.fields.driverKind')
+        }}</label>
+        <AppSelect v-model="crewForm.driver_kind" :options="driverKindOptions" />
       </div>
-    </Teleport>
+      <div v-if="crewForm.driver_kind === 'employee'">
+        <label class="mb-1 block text-sm font-medium">{{
+          t('transportation.seasonFleet.fields.driverEmployee')
+        }}</label>
+        <AppRemoteSelect
+          v-model="crewForm.default_driver_employee_id"
+          :query-key="['transport-default-driver-employees']"
+          :fetcher="fetchEmployees"
+          :map-option="(row: Employee) => employeeSelectOption(row)"
+          :empty-option="emptyEmployee"
+          :selected-option="
+            crewRow?.default_driver_employee
+              ? employeeSelectOption(crewRow.default_driver_employee)
+              : null
+          "
+          clearable
+          searchable
+        />
+        <p v-if="crewFieldErrors.driver" class="mt-1 text-xs text-red-600">
+          {{ t(`transportation.seasonFleet.errors.validation.${crewFieldErrors.driver}`) }}
+        </p>
+      </div>
+      <div v-else-if="crewForm.driver_kind === 'external'">
+        <label class="mb-1 block text-sm font-medium">{{
+          t('transportation.seasonFleet.fields.externalDriver')
+        }}</label>
+        <AppSelect
+          v-model="crewForm.default_external_driver_id"
+          :options="externalDriverOptions"
+          searchable
+        />
+        <p v-if="crewFieldErrors.driver" class="mt-1 text-xs text-red-600">
+          {{ t(`transportation.seasonFleet.errors.validation.${crewFieldErrors.driver}`) }}
+        </p>
+      </div>
+      <div>
+        <label class="mb-1 block text-sm font-medium">{{
+          t('transportation.seasonFleet.fields.supervisor')
+        }}</label>
+        <AppRemoteSelect
+          v-model="crewForm.default_supervisor_employee_id"
+          :query-key="['transport-default-supervisor-employees']"
+          :fetcher="fetchEmployees"
+          :map-option="(row: Employee) => employeeSelectOption(row)"
+          :empty-option="emptyEmployee"
+          :selected-option="
+            crewRow?.default_supervisor_employee
+              ? employeeSelectOption(crewRow.default_supervisor_employee)
+              : null
+          "
+          clearable
+          searchable
+        />
+      </div>
+    </AppFormDrawer>
   </div>
 </template>

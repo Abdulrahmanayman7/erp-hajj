@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import AppFormDrawer from '@/shared/components/AppFormDrawer.vue'
+import { useCaptureOnOpen, useFormDirty } from '@/shared/composables/useFormDirty'
 import type { Season, SeasonFormState } from '../types/seasons'
 
 const props = defineProps<{
@@ -42,6 +43,9 @@ function fieldMessage(key: string): string {
   return t(`seasons.errors.validation.${code}`)
 }
 
+const { dirty, capture, reset: resetDirty } = useFormDirty(() => props.form)
+useCaptureOnOpen(() => props.open, capture, { onClose: () => resetDirty() })
+
 function onOpenUpdate(value: boolean): void {
   if (!value) emit('close')
 }
@@ -53,6 +57,7 @@ function onOpenUpdate(value: boolean): void {
     :title="title"
     :description="subtitle"
     size="md"
+    :dirty="dirty"
     :submitting="submitting"
     :submit-disabled="locked"
     :cancel-label="t('seasons.cancel')"

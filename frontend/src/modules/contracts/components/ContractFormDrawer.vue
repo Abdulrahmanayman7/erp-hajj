@@ -6,6 +6,7 @@ import { listCategories } from '../api/categoriesApi'
 import { listEmployees } from '@/modules/employees/api/employeesApi'
 import AppDateInput from '@/shared/components/AppDateInput.vue'
 import AppFormDrawer from '@/shared/components/AppFormDrawer.vue'
+import { useCaptureOnOpen, useFormDirty } from '@/shared/composables/useFormDirty'
 import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 import { employeeSelectOption, namedCodeOption, toSelectId } from '@/shared/lookups/selectOptions'
@@ -63,6 +64,9 @@ const selectedCategory = computed(() =>
   props.editing?.category ? namedCodeOption(props.editing.category) : null,
 )
 
+const { dirty, capture, reset: resetDirty } = useFormDirty(() => props.form)
+useCaptureOnOpen(() => props.open, capture, { onClose: () => resetDirty() })
+
 function onOpenUpdate(value: boolean): void {
   if (!value) emit('close')
 }
@@ -74,6 +78,7 @@ function onOpenUpdate(value: boolean): void {
     :title="title"
     :description="subtitle"
     size="md"
+    :dirty="dirty"
     :submitting="submitting"
     :cancel-label="t('contracts.cancel')"
     :submit-label="primaryLabel"

@@ -11,11 +11,13 @@ import type { Employee } from '@/modules/employees/types/employees'
 import SeasonWorkspaceBar from '@/modules/season-pilgrims/components/SeasonWorkspaceBar.vue'
 import { useSeasonsQuery } from '@/modules/season-pilgrims/queries/useSeasonsQuery'
 import { ApiError } from '@/shared/api/http'
+import AppFormDrawer from '@/shared/components/AppFormDrawer.vue'
 import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
 import { employeeSelectOption } from '@/shared/lookups/selectOptions'
+import { useCaptureOnOpen, useFormDirty } from '@/shared/composables/useFormDirty'
 import { useToast } from '@/shared/composables/useToast'
 
 import {
@@ -108,6 +110,9 @@ const updateMutation = useUpdateSeasonProjectMutation()
 const submitting = computed(
   () => createMutation.isPending.value || updateMutation.isPending.value,
 )
+const { dirty: projectFormDirty, capture: captureProjectForm, reset: resetProjectForm } =
+  useFormDirty(() => ({ ...form }))
+useCaptureOnOpen(drawerOpen, captureProjectForm, { onClose: resetProjectForm })
 
 function openCreate(): void {
   editing.value = null
@@ -359,76 +364,52 @@ function delayLabel(row: SeasonProject): string {
       </div>
     </section>
 
-    <div
-      v-if="drawerOpen"
-      class="fixed inset-0 z-40 flex justify-end bg-black/30"
-      role="dialog"
-      aria-modal="true"
-      @click.self="drawerOpen = false"
+    <AppFormDrawer
+      v-model:open="drawerOpen"
+      :title="editing ? t('seasonProjects.editTitle') : t('seasonProjects.createTitle')"
+      :description="editing ? t('seasonProjects.editSubtitle') : t('seasonProjects.createSubtitle')"
+      size="sm"
+      :dirty="projectFormDirty"
+      :submitting="submitting"
+      :cancel-label="t('seasonProjects.cancel')"
+      :submit-label="submitting ? t('seasonProjects.saving') : (editing ? t('seasonProjects.editCta') : t('seasonProjects.createCta'))"
+      @submit="submitForm"
     >
-      <div class="flex h-full w-full max-w-md flex-col bg-white shadow-xl">
-        <header class="border-b border-brand-border px-4 py-3">
-          <h2 class="text-lg font-semibold">
-            {{ editing ? t('seasonProjects.editTitle') : t('seasonProjects.createTitle') }}
-          </h2>
-          <p class="text-sm text-brand-muted">
-            {{ editing ? t('seasonProjects.editSubtitle') : t('seasonProjects.createSubtitle') }}
-          </p>
-        </header>
-        <form class="flex flex-1 flex-col gap-3 overflow-y-auto p-4" @submit.prevent="submitForm">
-          <label class="block text-sm">
-            <span class="mb-1 block">{{ t('seasonProjects.fields.title') }}</span>
-            <input
-              v-model="form.title"
-              required
-              class="w-full rounded-lg border border-brand-border px-3 py-2"
-            >
-            <span v-if="fieldErrors.title" class="mt-1 block text-xs text-red-600">{{ fieldErrors.title }}</span>
-          </label>
-          <label class="block text-sm">
-            <span class="mb-1 block">{{ t('seasonProjects.fields.description') }}</span>
-            <textarea
-              v-model="form.description"
-              rows="3"
-              class="w-full rounded-lg border border-brand-border px-3 py-2"
-            />
-          </label>
-          <label class="block text-sm">
-            <span class="mb-1 block">{{ t('seasonProjects.fields.owner') }}</span>
-            <AppRemoteSelect
-              v-model="form.owner_employee_id"
-              :query-key="['season-projects-form-owners']"
-              :fetcher="fetchActiveEmployees"
-              :map-option="(row: Employee) => employeeSelectOption(row)"
-              :selected-option="
-                editing?.owner_employee ? employeeSelectOption(editing.owner_employee) : null
-              "
-              clearable
-            />
-            <span class="mt-1 block text-xs text-brand-muted">{{ t('seasonProjects.fields.ownerHint') }}</span>
-            <span v-if="fieldErrors.owner_employee_id" class="mt-1 block text-xs text-red-600">
-              {{ fieldErrors.owner_employee_id }}
-            </span>
-          </label>
-          <p v-if="formError" class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{{ formError }}</p>
-          <div class="mt-auto flex gap-2 border-t border-brand-border pt-3">
-            <button
-              type="button"
-              class="rounded-lg border px-3 py-2 text-sm"
-              @click="drawerOpen = false"
-            >
-              {{ t('seasonProjects.cancel') }}
-            </button>
-            <button
-              type="submit"
-              class="rounded-lg bg-brand-primary px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
-              :disabled="submitting"
-            >
-              {{ submitting ? t('seasonProjects.saving') : (editing ? t('seasonProjects.editCta') : t('seasonProjects.createCta')) }}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+      <label class="block text-sm">
+        <span class="mb-1 block">{{ t('seasonProjects.fields.title') }}</span>
+        <input
+          v-model="form.title"
+          required
+          class="w-full rounded-lg border border-brand-border px-3 py-2"
+        >
+        <span v-if="fieldErrors.title" class="mt-1 block text-xs text-red-600">{{ fieldErrors.title }}</span>
+      </label>
+      <label class="block text-sm">
+        <span class="mb-1 block">{{ t('seasonProjects.fields.description') }}</span>
+        <textarea
+          v-model="form.description"
+          rows="3"
+          class="w-full rounded-lg border border-brand-border px-3 py-2"
+        />
+      </label>
+      <label class="block text-sm">
+        <span class="mb-1 block">{{ t('seasonProjects.fields.owner') }}</span>
+        <AppRemoteSelect
+          v-model="form.owner_employee_id"
+          :query-key="['season-projects-form-owners']"
+          :fetcher="fetchActiveEmployees"
+          :map-option="(row: Employee) => employeeSelectOption(row)"
+          :selected-option="
+            editing?.owner_employee ? employeeSelectOption(editing.owner_employee) : null
+          "
+          clearable
+        />
+        <span class="mt-1 block text-xs text-brand-muted">{{ t('seasonProjects.fields.ownerHint') }}</span>
+        <span v-if="fieldErrors.owner_employee_id" class="mt-1 block text-xs text-red-600">
+          {{ fieldErrors.owner_employee_id }}
+        </span>
+      </label>
+      <p v-if="formError" class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{{ formError }}</p>
+    </AppFormDrawer>
   </div>
 </template>

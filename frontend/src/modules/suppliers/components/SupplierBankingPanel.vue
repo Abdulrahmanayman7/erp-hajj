@@ -15,7 +15,9 @@ import {
 } from 'lucide-vue-next'
 
 import { ApiError } from '@/shared/api/http'
+import AppFormDrawer from '@/shared/components/AppFormDrawer.vue'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
+import { useCaptureOnOpen, useFormDirty } from '@/shared/composables/useFormDirty'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import { useToast } from '@/shared/composables/useToast'
 
@@ -169,6 +171,19 @@ const formSubmitting = computed(
     updateMutation.isPending.value ||
     supersedeMutation.isPending.value,
 )
+const formDrawerTitle = computed(() => {
+  if (formMode.value === 'create') return t('suppliers.banking.createTitle')
+  if (formMode.value === 'edit') return t('suppliers.banking.editTitle')
+  return t('suppliers.banking.supersedeTitle')
+})
+const formDrawerDescription = computed(() =>
+  formMode.value === 'supersede'
+    ? t('suppliers.banking.supersedeHint')
+    : t('suppliers.banking.formHint'),
+)
+const { dirty: bankingFormDirty, capture: captureBankingForm, reset: resetBankingForm } =
+  useFormDirty(form)
+useCaptureOnOpen(formOpen, captureBankingForm, { onClose: resetBankingForm })
 
 function clearFormErrors(): void {
   formError.value = ''
@@ -197,12 +212,6 @@ function openSupersede(account: SupplierBankAccount): void {
   formTarget.value = account
   Object.assign(form, formForSupersede(account))
   formOpen.value = true
-}
-
-function closeForm(): void {
-  if (formSubmitting.value) return
-  formOpen.value = false
-  formTarget.value = null
 }
 
 async function submitForm(): Promise<void> {
@@ -703,172 +712,120 @@ function selectAccount(account: SupplierBankAccount): void {
       </aside>
     </div>
 
-    <!-- Create / edit / supersede drawer -->
-    <Teleport to="body">
-      <div v-if="formOpen" class="fixed inset-0 z-[70] flex justify-start">
-        <button
-          type="button"
-          class="absolute inset-0 bg-black/40"
-          :aria-label="t('suppliers.closeDrawer')"
+    <AppFormDrawer
+      v-model:open="formOpen"
+      :title="formDrawerTitle"
+      :description="formDrawerDescription"
+      size="md"
+      :dirty="bankingFormDirty"
+      :submitting="formSubmitting"
+      :cancel-label="t('suppliers.cancel')"
+      :submit-label="t('suppliers.save')"
+      data-testid="banking-form-drawer"
+      @close="formTarget = null"
+      @submit="submitForm"
+    >
+      <p v-if="formError" class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
+        {{ formError }}
+      </p>
+
+      <div>
+        <label class="mb-1 block text-sm font-semibold" for="bank-holder">
+          {{ t('suppliers.banking.holder') }}
+        </label>
+        <input
+          id="bank-holder"
+          v-model="form.account_holder_name"
+          :class="inputClass"
           :disabled="formSubmitting"
-          @click="closeForm"
         />
-        <aside
-          class="relative z-10 flex h-full w-full max-w-lg flex-col bg-brand-surface shadow-2xl"
-          role="dialog"
-          aria-modal="true"
-          data-testid="banking-form-drawer"
-        >
-          <header class="flex items-start justify-between border-b border-brand-border px-5 py-4">
-            <div>
-              <h2 class="text-lg font-bold text-brand-text">
-                {{
-                  formMode === 'create'
-                    ? t('suppliers.banking.createTitle')
-                    : formMode === 'edit'
-                      ? t('suppliers.banking.editTitle')
-                      : t('suppliers.banking.supersedeTitle')
-                }}
-              </h2>
-              <p class="mt-1 text-sm text-brand-text-secondary">
-                {{
-                  formMode === 'supersede'
-                    ? t('suppliers.banking.supersedeHint')
-                    : t('suppliers.banking.formHint')
-                }}
-              </p>
-            </div>
-            <button
-              type="button"
-              class="rounded-lg p-1 hover:bg-brand-bg"
-              :disabled="formSubmitting"
-              :aria-label="t('suppliers.closeDrawer')"
-              @click="closeForm"
-            >
-              <X class="h-5 w-5" />
-            </button>
-          </header>
-
-          <form class="flex flex-1 flex-col overflow-hidden" @submit.prevent="submitForm">
-            <fieldset class="flex flex-1 flex-col overflow-hidden" :disabled="formSubmitting">
-              <div class="flex-1 space-y-4 overflow-y-auto px-5 py-4">
-                <p v-if="formError" class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
-                  {{ formError }}
-                </p>
-
-                <div>
-                  <label class="mb-1 block text-sm font-semibold" for="bank-holder">
-                    {{ t('suppliers.banking.holder') }}
-                  </label>
-                  <input id="bank-holder" v-model="form.account_holder_name" :class="inputClass" />
-                  <p v-if="fieldErrors.account_holder_name" class="mt-1 text-xs text-red-600">
-                    {{ t(`suppliers.banking.validation.${fieldErrors.account_holder_name}`) }}
-                  </p>
-                </div>
-
-                <div>
-                  <label class="mb-1 block text-sm font-semibold" for="bank-name">
-                    {{ t('suppliers.banking.bankName') }}
-                  </label>
-                  <input id="bank-name" v-model="form.bank_name" :class="inputClass" />
-                  <p v-if="fieldErrors.bank_name" class="mt-1 text-xs text-red-600">
-                    {{ t(`suppliers.banking.validation.${fieldErrors.bank_name}`) }}
-                  </p>
-                </div>
-
-                <div>
-                  <label class="mb-1 block text-sm font-semibold" for="bank-label">
-                    {{ t('suppliers.banking.label') }}
-                  </label>
-                  <input id="bank-label" v-model="form.label" :class="inputClass" />
-                </div>
-
-                <div>
-                  <label class="mb-1 block text-sm font-semibold" for="bank-iban">
-                    {{ t('suppliers.banking.iban') }}
-                  </label>
-                  <input
-                    id="bank-iban"
-                    v-model="form.iban"
-                    dir="ltr"
-                    autocomplete="off"
-                    :class="[inputClass, 'text-start']"
-                    :placeholder="t('suppliers.banking.ibanPlaceholder')"
-                  />
-                </div>
-
-                <div>
-                  <label class="mb-1 block text-sm font-semibold" for="bank-local">
-                    {{ t('suppliers.banking.accountNumber') }}
-                  </label>
-                  <input
-                    id="bank-local"
-                    v-model="form.account_number"
-                    dir="ltr"
-                    autocomplete="off"
-                    :class="[inputClass, 'text-start']"
-                  />
-                  <p v-if="fieldErrors.identifier" class="mt-1 text-xs text-red-600">
-                    {{ t(`suppliers.banking.validation.${fieldErrors.identifier}`) }}
-                  </p>
-                </div>
-
-                <div>
-                  <label class="mb-1 block text-sm font-semibold" for="bank-currency">
-                    {{ t('suppliers.banking.currency') }}
-                  </label>
-                  <input
-                    id="bank-currency"
-                    v-model="form.currency"
-                    dir="ltr"
-                    readonly
-                    :class="[inputClass, 'bg-brand-bg text-start']"
-                  />
-                  <p class="mt-1 text-xs text-brand-text-muted">{{ t('suppliers.banking.currencyHint') }}</p>
-                  <p v-if="fieldErrors.currency" class="mt-1 text-xs text-red-600">
-                    {{ t(`suppliers.banking.validation.${fieldErrors.currency}`) }}
-                  </p>
-                </div>
-
-                <div>
-                  <label class="mb-1 block text-sm font-semibold" for="bank-evidence">
-                    {{ t('suppliers.banking.evidenceDocumentId') }}
-                  </label>
-                  <input
-                    id="bank-evidence"
-                    v-model.number="form.evidence_document_id"
-                    type="number"
-                    min="1"
-                    dir="ltr"
-                    :class="[inputClass, 'text-start']"
-                  />
-                  <p class="mt-1 text-xs text-brand-text-muted">{{ t('suppliers.banking.evidenceHint') }}</p>
-                </div>
-              </div>
-
-              <footer class="flex justify-end gap-2 border-t border-brand-border px-5 py-4">
-                <button
-                  type="button"
-                  class="rounded-xl border border-brand-border px-4 py-2 text-sm font-semibold"
-                  :disabled="formSubmitting"
-                  @click="closeForm"
-                >
-                  {{ t('suppliers.cancel') }}
-                </button>
-                <button
-                  type="submit"
-                  class="inline-flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
-                  :disabled="formSubmitting"
-                >
-                  <Loader2 v-if="formSubmitting" class="h-4 w-4 animate-spin" />
-                  {{ t('suppliers.save') }}
-                </button>
-              </footer>
-            </fieldset>
-          </form>
-        </aside>
+        <p v-if="fieldErrors.account_holder_name" class="mt-1 text-xs text-red-600">
+          {{ t(`suppliers.banking.validation.${fieldErrors.account_holder_name}`) }}
+        </p>
       </div>
-    </Teleport>
+
+      <div>
+        <label class="mb-1 block text-sm font-semibold" for="bank-name">
+          {{ t('suppliers.banking.bankName') }}
+        </label>
+        <input id="bank-name" v-model="form.bank_name" :class="inputClass" :disabled="formSubmitting" />
+        <p v-if="fieldErrors.bank_name" class="mt-1 text-xs text-red-600">
+          {{ t(`suppliers.banking.validation.${fieldErrors.bank_name}`) }}
+        </p>
+      </div>
+
+      <div>
+        <label class="mb-1 block text-sm font-semibold" for="bank-label">
+          {{ t('suppliers.banking.label') }}
+        </label>
+        <input id="bank-label" v-model="form.label" :class="inputClass" :disabled="formSubmitting" />
+      </div>
+
+      <div>
+        <label class="mb-1 block text-sm font-semibold" for="bank-iban">
+          {{ t('suppliers.banking.iban') }}
+        </label>
+        <input
+          id="bank-iban"
+          v-model="form.iban"
+          dir="ltr"
+          autocomplete="off"
+          :class="[inputClass, 'text-start']"
+          :placeholder="t('suppliers.banking.ibanPlaceholder')"
+          :disabled="formSubmitting"
+        />
+      </div>
+
+      <div>
+        <label class="mb-1 block text-sm font-semibold" for="bank-local">
+          {{ t('suppliers.banking.accountNumber') }}
+        </label>
+        <input
+          id="bank-local"
+          v-model="form.account_number"
+          dir="ltr"
+          autocomplete="off"
+          :class="[inputClass, 'text-start']"
+          :disabled="formSubmitting"
+        />
+        <p v-if="fieldErrors.identifier" class="mt-1 text-xs text-red-600">
+          {{ t(`suppliers.banking.validation.${fieldErrors.identifier}`) }}
+        </p>
+      </div>
+
+      <div>
+        <label class="mb-1 block text-sm font-semibold" for="bank-currency">
+          {{ t('suppliers.banking.currency') }}
+        </label>
+        <input
+          id="bank-currency"
+          v-model="form.currency"
+          dir="ltr"
+          readonly
+          :class="[inputClass, 'bg-brand-bg text-start']"
+        />
+        <p class="mt-1 text-xs text-brand-text-muted">{{ t('suppliers.banking.currencyHint') }}</p>
+        <p v-if="fieldErrors.currency" class="mt-1 text-xs text-red-600">
+          {{ t(`suppliers.banking.validation.${fieldErrors.currency}`) }}
+        </p>
+      </div>
+
+      <div>
+        <label class="mb-1 block text-sm font-semibold" for="bank-evidence">
+          {{ t('suppliers.banking.evidenceDocumentId') }}
+        </label>
+        <input
+          id="bank-evidence"
+          v-model.number="form.evidence_document_id"
+          type="number"
+          min="1"
+          dir="ltr"
+          :class="[inputClass, 'text-start']"
+          :disabled="formSubmitting"
+        />
+        <p class="mt-1 text-xs text-brand-text-muted">{{ t('suppliers.banking.evidenceHint') }}</p>
+      </div>
+    </AppFormDrawer>
 
     <!-- Confirm action modal -->
     <Teleport to="body">

@@ -258,7 +258,7 @@ useAccommodationDialog(drawerOpen, () => { if (!createMutation.isPending.value) 
       </div>
     </div>
 
-    <AccommodationFormDrawer :open="Boolean(drawerOpen)" :submitting="createMutation.isPending.value" :disabled="!canWrite" @close="drawerOpen = false" @submit="submitCreate">
+    <AccommodationFormDrawer :open="Boolean(drawerOpen)" :form="form" :submitting="createMutation.isPending.value" :disabled="!canWrite" @close="drawerOpen = false" @submit="submitCreate">
       <template #title>{{ t('accommodation.facilities.createTitle') }}</template>
       <template #subtitle>{{ t('accommodation.facilities.createSubtitle') }}</template>
       <label class="block text-sm">

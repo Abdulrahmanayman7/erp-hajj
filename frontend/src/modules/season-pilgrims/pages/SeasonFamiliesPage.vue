@@ -6,8 +6,10 @@ import { Pencil, Plus, Users } from 'lucide-vue-next'
 
 import { useAccommodationSeasonStore } from '@/modules/accommodation/stores/seasonContextStore'
 import { ApiError } from '@/shared/api/http'
+import AppFormDrawer from '@/shared/components/AppFormDrawer.vue'
 import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
+import { useCaptureOnOpen, useFormDirty } from '@/shared/composables/useFormDirty'
 import { useConfirm } from '@/shared/composables/useConfirm'
 import { useToast } from '@/shared/composables/useToast'
 
@@ -79,6 +81,11 @@ const primaryMutation = useSetFamilyPrimaryMutation()
 const submitting = computed(
   () => createMutation.isPending.value || updateMutation.isPending.value,
 )
+
+const { dirty: formDirty, capture: captureFormDirty, reset: resetFormDirty } = useFormDirty(
+  () => ({ ...form }),
+)
+useCaptureOnOpen(drawerOpen, captureFormDirty, { onClose: () => resetFormDirty() })
 
 function openCreate(): void {
   editing.value = null
@@ -332,68 +339,40 @@ function fieldMessage(key: string): string {
       </section>
     </div>
 
-    <Teleport to="body">
-      <div v-if="drawerOpen" class="fixed inset-0 z-50">
-        <div class="absolute inset-0 bg-[rgba(15,23,20,0.32)]" @click="drawerOpen = false" />
-        <aside
-          class="absolute inset-y-0 start-0 flex h-dvh w-full max-w-[440px] flex-col bg-brand-surface"
-          role="dialog"
-          aria-modal="true"
-        >
-          <header class="border-b border-brand-border px-5 py-4">
-            <h3 class="text-lg font-bold">
-              {{
-                editing
-                  ? t('seasonOps.families.editTitle')
-                  : t('seasonOps.families.createTitle')
-              }}
-            </h3>
-          </header>
-          <form class="flex flex-1 flex-col" @submit.prevent="submit">
-            <div class="flex-1 space-y-4 overflow-y-auto px-5 py-4">
-              <p v-if="formError" class="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">
-                {{ formError }}
-              </p>
-              <label class="block space-y-1">
-                <span class="text-sm font-semibold">{{ t('seasonOps.families.fields.name') }}</span>
-                <input
-                  v-model="form.name"
-                  class="h-11 w-full rounded-xl border border-brand-border px-3 text-sm"
-                  maxlength="255"
-                />
-                <span v-if="fieldMessage('name')" class="text-xs text-red-600">{{
-                  fieldMessage('name')
-                }}</span>
-              </label>
-              <label class="block space-y-1">
-                <span class="text-sm font-semibold">{{ t('seasonOps.families.fields.notes') }}</span>
-                <textarea
-                  v-model="form.notes"
-                  rows="3"
-                  class="w-full rounded-xl border border-brand-border px-3 py-2 text-sm"
-                  maxlength="5000"
-                />
-              </label>
-            </div>
-            <footer class="flex justify-end gap-2 border-t border-brand-border px-5 py-4">
-              <button
-                type="button"
-                class="h-11 rounded-xl border border-brand-border px-4 text-sm font-semibold"
-                @click="drawerOpen = false"
-              >
-                {{ t('pilgrims.cancel') }}
-              </button>
-              <button
-                type="submit"
-                class="h-11 rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white disabled:opacity-60"
-                :disabled="submitting || !seasonWritable"
-              >
-                {{ t('pilgrims.save') }}
-              </button>
-            </footer>
-          </form>
-        </aside>
-      </div>
-    </Teleport>
+    <AppFormDrawer
+      v-model:open="drawerOpen"
+      :title="editing ? t('seasonOps.families.editTitle') : t('seasonOps.families.createTitle')"
+      size="sm"
+      :dirty="formDirty"
+      :submitting="submitting"
+      :submit-disabled="!seasonWritable"
+      :cancel-label="t('pilgrims.cancel')"
+      :submit-label="t('pilgrims.save')"
+      @submit="submit"
+    >
+      <p v-if="formError" class="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">
+        {{ formError }}
+      </p>
+      <label class="block space-y-1">
+        <span class="text-sm font-semibold">{{ t('seasonOps.families.fields.name') }}</span>
+        <input
+          v-model="form.name"
+          class="h-11 w-full rounded-xl border border-brand-border px-3 text-sm"
+          maxlength="255"
+        />
+        <span v-if="fieldMessage('name')" class="text-xs text-red-600">{{
+          fieldMessage('name')
+        }}</span>
+      </label>
+      <label class="block space-y-1">
+        <span class="text-sm font-semibold">{{ t('seasonOps.families.fields.notes') }}</span>
+        <textarea
+          v-model="form.notes"
+          rows="3"
+          class="w-full rounded-xl border border-brand-border px-3 py-2 text-sm"
+          maxlength="5000"
+        />
+      </label>
+    </AppFormDrawer>
   </div>
 </template>

@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed, nextTick, onUnmounted, reactive, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Loader2, X } from 'lucide-vue-next'
 
 import { ApiError } from '@/shared/api/http'
+import AppFormDrawer from '@/shared/components/AppFormDrawer.vue'
 import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
+import { useCaptureOnOpen, useFormDirty } from '@/shared/composables/useFormDirty'
 import { toSelectId } from '@/shared/lookups/selectOptions'
 import { useToast } from '@/shared/composables/useToast'
 
@@ -37,6 +38,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   close: []
   enrolled: [pilgrimId: number]
+  'update:open': [value: boolean]
 }>()
 
 const { t } = useI18n()
@@ -44,7 +46,9 @@ const toast = useToast()
 const form = reactive<EnrollFormState>(emptyEnrollForm())
 const formError = ref('')
 const fieldErrors = reactive<Record<string, string>>({})
-let previouslyFocused: HTMLElement | null = null
+
+const { dirty, capture, reset } = useFormDirty(() => ({ ...form }))
+useCaptureOnOpen(() => props.open, capture, { onClose: () => reset() })
 
 const registerMutation = useRegisterSeasonPilgrimMutation()
 const familyMutation = useSetFamilyGroupMutation()
@@ -110,30 +114,15 @@ function resetForm(): void {
 
 watch(
   () => props.open,
-  async (isOpen) => {
-    if (isOpen) {
-      resetForm()
-      previouslyFocused =
-        document.activeElement instanceof HTMLElement ? document.activeElement : null
-      document.addEventListener('keydown', onKeydown)
-      await nextTick()
-      return
-    }
-    document.removeEventListener('keydown', onKeydown)
-    await nextTick()
-    previouslyFocused?.focus?.()
-    previouslyFocused = null
+  (isOpen) => {
+    if (isOpen) resetForm()
   },
 )
 
-function onKeydown(event: KeyboardEvent): void {
-  if (event.key === 'Escape' && props.open && !submitting.value) {
-    event.preventDefault()
-    emit('close')
-  }
+function onOpenUpdate(value: boolean): void {
+  emit('update:open', value)
+  if (!value) emit('close')
 }
-
-onUnmounted(() => document.removeEventListener('keydown', onKeydown))
 
 async function submit(): Promise<void> {
   Object.keys(fieldErrors).forEach((key) => delete fieldErrors[key])
@@ -174,6 +163,7 @@ async function submit(): Promise<void> {
 
     toast.success(t('seasonOps.enroll.toasts.success'))
     emit('enrolled', Number(form.pilgrim_id))
+    emit('update:open', false)
     emit('close')
   } catch (error) {
     if (error instanceof ApiError) {
@@ -195,150 +185,78 @@ async function submit(): Promise<void> {
 </script>
 
 <template>
-  <Teleport to="body">
-    <Transition name="enroll-drawer">
-      <div v-if="open" class="fixed inset-0 z-50" role="presentation">
-        <div class="absolute inset-0 bg-[rgba(15,23,20,0.32)]" @click="emit('close')" />
-        <aside
-          class="absolute inset-y-0 start-0 flex h-dvh w-full max-w-[480px] flex-col bg-brand-surface shadow-[-12px_0_40px_-24px_rgba(23,32,29,0.35)]"
-          role="dialog"
-          aria-modal="true"
-          :aria-label="t('seasonOps.enroll.title')"
-          @click.stop
-        >
-          <header
-            class="flex shrink-0 items-start justify-between gap-4 border-b border-brand-border px-4 py-5 sm:px-7"
-          >
-            <div class="min-w-0 text-start">
-              <h3 class="text-[21px] font-bold text-brand-text">
-                {{ t('seasonOps.enroll.title') }}
-              </h3>
-              <p class="mt-1.5 text-[13px] text-brand-text-secondary">
-                {{ t('seasonOps.enroll.subtitle') }}
-              </p>
-            </div>
-            <button
-              type="button"
-              class="inline-flex h-9 w-9 items-center justify-center rounded-[10px] text-brand-text-secondary hover:bg-brand-bg"
-              :disabled="submitting"
-              :aria-label="t('pilgrims.closeDrawer')"
-              @click="emit('close')"
-            >
-              <X class="h-5 w-5" />
-            </button>
-          </header>
+  <AppFormDrawer
+    :open="open"
+    :title="t('seasonOps.enroll.title')"
+    :description="t('seasonOps.enroll.subtitle')"
+    size="sm"
+    :dirty="dirty"
+    :submitting="submitting"
+    :submit-disabled="!seasonWritable || !seasonId"
+    :cancel-label="t('pilgrims.cancel')"
+    :submit-label="t('seasonOps.enroll.submit')"
+    @update:open="onOpenUpdate"
+    @close="emit('close')"
+    @submit="submit"
+  >
+    <p
+      v-if="!seasonWritable"
+      class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900"
+    >
+      {{ t('seasonOps.bar.closedNotice') }}
+    </p>
+    <p
+      v-if="formError"
+      class="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+    >
+      {{ formError }}
+    </p>
 
-          <form class="flex min-h-0 flex-1 flex-col" @submit.prevent="submit">
-            <div class="flex-1 space-y-4 overflow-y-auto px-4 py-5 sm:px-7">
-              <p
-                v-if="!seasonWritable"
-                class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900"
-              >
-                {{ t('seasonOps.bar.closedNotice') }}
-              </p>
-              <p
-                v-if="formError"
-                class="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
-              >
-                {{ formError }}
-              </p>
+    <label class="block space-y-1.5">
+      <span class="text-sm font-semibold">{{ t('seasonOps.enroll.pilgrim') }}</span>
+      <AppRemoteSelect
+        :model-value="form.pilgrim_id"
+        query-key="enroll-pilgrims"
+        :fetcher="fetchPilgrims"
+        :map-option="pilgrimOption"
+        :selected-option="presetPilgrim ? pilgrimOption(presetPilgrim) : null"
+        :disabled="presetPilgrim != null || submitting || !seasonWritable"
+        @update:model-value="form.pilgrim_id = toSelectId($event)"
+      />
+      <span v-if="fieldMessage('pilgrim_id')" class="text-xs text-red-600">{{
+        fieldMessage('pilgrim_id')
+      }}</span>
+    </label>
 
-              <label class="block space-y-1.5">
-                <span class="text-sm font-semibold">{{ t('seasonOps.enroll.pilgrim') }}</span>
-                <AppRemoteSelect
-                  :model-value="form.pilgrim_id"
-                  query-key="enroll-pilgrims"
-                  :fetcher="fetchPilgrims"
-                  :map-option="pilgrimOption"
-                  :selected-option="
-                    presetPilgrim
-                      ? pilgrimOption(presetPilgrim)
-                      : null
-                  "
-                  :disabled="presetPilgrim != null || submitting || !seasonWritable"
-                  @update:model-value="form.pilgrim_id = toSelectId($event)"
-                />
-                <span v-if="fieldMessage('pilgrim_id')" class="text-xs text-red-600">{{
-                  fieldMessage('pilgrim_id')
-                }}</span>
-              </label>
+    <label class="block space-y-1.5">
+      <span class="text-sm font-semibold">{{ t('seasonOps.enroll.program') }}</span>
+      <AppSelect
+        v-model="form.season_program_id"
+        :options="programOptions"
+        :disabled="submitting || !seasonWritable"
+        searchable
+      />
+    </label>
 
-              <label class="block space-y-1.5">
-                <span class="text-sm font-semibold">{{ t('seasonOps.enroll.program') }}</span>
-                <AppSelect
-                  v-model="form.season_program_id"
-                  :options="programOptions"
-                  :disabled="submitting || !seasonWritable"
-                  searchable
-                />
-              </label>
+    <label class="block space-y-1.5">
+      <span class="text-sm font-semibold">{{ t('seasonOps.enroll.group') }}</span>
+      <AppSelect
+        v-model="form.season_pilgrim_group_id"
+        :options="groupOptions"
+        :disabled="submitting || !seasonWritable"
+        searchable
+      />
+    </label>
 
-              <label class="block space-y-1.5">
-                <span class="text-sm font-semibold">{{ t('seasonOps.enroll.group') }}</span>
-                <AppSelect
-                  v-model="form.season_pilgrim_group_id"
-                  :options="groupOptions"
-                  :disabled="submitting || !seasonWritable"
-                  searchable
-                />
-              </label>
-
-              <label class="block space-y-1.5">
-                <span class="text-sm font-semibold">{{ t('seasonOps.enroll.family') }}</span>
-                <AppSelect
-                  v-model="form.season_family_group_id"
-                  :options="familyOptions"
-                  :disabled="submitting || !seasonWritable"
-                  searchable
-                />
-                <span class="text-xs text-brand-text-muted">{{
-                  t('seasonOps.enroll.familyHint')
-                }}</span>
-              </label>
-            </div>
-
-            <footer
-              class="flex shrink-0 items-center justify-end gap-3 border-t border-brand-border px-4 py-4 sm:px-7"
-            >
-              <button
-                type="button"
-                class="inline-flex h-11 items-center rounded-xl border border-brand-border px-4 text-sm font-semibold"
-                :disabled="submitting"
-                @click="emit('close')"
-              >
-                {{ t('pilgrims.cancel') }}
-              </button>
-              <button
-                type="submit"
-                class="inline-flex h-11 items-center gap-2 rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white disabled:opacity-60"
-                :disabled="submitting || !seasonWritable || !seasonId"
-              >
-                <Loader2 v-if="submitting" class="h-4 w-4 animate-spin" />
-                <span>{{ t('seasonOps.enroll.submit') }}</span>
-              </button>
-            </footer>
-          </form>
-        </aside>
-      </div>
-    </Transition>
-  </Teleport>
+    <label class="block space-y-1.5">
+      <span class="text-sm font-semibold">{{ t('seasonOps.enroll.family') }}</span>
+      <AppSelect
+        v-model="form.season_family_group_id"
+        :options="familyOptions"
+        :disabled="submitting || !seasonWritable"
+        searchable
+      />
+      <span class="text-xs text-brand-text-muted">{{ t('seasonOps.enroll.familyHint') }}</span>
+    </label>
+  </AppFormDrawer>
 </template>
-
-<style scoped>
-.enroll-drawer-enter-active,
-.enroll-drawer-leave-active {
-  transition: opacity 0.18s ease;
-}
-.enroll-drawer-enter-active aside,
-.enroll-drawer-leave-active aside {
-  transition: transform 0.22s ease;
-}
-.enroll-drawer-enter-from,
-.enroll-drawer-leave-to {
-  opacity: 0;
-}
-.enroll-drawer-enter-from aside,
-.enroll-drawer-leave-to aside {
-  transform: translateX(100%);
-}
-</style>

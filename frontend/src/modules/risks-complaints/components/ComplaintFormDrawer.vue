@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import AppFormDrawer from '@/shared/components/AppFormDrawer.vue'
+import { useCaptureOnOpen, useFormDirty } from '@/shared/composables/useFormDirty'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 
 import type { ComplaintCategory, ComplaintFormState, OperationalComplaint } from '../types/complaints'
@@ -33,6 +34,9 @@ const categoryOptions = computed<AppSelectOption[]>(() => [
   ...COMPLAINT_CATEGORIES.map((c) => ({ value: c, label: t(`complaints.category.${c}`) })),
 ])
 
+const { dirty, capture, reset: resetDirty } = useFormDirty(() => props.form)
+useCaptureOnOpen(() => props.open, capture, { onClose: () => resetDirty() })
+
 function onOpenUpdate(value: boolean): void {
   if (!value) emit('close')
 }
@@ -44,6 +48,7 @@ function onOpenUpdate(value: boolean): void {
     :title="t(isEdit ? 'complaints.editTitle' : 'complaints.createTitle')"
     :description="t(isEdit ? 'complaints.editSubtitle' : 'complaints.createSubtitle')"
     size="md"
+    :dirty="dirty"
     :submitting="submitting"
     :cancel-label="t('complaints.cancel')"
     :submit-label="t(isEdit ? 'complaints.save' : 'complaints.createCta')"

@@ -1,17 +1,21 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import AppFormDrawer from '@/shared/components/AppFormDrawer.vue'
+import { useCaptureOnOpen, useFormDirty } from '@/shared/composables/useFormDirty'
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     open: boolean
     submitting?: boolean
     disabled?: boolean
+    /** Optional override; when omitted, dirty is derived from `form` when provided. */
     dirty?: boolean
+    form?: unknown
     titleText?: string
   }>(),
-  { submitting: false, disabled: false, dirty: false, titleText: '' },
+  { submitting: false, disabled: false, titleText: '' },
 )
 
 const emit = defineEmits<{
@@ -21,6 +25,13 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+
+const { dirty: formDirty, capture, reset: resetFormDirty } = useFormDirty(() => props.form, {
+  enabled: () => props.form != null,
+})
+useCaptureOnOpen(() => props.open, capture, { onClose: () => resetFormDirty() })
+
+const effectiveDirty = computed(() => props.dirty ?? formDirty.value)
 
 function onOpenUpdate(value: boolean): void {
   emit('update:open', value)
@@ -35,7 +46,7 @@ function onOpenUpdate(value: boolean): void {
     size="md"
     :submitting="submitting"
     :submit-disabled="disabled"
-    :dirty="dirty"
+    :dirty="effectiveDirty"
     :cancel-label="t('accommodation.cancel')"
     data-test="accommodation-form-drawer"
     @update:open="onOpenUpdate"

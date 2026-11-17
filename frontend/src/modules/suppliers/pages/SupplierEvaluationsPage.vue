@@ -29,11 +29,13 @@ import {
   softStatusDotClass,
 } from '@/modules/purchase-requests/validation/purchaseRequestValidation'
 import { ApiError } from '@/shared/api/http'
+import AppFormDrawer from '@/shared/components/AppFormDrawer.vue'
 import AppMobileFilters from '@/shared/components/AppMobileFilters.vue'
 import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
+import { useCaptureOnOpen, useFormDirty } from '@/shared/composables/useFormDirty'
 import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import { useToast } from '@/shared/composables/useToast'
@@ -88,6 +90,9 @@ const form = reactive({
   notes: '',
 })
 const formError = ref('')
+const { dirty: evaluationFormDirty, capture: captureEvaluationForm, reset: resetEvaluationForm } =
+  useFormDirty(form)
+useCaptureOnOpen(createOpen, captureEvaluationForm, { onClose: resetEvaluationForm })
 
 const createMutation = useCreateEvaluationMutation()
 const submitMutation = useSubmitEvaluationMutation()
@@ -445,75 +450,62 @@ function openCreate(): void {
       </p>
     </div>
 
-    <div
-      v-if="createOpen"
-      class="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4"
-      @click.self="createOpen = false"
+    <AppFormDrawer
+      v-model:open="createOpen"
+      :title="t('evaluations.create')"
+      size="md"
+      :dirty="evaluationFormDirty"
+      :submitting="createMutation.isPending.value"
+      :cancel-label="t('common.cancel')"
+      :submit-label="t('evaluations.create')"
+      @submit="createDraft"
     >
-      <div class="w-full max-w-lg space-y-4 rounded-2xl border border-brand-border bg-brand-surface p-5 shadow-xl">
-        <h2 class="text-lg font-bold text-brand-text">{{ t('evaluations.create') }}</h2>
+      <label class="block text-sm">
+        <span class="mb-1 block text-brand-text-secondary">{{ t('evaluations.fields.supplier') }}</span>
+        <AppRemoteSelect
+          :model-value="form.supplier_id"
+          query-key="evaluation-create-suppliers"
+          :fetcher="fetchSuppliers"
+          :map-option="mapSupplierOption"
+          @update:model-value="form.supplier_id = toSelectId($event)"
+        />
+      </label>
 
-        <label class="block text-sm">
-          <span class="mb-1 block text-brand-text-secondary">{{ t('evaluations.fields.supplier') }}</span>
-          <AppRemoteSelect
-            :model-value="form.supplier_id"
-            query-key="evaluation-create-suppliers"
-            :fetcher="fetchSuppliers"
-            :map-option="mapSupplierOption"
-            @update:model-value="form.supplier_id = toSelectId($event)"
-          />
-        </label>
+      <label class="block text-sm">
+        <span class="mb-1 block text-brand-text-secondary">{{ t('evaluations.fields.category') }}</span>
+        <AppRemoteSelect
+          :model-value="form.supplier_category_id"
+          query-key="evaluation-create-categories"
+          :fetcher="fetchCategories"
+          :map-option="(row: SupplierCategory) => namedCodeOption(row)"
+          @update:model-value="form.supplier_category_id = toSelectId($event)"
+        />
+      </label>
 
-        <label class="block text-sm">
-          <span class="mb-1 block text-brand-text-secondary">{{ t('evaluations.fields.category') }}</span>
-          <AppRemoteSelect
-            :model-value="form.supplier_category_id"
-            query-key="evaluation-create-categories"
-            :fetcher="fetchCategories"
-            :map-option="(row: SupplierCategory) => namedCodeOption(row)"
-            @update:model-value="form.supplier_category_id = toSelectId($event)"
-          />
-        </label>
+      <label class="block text-sm">
+        <span class="mb-1 block text-brand-text-secondary">{{ t('evaluations.fields.kind') }}</span>
+        <AppSelect v-model="form.evaluation_kind" :options="kindFormOptions" />
+      </label>
 
-        <label class="block text-sm">
-          <span class="mb-1 block text-brand-text-secondary">{{ t('evaluations.fields.kind') }}</span>
-          <AppSelect v-model="form.evaluation_kind" :options="kindFormOptions" />
-        </label>
+      <label v-if="form.evaluation_kind === 'post_season'" class="block text-sm">
+        <span class="mb-1 block text-brand-text-secondary">{{ t('evaluations.fields.season') }}</span>
+        <AppRemoteSelect
+          :model-value="form.season_id"
+          query-key="evaluation-create-seasons"
+          :fetcher="fetchSeasons"
+          :map-option="mapSeasonOption"
+          clearable
+          @update:model-value="form.season_id = toSelectNullableId($event)"
+        />
+      </label>
 
-        <label v-if="form.evaluation_kind === 'post_season'" class="block text-sm">
-          <span class="mb-1 block text-brand-text-secondary">{{ t('evaluations.fields.season') }}</span>
-          <AppRemoteSelect
-            :model-value="form.season_id"
-            query-key="evaluation-create-seasons"
-            :fetcher="fetchSeasons"
-            :map-option="mapSeasonOption"
-            clearable
-            @update:model-value="form.season_id = toSelectNullableId($event)"
-          />
-        </label>
+      <label class="flex items-center gap-2 text-sm text-brand-text">
+        <input v-model="form.monitoring_recommended" type="checkbox" class="rounded border-brand-border" />
+        {{ t('evaluations.fields.monitoringProposed') }}
+      </label>
 
-        <label class="flex items-center gap-2 text-sm text-brand-text">
-          <input v-model="form.monitoring_recommended" type="checkbox" class="rounded border-brand-border" />
-          {{ t('evaluations.fields.monitoringProposed') }}
-        </label>
-
-        <p v-if="formError" class="text-sm text-red-700">{{ formError }}</p>
-
-        <div class="flex justify-end gap-2">
-          <button type="button" class="rounded-xl px-4 py-2 text-sm" @click="createOpen = false">
-            {{ t('common.cancel') }}
-          </button>
-          <button
-            type="button"
-            class="rounded-xl bg-brand-primary px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
-            :disabled="createMutation.isPending.value"
-            @click="createDraft"
-          >
-            {{ t('evaluations.create') }}
-          </button>
-        </div>
-      </div>
-    </div>
+      <p v-if="formError" class="text-sm text-red-700">{{ formError }}</p>
+    </AppFormDrawer>
 
     <div
       v-if="rejectOpen"

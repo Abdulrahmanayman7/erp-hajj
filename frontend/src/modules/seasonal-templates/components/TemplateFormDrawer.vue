@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import AppFormDrawer from '@/shared/components/AppFormDrawer.vue'
+import { useCaptureOnOpen, useFormDirty } from '@/shared/composables/useFormDirty'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 
 import { APPROVED_ENTITY_KINDS } from '../types/seasonCopy'
@@ -77,6 +78,9 @@ function onCodes(kind: string, value: string): void {
   patch({ codes: { ...props.form.codes, [kind]: value } })
 }
 
+const { dirty, capture, reset: resetDirty } = useFormDirty(() => props.form)
+useCaptureOnOpen(() => props.open, capture, { onClose: () => resetDirty() })
+
 function onOpenUpdate(value: boolean): void {
   if (!value) emit('close')
 }
@@ -88,6 +92,7 @@ function onOpenUpdate(value: boolean): void {
     :title="title"
     :description="t('seasonalTemplates.form.subtitle')"
     size="md"
+    :dirty="dirty"
     :submitting="submitting"
     :cancel-label="t('seasonalTemplates.common.cancel')"
     :submit-label="primaryLabel"

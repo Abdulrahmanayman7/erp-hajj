@@ -12,11 +12,13 @@ import type { SeasonPilgrim } from '@/modules/season-pilgrims/types/seasonPilgri
 import { listEmployees } from '@/modules/employees/api/employeesApi'
 import type { Employee } from '@/modules/employees/types/employees'
 import { ApiError } from '@/shared/api/http'
+import AppFormDrawer from '@/shared/components/AppFormDrawer.vue'
 import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
 import { useConfirm } from '@/shared/composables/useConfirm'
+import { useCaptureOnOpen, useFormDirty } from '@/shared/composables/useFormDirty'
 import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
 import { useToast } from '@/shared/composables/useToast'
 import { employeeSelectOption } from '@/shared/lookups/selectOptions'
@@ -114,6 +116,31 @@ const pilgrimSearch = ref('')
 const selectedPilgrimIds = ref<number[]>([])
 const assignError = ref('')
 const panelError = ref('')
+
+const vehicleFormSnapshot = computed(() => ({
+  vehicleId: vehicleId.value,
+  vehicleReason: vehicleReason.value,
+}))
+const { dirty: vehicleFormDirty, capture: captureVehicleFormDirty, reset: resetVehicleFormDirty } =
+  useFormDirty(vehicleFormSnapshot)
+useCaptureOnOpen(vehicleDrawer, captureVehicleFormDirty, { onClose: () => resetVehicleFormDirty() })
+
+const driverFormSnapshot = computed(() => ({
+  driverKind: driverKind.value,
+  driverEmployeeId: driverEmployeeId.value,
+  driverExternalId: driverExternalId.value,
+  driverReason: driverReason.value,
+}))
+const { dirty: driverFormDirty, capture: captureDriverFormDirty, reset: resetDriverFormDirty } =
+  useFormDirty(driverFormSnapshot)
+useCaptureOnOpen(driverDrawer, captureDriverFormDirty, { onClose: () => resetDriverFormDirty() })
+
+const assignFormSnapshot = computed(() => ({
+  selectedPilgrimIds: [...selectedPilgrimIds.value],
+}))
+const { dirty: assignFormDirty, capture: captureAssignFormDirty, reset: resetAssignFormDirty } =
+  useFormDirty(assignFormSnapshot)
+useCaptureOnOpen(assignDrawer, captureAssignFormDirty, { onClose: () => resetAssignFormDirty() })
 
 watch(driverKind, () => {
   driverEmployeeId.value = ''
@@ -524,129 +551,119 @@ async function onRecordBreakdown(): Promise<void> {
       </div>
     </template>
 
-    <!-- Vehicle drawer -->
-    <Teleport to="body">
-      <div v-if="vehicleDrawer" class="fixed inset-0 z-50 print:hidden">
-        <div class="absolute inset-0 bg-[rgba(15,23,20,0.32)]" @click="vehicleDrawer = false" />
-        <aside class="absolute inset-y-0 start-0 flex h-dvh w-full max-w-[440px] flex-col bg-brand-surface" role="dialog">
-          <header class="border-b border-brand-border px-5 py-4">
-            <h3 class="text-lg font-bold">{{ t('transportation.runs.assignVehicle') }}</h3>
-          </header>
-          <div class="flex-1 space-y-4 overflow-y-auto px-5 py-4">
-            <p v-if="panelError" class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{{ panelError }}</p>
-            <AppRemoteSelect
-              v-model="vehicleId"
-              :query-key="['run-assign-fleet', selectedSeasonId]"
-              :fetcher="fetchFleet"
-              :map-option="mapFleet"
-              searchable
-            />
-            <div v-if="run && run.status !== 'planned'">
-              <label class="mb-1 block text-sm font-medium">{{ t('transportation.runs.fields.reason') }}</label>
-              <textarea v-model="vehicleReason" rows="3" class="w-full rounded-xl border border-brand-border px-3 py-2 text-sm" />
-            </div>
-          </div>
-          <footer class="flex gap-2 border-t border-brand-border px-5 py-4">
-            <button type="button" class="h-11 flex-1 rounded-xl border border-brand-border text-sm font-semibold" @click="vehicleDrawer = false">
-              {{ t('transportation.movements.cancel') }}
-            </button>
-            <button type="button" class="h-11 flex-1 rounded-xl bg-brand-primary-dark text-sm font-semibold text-white" @click="submitVehicle">
-              {{ t('transportation.movements.save') }}
-            </button>
-          </footer>
-        </aside>
-      </div>
-    </Teleport>
+    <div class="print:hidden">
+      <AppFormDrawer
+        v-model:open="vehicleDrawer"
+        :title="t('transportation.runs.assignVehicle')"
+        size="sm"
+        :dirty="vehicleFormDirty"
+        :submitting="assignVehicleMutation.isPending.value"
+        :cancel-label="t('transportation.movements.cancel')"
+        :submit-label="t('transportation.movements.save')"
+        @submit="submitVehicle"
+      >
+        <p v-if="panelError" class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+          {{ panelError }}
+        </p>
+        <AppRemoteSelect
+          v-model="vehicleId"
+          :query-key="['run-assign-fleet', selectedSeasonId]"
+          :fetcher="fetchFleet"
+          :map-option="mapFleet"
+          searchable
+        />
+        <div v-if="run && run.status !== 'planned'">
+          <label class="mb-1 block text-sm font-medium">{{ t('transportation.runs.fields.reason') }}</label>
+          <textarea
+            v-model="vehicleReason"
+            rows="3"
+            class="w-full rounded-xl border border-brand-border px-3 py-2 text-sm"
+          />
+        </div>
+      </AppFormDrawer>
 
-    <!-- Driver drawer -->
-    <Teleport to="body">
-      <div v-if="driverDrawer" class="fixed inset-0 z-50 print:hidden">
-        <div class="absolute inset-0 bg-[rgba(15,23,20,0.32)]" @click="driverDrawer = false" />
-        <aside class="absolute inset-y-0 start-0 flex h-dvh w-full max-w-[440px] flex-col bg-brand-surface" role="dialog">
-          <header class="border-b border-brand-border px-5 py-4">
-            <h3 class="text-lg font-bold">{{ t('transportation.runs.assignDriver') }}</h3>
-          </header>
-          <div class="flex-1 space-y-4 overflow-y-auto px-5 py-4">
-            <p v-if="panelError" class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{{ panelError }}</p>
-            <AppSelect v-model="driverKind" :options="driverKindOptions" />
-            <AppRemoteSelect
-              v-if="driverKind === 'employee'"
-              v-model="driverEmployeeId"
-              :query-key="['run-assign-employees']"
-              :fetcher="fetchEmployees"
-              :map-option="mapEmployee"
-              searchable
-            />
-            <AppRemoteSelect
-              v-else
-              v-model="driverExternalId"
-              :query-key="['run-assign-external-drivers']"
-              :fetcher="fetchDrivers"
-              :map-option="mapDriver"
-              searchable
-            />
-            <div v-if="run && run.status !== 'planned'">
-              <label class="mb-1 block text-sm font-medium">{{ t('transportation.runs.fields.reason') }}</label>
-              <textarea v-model="driverReason" rows="3" class="w-full rounded-xl border border-brand-border px-3 py-2 text-sm" />
-            </div>
-          </div>
-          <footer class="flex gap-2 border-t border-brand-border px-5 py-4">
-            <button type="button" class="h-11 flex-1 rounded-xl border border-brand-border text-sm font-semibold" @click="driverDrawer = false">
-              {{ t('transportation.movements.cancel') }}
-            </button>
-            <button type="button" class="h-11 flex-1 rounded-xl bg-brand-primary-dark text-sm font-semibold text-white" @click="submitDriver">
-              {{ t('transportation.movements.save') }}
-            </button>
-          </footer>
-        </aside>
-      </div>
-    </Teleport>
+      <AppFormDrawer
+        v-model:open="driverDrawer"
+        :title="t('transportation.runs.assignDriver')"
+        size="sm"
+        :dirty="driverFormDirty"
+        :submitting="assignDriverMutation.isPending.value"
+        :cancel-label="t('transportation.movements.cancel')"
+        :submit-label="t('transportation.movements.save')"
+        @submit="submitDriver"
+      >
+        <p v-if="panelError" class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+          {{ panelError }}
+        </p>
+        <AppSelect v-model="driverKind" :options="driverKindOptions" />
+        <AppRemoteSelect
+          v-if="driverKind === 'employee'"
+          v-model="driverEmployeeId"
+          :query-key="['run-assign-employees']"
+          :fetcher="fetchEmployees"
+          :map-option="mapEmployee"
+          searchable
+        />
+        <AppRemoteSelect
+          v-else
+          v-model="driverExternalId"
+          :query-key="['run-assign-external-drivers']"
+          :fetcher="fetchDrivers"
+          :map-option="mapDriver"
+          searchable
+        />
+        <div v-if="run && run.status !== 'planned'">
+          <label class="mb-1 block text-sm font-medium">{{ t('transportation.runs.fields.reason') }}</label>
+          <textarea
+            v-model="driverReason"
+            rows="3"
+            class="w-full rounded-xl border border-brand-border px-3 py-2 text-sm"
+          />
+        </div>
+      </AppFormDrawer>
 
-    <!-- Passengers drawer -->
-    <Teleport to="body">
-      <div v-if="assignDrawer" class="fixed inset-0 z-50 print:hidden">
-        <div class="absolute inset-0 bg-[rgba(15,23,20,0.32)]" @click="assignDrawer = false" />
-        <aside class="absolute inset-y-0 start-0 flex h-dvh w-full max-w-[440px] flex-col bg-brand-surface" role="dialog">
-          <header class="border-b border-brand-border px-5 py-4">
-            <h3 class="text-lg font-bold">{{ t('transportation.runs.assignPassengers') }}</h3>
-          </header>
-          <div class="flex-1 space-y-4 overflow-y-auto px-5 py-4">
-            <p v-if="assignError" class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{{ assignError }}</p>
-            <p class="text-xs text-brand-text-muted">
-              {{ t('transportation.runs.availableSeats', { count: seats ?? '—' }) }}
-            </p>
-            <AppRemoteSelect
-              v-model="pilgrimPick"
-              :query-key="['run-assign-pilgrims', selectedSeasonId, pilgrimSearch]"
-              :fetcher="fetchPilgrims"
-              :map-option="mapPilgrim"
-              searchable
-            />
-            <ul v-if="selectedPilgrimIds.length" class="space-y-1 text-sm">
-              <li v-for="id in selectedPilgrimIds" :key="id" class="flex justify-between rounded-lg bg-brand-bg px-3 py-2">
-                <span dir="ltr">#{{ id }}</span>
-                <button type="button" class="text-xs text-red-700" @click="selectedPilgrimIds = selectedPilgrimIds.filter((x) => x !== id)">
-                  {{ t('transportation.runs.removeSelection') }}
-                </button>
-              </li>
-            </ul>
-            <button type="button" class="hidden" @click="searchPilgrims" />
-          </div>
-          <footer class="flex gap-2 border-t border-brand-border px-5 py-4">
-            <button type="button" class="h-11 flex-1 rounded-xl border border-brand-border text-sm font-semibold" @click="assignDrawer = false">
-              {{ t('transportation.movements.cancel') }}
-            </button>
+      <AppFormDrawer
+        v-model:open="assignDrawer"
+        :title="t('transportation.runs.assignPassengers')"
+        size="sm"
+        :dirty="assignFormDirty"
+        :submitting="addPassengersMutation.isPending.value"
+        :submit-disabled="!selectedPilgrimIds.length"
+        :cancel-label="t('transportation.movements.cancel')"
+        :submit-label="t('transportation.movements.save')"
+        @submit="submitPassengers"
+      >
+        <p v-if="assignError" class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+          {{ assignError }}
+        </p>
+        <p class="text-xs text-brand-text-muted">
+          {{ t('transportation.runs.availableSeats', { count: seats ?? '—' }) }}
+        </p>
+        <AppRemoteSelect
+          v-model="pilgrimPick"
+          :query-key="['run-assign-pilgrims', selectedSeasonId, pilgrimSearch]"
+          :fetcher="fetchPilgrims"
+          :map-option="mapPilgrim"
+          searchable
+        />
+        <ul v-if="selectedPilgrimIds.length" class="space-y-1 text-sm">
+          <li
+            v-for="id in selectedPilgrimIds"
+            :key="id"
+            class="flex justify-between rounded-lg bg-brand-bg px-3 py-2"
+          >
+            <span dir="ltr">#{{ id }}</span>
             <button
               type="button"
-              class="h-11 flex-1 rounded-xl bg-brand-primary-dark text-sm font-semibold text-white disabled:opacity-50"
-              :disabled="!selectedPilgrimIds.length || addPassengersMutation.isPending.value"
-              @click="submitPassengers"
+              class="text-xs text-red-700"
+              @click="selectedPilgrimIds = selectedPilgrimIds.filter((x) => x !== id)"
             >
-              {{ t('transportation.movements.save') }}
+              {{ t('transportation.runs.removeSelection') }}
             </button>
-          </footer>
-        </aside>
-      </div>
-    </Teleport>
+          </li>
+        </ul>
+        <button type="button" class="hidden" @click="searchPilgrims" />
+      </AppFormDrawer>
+    </div>
   </div>
 </template>

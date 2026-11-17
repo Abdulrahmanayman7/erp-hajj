@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import AppFormDrawer from '@/shared/components/AppFormDrawer.vue'
+import { useCaptureOnOpen, useFormDirty } from '@/shared/composables/useFormDirty'
 import type { RoleSummary } from '@/modules/roles/types/roles'
 import type { AvatarGroup, TenantUser } from '../types/users'
 
@@ -59,6 +60,9 @@ function isRoleSelected(role: RoleSummary): boolean {
   return props.form.role_ids.includes(role.id)
 }
 
+const { dirty, capture, reset: resetDirty } = useFormDirty(() => props.form)
+useCaptureOnOpen(() => props.open, capture, { onClose: () => resetDirty() })
+
 function onOpenUpdate(value: boolean): void {
   if (!value) emit('close')
 }
@@ -70,6 +74,7 @@ function onOpenUpdate(value: boolean): void {
     :title="title"
     :description="subtitle"
     size="md"
+    :dirty="dirty"
     :submitting="submitting"
     :cancel-label="t('users.cancel')"
     :submit-label="submitting ? t('users.saving') : primaryLabel"

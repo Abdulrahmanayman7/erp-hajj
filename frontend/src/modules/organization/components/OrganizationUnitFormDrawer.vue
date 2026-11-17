@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 
 import { listUsers } from '@/modules/users/api/usersApi'
 import AppFormDrawer from '@/shared/components/AppFormDrawer.vue'
+import { useCaptureOnOpen, useFormDirty } from '@/shared/composables/useFormDirty'
 import AppNumberInput from '@/shared/components/AppNumberInput.vue'
 import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
@@ -64,6 +65,9 @@ function patch(partial: Partial<OrganizationUnitFormState>): void {
   emit('update:form', { ...props.form, ...partial })
 }
 
+const { dirty, capture, reset: resetDirty } = useFormDirty(() => props.form)
+useCaptureOnOpen(() => props.open, capture, { onClose: () => resetDirty() })
+
 function onOpenUpdate(value: boolean): void {
   if (!value) emit('close')
 }
@@ -75,6 +79,7 @@ function onOpenUpdate(value: boolean): void {
     :title="title"
     :description="subtitle"
     size="md"
+    :dirty="dirty"
     :submitting="submitting"
     :cancel-label="t('organization.cancel')"
     :submit-label="primaryLabel"

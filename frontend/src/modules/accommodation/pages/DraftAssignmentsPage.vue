@@ -20,11 +20,13 @@ import {
   XCircle,
 } from 'lucide-vue-next'
 
+import AppFormDrawer from '@/shared/components/AppFormDrawer.vue'
 import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
 import { useConfirm } from '@/shared/composables/useConfirm'
+import { useCaptureOnOpen, useFormDirty } from '@/shared/composables/useFormDirty'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import { useToast } from '@/shared/composables/useToast'
 import { toSelectId } from '@/shared/lookups/selectOptions'
@@ -166,11 +168,27 @@ const familyPanelOpen = ref(false)
 const familyGroupId = ref<number | ''>('')
 const selectedFamilyAssignmentIds = ref<number[]>([])
 const familyError = ref('')
+const { dirty: familyPanelDirty, capture: captureFamilyPanel, reset: resetFamilyPanel } = useFormDirty(
+  () => ({
+    familyGroupId: familyGroupId.value,
+    selectedFamilyAssignmentIds: [...selectedFamilyAssignmentIds.value],
+  }),
+)
+useCaptureOnOpen(familyPanelOpen, captureFamilyPanel, { onClose: resetFamilyPanel })
 
 const checkoutOpen = ref(false)
 const checkoutRow = ref<AccommodationAssignment | null>(null)
 const checkoutOccurredAt = ref('')
 const checkoutError = ref('')
+const checkoutDrawerOpen = computed({
+  get: () => checkoutOpen.value && checkoutRow.value != null,
+  set: (value: boolean) => {
+    if (!value) closeCheckout()
+  },
+})
+const { dirty: checkoutFormDirty, capture: captureCheckoutForm, reset: resetCheckoutForm } =
+  useFormDirty(() => checkoutOccurredAt.value)
+useCaptureOnOpen(checkoutOpen, captureCheckoutForm, { onClose: resetCheckoutForm })
 
 const relocateOpen = ref(false)
 const relocateRow = ref<AccommodationAssignment | null>(null)
@@ -179,6 +197,20 @@ const relocateDestPositionId = ref<number | ''>('')
 const relocateOccurredAt = ref('')
 const relocateCheckInAfter = ref(false)
 const relocateError = ref('')
+const relocateDrawerOpen = computed({
+  get: () => relocateOpen.value && relocateRow.value != null,
+  set: (value: boolean) => {
+    if (!value) closeRelocate()
+  },
+})
+const { dirty: relocateFormDirty, capture: captureRelocateForm, reset: resetRelocateForm } =
+  useFormDirty(() => ({
+    destination_unit_id: relocateDestUnitId.value,
+    destination_position_id: relocateDestPositionId.value,
+    occurred_at: relocateOccurredAt.value,
+    check_in_after: relocateCheckInAfter.value,
+  }))
+useCaptureOnOpen(relocateOpen, captureRelocateForm, { onClose: resetRelocateForm })
 const lastRelocatePair = ref<{ sourceId: number; destinationId: number } | null>(null)
 
 const createMutation = useCreateAssignmentMutation()
@@ -838,7 +870,7 @@ useAccommodationDialog(() => drawerOpen.value || familyPanelOpen.value || checko
       </div>
     </div>
 
-    <AccommodationFormDrawer :open="Boolean(drawerOpen)" :submitting="createMutation.isPending.value || updateMutation.isPending.value" :disabled="!canWrite" @close="closeDrawer" @submit="submit">
+    <AccommodationFormDrawer :open="Boolean(drawerOpen)" :form="form" :submitting="createMutation.isPending.value || updateMutation.isPending.value" :disabled="!canWrite" @close="closeDrawer" @submit="submit">
       <template #title>{{ editingId ? t('accommodation.drafts.editTitle') : t('accommodation.drafts.createTitle') }}</template>
 
       <p v-if="editingId" class="rounded-xl bg-brand-bg p-3 text-sm font-semibold">{{ pilgrimName(Number(form.season_pilgrim_id)) }}</p>
@@ -897,203 +929,151 @@ useAccommodationDialog(() => drawerOpen.value || familyPanelOpen.value || checko
       <template #submit-label>{{ t('accommodation.experience.saveDraft') }}</template>
     </AccommodationFormDrawer>
 
-    <Teleport to="body">
-      <div v-if="familyPanelOpen" class="fixed inset-0 z-50" role="dialog" aria-modal="true" :aria-label="t('accommodation.confirm.familyTitle')">
-        <div class="absolute inset-0 bg-black/30" @click="closeFamilyPanel" />
-        <aside role="dialog" aria-modal="true" :aria-label="t('accommodation.experience.eyebrow')" class="accommodation-drawer app-drawer-panel absolute inset-y-0 start-0 flex w-full max-w-[520px] flex-col bg-brand-surface shadow-xl">
-          <header class="border-b px-5 py-4">
-            <h3 class="text-lg font-bold">{{ t('accommodation.confirm.familyTitle') }}</h3>
-            <p class="mt-1 text-sm text-brand-text-secondary">{{ t('accommodation.confirm.familyHint') }}</p>
-          </header>
-          <div class="flex flex-1 flex-col">
-            <div class="flex-1 space-y-4 overflow-y-auto px-5 py-5">
-              <label v-if="canPickFamily" class="block text-sm">
-                <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.familyGroup') }}</span>
-                <AppRemoteSelect
-                  :model-value="familyGroupId === '' ? null : familyGroupId"
-                  :query-key="['accommodation-season-family-groups', seasonStore.selectedSeasonId]"
-                  :fetcher="listSeasonFamilyGroupsLookup"
-                  :map-option="familySelectOption"
-                  @update:model-value="familyGroupId = toSelectId($event)"
-                />
-              </label>
-              <label v-else class="block text-sm">
-                <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.familyGroupId') }}</span>
-                <input v-model.number="familyGroupId" type="number" min="1" class="w-full rounded-lg border px-3 py-2">
-              </label>
+    <AppFormDrawer
+      v-model:open="familyPanelOpen"
+      :title="t('accommodation.confirm.familyTitle')"
+      :description="t('accommodation.confirm.familyHint')"
+      size="lg"
+      :dirty="familyPanelDirty"
+      :submitting="actionBusy"
+      :cancel-label="t('accommodation.cancel')"
+      :submit-label="t('accommodation.confirm.submitFamily')"
+      :submit-disabled="!canConfirm || actionBusy || selectedFamilyAssignmentIds.length === 0 || familyGroupId === ''"
+      @close="closeFamilyPanel"
+      @submit="submitFamilyConfirm"
+    >
+      <label v-if="canPickFamily" class="block text-sm">
+        <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.familyGroup') }}</span>
+        <AppRemoteSelect
+          :model-value="familyGroupId === '' ? null : familyGroupId"
+          :query-key="['accommodation-season-family-groups', seasonStore.selectedSeasonId]"
+          :fetcher="listSeasonFamilyGroupsLookup"
+          :map-option="familySelectOption"
+          @update:model-value="familyGroupId = toSelectId($event)"
+        />
+      </label>
+      <label v-else class="block text-sm">
+        <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.familyGroupId') }}</span>
+        <input v-model.number="familyGroupId" type="number" min="1" class="w-full rounded-lg border px-3 py-2">
+      </label>
 
-              <div>
-                <p class="mb-2 text-sm font-medium text-brand-text-secondary">{{ t('accommodation.confirm.selectDrafts') }}</p>
-                <div v-if="draftAssignments.length === 0" class="rounded-lg border border-dashed px-3 py-6 text-center text-sm">
-                  {{ t('accommodation.confirm.noDrafts') }}
-                </div>
-                <ul v-else class="space-y-2">
-                  <li
-                    v-for="row in draftAssignments"
-                    :key="row.id"
-                    class="flex items-start gap-3 rounded-lg border border-brand-border px-3 py-2"
-                  >
-                    <input
-                      :id="`family-asg-${row.id}`"
-                      type="checkbox"
-                      class="mt-1"
-                      :checked="selectedFamilyAssignmentIds.includes(row.id)"
-                      :disabled="actionBusy"
-                      @change="toggleFamilyAssignment(row.id, ($event.target as HTMLInputElement).checked)"
-                    >
-                    <label :for="`family-asg-${row.id}`" class="flex-1 text-sm">
-                      <span class="font-medium">#{{ row.id }}</span>
-                      <span class="ms-2 text-brand-text-secondary">
-                        {{ pilgrimName(row.season_pilgrim_id) }}
-                      </span>
-                      <div class="text-xs text-brand-text-muted">{{ formatInterval(row) }}</div>
-                    </label>
-                  </li>
-                </ul>
-              </div>
-
-              <div v-if="selectedFamilyAssignments.length" class="rounded-lg bg-slate-50 px-3 py-3 text-sm ring-1 ring-slate-200/80">
-                <p class="font-semibold">{{ t('accommodation.confirm.selectedSummary', { count: selectedFamilyAssignments.length }) }}</p>
-                <p class="mt-1 text-brand-text-secondary">{{ t('accommodation.confirm.allOrNothing') }}</p>
-              </div>
-              <p v-if="familyError" class="text-sm text-red-700">{{ familyError }}</p>
-            </div>
-            <footer class="flex justify-end gap-2 border-t px-5 py-4">
-              <button type="button" class="rounded-lg px-3 py-2 text-sm" :disabled="actionBusy" @click="closeFamilyPanel">
-                {{ t('accommodation.cancel') }}
-              </button>
-              <button
-                type="button"
-                class="rounded-lg bg-emerald-700 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
-                :disabled="!canConfirm || actionBusy || selectedFamilyAssignmentIds.length === 0 || familyGroupId === ''"
-                @click="submitFamilyConfirm"
-              >
-                {{ t('accommodation.confirm.submitFamily') }}
-              </button>
-            </footer>
-          </div>
-        </aside>
+      <div>
+        <p class="mb-2 text-sm font-medium text-brand-text-secondary">{{ t('accommodation.confirm.selectDrafts') }}</p>
+        <div v-if="draftAssignments.length === 0" class="rounded-lg border border-dashed px-3 py-6 text-center text-sm">
+          {{ t('accommodation.confirm.noDrafts') }}
+        </div>
+        <ul v-else class="space-y-2">
+          <li
+            v-for="row in draftAssignments"
+            :key="row.id"
+            class="flex items-start gap-3 rounded-lg border border-brand-border px-3 py-2"
+          >
+            <input
+              :id="`family-asg-${row.id}`"
+              type="checkbox"
+              class="mt-1"
+              :checked="selectedFamilyAssignmentIds.includes(row.id)"
+              :disabled="actionBusy"
+              @change="toggleFamilyAssignment(row.id, ($event.target as HTMLInputElement).checked)"
+            >
+            <label :for="`family-asg-${row.id}`" class="flex-1 text-sm">
+              <span class="font-medium">#{{ row.id }}</span>
+              <span class="ms-2 text-brand-text-secondary">
+                {{ pilgrimName(row.season_pilgrim_id) }}
+              </span>
+              <div class="text-xs text-brand-text-muted">{{ formatInterval(row) }}</div>
+            </label>
+          </li>
+        </ul>
       </div>
-    </Teleport>
 
-    <Teleport to="body">
-      <div
-        v-if="checkoutOpen && checkoutRow"
-        class="fixed inset-0 z-50"
-        role="dialog"
-        aria-modal="true"
-        :aria-label="t('accommodation.ops.checkOutTitle')"
-      >
-        <div class="absolute inset-0 bg-black/30" @click="closeCheckout" />
-        <aside role="dialog" aria-modal="true" :aria-label="t('accommodation.experience.eyebrow')" class="accommodation-drawer app-drawer-panel absolute inset-y-0 start-0 flex w-full max-w-[480px] flex-col bg-brand-surface shadow-xl">
-          <header class="border-b px-5 py-4">
-            <h3 class="text-lg font-bold">{{ t('accommodation.ops.checkOutTitle') }}</h3>
-            <p class="mt-1 text-sm text-brand-text-secondary">{{ t('accommodation.ops.checkOutHint') }}</p>
-          </header>
-          <div class="flex flex-1 flex-col">
-            <div class="flex-1 space-y-4 overflow-y-auto px-5 py-5">
-              <p class="text-sm">
-                {{
-                  t('accommodation.ops.checkOutBody', {
-                    original: formatInterval(checkoutRow),
-                  })
-                }}
-              </p>
-              <div class="rounded-lg bg-slate-50 px-3 py-3 text-xs text-slate-800 ring-1 ring-slate-200/80">
-                <div>{{ t('accommodation.fields.effectiveEndsAt') }}: {{ checkoutRow.effective_ends_at }}</div>
-                <div class="mt-1">{{ t('accommodation.fields.actualDepartedAt') }} ≠ {{ t('accommodation.fields.endsAt') }}</div>
-              </div>
-              <label class="block text-sm">
-                <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.occurredAt') }}</span>
-                <input v-model="checkoutOccurredAt" type="datetime-local" class="w-full rounded-lg border px-3 py-2" :disabled="actionBusy">
-              </label>
-              <p v-if="checkoutError" class="text-sm text-red-700">{{ checkoutError }}</p>
-            </div>
-            <footer class="flex justify-end gap-2 border-t px-5 py-4">
-              <button type="button" class="rounded-lg px-3 py-2 text-sm" :disabled="actionBusy" @click="closeCheckout">
-                {{ t('accommodation.cancel') }}
-              </button>
-              <button
-                type="button"
-                class="rounded-lg bg-slate-700 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
-                :disabled="actionBusy || !canOps"
-                @click="submitCheckout"
-              >
-                {{ t('accommodation.ops.submitCheckOut') }}
-              </button>
-            </footer>
-          </div>
-        </aside>
+      <div v-if="selectedFamilyAssignments.length" class="rounded-lg bg-slate-50 px-3 py-3 text-sm ring-1 ring-slate-200/80">
+        <p class="font-semibold">{{ t('accommodation.confirm.selectedSummary', { count: selectedFamilyAssignments.length }) }}</p>
+        <p class="mt-1 text-brand-text-secondary">{{ t('accommodation.confirm.allOrNothing') }}</p>
       </div>
-    </Teleport>
+      <p v-if="familyError" class="text-sm text-red-700">{{ familyError }}</p>
+    </AppFormDrawer>
 
-    <Teleport to="body">
-      <div
-        v-if="relocateOpen && relocateRow"
-        class="fixed inset-0 z-50"
-        role="dialog"
-        aria-modal="true"
-        :aria-label="t('accommodation.ops.relocateTitle')"
-      >
-        <div class="absolute inset-0 bg-black/30" @click="closeRelocate" />
-        <aside role="dialog" aria-modal="true" :aria-label="t('accommodation.experience.eyebrow')" class="accommodation-drawer app-drawer-panel absolute inset-y-0 start-0 flex w-full max-w-[520px] flex-col bg-brand-surface shadow-xl">
-          <header class="border-b px-5 py-4">
-            <h3 class="text-lg font-bold">{{ t('accommodation.ops.relocateTitle') }}</h3>
-            <p class="mt-1 text-sm text-brand-text-secondary">{{ t('accommodation.ops.relocateHint') }}</p>
-          </header>
-          <div class="flex flex-1 flex-col">
-            <div class="flex-1 space-y-4 overflow-y-auto px-5 py-5">
-              <div class="rounded-lg bg-slate-50 px-3 py-3 text-sm ring-1 ring-slate-200/80">
-                <p class="font-semibold">#{{ relocateRow.id }}</p>
-                <p class="text-xs text-brand-text-secondary">{{ formatInterval(relocateRow) }}</p>
-                <p class="mt-1 text-xs text-amber-900">{{ t('accommodation.ops.noAvailabilityGuarantee') }}</p>
-              </div>
-              <label class="block text-sm">
-                <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.destinationSeasonUnit') }}</span>
-                <AppSelect
-                  searchable
-                  :model-value="relocateDestUnitId === '' ? '' : relocateDestUnitId"
-                  :options="seasonUnitOptions"
-                  :disabled="actionBusy"
-                  @update:model-value="relocateDestUnitId = toSelectId($event)"
-                />
-              </label>
-              <label v-if="relocateUnit?.allocation_mode === 'position'" class="block text-sm">
-                <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.destinationSeasonPosition') }}</span>
-                <AppSelect
-                  searchable
-                  :model-value="relocateDestPositionId === '' ? '' : relocateDestPositionId"
-                  :options="relocatePositionOptions"
-                  :disabled="actionBusy"
-                  @update:model-value="relocateDestPositionId = toSelectId($event)"
-                />
-              </label>
-              <label class="block text-sm">
-                <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.occurredAt') }}</span>
-                <input v-model="relocateOccurredAt" type="datetime-local" class="w-full rounded-lg border px-3 py-2" :disabled="actionBusy">
-              </label>
-              <label v-if="can('accommodation.check_in')" class="flex items-center gap-2 text-sm">
-                <input v-model="relocateCheckInAfter" type="checkbox" :disabled="actionBusy">
-                <span>{{ t('accommodation.fields.checkInAfter') }}</span>
-              </label>
-              <p v-if="relocateError" class="text-sm text-red-700">{{ relocateError }}</p>
-            </div>
-            <footer class="flex justify-end gap-2 border-t px-5 py-4">
-              <button type="button" class="rounded-lg px-3 py-2 text-sm" :disabled="actionBusy" @click="closeRelocate">
-                {{ t('accommodation.cancel') }}
-              </button>
-              <button
-                type="button"
-                class="rounded-lg bg-brand-primary px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
-                :disabled="actionBusy || !canOps || relocateDestUnitId === ''"
-                @click="submitRelocate"
-              >
-                {{ t('accommodation.ops.submitRelocate') }}
-              </button>
-            </footer>
-          </div>
-        </aside>
-      </div>
-    </Teleport>
+    <AppFormDrawer
+      v-model:open="checkoutDrawerOpen"
+      :title="t('accommodation.ops.checkOutTitle')"
+      :description="t('accommodation.ops.checkOutHint')"
+      size="md"
+      :dirty="checkoutFormDirty"
+      :submitting="actionBusy"
+      :cancel-label="t('accommodation.cancel')"
+      :submit-label="t('accommodation.ops.submitCheckOut')"
+      :submit-disabled="actionBusy || !canOps"
+      @submit="submitCheckout"
+    >
+      <template v-if="checkoutRow">
+        <p class="text-sm">
+          {{
+            t('accommodation.ops.checkOutBody', {
+              original: formatInterval(checkoutRow),
+            })
+          }}
+        </p>
+        <div class="rounded-lg bg-slate-50 px-3 py-3 text-xs text-slate-800 ring-1 ring-slate-200/80">
+          <div>{{ t('accommodation.fields.effectiveEndsAt') }}: {{ checkoutRow.effective_ends_at }}</div>
+          <div class="mt-1">{{ t('accommodation.fields.actualDepartedAt') }} ≠ {{ t('accommodation.fields.endsAt') }}</div>
+        </div>
+        <label class="block text-sm">
+          <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.occurredAt') }}</span>
+          <input v-model="checkoutOccurredAt" type="datetime-local" class="w-full rounded-lg border px-3 py-2" :disabled="actionBusy">
+        </label>
+        <p v-if="checkoutError" class="text-sm text-red-700">{{ checkoutError }}</p>
+      </template>
+    </AppFormDrawer>
+
+    <AppFormDrawer
+      v-model:open="relocateDrawerOpen"
+      :title="t('accommodation.ops.relocateTitle')"
+      :description="t('accommodation.ops.relocateHint')"
+      size="lg"
+      :dirty="relocateFormDirty"
+      :submitting="actionBusy"
+      :cancel-label="t('accommodation.cancel')"
+      :submit-label="t('accommodation.ops.submitRelocate')"
+      :submit-disabled="actionBusy || !canOps || relocateDestUnitId === ''"
+      @submit="submitRelocate"
+    >
+      <template v-if="relocateRow">
+        <div class="rounded-lg bg-slate-50 px-3 py-3 text-sm ring-1 ring-slate-200/80">
+          <p class="font-semibold">#{{ relocateRow.id }}</p>
+          <p class="text-xs text-brand-text-secondary">{{ formatInterval(relocateRow) }}</p>
+          <p class="mt-1 text-xs text-amber-900">{{ t('accommodation.ops.noAvailabilityGuarantee') }}</p>
+        </div>
+        <label class="block text-sm">
+          <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.destinationSeasonUnit') }}</span>
+          <AppSelect
+            searchable
+            :model-value="relocateDestUnitId === '' ? '' : relocateDestUnitId"
+            :options="seasonUnitOptions"
+            :disabled="actionBusy"
+            @update:model-value="relocateDestUnitId = toSelectId($event)"
+          />
+        </label>
+        <label v-if="relocateUnit?.allocation_mode === 'position'" class="block text-sm">
+          <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.destinationSeasonPosition') }}</span>
+          <AppSelect
+            searchable
+            :model-value="relocateDestPositionId === '' ? '' : relocateDestPositionId"
+            :options="relocatePositionOptions"
+            :disabled="actionBusy"
+            @update:model-value="relocateDestPositionId = toSelectId($event)"
+          />
+        </label>
+        <label class="block text-sm">
+          <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.occurredAt') }}</span>
+          <input v-model="relocateOccurredAt" type="datetime-local" class="w-full rounded-lg border px-3 py-2" :disabled="actionBusy">
+        </label>
+        <label v-if="can('accommodation.check_in')" class="flex items-center gap-2 text-sm">
+          <input v-model="relocateCheckInAfter" type="checkbox" :disabled="actionBusy">
+          <span>{{ t('accommodation.fields.checkInAfter') }}</span>
+        </label>
+        <p v-if="relocateError" class="text-sm text-red-700">{{ relocateError }}</p>
+      </template>
+    </AppFormDrawer>
   </div>
 </template>
