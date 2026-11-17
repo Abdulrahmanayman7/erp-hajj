@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRoute } from 'vue-router'
 import { ChevronDown, ChevronsLeft, ChevronsRight, LogOut } from 'lucide-vue-next'
@@ -15,6 +15,7 @@ import {
   useAppNavigation,
 } from '@/shared/composables/useAppNavigation'
 import { useSidebarCollapse } from '@/shared/composables/useSidebarCollapse'
+import { scrollContainerIntoView } from '@/shared/utils/scrollContainerIntoView'
 
 /** Legacy multi-open map — discarded so it cannot override exclusive accordion. */
 const LEGACY_GROUPS_KEY = 'erp-hajj.sidebar.groups'
@@ -32,6 +33,8 @@ const sidebarToggleLabel = computed(() =>
 
 /** Exclusive accordion: at most one multi-item group key, or null when closed. */
 const expandedGroupKey = ref<string | null>(null)
+const navEl = ref<HTMLElement | null>(null)
+const groupEls = new Map<string, HTMLElement>()
 
 const displayName = computed(() => user.value?.name ?? t('auth.userFallback'))
 const roleLabel = computed(() => user.value?.roles?.[0]?.name ?? t('auth.systemManager'))
@@ -40,13 +43,34 @@ function isGroupActive(group: AppNavGroup): boolean {
   return group.items.some((item) => isItemActive(item))
 }
 
+function setGroupEl(key: string, el: Element | null): void {
+  if (el instanceof HTMLElement) {
+    groupEls.set(key, el)
+    return
+  }
+  groupEls.delete(key)
+}
+
+async function scrollExpandedGroupIntoView(key: string | null): Promise<void> {
+  if (!key || collapsed.value) return
+  await nextTick()
+  requestAnimationFrame(() => {
+    scrollContainerIntoView(navEl.value, groupEls.get(key) ?? null, { padding: 10 })
+  })
+}
+
 function syncExpandedFromRoute(): void {
-  expandedGroupKey.value = resolveActiveMultiItemGroupKey(navGroups.value, route.path)
+  const next = resolveActiveMultiItemGroupKey(navGroups.value, route.path)
+  const changed = expandedGroupKey.value !== next
+  expandedGroupKey.value = next
+  if (changed) void scrollExpandedGroupIntoView(next)
 }
 
 function toggleGroup(key: string): void {
   if (collapsed.value) return
-  expandedGroupKey.value = expandedGroupKey.value === key ? null : key
+  const next = expandedGroupKey.value === key ? null : key
+  expandedGroupKey.value = next
+  if (next) void scrollExpandedGroupIntoView(next)
 }
 
 function isGroupOpen(key: string): boolean {
@@ -130,12 +154,16 @@ onMounted(() => {
       <div class="sidebar-body relative z-[1] flex min-h-0 flex-1 flex-col overflow-hidden">
         <div class="relative flex min-h-0 flex-1 flex-col overflow-hidden">
         <nav
+          ref="navEl"
           class="sidebar-nav flex min-h-0 flex-1 flex-col gap-2 overflow-x-hidden overflow-y-auto overscroll-contain px-3 py-2"
+          data-test="sidebar-nav-scroll"
         >
           <div
             v-for="group in navGroups"
             :key="group.key"
+            :ref="(el) => setGroupEl(group.key, el as Element | null)"
             class="sidebar-nav-group"
+            :data-group-key="group.key"
           >
             <button
               v-if="!collapsed && group.items.length > 1"

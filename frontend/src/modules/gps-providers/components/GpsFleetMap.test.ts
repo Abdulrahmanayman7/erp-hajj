@@ -11,6 +11,7 @@ vi.mock('leaflet', () => {
     remove: vi.fn(),
     fitBounds: vi.fn(),
     invalidateSize: vi.fn(),
+    getZoom: vi.fn(() => 12),
   }
   const layer = {
     clearLayers: vi.fn(),
@@ -20,7 +21,10 @@ vi.mock('leaflet', () => {
   }
   const marker = {
     bindPopup: vi.fn().mockReturnThis(),
+    on: vi.fn().mockReturnThis(),
     addTo: vi.fn().mockReturnThis(),
+    openPopup: vi.fn().mockReturnThis(),
+    getLatLng: vi.fn(() => ({ lat: 21.42, lng: 39.82 })),
   }
   return {
     default: {
