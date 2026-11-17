@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 
 import { listEmployees } from '@/modules/employees/api/employeesApi'
 import AppFormDrawer from '@/shared/components/AppFormDrawer.vue'
+import { useCaptureOnOpen, useFormDirty } from '@/shared/composables/useFormDirty'
 import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 import { employeeSelectOption, toSelectId } from '@/shared/lookups/selectOptions'
@@ -45,6 +46,9 @@ const selectedEmployee = computed(() =>
     : null,
 )
 
+const { dirty, capture, reset: resetDirty } = useFormDirty(() => props.form)
+useCaptureOnOpen(() => props.open, capture, { onClose: () => resetDirty() })
+
 function onOpenUpdate(value: boolean): void {
   if (!value) emit('close')
 }
@@ -56,6 +60,7 @@ function onOpenUpdate(value: boolean): void {
     :title="t(isEdit ? 'inventory.warehouses.editTitle' : 'inventory.warehouses.createTitle')"
     :description="t(isEdit ? 'inventory.warehouses.editSubtitle' : 'inventory.warehouses.createSubtitle')"
     size="md"
+    :dirty="dirty"
     :submitting="submitting"
     :cancel-label="t('inventory.cancel')"
     :submit-label="t(isEdit ? 'inventory.save' : 'inventory.warehouses.createCta')"

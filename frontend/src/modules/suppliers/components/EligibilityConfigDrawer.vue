@@ -1,12 +1,14 @@
 <script setup lang="ts">
-import { computed, nextTick, onUnmounted, reactive, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { CheckCheck, Copy, Eye, Loader2, Pencil, Plus, Trash2, X } from 'lucide-vue-next'
+import { CheckCheck, Copy, Eye, Loader2, Pencil, Plus, Trash2 } from 'lucide-vue-next'
 
 import { ApiError } from '@/shared/api/http'
+import AppFormDrawer from '@/shared/components/AppFormDrawer.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
 import { useConfirm } from '@/shared/composables/useConfirm'
+import { useFormDirty } from '@/shared/composables/useFormDirty'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import { useToast } from '@/shared/composables/useToast'
 
@@ -107,7 +109,31 @@ const categoryOptions = computed<AppSelectOption[]>(() => [
   ...(categoriesData.value?.data ?? []).map((c) => ({ value: c.id, label: c.name })),
 ])
 
-let previouslyFocused: HTMLElement | null = null
+const formDrawerOpen = computed(() => mode.value === 'form')
+
+const { dirty: formDirty, capture: captureFormDirty, reset: resetFormDirty } = useFormDirty(form, {
+  enabled: formDrawerOpen,
+})
+
+const outerTitle = computed(() => {
+  if (mode.value === 'view') return t('suppliers.eligibility.viewTitle')
+  return t('suppliers.eligibility.configTitle')
+})
+
+function onOuterOpenUpdate(value: boolean): void {
+  if (!value) emit('close')
+}
+
+function onFormDrawerOpenUpdate(value: boolean): void {
+  if (!value && mode.value === 'form') {
+    resetFormDirty()
+    if (editingId.value != null && selectedId.value != null) {
+      openView(selectedId.value)
+    } else {
+      backToList()
+    }
+  }
+}
 
 function apiMessage(error: unknown): string {
   if (!(error instanceof ApiError)) return t('suppliers.errors.generic')
@@ -144,6 +170,7 @@ function openCreate(): void {
   editingId.value = null
   selectedId.value = null
   mode.value = 'form'
+  captureFormDirty()
 }
 
 function openEdit(): void {
@@ -152,6 +179,7 @@ function openEdit(): void {
   Object.assign(form, setToFormState(detail.value))
   editingId.value = detail.value.id
   mode.value = 'form'
+  captureFormDirty()
 }
 
 function addDef(): void {
@@ -181,6 +209,7 @@ async function submitForm(): Promise<void> {
         payload: { name: form.name.trim(), requirement_defs: buildDefPayloads(form.defs) },
       })
       toast.success(t('suppliers.eligibility.toasts.updated'))
+      resetFormDirty()
       openView(updated.id)
     } else {
       const created = await createMutation.mutateAsync({
@@ -189,6 +218,7 @@ async function submitForm(): Promise<void> {
         requirement_defs: buildDefPayloads(form.defs),
       })
       toast.success(t('suppliers.eligibility.toasts.created'))
+      resetFormDirty()
       openView(created.id)
     }
   } catch (error) {
@@ -236,89 +266,31 @@ async function onNewDraft(): Promise<void> {
   }
 }
 
-function onKeydown(event: KeyboardEvent): void {
-  if (
-    event.key === 'Escape' &&
-    props.open &&
-    !isSubmitting.value &&
-    !approveDialogOpen.value
-  ) {
-    event.preventDefault()
-    emit('close')
-  }
-}
-
 watch(
   () => props.open,
-  async (isOpen) => {
-    if (isOpen) {
-      previouslyFocused =
-        document.activeElement instanceof HTMLElement ? document.activeElement : null
-      document.addEventListener('keydown', onKeydown)
-      await nextTick()
-      return
+  (isOpen) => {
+    if (!isOpen) {
+      backToList()
+      approveDialogOpen.value = false
     }
-    backToList()
-    approveDialogOpen.value = false
-    document.removeEventListener('keydown', onKeydown)
-    await nextTick()
-    previouslyFocused?.focus?.()
-    previouslyFocused = null
   },
 )
-
-onUnmounted(() => {
-  document.removeEventListener('keydown', onKeydown)
-})
 
 const inputClass = 'w-full rounded-xl border border-brand-border px-3 py-2 text-sm'
 </script>
 
 <template>
-  <Teleport to="body">
-    <Transition name="elig-drawer">
-      <div v-if="open" class="fixed inset-0 z-[70] flex justify-start">
-        <button
-          type="button"
-          class="absolute inset-0 bg-black/40"
-          :aria-label="t('suppliers.closeDrawer')"
-          @click="emit('close')"
-        />
-        <aside
-          class="relative z-10 flex h-full w-full max-w-3xl flex-col bg-brand-surface shadow-2xl"
-          role="dialog"
-          aria-modal="true"
-          :aria-label="t('suppliers.eligibility.configTitle')"
-        >
-          <header class="flex items-start justify-between border-b border-brand-border px-5 py-4">
-            <div>
-              <h2 class="text-lg font-bold text-brand-text">
-                {{
-                  mode === 'form'
-                    ? isEditing
-                      ? t('suppliers.eligibility.editTitle')
-                      : t('suppliers.eligibility.createTitle')
-                    : mode === 'view'
-                      ? t('suppliers.eligibility.viewTitle')
-                      : t('suppliers.eligibility.configTitle')
-                }}
-              </h2>
-              <p class="mt-1 text-sm text-brand-text-secondary">
-                {{ t('suppliers.eligibility.configSubtitle') }}
-              </p>
-            </div>
-            <button
-              type="button"
-              class="rounded-lg p-1 hover:bg-brand-bg"
-              :aria-label="t('suppliers.closeDrawer')"
-              @click="emit('close')"
-            >
-              <X class="h-5 w-5" />
-            </button>
-          </header>
-
-          <!-- LIST -->
-          <div v-if="mode === 'list'" class="flex-1 overflow-y-auto px-5 py-4">
+  <AppFormDrawer
+    :open="open"
+    :title="outerTitle"
+    :description="t('suppliers.eligibility.configSubtitle')"
+    size="lg"
+    hide-default-footer
+    :close-on-escape="!approveDialogOpen"
+    @update:open="onOuterOpenUpdate"
+  >
+    <!-- LIST -->
+    <div v-if="mode === 'list'">
             <div class="mb-4 flex flex-wrap items-end justify-between gap-3">
               <div class="w-48">
                 <AppSelect v-model="statusFilter" :options="statusOptions" :label="t('suppliers.fields.status')" />
@@ -388,10 +360,10 @@ const inputClass = 'w-full rounded-xl border border-brand-border px-3 py-2 text-
                 </tbody>
               </table>
             </div>
-          </div>
+    </div>
 
-          <!-- VIEW -->
-          <div v-else-if="mode === 'view'" class="flex-1 overflow-y-auto px-5 py-4">
+    <!-- VIEW -->
+    <div v-else-if="mode === 'view'" class="relative">
             <button type="button" class="mb-4 text-sm font-semibold text-brand-primary" @click="backToList">
               {{ t('suppliers.eligibility.back') }}
             </button>
@@ -505,230 +477,200 @@ const inputClass = 'w-full rounded-xl border border-brand-border px-3 py-2 text-
                 </li>
               </ul>
             </template>
+
+      <div
+        v-if="approveDialogOpen"
+        class="fixed inset-0 z-[60] flex items-center justify-center bg-black/30 p-4"
+        role="dialog"
+        aria-modal="true"
+      >
+        <div class="w-full max-w-md rounded-2xl bg-brand-surface p-5 shadow-xl">
+          <h3 class="text-base font-bold text-brand-text">{{ t('suppliers.eligibility.approveTitle') }}</h3>
+          <p class="mt-1 text-sm text-brand-text-secondary">{{ t('suppliers.eligibility.approveBody') }}</p>
+          <textarea
+            v-model="approveComment"
+            rows="3"
+            :class="[inputClass, 'mt-3']"
+            :placeholder="t('suppliers.eligibility.approveCommentPlaceholder')"
+          />
+          <div class="mt-4 flex justify-end gap-2">
+            <button
+              type="button"
+              class="rounded-xl border border-brand-border px-4 py-2 text-sm font-semibold"
+              @click="approveDialogOpen = false"
+            >
+              {{ t('suppliers.cancel') }}
+            </button>
+            <button
+              type="button"
+              class="inline-flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+              :disabled="approveMutation.isPending.value"
+              @click="submitApprove"
+            >
+              <Loader2 v-if="approveMutation.isPending.value" class="h-4 w-4 animate-spin" />
+              {{ t('suppliers.eligibility.approve') }}
+            </button>
           </div>
-
-          <!-- FORM -->
-          <form
-            v-else
-            class="flex flex-1 flex-col overflow-hidden"
-            @submit.prevent="submitForm"
-          >
-            <div class="flex-1 space-y-4 overflow-y-auto px-5 py-4">
-              <p v-if="formError" class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
-                {{ formError }}
-              </p>
-
-              <div class="grid gap-3 sm:grid-cols-2">
-                <div>
-                  <label class="mb-1 block text-sm font-semibold text-brand-text" for="elig-config-key">
-                    {{ t('suppliers.eligibility.fields.configKey') }}
-                  </label>
-                  <input
-                    id="elig-config-key"
-                    v-model="form.config_key"
-                    type="text"
-                    dir="ltr"
-                    :disabled="isEditing"
-                    :class="[inputClass, 'text-start disabled:bg-brand-bg']"
-                  />
-                  <p class="mt-1 text-xs text-brand-text-muted">{{ t('suppliers.eligibility.fields.configKeyHint') }}</p>
-                  <p v-if="errors.config_key" class="mt-1 text-xs text-red-600">
-                    {{ t(errors.config_key === 'required' ? 'suppliers.validation.required' : `suppliers.eligibility.validation.${errors.config_key}`) }}
-                  </p>
-                </div>
-                <div>
-                  <label class="mb-1 block text-sm font-semibold text-brand-text" for="elig-name">
-                    {{ t('suppliers.eligibility.fields.name') }}
-                  </label>
-                  <input id="elig-name" v-model="form.name" type="text" :class="inputClass" />
-                  <p v-if="errors.name" class="mt-1 text-xs text-red-600">{{ t('suppliers.validation.required') }}</p>
-                </div>
-              </div>
-
-              <div class="flex items-center justify-between">
-                <h4 class="text-sm font-bold text-brand-text">{{ t('suppliers.eligibility.defsTitle') }}</h4>
-                <button
-                  type="button"
-                  class="inline-flex items-center gap-1 rounded-xl border border-brand-border px-3 py-1.5 text-sm font-semibold"
-                  @click="addDef"
-                >
-                  <Plus class="h-4 w-4" />
-                  {{ t('suppliers.eligibility.addDef') }}
-                </button>
-              </div>
-              <p v-if="errors.defs" class="text-xs text-red-600">
-                {{ t(`suppliers.eligibility.validation.${errors.defs}`) }}
-              </p>
-
-              <div
-                v-for="(row, index) in form.defs"
-                :key="index"
-                class="space-y-3 rounded-xl border border-brand-border p-3"
-              >
-                <div class="grid gap-3 sm:grid-cols-2">
-                  <div>
-                    <label class="mb-1 block text-xs font-semibold">{{ t('suppliers.eligibility.fields.requirementKey') }}</label>
-                    <input
-                      :value="row.requirement_key"
-                      type="text"
-                      dir="ltr"
-                      :class="[inputClass, 'text-start']"
-                      @input="patchDef(index, { requirement_key: ($event.target as HTMLInputElement).value })"
-                    />
-                    <p v-if="errors.defRows[index]?.requirement_key" class="mt-1 text-xs text-red-600">
-                      {{ t(errors.defRows[index]?.requirement_key === 'required' ? 'suppliers.validation.required' : `suppliers.eligibility.validation.${errors.defRows[index]?.requirement_key}`) }}
-                    </p>
-                  </div>
-                  <div>
-                    <label class="mb-1 block text-xs font-semibold">{{ t('suppliers.eligibility.fields.labelAr') }}</label>
-                    <input
-                      :value="row.label_ar"
-                      type="text"
-                      :class="inputClass"
-                      @input="patchDef(index, { label_ar: ($event.target as HTMLInputElement).value })"
-                    />
-                    <p v-if="errors.defRows[index]?.label_ar" class="mt-1 text-xs text-red-600">
-                      {{ t('suppliers.validation.required') }}
-                    </p>
-                  </div>
-                  <div>
-                    <label class="mb-1 block text-xs font-semibold">{{ t('suppliers.eligibility.fields.supplierType') }}</label>
-                    <AppSelect
-                      :model-value="row.supplier_type"
-                      :options="typeOptions"
-                      @update:model-value="patchDef(index, { supplier_type: $event as SupplierType })"
-                    />
-                  </div>
-                  <div>
-                    <label class="mb-1 block text-xs font-semibold">{{ t('suppliers.eligibility.fields.category') }}</label>
-                    <AppSelect
-                      :model-value="row.supplier_category_id"
-                      :options="categoryOptions"
-                      searchable
-                      @update:model-value="patchDef(index, { supplier_category_id: $event === '' || $event == null ? '' : Number($event) })"
-                    />
-                  </div>
-                  <div>
-                    <label class="mb-1 block text-xs font-semibold">{{ t('suppliers.eligibility.fields.countryCode') }}</label>
-                    <input
-                      :value="row.country_code"
-                      type="text"
-                      maxlength="2"
-                      dir="ltr"
-                      :class="[inputClass, 'text-start uppercase']"
-                      @input="patchDef(index, { country_code: ($event.target as HTMLInputElement).value.toUpperCase() })"
-                    />
-                    <p v-if="errors.defRows[index]?.country_code" class="mt-1 text-xs text-red-600">
-                      {{ t('suppliers.eligibility.validation.countryCode') }}
-                    </p>
-                  </div>
-                  <div>
-                    <label class="mb-1 block text-xs font-semibold">{{ t('suppliers.eligibility.fields.validityDays') }}</label>
-                    <input
-                      :value="row.default_validity_days"
-                      type="number"
-                      min="1"
-                      max="3650"
-                      dir="ltr"
-                      :class="[inputClass, 'text-start']"
-                      @input="patchDef(index, { default_validity_days: ($event.target as HTMLInputElement).value === '' ? '' : Number(($event.target as HTMLInputElement).value) })"
-                    />
-                    <p v-if="errors.defRows[index]?.default_validity_days" class="mt-1 text-xs text-red-600">
-                      {{ t('suppliers.eligibility.validation.validityDays') }}
-                    </p>
-                  </div>
-                </div>
-                <div class="flex items-center justify-between">
-                  <label class="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      :checked="row.is_mandatory"
-                      @change="patchDef(index, { is_mandatory: ($event.target as HTMLInputElement).checked })"
-                    />
-                    {{ t('suppliers.eligibility.fields.isMandatory') }}
-                  </label>
-                  <button
-                    type="button"
-                    class="inline-flex items-center gap-1 text-sm text-red-600"
-                    :aria-label="t('suppliers.eligibility.removeDef')"
-                    @click="removeDef(index)"
-                  >
-                    <Trash2 class="h-4 w-4" />
-                    {{ t('suppliers.eligibility.removeDef') }}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <footer class="flex justify-end gap-2 border-t border-brand-border px-5 py-4">
-              <button
-                type="button"
-                class="rounded-xl border border-brand-border px-4 py-2 text-sm font-semibold"
-                :disabled="isSubmitting"
-                @click="isEditing && selectedId != null ? openView(selectedId) : backToList()"
-              >
-                {{ t('suppliers.cancel') }}
-              </button>
-              <button
-                type="submit"
-                class="inline-flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
-                :disabled="isSubmitting"
-              >
-                <Loader2 v-if="isSubmitting" class="h-4 w-4 animate-spin" />
-                {{ t('suppliers.save') }}
-              </button>
-            </footer>
-          </form>
-
-          <!-- APPROVE DIALOG -->
-          <div
-            v-if="approveDialogOpen"
-            class="absolute inset-0 z-20 flex items-center justify-center bg-black/30 p-4"
-            role="dialog"
-            aria-modal="true"
-          >
-            <div class="w-full max-w-md rounded-2xl bg-brand-surface p-5 shadow-xl">
-              <h3 class="text-base font-bold text-brand-text">{{ t('suppliers.eligibility.approveTitle') }}</h3>
-              <p class="mt-1 text-sm text-brand-text-secondary">{{ t('suppliers.eligibility.approveBody') }}</p>
-              <textarea
-                v-model="approveComment"
-                rows="3"
-                :class="[inputClass, 'mt-3']"
-                :placeholder="t('suppliers.eligibility.approveCommentPlaceholder')"
-              />
-              <div class="mt-4 flex justify-end gap-2">
-                <button
-                  type="button"
-                  class="rounded-xl border border-brand-border px-4 py-2 text-sm font-semibold"
-                  @click="approveDialogOpen = false"
-                >
-                  {{ t('suppliers.cancel') }}
-                </button>
-                <button
-                  type="button"
-                  class="inline-flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
-                  :disabled="approveMutation.isPending.value"
-                  @click="submitApprove"
-                >
-                  <Loader2 v-if="approveMutation.isPending.value" class="h-4 w-4 animate-spin" />
-                  {{ t('suppliers.eligibility.approve') }}
-                </button>
-              </div>
-            </div>
-          </div>
-        </aside>
+        </div>
       </div>
-    </Transition>
-  </Teleport>
-</template>
+    </div>
+  </AppFormDrawer>
 
-<style scoped>
-.elig-drawer-enter-active,
-.elig-drawer-leave-active {
-  transition: opacity 0.2s ease;
-}
-.elig-drawer-enter-from,
-.elig-drawer-leave-to {
-  opacity: 0;
-}
-</style>
+  <AppFormDrawer
+    :open="formDrawerOpen"
+    :title="isEditing ? t('suppliers.eligibility.editTitle') : t('suppliers.eligibility.createTitle')"
+    :description="t('suppliers.eligibility.configSubtitle')"
+    size="lg"
+    :dirty="formDirty"
+    :submitting="isSubmitting"
+    :cancel-label="t('suppliers.cancel')"
+    :submit-label="t('suppliers.save')"
+    @update:open="onFormDrawerOpenUpdate"
+    @submit="submitForm"
+  >
+    <p v-if="formError" class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
+      {{ formError }}
+    </p>
+
+    <div class="grid gap-3 sm:grid-cols-2">
+      <div>
+        <label class="mb-1 block text-sm font-semibold text-brand-text" for="elig-config-key">
+          {{ t('suppliers.eligibility.fields.configKey') }}
+        </label>
+        <input
+          id="elig-config-key"
+          v-model="form.config_key"
+          type="text"
+          dir="ltr"
+          :disabled="isEditing"
+          :class="[inputClass, 'text-start disabled:bg-brand-bg']"
+        />
+        <p class="mt-1 text-xs text-brand-text-muted">{{ t('suppliers.eligibility.fields.configKeyHint') }}</p>
+        <p v-if="errors.config_key" class="mt-1 text-xs text-red-600">
+          {{ t(errors.config_key === 'required' ? 'suppliers.validation.required' : `suppliers.eligibility.validation.${errors.config_key}`) }}
+        </p>
+      </div>
+      <div>
+        <label class="mb-1 block text-sm font-semibold text-brand-text" for="elig-name">
+          {{ t('suppliers.eligibility.fields.name') }}
+        </label>
+        <input id="elig-name" v-model="form.name" type="text" :class="inputClass" />
+        <p v-if="errors.name" class="mt-1 text-xs text-red-600">{{ t('suppliers.validation.required') }}</p>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-between">
+      <h4 class="text-sm font-bold text-brand-text">{{ t('suppliers.eligibility.defsTitle') }}</h4>
+      <button
+        type="button"
+        class="inline-flex items-center gap-1 rounded-xl border border-brand-border px-3 py-1.5 text-sm font-semibold"
+        @click="addDef"
+      >
+        <Plus class="h-4 w-4" />
+        {{ t('suppliers.eligibility.addDef') }}
+      </button>
+    </div>
+    <p v-if="errors.defs" class="text-xs text-red-600">
+      {{ t(`suppliers.eligibility.validation.${errors.defs}`) }}
+    </p>
+
+    <div
+      v-for="(row, index) in form.defs"
+      :key="index"
+      class="space-y-3 rounded-xl border border-brand-border p-3"
+    >
+      <div class="grid gap-3 sm:grid-cols-2">
+        <div>
+          <label class="mb-1 block text-xs font-semibold">{{ t('suppliers.eligibility.fields.requirementKey') }}</label>
+          <input
+            :value="row.requirement_key"
+            type="text"
+            dir="ltr"
+            :class="[inputClass, 'text-start']"
+            @input="patchDef(index, { requirement_key: ($event.target as HTMLInputElement).value })"
+          />
+          <p v-if="errors.defRows[index]?.requirement_key" class="mt-1 text-xs text-red-600">
+            {{ t(errors.defRows[index]?.requirement_key === 'required' ? 'suppliers.validation.required' : `suppliers.eligibility.validation.${errors.defRows[index]?.requirement_key}`) }}
+          </p>
+        </div>
+        <div>
+          <label class="mb-1 block text-xs font-semibold">{{ t('suppliers.eligibility.fields.labelAr') }}</label>
+          <input
+            :value="row.label_ar"
+            type="text"
+            :class="inputClass"
+            @input="patchDef(index, { label_ar: ($event.target as HTMLInputElement).value })"
+          />
+          <p v-if="errors.defRows[index]?.label_ar" class="mt-1 text-xs text-red-600">
+            {{ t('suppliers.validation.required') }}
+          </p>
+        </div>
+        <div>
+          <label class="mb-1 block text-xs font-semibold">{{ t('suppliers.eligibility.fields.supplierType') }}</label>
+          <AppSelect
+            :model-value="row.supplier_type"
+            :options="typeOptions"
+            @update:model-value="patchDef(index, { supplier_type: $event as SupplierType })"
+          />
+        </div>
+        <div>
+          <label class="mb-1 block text-xs font-semibold">{{ t('suppliers.eligibility.fields.category') }}</label>
+          <AppSelect
+            :model-value="row.supplier_category_id"
+            :options="categoryOptions"
+            searchable
+            @update:model-value="patchDef(index, { supplier_category_id: $event === '' || $event == null ? '' : Number($event) })"
+          />
+        </div>
+        <div>
+          <label class="mb-1 block text-xs font-semibold">{{ t('suppliers.eligibility.fields.countryCode') }}</label>
+          <input
+            :value="row.country_code"
+            type="text"
+            maxlength="2"
+            dir="ltr"
+            :class="[inputClass, 'text-start uppercase']"
+            @input="patchDef(index, { country_code: ($event.target as HTMLInputElement).value.toUpperCase() })"
+          />
+          <p v-if="errors.defRows[index]?.country_code" class="mt-1 text-xs text-red-600">
+            {{ t('suppliers.eligibility.validation.countryCode') }}
+          </p>
+        </div>
+        <div>
+          <label class="mb-1 block text-xs font-semibold">{{ t('suppliers.eligibility.fields.validityDays') }}</label>
+          <input
+            :value="row.default_validity_days"
+            type="number"
+            min="1"
+            max="3650"
+            dir="ltr"
+            :class="[inputClass, 'text-start']"
+            @input="patchDef(index, { default_validity_days: ($event.target as HTMLInputElement).value === '' ? '' : Number(($event.target as HTMLInputElement).value) })"
+          />
+          <p v-if="errors.defRows[index]?.default_validity_days" class="mt-1 text-xs text-red-600">
+            {{ t('suppliers.eligibility.validation.validityDays') }}
+          </p>
+        </div>
+      </div>
+      <div class="flex items-center justify-between">
+        <label class="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            :checked="row.is_mandatory"
+            @change="patchDef(index, { is_mandatory: ($event.target as HTMLInputElement).checked })"
+          />
+          {{ t('suppliers.eligibility.fields.isMandatory') }}
+        </label>
+        <button
+          type="button"
+          class="inline-flex items-center gap-1 text-sm text-red-600"
+          :aria-label="t('suppliers.eligibility.removeDef')"
+          @click="removeDef(index)"
+        >
+          <Trash2 class="h-4 w-4" />
+          {{ t('suppliers.eligibility.removeDef') }}
+        </button>
+      </div>
+    </div>
+  </AppFormDrawer>
+</template>

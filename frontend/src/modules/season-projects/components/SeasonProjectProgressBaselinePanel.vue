@@ -3,8 +3,10 @@ import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { ApiError } from '@/shared/api/http'
+import AppFormDrawer from '@/shared/components/AppFormDrawer.vue'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
 import { useConfirm } from '@/shared/composables/useConfirm'
+import { useCaptureOnOpen, useFormDirty } from '@/shared/composables/useFormDirty'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import { useToast } from '@/shared/composables/useToast'
 
@@ -73,6 +75,9 @@ const editorOpen = ref(false)
 const formRows = ref<SeasonProjectProgressCheckpointFormRow[]>([emptyCheckpointFormRow()])
 const formError = ref('')
 const fieldErrors = ref<Record<string, string>>({})
+const { dirty: baselineFormDirty, capture: captureBaselineForm, reset: resetBaselineForm } =
+  useFormDirty(formRows)
+useCaptureOnOpen(editorOpen, captureBaselineForm, { onClose: resetBaselineForm })
 
 function apiMessage(error: unknown): string {
   if (!(error instanceof ApiError)) return t('seasonProjects.errors.generic')
@@ -329,98 +334,77 @@ watch(draftBaseline, (draft) => {
     </p>
   </section>
 
-  <div
-    v-if="editorOpen"
-    class="fixed inset-0 z-40 flex justify-end bg-black/30"
-    role="dialog"
-    aria-modal="true"
-    @click.self="editorOpen = false"
+  <AppFormDrawer
+    v-model:open="editorOpen"
+    :title="t('seasonProjects.baseline.editorTitle')"
+    :description="t('seasonProjects.baseline.editorSubtitle')"
+    size="md"
+    :dirty="baselineFormDirty"
+    :submitting="upsertPending"
+    :cancel-label="t('seasonProjects.cancel')"
+    :submit-label="t('seasonProjects.baseline.saveDraft')"
+    @submit="submitDraft"
   >
-    <div class="flex h-full w-full max-w-lg flex-col bg-white shadow-xl">
-      <header class="border-b px-4 py-3">
-        <h2 class="text-lg font-semibold">{{ t('seasonProjects.baseline.editorTitle') }}</h2>
-        <p class="text-xs text-brand-muted">{{ t('seasonProjects.baseline.editorSubtitle') }}</p>
-      </header>
-      <form class="flex flex-1 flex-col gap-3 overflow-y-auto p-4" @submit.prevent="submitDraft">
-        <div
-          v-for="(row, index) in formRows"
-          :key="index"
-          class="rounded-lg border border-brand-border/70 p-3"
+    <div
+      v-for="(row, index) in formRows"
+      :key="index"
+      class="rounded-lg border border-brand-border/70 p-3"
+    >
+      <div class="mb-2 flex items-center justify-between gap-2">
+        <p class="text-sm font-medium">
+          {{ t('seasonProjects.baseline.checkpointN', { n: index + 1 }) }}
+        </p>
+        <button
+          v-if="formRows.length > 1"
+          type="button"
+          class="text-xs text-red-600 underline"
+          @click="removeRow(index)"
         >
-          <div class="mb-2 flex items-center justify-between gap-2">
-            <p class="text-sm font-medium">
-              {{ t('seasonProjects.baseline.checkpointN', { n: index + 1 }) }}
-            </p>
-            <button
-              v-if="formRows.length > 1"
-              type="button"
-              class="text-xs text-red-600 underline"
-              @click="removeRow(index)"
-            >
-              {{ t('seasonProjects.delete') }}
-            </button>
-          </div>
-          <label class="mb-2 block text-sm">
-            <span class="mb-1 block">{{ t('seasonProjects.baseline.effectiveAt') }}</span>
-            <input
-              v-model="row.effective_at"
-              type="datetime-local"
-              class="w-full rounded-lg border border-brand-border px-3 py-2"
-            >
-            <span
-              v-if="fieldErrors[`checkpoints.${index}.effective_at`]"
-              class="text-xs text-red-600"
-            >
-              {{ fieldErrors[`checkpoints.${index}.effective_at`] }}
-            </span>
-          </label>
-          <label class="block text-sm">
-            <span class="mb-1 block">{{ t('seasonProjects.baseline.plannedPercent') }}</span>
-            <input
-              v-model="row.planned_progress_percent"
-              type="number"
-              min="0"
-              max="100"
-              step="0.01"
-              class="w-full rounded-lg border border-brand-border px-3 py-2"
-            >
-            <span
-              v-if="fieldErrors[`checkpoints.${index}.planned_progress_percent`]"
-              class="text-xs text-red-600"
-            >
-              {{ fieldErrors[`checkpoints.${index}.planned_progress_percent`] }}
-            </span>
-          </label>
-        </div>
-
-        <button type="button" class="rounded-lg border px-3 py-2 text-sm" @click="addRow">
-          {{ t('seasonProjects.baseline.addCheckpoint') }}
+          {{ t('seasonProjects.delete') }}
         </button>
-
-        <p v-if="fieldErrors.checkpoints" class="text-sm text-red-600">
-          {{ fieldErrors.checkpoints }}
-        </p>
-        <p v-if="formError" class="rounded bg-red-50 px-3 py-2 text-sm text-red-700">
-          {{ formError }}
-        </p>
-
-        <div class="mt-auto flex gap-2 border-t pt-3">
-          <button
-            type="button"
-            class="rounded-lg border px-3 py-2 text-sm"
-            @click="editorOpen = false"
-          >
-            {{ t('seasonProjects.cancel') }}
-          </button>
-          <button
-            type="submit"
-            class="rounded-lg bg-brand-primary px-3 py-2 text-sm text-white disabled:opacity-50"
-            :disabled="upsertPending"
-          >
-            {{ t('seasonProjects.baseline.saveDraft') }}
-          </button>
-        </div>
-      </form>
+      </div>
+      <label class="mb-2 block text-sm">
+        <span class="mb-1 block">{{ t('seasonProjects.baseline.effectiveAt') }}</span>
+        <input
+          v-model="row.effective_at"
+          type="datetime-local"
+          class="w-full rounded-lg border border-brand-border px-3 py-2"
+        >
+        <span
+          v-if="fieldErrors[`checkpoints.${index}.effective_at`]"
+          class="text-xs text-red-600"
+        >
+          {{ fieldErrors[`checkpoints.${index}.effective_at`] }}
+        </span>
+      </label>
+      <label class="block text-sm">
+        <span class="mb-1 block">{{ t('seasonProjects.baseline.plannedPercent') }}</span>
+        <input
+          v-model="row.planned_progress_percent"
+          type="number"
+          min="0"
+          max="100"
+          step="0.01"
+          class="w-full rounded-lg border border-brand-border px-3 py-2"
+        >
+        <span
+          v-if="fieldErrors[`checkpoints.${index}.planned_progress_percent`]"
+          class="text-xs text-red-600"
+        >
+          {{ fieldErrors[`checkpoints.${index}.planned_progress_percent`] }}
+        </span>
+      </label>
     </div>
-  </div>
+
+    <button type="button" class="rounded-lg border px-3 py-2 text-sm" @click="addRow">
+      {{ t('seasonProjects.baseline.addCheckpoint') }}
+    </button>
+
+    <p v-if="fieldErrors.checkpoints" class="text-sm text-red-600">
+      {{ fieldErrors.checkpoints }}
+    </p>
+    <p v-if="formError" class="rounded bg-red-50 px-3 py-2 text-sm text-red-700">
+      {{ formError }}
+    </p>
+  </AppFormDrawer>
 </template>

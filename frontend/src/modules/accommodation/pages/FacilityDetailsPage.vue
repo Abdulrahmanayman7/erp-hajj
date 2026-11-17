@@ -139,6 +139,21 @@ const structureForm = reactive<StructureFormState>(emptyStructureForm())
 const unitForm = reactive<UnitFormState>(emptyUnitForm())
 const positionForm = reactive<PositionFormState>(emptyPositionForm())
 
+const facilityDrawerForm = computed(() => {
+  switch (drawerKind.value) {
+    case 'facility':
+      return facilityForm
+    case 'structure':
+      return structureForm
+    case 'unit':
+      return unitForm
+    case 'position':
+      return positionForm
+    default:
+      return undefined
+  }
+})
+
 const updateFacilityMutation = useUpdateFacilityMutation()
 const deleteFacilityMutation = useDeleteFacilityMutation()
 const createStructureMutation = useCreateStructureMutation()
@@ -649,7 +664,7 @@ useAccommodationDialog(() => drawerKind.value !== null, () => { if (!formSubmitt
       </section>
     </template>
 
-    <AccommodationFormDrawer :open="Boolean(drawerKind)" :submitting="formSubmitting" :disabled="!canWrite" @close="closeDrawer" @submit="drawerKind === 'facility' ? submitFacility() : drawerKind === 'structure' ? submitStructure() : drawerKind === 'unit' ? submitUnit() : submitPosition()">
+    <AccommodationFormDrawer :open="Boolean(drawerKind)" :form="facilityDrawerForm" :submitting="formSubmitting" :disabled="!canWrite" @close="closeDrawer" @submit="drawerKind === 'facility' ? submitFacility() : drawerKind === 'structure' ? submitStructure() : drawerKind === 'unit' ? submitUnit() : submitPosition()">
       <template #title>{{
         drawerKind === 'facility'
           ? t('accommodation.facilityDetails.editFacility')

@@ -9,10 +9,12 @@ import { useAccommodationSeasonStore } from '@/modules/accommodation/stores/seas
 import SeasonWorkspaceBar from '@/modules/season-pilgrims/components/SeasonWorkspaceBar.vue'
 import { useSeasonsQuery } from '@/modules/season-pilgrims/queries/useSeasonsQuery'
 import { ApiError } from '@/shared/api/http'
+import AppFormDrawer from '@/shared/components/AppFormDrawer.vue'
 import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
+import { useCaptureOnOpen, useFormDirty } from '@/shared/composables/useFormDirty'
 import { useToast } from '@/shared/composables/useToast'
 
 import { listTransportPoints } from '../api/pointsApi'
@@ -95,6 +97,11 @@ const updateMutation = useUpdateMovementMutation()
 const submitting = computed(
   () => createMutation.isPending.value || updateMutation.isPending.value,
 )
+
+const { dirty: formDirty, capture: captureFormDirty, reset: resetFormDirty } = useFormDirty(
+  () => ({ ...form }),
+)
+useCaptureOnOpen(drawerOpen, captureFormDirty, { onClose: () => resetFormDirty() })
 
 function openCreate(): void {
   editing.value = null
@@ -332,113 +339,89 @@ const mapPoint = (row: TransportPoint): AppSelectOption => ({
       </div>
     </div>
 
-    <Teleport to="body">
-      <div v-if="drawerOpen" class="fixed inset-0 z-50">
-        <div class="absolute inset-0 bg-[rgba(15,23,20,0.32)]" @click="drawerOpen = false" />
-        <aside
-          class="absolute inset-y-0 start-0 flex h-dvh w-full max-w-[440px] flex-col bg-brand-surface"
-          role="dialog"
-          aria-modal="true"
-        >
-          <header class="border-b border-brand-border px-5 py-4">
-            <h3 class="text-lg font-bold">
-              {{
-                editing
-                  ? t('transportation.movements.editTitle')
-                  : t('transportation.movements.createTitle')
-              }}
-            </h3>
-          </header>
-          <div class="flex-1 space-y-4 overflow-y-auto px-5 py-4">
-            <p v-if="formError" class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
-              {{ formError }}
-            </p>
-            <div>
-              <label class="mb-1 block text-sm font-medium">{{
-                t('transportation.movements.fields.origin')
-              }}</label>
-              <AppRemoteSelect
-                v-model="form.origin_point_id"
-                :query-key="['transport-movement-origin-points']"
-                :fetcher="fetchPoints"
-                :map-option="mapPoint"
-                searchable
-              />
-              <p v-if="fieldMessage('origin_point_id')" class="mt-1 text-xs text-red-600">
-                {{ fieldMessage('origin_point_id') }}
-              </p>
-            </div>
-            <div>
-              <label class="mb-1 block text-sm font-medium">{{
-                t('transportation.movements.fields.destination')
-              }}</label>
-              <AppRemoteSelect
-                v-model="form.destination_point_id"
-                :query-key="['transport-movement-destination-points']"
-                :fetcher="fetchPoints"
-                :map-option="mapPoint"
-                searchable
-              />
-              <p v-if="fieldMessage('destination_point_id')" class="mt-1 text-xs text-red-600">
-                {{ fieldMessage('destination_point_id') }}
-              </p>
-            </div>
-            <div>
-              <label class="mb-1 block text-sm font-medium">{{
-                t('transportation.movements.fields.departure')
-              }}</label>
-              <input
-                v-model="form.planned_departure_at"
-                type="datetime-local"
-                class="h-11 w-full rounded-xl border border-brand-border px-3 text-sm"
-              />
-              <p v-if="fieldMessage('planned_departure_at')" class="mt-1 text-xs text-red-600">
-                {{ fieldMessage('planned_departure_at') }}
-              </p>
-            </div>
-            <div>
-              <label class="mb-1 block text-sm font-medium">{{
-                t('transportation.movements.fields.arrival')
-              }}</label>
-              <input
-                v-model="form.planned_arrival_at"
-                type="datetime-local"
-                class="h-11 w-full rounded-xl border border-brand-border px-3 text-sm"
-              />
-              <p v-if="fieldMessage('planned_arrival_at')" class="mt-1 text-xs text-red-600">
-                {{ fieldMessage('planned_arrival_at') }}
-              </p>
-            </div>
-            <div>
-              <label class="mb-1 block text-sm font-medium">{{
-                t('transportation.movements.fields.notes')
-              }}</label>
-              <textarea
-                v-model="form.notes"
-                rows="3"
-                class="w-full rounded-xl border border-brand-border px-3 py-2 text-sm"
-              />
-            </div>
-          </div>
-          <footer class="flex gap-2 border-t border-brand-border px-5 py-4">
-            <button
-              type="button"
-              class="h-11 flex-1 rounded-xl border border-brand-border text-sm font-semibold"
-              @click="drawerOpen = false"
-            >
-              {{ t('transportation.movements.cancel') }}
-            </button>
-            <button
-              type="button"
-              class="h-11 flex-1 rounded-xl bg-brand-primary-dark text-sm font-semibold text-white disabled:opacity-50"
-              :disabled="submitting"
-              @click="submit"
-            >
-              {{ t('transportation.movements.save') }}
-            </button>
-          </footer>
-        </aside>
+    <AppFormDrawer
+      v-model:open="drawerOpen"
+      :title="
+        editing
+          ? t('transportation.movements.editTitle')
+          : t('transportation.movements.createTitle')
+      "
+      size="sm"
+      :dirty="formDirty"
+      :submitting="submitting"
+      :cancel-label="t('transportation.movements.cancel')"
+      :submit-label="t('transportation.movements.save')"
+      @submit="submit"
+    >
+      <p v-if="formError" class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+        {{ formError }}
+      </p>
+      <div>
+        <label class="mb-1 block text-sm font-medium">{{
+          t('transportation.movements.fields.origin')
+        }}</label>
+        <AppRemoteSelect
+          v-model="form.origin_point_id"
+          :query-key="['transport-movement-origin-points']"
+          :fetcher="fetchPoints"
+          :map-option="mapPoint"
+          searchable
+        />
+        <p v-if="fieldMessage('origin_point_id')" class="mt-1 text-xs text-red-600">
+          {{ fieldMessage('origin_point_id') }}
+        </p>
       </div>
-    </Teleport>
+      <div>
+        <label class="mb-1 block text-sm font-medium">{{
+          t('transportation.movements.fields.destination')
+        }}</label>
+        <AppRemoteSelect
+          v-model="form.destination_point_id"
+          :query-key="['transport-movement-destination-points']"
+          :fetcher="fetchPoints"
+          :map-option="mapPoint"
+          searchable
+        />
+        <p v-if="fieldMessage('destination_point_id')" class="mt-1 text-xs text-red-600">
+          {{ fieldMessage('destination_point_id') }}
+        </p>
+      </div>
+      <div>
+        <label class="mb-1 block text-sm font-medium">{{
+          t('transportation.movements.fields.departure')
+        }}</label>
+        <input
+          v-model="form.planned_departure_at"
+          type="datetime-local"
+          class="h-11 w-full rounded-xl border border-brand-border px-3 text-sm"
+        />
+        <p v-if="fieldMessage('planned_departure_at')" class="mt-1 text-xs text-red-600">
+          {{ fieldMessage('planned_departure_at') }}
+        </p>
+      </div>
+      <div>
+        <label class="mb-1 block text-sm font-medium">{{
+          t('transportation.movements.fields.arrival')
+        }}</label>
+        <input
+          v-model="form.planned_arrival_at"
+          type="datetime-local"
+          class="h-11 w-full rounded-xl border border-brand-border px-3 text-sm"
+        />
+        <p v-if="fieldMessage('planned_arrival_at')" class="mt-1 text-xs text-red-600">
+          {{ fieldMessage('planned_arrival_at') }}
+        </p>
+      </div>
+      <div>
+        <label class="mb-1 block text-sm font-medium">{{
+          t('transportation.movements.fields.notes')
+        }}</label>
+        <textarea
+          v-model="form.notes"
+          rows="3"
+          class="w-full rounded-xl border border-brand-border px-3 py-2 text-sm"
+        />
+      </div>
+    </AppFormDrawer>
   </div>
 </template>

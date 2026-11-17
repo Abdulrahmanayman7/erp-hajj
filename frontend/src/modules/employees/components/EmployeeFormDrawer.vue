@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { listPositions } from '../api/positionsApi'
 import AppDateInput from '@/shared/components/AppDateInput.vue'
 import AppFormDrawer from '@/shared/components/AppFormDrawer.vue'
+import { useCaptureOnOpen, useFormDirty } from '@/shared/composables/useFormDirty'
 import AppPhoneInput from '@/shared/components/AppPhoneInput.vue'
 import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
@@ -56,6 +57,9 @@ function patch(partial: Partial<EmployeeFormState>): void {
   emit('update:form', { ...props.form, ...partial })
 }
 
+const { dirty, capture, reset: resetDirty } = useFormDirty(() => props.form)
+useCaptureOnOpen(() => props.open, capture, { onClose: () => resetDirty() })
+
 function onOpenUpdate(value: boolean): void {
   if (!value) emit('close')
 }
@@ -67,6 +71,7 @@ function onOpenUpdate(value: boolean): void {
     :title="title"
     :description="subtitle"
     size="md"
+    :dirty="dirty"
     :submitting="submitting"
     :cancel-label="t('employees.cancel')"
     :submit-label="primaryLabel"

@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import AppFormDrawer from '@/shared/components/AppFormDrawer.vue'
+import { useCaptureOnOpen, useFormDirty } from '@/shared/composables/useFormDirty'
 import type { OperationalRisk, RiskFormState } from '../types/risks'
 import OperationalLinksFields from './OperationalLinksFields.vue'
 
@@ -25,6 +26,9 @@ const { t } = useI18n()
 const isEdit = computed(() => props.editing != null)
 const patch = (part: Partial<RiskFormState>) => emit('update:form', { ...props.form, ...part })
 
+const { dirty, capture, reset: resetDirty } = useFormDirty(() => props.form)
+useCaptureOnOpen(() => props.open, capture, { onClose: () => resetDirty() })
+
 function onOpenUpdate(value: boolean): void {
   if (!value) emit('close')
 }
@@ -36,6 +40,7 @@ function onOpenUpdate(value: boolean): void {
     :title="t(isEdit ? 'risks.editTitle' : 'risks.createTitle')"
     :description="t(isEdit ? 'risks.editSubtitle' : 'risks.createSubtitle')"
     size="md"
+    :dirty="dirty"
     :submitting="submitting"
     :cancel-label="t('risks.cancel')"
     :submit-label="t(isEdit ? 'risks.save' : 'risks.createCta')"

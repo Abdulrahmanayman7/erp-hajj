@@ -6,6 +6,7 @@ import { listEmployees } from '@/modules/employees/api/employeesApi'
 import { listWarehouses } from '@/modules/inventory/api/warehousesApi'
 import AppDateInput from '@/shared/components/AppDateInput.vue'
 import AppFormDrawer from '@/shared/components/AppFormDrawer.vue'
+import { useCaptureOnOpen, useFormDirty } from '@/shared/composables/useFormDirty'
 import AppNumberInput from '@/shared/components/AppNumberInput.vue'
 import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
@@ -63,6 +64,9 @@ const selectedWarehouse = computed(() =>
   props.editing?.warehouse ? warehouseSelectOption(props.editing.warehouse) : null,
 )
 
+const { dirty, capture, reset: resetDirty } = useFormDirty(() => props.form)
+useCaptureOnOpen(() => props.open, capture, { onClose: () => resetDirty() })
+
 function onOpenUpdate(value: boolean): void {
   if (!value) emit('close')
 }
@@ -74,6 +78,7 @@ function onOpenUpdate(value: boolean): void {
     :title="t(isEdit ? 'assets.form.editTitle' : 'assets.form.createTitle')"
     :description="t(isEdit ? 'assets.form.editSubtitle' : 'assets.form.createSubtitle')"
     size="md"
+    :dirty="dirty"
     :submitting="submitting"
     :cancel-label="t('assets.cancel')"
     :submit-label="t('assets.save')"

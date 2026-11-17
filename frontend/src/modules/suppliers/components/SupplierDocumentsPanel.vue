@@ -14,8 +14,10 @@ import {
   validateDocumentUploadForm,
 } from '@/modules/documents/validation/documentValidation'
 import { ApiError } from '@/shared/api/http'
+import AppFormDrawer from '@/shared/components/AppFormDrawer.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
+import { useCaptureOnOpen, useFormDirty } from '@/shared/composables/useFormDirty'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import { useToast } from '@/shared/composables/useToast'
 
@@ -139,6 +141,14 @@ const linkedDocumentOptions = computed<AppSelectOption[]>(() => [
 const recordSubmitting = computed(
   () => createMutation.isPending.value || supersedeMutation.isPending.value,
 )
+const recordDrawerTitle = computed(() =>
+  recordMode.value === 'create'
+    ? t('suppliers.documents.addRecordTitle')
+    : t('suppliers.documents.supersedeTitle'),
+)
+const { dirty: recordFormDirty, capture: captureRecordForm, reset: resetRecordForm } =
+  useFormDirty(recordForm)
+useCaptureOnOpen(recordDrawerOpen, captureRecordForm, { onClose: resetRecordForm })
 
 function clearRecordErrors(): void {
   recordFormError.value = ''
@@ -213,6 +223,12 @@ async function submitRecord(): Promise<void> {
 /* ------------------------------- upload flow ------------------------------ */
 
 const uploadOpen = ref(false)
+const recordDrawerVisible = computed({
+  get: () => recordDrawerOpen.value && !uploadOpen.value,
+  set: (value: boolean) => {
+    if (!value) closeRecordDrawer()
+  },
+})
 const uploadError = ref('')
 const uploadFieldErrors = reactive<Record<string, string>>({})
 const emptyUploadForm = (): DocumentUploadFormState => ({
@@ -490,123 +506,80 @@ const inputClass = 'w-full rounded-xl border border-brand-border px-3 py-2 text-
       </template>
     </section>
 
-    <!-- Create / supersede record drawer -->
-    <Teleport to="body">
-      <div
-        v-if="recordDrawerOpen && !uploadOpen"
-        class="fixed inset-0 z-[70] flex justify-start"
-      >
+    <AppFormDrawer
+      v-model:open="recordDrawerVisible"
+      :title="recordDrawerTitle"
+      :description="recordRow?.label ?? ''"
+      size="md"
+      :dirty="recordFormDirty"
+      :submitting="recordSubmitting"
+      :cancel-label="t('suppliers.cancel')"
+      :submit-label="t('suppliers.save')"
+      @submit="submitRecord"
+    >
+      <p v-if="recordFormError" class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
+        {{ recordFormError }}
+      </p>
+      <p class="rounded-lg bg-brand-bg px-3 py-2 text-xs text-brand-text-secondary">
+        {{ t('suppliers.documents.uploadLinkNote') }}
+      </p>
+
+      <PermissionGuard permission="documents.upload">
         <button
           type="button"
-          class="absolute inset-0 bg-black/40"
-          :aria-label="t('suppliers.closeDrawer')"
-          @click="closeRecordDrawer"
-        />
-        <aside
-          class="relative z-10 flex h-full w-full max-w-lg flex-col bg-brand-surface shadow-2xl"
-          role="dialog"
-          aria-modal="true"
+          class="inline-flex items-center gap-2 rounded-xl border border-brand-border px-3 py-2 text-sm font-semibold"
+          @click="openUpload"
         >
-          <header class="flex items-start justify-between border-b border-brand-border px-5 py-4">
-            <div>
-              <h2 class="text-lg font-bold text-brand-text">
-                {{ recordMode === 'create' ? t('suppliers.documents.addRecordTitle') : t('suppliers.documents.supersedeTitle') }}
-              </h2>
-              <p v-if="recordRow" class="mt-1 text-sm text-brand-text-secondary">{{ recordRow.label }}</p>
-            </div>
-            <button type="button" class="rounded-lg p-1 hover:bg-brand-bg" :aria-label="t('suppliers.closeDrawer')" @click="closeRecordDrawer">
-              <X class="h-5 w-5" />
-            </button>
-          </header>
+          <Upload class="h-4 w-4" />
+          {{ t('suppliers.documents.uploadAndLink') }}
+        </button>
+      </PermissionGuard>
 
-          <form class="flex flex-1 flex-col overflow-hidden" @submit.prevent="submitRecord">
-            <div class="flex-1 space-y-4 overflow-y-auto px-5 py-4">
-              <p v-if="recordFormError" class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
-                {{ recordFormError }}
-              </p>
-              <p class="rounded-lg bg-brand-bg px-3 py-2 text-xs text-brand-text-secondary">
-                {{ t('suppliers.documents.uploadLinkNote') }}
-              </p>
-
-              <PermissionGuard permission="documents.upload">
-                <button
-                  type="button"
-                  class="inline-flex items-center gap-2 rounded-xl border border-brand-border px-3 py-2 text-sm font-semibold"
-                  @click="openUpload"
-                >
-                  <Upload class="h-4 w-4" />
-                  {{ t('suppliers.documents.uploadAndLink') }}
-                </button>
-              </PermissionGuard>
-
-              <div v-if="canPickLinkedDocuments && (linkedDocsQuery.data.value?.length ?? 0) > 0">
-                <label class="mb-1 block text-sm font-semibold text-brand-text">{{ t('suppliers.documents.pickLinked') }}</label>
-                <AppSelect
-                  :model-value="recordForm.document_id"
-                  :options="linkedDocumentOptions"
-                  searchable
-                  @update:model-value="recordForm.document_id = $event === '' || $event == null ? '' : Number($event)"
-                />
-              </div>
-
-              <div>
-                <label class="mb-1 block text-sm font-semibold text-brand-text" for="rec-document-id">
-                  {{ t('suppliers.documents.documentId') }}
-                </label>
-                <input
-                  id="rec-document-id"
-                  :value="recordForm.document_id"
-                  type="number"
-                  min="1"
-                  dir="ltr"
-                  :class="[inputClass, 'text-start']"
-                  @input="recordForm.document_id = ($event.target as HTMLInputElement).value === '' ? '' : Number(($event.target as HTMLInputElement).value)"
-                />
-                <p class="mt-1 text-xs text-brand-text-muted">{{ t('suppliers.documents.documentIdHint') }}</p>
-                <p v-if="recordErrors.document_id" class="mt-1 text-xs text-red-600">
-                  {{ t('suppliers.documents.validation.documentId') }}
-                </p>
-              </div>
-
-              <div>
-                <label class="mb-1 block text-sm font-semibold text-brand-text" for="rec-expires-at">
-                  {{ t('suppliers.documents.expiresAtField') }}
-                </label>
-                <input
-                  id="rec-expires-at"
-                  v-model="recordForm.expires_at"
-                  type="date"
-                  dir="ltr"
-                  :class="[inputClass, 'text-start']"
-                />
-                <p v-if="recordErrors.expires_at" class="mt-1 text-xs text-red-600">
-                  {{ t('suppliers.documents.validation.date') }}
-                </p>
-              </div>
-            </div>
-
-            <footer class="flex justify-end gap-2 border-t border-brand-border px-5 py-4">
-              <button
-                type="button"
-                class="rounded-xl border border-brand-border px-4 py-2 text-sm font-semibold"
-                :disabled="recordSubmitting"
-                @click="closeRecordDrawer"
-              >
-                {{ t('suppliers.cancel') }}
-              </button>
-              <button
-                type="submit"
-                class="inline-flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
-                :disabled="recordSubmitting"
-              >
-                <Loader2 v-if="recordSubmitting" class="h-4 w-4 animate-spin" />
-                {{ t('suppliers.save') }}
-              </button>
-            </footer>
-          </form>
-        </aside>
+      <div v-if="canPickLinkedDocuments && (linkedDocsQuery.data.value?.length ?? 0) > 0">
+        <label class="mb-1 block text-sm font-semibold text-brand-text">{{ t('suppliers.documents.pickLinked') }}</label>
+        <AppSelect
+          :model-value="recordForm.document_id"
+          :options="linkedDocumentOptions"
+          searchable
+          @update:model-value="recordForm.document_id = $event === '' || $event == null ? '' : Number($event)"
+        />
       </div>
-    </Teleport>
+
+      <div>
+        <label class="mb-1 block text-sm font-semibold text-brand-text" for="rec-document-id">
+          {{ t('suppliers.documents.documentId') }}
+        </label>
+        <input
+          id="rec-document-id"
+          :value="recordForm.document_id"
+          type="number"
+          min="1"
+          dir="ltr"
+          :class="[inputClass, 'text-start']"
+          @input="recordForm.document_id = ($event.target as HTMLInputElement).value === '' ? '' : Number(($event.target as HTMLInputElement).value)"
+        />
+        <p class="mt-1 text-xs text-brand-text-muted">{{ t('suppliers.documents.documentIdHint') }}</p>
+        <p v-if="recordErrors.document_id" class="mt-1 text-xs text-red-600">
+          {{ t('suppliers.documents.validation.documentId') }}
+        </p>
+      </div>
+
+      <div>
+        <label class="mb-1 block text-sm font-semibold text-brand-text" for="rec-expires-at">
+          {{ t('suppliers.documents.expiresAtField') }}
+        </label>
+        <input
+          id="rec-expires-at"
+          v-model="recordForm.expires_at"
+          type="date"
+          dir="ltr"
+          :class="[inputClass, 'text-start']"
+        />
+        <p v-if="recordErrors.expires_at" class="mt-1 text-xs text-red-600">
+          {{ t('suppliers.documents.validation.date') }}
+        </p>
+      </div>
+    </AppFormDrawer>
 
     <DocumentUploadDrawer
       v-if="uploadOpen"

@@ -167,6 +167,13 @@ const spForm = reactive<SeasonPositionFormState>({
   is_active: true,
 })
 
+const allocationDrawerForm = computed(() => {
+  if (drawerSection.value === 'facility') return sfForm
+  if (drawerSection.value === 'unit') return suForm
+  if (drawerSection.value === 'position') return spForm
+  return undefined
+})
+
 const suFormFacilityId = computed(() => {
   if (suForm.season_facility_id === '') return null
   const row = (catalog.seasonFacilities.data.value ?? []).find((item) => item.id === suForm.season_facility_id)
@@ -600,7 +607,7 @@ useAccommodationDialog(() => drawerSection.value !== null, () => { if (!saving.v
       </section>
     </template>
 
-    <AccommodationFormDrawer :open="Boolean(drawerSection)" :submitting="saving" :disabled="!canWrite" @close="closeDrawer" @submit="drawerSection === 'facility' ? submitSf() : drawerSection === 'unit' ? submitSu() : submitSp()">
+    <AccommodationFormDrawer :open="Boolean(drawerSection)" :form="allocationDrawerForm" :submitting="saving" :disabled="!canWrite" @close="closeDrawer" @submit="drawerSection === 'facility' ? submitSf() : drawerSection === 'unit' ? submitSu() : submitSp()">
       <template #title>{{ t('accommodation.experience.' + ({ facility: 'facilityStep', unit: 'unitStep', position: 'positionStep' }[drawerSection ?? 'facility'])) }}</template>
 
       <template v-if="drawerSection === 'facility'">

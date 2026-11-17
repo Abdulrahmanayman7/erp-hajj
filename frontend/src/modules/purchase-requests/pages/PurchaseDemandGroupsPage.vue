@@ -4,10 +4,12 @@ import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
 import { FilePlus2, Plus, Search } from 'lucide-vue-next'
 
+import AppFormDrawer from '@/shared/components/AppFormDrawer.vue'
 import AppMobileFilters from '@/shared/components/AppMobileFilters.vue'
 import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
+import { useCaptureOnOpen, useFormDirty } from '@/shared/composables/useFormDirty'
 import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import {
@@ -41,6 +43,10 @@ const createOpen = ref(false)
 const createTitle = ref('')
 const createBusy = ref(false)
 const createError = ref('')
+const { dirty: createFormDirty, capture: captureCreateForm, reset: resetCreateForm } = useFormDirty(
+  () => createTitle.value,
+)
+useCaptureOnOpen(createOpen, captureCreateForm, { onClose: resetCreateForm })
 
 const listState = computed(() =>
   resolvePurchaseListState({
@@ -253,40 +259,27 @@ async function submitCreate(): Promise<void> {
       </footer>
     </div>
 
-    <div
-      v-if="createOpen && canMutate"
-      class="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4"
-      @click.self="createOpen = false"
+    <AppFormDrawer
+      v-if="canMutate"
+      v-model:open="createOpen"
+      :title="t('purchaseDemandGroups.create')"
+      size="sm"
+      :dirty="createFormDirty"
+      :submitting="createBusy"
+      :submit-disabled="createTitle.trim().length < 3"
+      :cancel-label="t('common.cancel')"
+      :submit-label="t('common.save')"
+      @submit="submitCreate"
     >
-      <div class="w-full max-w-md space-y-4 rounded-2xl border border-brand-border bg-brand-surface p-5 shadow-xl">
-        <h2 class="text-lg font-bold text-brand-text">{{ t('purchaseDemandGroups.create') }}</h2>
-        <label class="block text-sm">
-          <span class="mb-1 block text-brand-text-secondary">{{ t('purchaseDemandGroups.titleField') }}</span>
-          <input
-            v-model="createTitle"
-            class="w-full rounded-xl border border-brand-border px-3 py-2 text-sm"
-            :placeholder="t('purchaseDemandGroups.titleField')"
-          />
-        </label>
-        <p v-if="createError" class="text-sm text-red-700">{{ createError }}</p>
-        <div class="flex justify-end gap-2">
-          <button
-            type="button"
-            class="rounded-xl px-4 py-2 text-sm text-brand-text-secondary"
-            @click="createOpen = false"
-          >
-            {{ t('common.cancel') }}
-          </button>
-          <button
-            type="button"
-            class="rounded-xl bg-brand-primary px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
-            :disabled="createBusy || createTitle.trim().length < 3"
-            @click="submitCreate"
-          >
-            {{ t('common.save') }}
-          </button>
-        </div>
-      </div>
-    </div>
+      <label class="block text-sm">
+        <span class="mb-1 block text-brand-text-secondary">{{ t('purchaseDemandGroups.titleField') }}</span>
+        <input
+          v-model="createTitle"
+          class="w-full rounded-xl border border-brand-border px-3 py-2 text-sm"
+          :placeholder="t('purchaseDemandGroups.titleField')"
+        />
+      </label>
+      <p v-if="createError" class="text-sm text-red-700">{{ createError }}</p>
+    </AppFormDrawer>
   </div>
 </template>

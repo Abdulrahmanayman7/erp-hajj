@@ -8,15 +8,16 @@ import {
   LoaderCircle,
   Plus,
   Search,
-  X,
 } from 'lucide-vue-next'
 
 import { ApiError } from '@/shared/api/http'
+import AppFormDrawer from '@/shared/components/AppFormDrawer.vue'
 import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
 import { useBodyScrollLock } from '@/shared/composables/useBodyScrollLock'
 import { useConfirm } from '@/shared/composables/useConfirm'
+import { useCaptureOnOpen, useFormDirty } from '@/shared/composables/useFormDirty'
 import { useToast } from '@/shared/composables/useToast'
 import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
 
@@ -212,6 +213,11 @@ async function submitForm(): Promise<void> {
       error instanceof ApiError ? error.message : t('organization.toasts.genericError')
   }
 }
+
+const { dirty: moveDirty, capture: captureMove, reset: resetMoveDirty } = useFormDirty(
+  () => ({ parent_id: moveParentId.value }),
+)
+useCaptureOnOpen(moveOpen, captureMove, { onClose: () => resetMoveDirty() })
 
 function openMove(): void {
   if (!selected.value) return
@@ -521,59 +527,29 @@ function collapseAll(): void {
       @update:form="form = $event"
     />
 
-    <Teleport to="body">
-      <div
-        v-if="moveOpen && selected"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(15,23,20,0.32)] p-4"
-      >
-        <div class="w-full max-w-md overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-[0_14px_32px_-18px_rgba(23,32,29,0.38)]">
-          <div class="flex items-start justify-between gap-3 border-b border-brand-border px-5 py-4">
-            <div>
-              <h3 class="text-lg font-bold text-brand-text">{{ t('organization.moveTitle') }}</h3>
-              <p class="mt-1 text-sm text-brand-text-secondary">{{ t('organization.moveBody') }}</p>
-            </div>
-            <button
-              type="button"
-              class="inline-flex h-11 w-11 items-center justify-center rounded-xl text-brand-text-muted transition hover:bg-brand-bg hover:text-brand-text"
-              :aria-label="t('organization.close')"
-              @click="moveOpen = false"
-            >
-              <X class="h-4 w-4" :stroke-width="2" />
-            </button>
-          </div>
-          <div class="px-5 py-4">
-            <span class="mb-1.5 block text-sm font-medium text-brand-text">{{
-              t('organization.fields.parent')
-            }}</span>
-            <AppSelect
-              :model-value="moveParentId"
-              :options="moveParentOptions"
-              searchable
-              @update:model-value="
-                moveParentId = $event === null || $event === '' ? null : Number($event)
-              "
-            />
-          </div>
-          <div class="flex flex-col gap-2 border-t border-brand-border px-5 py-4 sm:flex-row sm:justify-end">
-            <button
-              type="button"
-              class="inline-flex h-11 items-center justify-center rounded-xl px-4 text-sm font-medium text-brand-text-secondary transition hover:bg-brand-bg sm:h-10"
-              @click="moveOpen = false"
-            >
-              {{ t('organization.cancel') }}
-            </button>
-            <button
-              type="button"
-              class="inline-flex h-11 items-center justify-center rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white transition hover:bg-brand-primary disabled:opacity-60 sm:h-10"
-              :disabled="isMoving"
-              @click="confirmMove"
-            >
-              {{ t('organization.moveCta') }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </Teleport>
+    <AppFormDrawer
+      v-model:open="moveOpen"
+      :title="t('organization.moveTitle')"
+      :description="t('organization.moveBody')"
+      size="sm"
+      :dirty="moveDirty"
+      :submitting="isMoving"
+      :submit-label="t('organization.moveCta')"
+      :cancel-label="t('organization.cancel')"
+      @submit="confirmMove"
+    >
+      <span class="mb-1.5 block text-sm font-medium text-brand-text">{{
+        t('organization.fields.parent')
+      }}</span>
+      <AppSelect
+        :model-value="moveParentId"
+        :options="moveParentOptions"
+        searchable
+        @update:model-value="
+          moveParentId = $event === null || $event === '' ? null : Number($event)
+        "
+      />
+    </AppFormDrawer>
   </div>
 </template>
 

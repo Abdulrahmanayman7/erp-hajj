@@ -174,6 +174,8 @@ watch(
 onUnmounted(() => {
   document.removeEventListener('keydown', onKeydown, true)
 })
+
+defineExpose({ requestClose })
 </script>
 
 <template>

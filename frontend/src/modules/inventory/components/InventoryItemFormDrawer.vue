@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import AppFormDrawer from '@/shared/components/AppFormDrawer.vue'
+import { useCaptureOnOpen, useFormDirty } from '@/shared/composables/useFormDirty'
 import AppNumberInput from '@/shared/components/AppNumberInput.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 
@@ -39,6 +40,9 @@ function patch(part: Partial<InventoryItemFormState>): void {
   emit('update:form', { ...props.form, ...part })
 }
 
+const { dirty, capture, reset: resetDirty } = useFormDirty(() => props.form)
+useCaptureOnOpen(() => props.open, capture, { onClose: () => resetDirty() })
+
 function onOpenUpdate(value: boolean): void {
   if (!value) emit('close')
 }
@@ -50,6 +54,7 @@ function onOpenUpdate(value: boolean): void {
     :title="t(isEdit ? 'inventory.items.editTitle' : 'inventory.items.createTitle')"
     :description="t(isEdit ? 'inventory.items.editSubtitle' : 'inventory.items.createSubtitle')"
     size="md"
+    :dirty="dirty"
     :submitting="submitting"
     :cancel-label="t('inventory.cancel')"
     :submit-label="t(isEdit ? 'inventory.save' : 'inventory.items.createCta')"

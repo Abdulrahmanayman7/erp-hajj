@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { listEmployees } from '@/modules/employees/api/employeesApi'
 import AppDateInput from '@/shared/components/AppDateInput.vue'
 import AppFormDrawer from '@/shared/components/AppFormDrawer.vue'
+import { useCaptureOnOpen, useFormDirty } from '@/shared/composables/useFormDirty'
 import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 import { employeeSelectOption, toSelectId } from '@/shared/lookups/selectOptions'
@@ -39,6 +40,9 @@ const selectedResponsible = computed(() =>
   props.editing?.responsible_employee ? employeeSelectOption(props.editing.responsible_employee) : null,
 )
 
+const { dirty, capture, reset: resetDirty } = useFormDirty(() => props.form)
+useCaptureOnOpen(() => props.open, capture, { onClose: () => resetDirty() })
+
 function onOpenUpdate(value: boolean): void {
   if (!value) emit('close')
 }
@@ -49,6 +53,7 @@ function onOpenUpdate(value: boolean): void {
     :title="t(isEdit ? 'decisions.editTitle' : 'decisions.createTitle')"
     :description="t(isEdit ? 'decisions.editSubtitle' : 'decisions.createSubtitle')"
     size="md"
+    :dirty="dirty"
     :submitting="submitting"
     :cancel-label="t('decisions.cancel')"
     :submit-label="t(isEdit ? 'decisions.editCta' : 'decisions.createCta')"

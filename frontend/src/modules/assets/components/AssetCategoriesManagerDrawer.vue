@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Loader2, Pencil, Plus, Power, PowerOff, Trash2, X } from 'lucide-vue-next'
+import { Pencil, Plus, Power, PowerOff, Trash2 } from 'lucide-vue-next'
 
 import { ApiError } from '@/shared/api/http'
+import AppFormDrawer from '@/shared/components/AppFormDrawer.vue'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
 import { useConfirm } from '@/shared/composables/useConfirm'
+import { useFormDirty } from '@/shared/composables/useFormDirty'
 import { useToast } from '@/shared/composables/useToast'
 
 import {
@@ -40,6 +42,10 @@ const formError = ref('')
 const form = reactive<AssetCategoryFormState>({ name: '', description: '', is_active: true })
 const fieldErrors = reactive<Record<string, string>>({})
 
+const { dirty: formDirty, capture: captureFormDirty, reset: resetFormDirty } = useFormDirty(form, {
+  enabled: formOpen,
+})
+
 const isSubmitting = computed(
   () => createMutation.isPending.value || updateMutation.isPending.value,
 )
@@ -51,6 +57,17 @@ watch(
   },
 )
 
+function onOuterOpenUpdate(value: boolean): void {
+  if (!value) emit('close')
+}
+
+function onFormOpenUpdate(value: boolean): void {
+  if (!value) {
+    formOpen.value = false
+    resetFormDirty()
+  }
+}
+
 function openCreate(): void {
   editing.value = null
   form.name = ''
@@ -59,6 +76,7 @@ function openCreate(): void {
   formError.value = ''
   Object.keys(fieldErrors).forEach((k) => delete fieldErrors[k])
   formOpen.value = true
+  captureFormDirty()
 }
 
 function openEdit(category: AssetCategory): void {
@@ -69,6 +87,7 @@ function openEdit(category: AssetCategory): void {
   formError.value = ''
   Object.keys(fieldErrors).forEach((k) => delete fieldErrors[k])
   formOpen.value = true
+  captureFormDirty()
 }
 
 function apiMessage(error: unknown): string {
@@ -100,6 +119,7 @@ async function submitForm(): Promise<void> {
       toast.success(t('assets.toasts.categoryCreated'))
     }
     formOpen.value = false
+    resetFormDirty()
   } catch (error) {
     formError.value = apiMessage(error)
   }
@@ -146,155 +166,113 @@ async function confirmDelete(category: AssetCategory): Promise<void> {
 </script>
 
 <template>
-  <Teleport to="body">
-    <div v-if="open" class="fixed inset-0 z-50" role="presentation">
-      <div class="absolute inset-0 bg-black/30" @click="emit('close')" />
-      <aside
-        class="app-drawer-panel absolute inset-y-0 start-0 flex w-full max-w-[520px] flex-col bg-brand-surface shadow-xl"
-        role="dialog"
-        aria-modal="true"
-        @click.stop
-      >
-        <header class="flex shrink-0 items-start justify-between border-b border-brand-border px-4 py-4">
-          <div>
-            <h2 class="text-lg font-bold">{{ t('assets.categories.title') }}</h2>
-            <p class="mt-1 text-sm text-brand-text-secondary">{{ t('assets.categories.subtitle') }}</p>
-          </div>
-          <button
-            type="button"
-            class="rounded-lg p-2 text-brand-text-muted hover:bg-brand-bg"
-            :aria-label="t('assets.closeDrawer')"
-            @click="emit('close')"
-          >
-            <X class="h-5 w-5" />
-          </button>
-        </header>
+  <AppFormDrawer
+    :open="open"
+    :title="t('assets.categories.title')"
+    :description="t('assets.categories.subtitle')"
+    size="md"
+    hide-default-footer
+    @update:open="onOuterOpenUpdate"
+  >
+    <div class="border-b border-brand-border pb-3 -mt-1 mb-4">
+      <PermissionGuard permission="assets.update">
+        <button
+          type="button"
+          class="inline-flex items-center gap-2 rounded-xl bg-brand-primary-dark px-3 py-2 text-sm font-semibold text-white"
+          @click="openCreate"
+        >
+          <Plus class="h-4 w-4" />
+          {{ t('assets.categories.add') }}
+        </button>
+      </PermissionGuard>
+    </div>
 
-        <div class="border-b border-brand-border px-4 py-3">
+    <div v-if="isLoading" class="py-10 text-center text-sm">{{ t('assets.categories.loading') }}</div>
+    <div v-else-if="isError" class="py-10 text-center text-sm">
+      <p>{{ t('assets.errors.loadCategories') }}</p>
+      <button type="button" class="mt-2 underline" @click="() => refetch()">
+        {{ t('assets.retry') }}
+      </button>
+    </div>
+    <div v-else-if="!categories.length" class="py-10 text-center text-sm text-brand-text-muted">
+      {{ t('assets.categories.empty') }}
+    </div>
+    <ul v-else class="space-y-2">
+      <li
+        v-for="category in categories"
+        :key="category.id"
+        class="flex items-center justify-between gap-3 rounded-xl border border-brand-border px-3 py-3"
+      >
+        <div class="min-w-0">
+          <p class="font-semibold">{{ category.name }}</p>
+          <p v-if="category.description" class="truncate text-xs text-brand-text-muted">
+            {{ category.description }}
+          </p>
+          <span
+            class="mt-1 inline-flex rounded-full px-2 py-0.5 text-xs font-semibold"
+            :class="
+              category.is_active
+                ? 'bg-emerald-50 text-emerald-800'
+                : 'bg-neutral-100 text-neutral-600'
+            "
+          >
+            {{ category.is_active ? t('assets.status.active') : t('assets.status.inactive') }}
+          </span>
+        </div>
+        <div class="flex shrink-0 items-center gap-1">
           <PermissionGuard permission="assets.update">
+            <button type="button" class="rounded-lg p-2 hover:bg-brand-bg" @click="openEdit(category)">
+              <Pencil class="h-4 w-4" />
+            </button>
+            <button type="button" class="rounded-lg p-2 hover:bg-brand-bg" @click="toggleActive(category)">
+              <PowerOff v-if="category.is_active" class="h-4 w-4" />
+              <Power v-else class="h-4 w-4" />
+            </button>
             <button
               type="button"
-              class="inline-flex items-center gap-2 rounded-xl bg-brand-primary-dark px-3 py-2 text-sm font-semibold text-white"
-              @click="openCreate"
+              class="rounded-lg p-2 text-red-700 hover:bg-red-50"
+              @click="confirmDelete(category)"
             >
-              <Plus class="h-4 w-4" />
-              {{ t('assets.categories.add') }}
+              <Trash2 class="h-4 w-4" />
             </button>
           </PermissionGuard>
         </div>
+      </li>
+    </ul>
+  </AppFormDrawer>
 
-        <div class="flex-1 overflow-y-auto px-4 py-4">
-          <div v-if="isLoading" class="py-10 text-center text-sm">{{ t('assets.categories.loading') }}</div>
-          <div v-else-if="isError" class="py-10 text-center text-sm">
-            <p>{{ t('assets.errors.loadCategories') }}</p>
-            <button type="button" class="mt-2 underline" @click="() => refetch()">
-              {{ t('assets.retry') }}
-            </button>
-          </div>
-          <div v-else-if="!categories.length" class="py-10 text-center text-sm text-brand-text-muted">
-            {{ t('assets.categories.empty') }}
-          </div>
-          <ul v-else class="space-y-2">
-            <li
-              v-for="category in categories"
-              :key="category.id"
-              class="flex items-center justify-between gap-3 rounded-xl border border-brand-border px-3 py-3"
-            >
-              <div class="min-w-0">
-                <p class="font-semibold">{{ category.name }}</p>
-                <p v-if="category.description" class="truncate text-xs text-brand-text-muted">
-                  {{ category.description }}
-                </p>
-                <span
-                  class="mt-1 inline-flex rounded-full px-2 py-0.5 text-xs font-semibold"
-                  :class="
-                    category.is_active
-                      ? 'bg-emerald-50 text-emerald-800'
-                      : 'bg-neutral-100 text-neutral-600'
-                  "
-                >
-                  {{ category.is_active ? t('assets.status.active') : t('assets.status.inactive') }}
-                </span>
-              </div>
-              <div class="flex shrink-0 items-center gap-1">
-                <PermissionGuard permission="assets.update">
-                  <button type="button" class="rounded-lg p-2 hover:bg-brand-bg" @click="openEdit(category)">
-                    <Pencil class="h-4 w-4" />
-                  </button>
-                  <button type="button" class="rounded-lg p-2 hover:bg-brand-bg" @click="toggleActive(category)">
-                    <PowerOff v-if="category.is_active" class="h-4 w-4" />
-                    <Power v-else class="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    class="rounded-lg p-2 text-red-700 hover:bg-red-50"
-                    @click="confirmDelete(category)"
-                  >
-                    <Trash2 class="h-4 w-4" />
-                  </button>
-                </PermissionGuard>
-              </div>
-            </li>
-          </ul>
-        </div>
-
-        <div
-          v-if="formOpen"
-          class="absolute inset-0 z-10 flex items-end bg-black/20 sm:items-center sm:justify-center"
-        >
-          <div
-            class="w-full rounded-t-2xl bg-brand-surface p-4 shadow-xl sm:max-w-md sm:rounded-2xl sm:p-5"
-            style="padding-bottom: max(16px, env(safe-area-inset-bottom))"
-          >
-            <h3 class="text-lg font-bold">
-              {{ editing ? t('assets.categories.editTitle') : t('assets.categories.createTitle') }}
-            </h3>
-            <div class="mt-4 space-y-3">
-              <label class="block">
-                <span class="text-sm font-medium">{{ t('assets.fields.categoryName') }}</span>
-                <input
-                  v-model="form.name"
-                  type="text"
-                  class="mt-1 h-11 w-full rounded-xl border border-brand-border px-3"
-                  :disabled="isSubmitting"
-                />
-                <p v-if="fieldErrors.name" class="mt-1 text-sm text-red-700">
-                  {{ t(`assets.validation.${fieldErrors.name}`) }}
-                </p>
-              </label>
-              <label class="block">
-                <span class="text-sm font-medium">{{ t('assets.fields.categoryDescription') }}</span>
-                <textarea
-                  v-model="form.description"
-                  rows="3"
-                  class="mt-1 w-full rounded-xl border border-brand-border px-3 py-2"
-                  :disabled="isSubmitting"
-                />
-              </label>
-              <p v-if="formError" class="text-sm text-red-700">{{ formError }}</p>
-            </div>
-            <div class="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-              <button
-                type="button"
-                class="inline-flex h-11 items-center justify-center rounded-xl px-4 text-sm"
-                :disabled="isSubmitting"
-                @click="formOpen = false"
-              >
-                {{ t('assets.cancel') }}
-              </button>
-              <button
-                type="button"
-                class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white"
-                :disabled="isSubmitting"
-                @click="submitForm"
-              >
-                <Loader2 v-if="isSubmitting" class="h-4 w-4 animate-spin" />
-                {{ t('assets.save') }}
-              </button>
-            </div>
-          </div>
-        </div>
-      </aside>
-    </div>
-  </Teleport>
+  <AppFormDrawer
+    :open="formOpen"
+    :title="editing ? t('assets.categories.editTitle') : t('assets.categories.createTitle')"
+    size="sm"
+    :dirty="formDirty"
+    :submitting="isSubmitting"
+    :cancel-label="t('assets.cancel')"
+    :submit-label="t('assets.save')"
+    @update:open="onFormOpenUpdate"
+    @submit="submitForm"
+  >
+    <label class="block">
+      <span class="text-sm font-medium">{{ t('assets.fields.categoryName') }}</span>
+      <input
+        v-model="form.name"
+        type="text"
+        class="mt-1 h-11 w-full rounded-xl border border-brand-border px-3"
+        :disabled="isSubmitting"
+      />
+      <p v-if="fieldErrors.name" class="mt-1 text-sm text-red-700">
+        {{ t(`assets.validation.${fieldErrors.name}`) }}
+      </p>
+    </label>
+    <label class="block">
+      <span class="text-sm font-medium">{{ t('assets.fields.categoryDescription') }}</span>
+      <textarea
+        v-model="form.description"
+        rows="3"
+        class="mt-1 w-full rounded-xl border border-brand-border px-3 py-2"
+        :disabled="isSubmitting"
+      />
+    </label>
+    <p v-if="formError" class="text-sm text-red-700">{{ formError }}</p>
+  </AppFormDrawer>
 </template>

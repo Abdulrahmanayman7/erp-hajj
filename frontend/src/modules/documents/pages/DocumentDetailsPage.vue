@@ -18,10 +18,12 @@ import {
 } from 'lucide-vue-next'
 
 import { ApiError } from '@/shared/api/http'
+import AppFormDrawer from '@/shared/components/AppFormDrawer.vue'
 import AppNumberInput from '@/shared/components/AppNumberInput.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
 import { useConfirm } from '@/shared/composables/useConfirm'
+import { useCaptureOnOpen, useFormDirty } from '@/shared/composables/useFormDirty'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import { useToast } from '@/shared/composables/useToast'
 
@@ -86,6 +88,9 @@ const form = reactive({
   linkable_type: '' as DocumentLinkableType | '',
   linkable_id: '' as number | '',
 })
+const { dirty: metadataFormDirty, capture: captureMetadataForm, reset: resetMetadataForm } =
+  useFormDirty(form)
+useCaptureOnOpen(editing, captureMetadataForm, { onClose: resetMetadataForm })
 
 function startEdit(): void {
   if (!document.value || !can('documents.update')) return
@@ -331,84 +336,69 @@ const hostLink = computed(() => {
         </aside>
       </div>
 
-      <div
-        v-if="editing"
-        class="fixed inset-0 z-50 flex items-end bg-[rgba(15,23,20,0.32)] p-0 sm:items-center sm:justify-center sm:p-4"
+      <AppFormDrawer
+        v-model:open="editing"
+        :title="t('documents.editTitle')"
+        size="md"
+        :dirty="metadataFormDirty"
+        :submitting="update.isPending.value"
+        :cancel-label="t('documents.cancel')"
+        :submit-label="t('documents.save')"
+        @submit="saveEdit"
       >
-        <form
-          class="w-full rounded-t-2xl bg-brand-surface p-5 shadow-xl sm:max-w-lg sm:rounded-2xl"
-          v-autofocus-when
-          @submit.prevent="saveEdit"
-        >
-          <h3 class="text-lg font-bold">{{ t('documents.editTitle') }}</h3>
-          <div class="mt-4 space-y-3">
-            <label class="block space-y-1.5">
-              <span class="text-sm font-medium">{{ t('documents.fields.title') }}</span>
-              <input
-                v-model="form.title"
-                type="text"
-                class="h-11 w-full rounded-xl border border-brand-border px-3"
-              />
-              <p v-if="fieldErrors.title" class="text-sm text-red-700">{{ fieldErrors.title }}</p>
-            </label>
-            <label class="block space-y-1.5">
-              <span class="text-sm font-medium">{{ t('documents.fields.description') }}</span>
-              <textarea
-                v-model="form.description"
-                rows="3"
-                class="w-full rounded-xl border border-brand-border px-3 py-2"
-              />
-            </label>
-            <label class="block space-y-1.5">
-              <span class="text-sm font-medium">{{ t('documents.fields.category') }}</span>
-              <AppSelect
-                v-model="form.category_id"
-                :options="categoryOptions"
-                searchable
-              />
-            </label>
-            <label class="block space-y-1.5">
-              <span class="text-sm font-medium">{{ t('documents.fields.linkableType') }}</span>
-              <AppSelect
-                :model-value="form.linkable_type"
-                :options="linkTypeOptions"
-                @update:model-value="
-                  form.linkable_type = ($event || '') as DocumentLinkableType | '';
-                  if (!form.linkable_type) form.linkable_id = ''
-                "
-              />
-            </label>
-            <label v-if="form.linkable_type" class="block space-y-1.5">
-              <span class="text-sm font-medium">{{ t('documents.fields.linkableId') }}</span>
-              <AppNumberInput
-                :model-value="form.linkable_id"
-                integer
-                min="1"
-                class="h-11 w-full rounded-xl border border-brand-border px-3"
-                @update:model-value="
-                  form.linkable_id = $event === '' ? '' : Number($event)
-                "
-              />
-              <p v-if="fieldErrors.linkable_id" class="text-sm text-red-700">
-                {{ fieldErrors.linkable_id }}
-              </p>
-            </label>
-            <p v-if="formError" class="text-sm text-red-700">{{ formError }}</p>
-          </div>
-          <div class="mt-5 flex justify-end gap-2">
-            <button type="button" class="rounded-xl px-4 py-2 text-sm" @click="editing = false">
-              {{ t('documents.cancel') }}
-            </button>
-            <button
-              type="submit"
-              class="rounded-xl bg-brand-primary-dark px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
-              :disabled="update.isPending.value"
-            >
-              {{ t('documents.save') }}
-            </button>
-          </div>
-        </form>
-      </div>
+        <label class="block space-y-1.5">
+          <span class="text-sm font-medium">{{ t('documents.fields.title') }}</span>
+          <input
+            v-model="form.title"
+            type="text"
+            class="h-11 w-full rounded-xl border border-brand-border px-3"
+          />
+          <p v-if="fieldErrors.title" class="text-sm text-red-700">{{ fieldErrors.title }}</p>
+        </label>
+        <label class="block space-y-1.5">
+          <span class="text-sm font-medium">{{ t('documents.fields.description') }}</span>
+          <textarea
+            v-model="form.description"
+            rows="3"
+            class="w-full rounded-xl border border-brand-border px-3 py-2"
+          />
+        </label>
+        <label class="block space-y-1.5">
+          <span class="text-sm font-medium">{{ t('documents.fields.category') }}</span>
+          <AppSelect
+            v-model="form.category_id"
+            :options="categoryOptions"
+            searchable
+          />
+        </label>
+        <label class="block space-y-1.5">
+          <span class="text-sm font-medium">{{ t('documents.fields.linkableType') }}</span>
+          <AppSelect
+            :model-value="form.linkable_type"
+            :options="linkTypeOptions"
+            @update:model-value="
+              form.linkable_type = ($event || '') as DocumentLinkableType | '';
+              if (!form.linkable_type) form.linkable_id = ''
+            "
+          />
+        </label>
+        <label v-if="form.linkable_type" class="block space-y-1.5">
+          <span class="text-sm font-medium">{{ t('documents.fields.linkableId') }}</span>
+          <AppNumberInput
+            :model-value="form.linkable_id"
+            integer
+            min="1"
+            class="h-11 w-full rounded-xl border border-brand-border px-3"
+            @update:model-value="
+              form.linkable_id = $event === '' ? '' : Number($event)
+            "
+          />
+          <p v-if="fieldErrors.linkable_id" class="text-sm text-red-700">
+            {{ fieldErrors.linkable_id }}
+          </p>
+        </label>
+        <p v-if="formError" class="text-sm text-red-700">{{ formError }}</p>
+      </AppFormDrawer>
     </template>
   </div>
 </template>

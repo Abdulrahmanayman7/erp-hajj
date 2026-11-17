@@ -103,6 +103,11 @@ const grantDrawer = ref<GrantDrawer>(null)
 const formError = ref('')
 const facilityScopeForm = reactive<FacilityScopeFormState>({ user_id: '', facility_id: '' })
 const supervisorScopeForm = reactive<SupervisorScopeFormState>({ user_id: '' })
+const grantDrawerForm = computed(() => {
+  if (grantDrawer.value === 'facility') return facilityScopeForm
+  if (grantDrawer.value === 'supervisor') return supervisorScopeForm
+  return undefined
+})
 
 const grantFacilityMutation = useGrantFacilityScopeMutation()
 const revokeFacilityMutation = useRevokeFacilityScopeMutation()
@@ -361,7 +366,7 @@ useAccommodationDialog(() => grantDrawer.value !== null, () => { if (!grantFacil
       </section>
     </template>
 
-    <AccommodationFormDrawer :open="Boolean(grantDrawer)" :submitting="grantFacilityMutation.isPending.value || grantSupervisorMutation.isPending.value" :disabled="!canWrite" @close="closeDrawer" @submit="grantDrawer === 'facility' ? submitFacilityGrant() : submitSupervisorGrant()">
+    <AccommodationFormDrawer :open="Boolean(grantDrawer)" :form="grantDrawerForm" :submitting="grantFacilityMutation.isPending.value || grantSupervisorMutation.isPending.value" :disabled="!canWrite" @close="closeDrawer" @submit="grantDrawer === 'facility' ? submitFacilityGrant() : submitSupervisorGrant()">
       <template #title>{{ grantDrawer === 'facility' ? t('accommodation.scopes.grantFacility') : t('accommodation.scopes.grantSupervisor') }}</template>
 
       <label class="block text-sm">
