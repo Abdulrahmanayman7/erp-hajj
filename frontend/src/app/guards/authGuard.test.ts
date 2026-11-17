@@ -34,6 +34,25 @@ function route(
   } as never
 }
 
+function tenantUser(permissions: string[]) {
+  return {
+    id: 1,
+    name: 'Test',
+    email: 't@example.com',
+    status: 'active' as const,
+    is_platform_user: false,
+    tenant: null,
+    roles: [],
+    permissions,
+  }
+}
+
+/** Make cached /me look older than the permission revalidation cooldown. */
+function ageCurrentUserCache(client: QueryClient, ageMs = 60_000) {
+  const query = client.getQueryCache().find({ queryKey: currentUserQueryKey })
+  query?.setState({ dataUpdatedAt: Date.now() - ageMs })
+}
+
 describe('createAuthGuard', () => {
   let queryClient: QueryClient
 
@@ -139,16 +158,7 @@ describe('createAuthGuard', () => {
   })
 
   it('sends authenticated users lacking permission to 403 page', async () => {
-    queryClient.setQueryData(currentUserQueryKey, {
-      id: 1,
-      name: 'Test',
-      email: 't@example.com',
-      status: 'active',
-      is_platform_user: false,
-      tenant: null,
-      roles: [],
-      permissions: ['dashboard.view'],
-    })
+    queryClient.setQueryData(currentUserQueryKey, tenantUser(['dashboard.view']))
 
     const guard = createAuthGuard(queryClient)
     const result = await guard(
@@ -158,6 +168,75 @@ describe('createAuthGuard', () => {
     )
 
     expect(result).toMatchObject({ name: 'app-forbidden' })
+    // Fresh setQueryData is inside the cooldown — no extra /me round-trip.
+    expect(fetchCurrentUser).not.toHaveBeenCalled()
+  })
+
+  it('revalidates /me when stale cached permissions would deny GPS access', async () => {
+    queryClient.setQueryData(currentUserQueryKey, tenantUser(['dashboard.view']))
+    ageCurrentUserCache(queryClient)
+    vi.mocked(fetchCurrentUser).mockResolvedValue(
+      tenantUser(['dashboard.view', 'gps.map.view', 'gps.providers.view']),
+    )
+
+    const guard = createAuthGuard(queryClient)
+    const result = await guard(
+      route({ requiresAuth: true, permission: 'gps.map.view' }, '/app/gps-fleet-map', 'gps-fleet-map'),
+      {} as never,
+      (() => undefined) as never,
+    )
+
+    expect(fetchCurrentUser).toHaveBeenCalledTimes(1)
+    expect(result).toBe(true)
+    expect(queryClient.getQueryData(currentUserQueryKey)).toMatchObject({
+      permissions: expect.arrayContaining(['gps.map.view']),
+    })
+  })
+
+  it('returns 403 only after a fresh /me still denies access', async () => {
+    queryClient.setQueryData(currentUserQueryKey, tenantUser(['dashboard.view']))
+    ageCurrentUserCache(queryClient)
+    vi.mocked(fetchCurrentUser).mockResolvedValue(tenantUser(['dashboard.view']))
+
+    const guard = createAuthGuard(queryClient)
+    const result = await guard(
+      route(
+        {
+          requiresAuth: true,
+          permissionsAny: ['gps.providers.view', 'gps.providers.manage'],
+        },
+        '/app/gps-providers',
+        'gps-providers',
+      ),
+      {} as never,
+      (() => undefined) as never,
+    )
+
+    expect(fetchCurrentUser).toHaveBeenCalledTimes(1)
+    expect(result).toMatchObject({ name: 'app-forbidden' })
+  })
+
+  it('does not revalidate /me again within the permission cooldown', async () => {
+    queryClient.setQueryData(currentUserQueryKey, tenantUser(['dashboard.view']))
+    ageCurrentUserCache(queryClient)
+    vi.mocked(fetchCurrentUser).mockResolvedValue(tenantUser(['dashboard.view']))
+
+    const guard = createAuthGuard(queryClient)
+    const gpsRoute = route(
+      { requiresAuth: true, permission: 'gps.map.view' },
+      '/app/gps-fleet-map',
+      'gps-fleet-map',
+    )
+
+    expect(await guard(gpsRoute, {} as never, (() => undefined) as never)).toMatchObject({
+      name: 'app-forbidden',
+    })
+    expect(fetchCurrentUser).toHaveBeenCalledTimes(1)
+
+    expect(await guard(gpsRoute, {} as never, (() => undefined) as never)).toMatchObject({
+      name: 'app-forbidden',
+    })
+    expect(fetchCurrentUser).toHaveBeenCalledTimes(1)
   })
 
   it('allows permissionsAll when every listed permission is present', async () => {
