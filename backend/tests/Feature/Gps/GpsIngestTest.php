@@ -2,7 +2,10 @@
 
 use App\Core\Authorization\Events\AuthorizationSecurityEvent;
 use App\Core\Tenancy\Models\Tenant;
+use App\Modules\Gps\Enums\GpsConnectionMethod;
+use App\Modules\Gps\Enums\GpsProviderHealthStatus;
 use App\Modules\Gps\Models\GpsDeviceBinding;
+use App\Modules\Gps\Models\GpsProvider;
 use App\Modules\Gps\Models\GpsVehicleLastKnown;
 use App\Modules\SeasonPilgrims\Models\Season;
 use App\Modules\Transportation\Enums\ServiceLevel;
@@ -450,4 +453,63 @@ it('returns an identical GPS_INGEST_DENIED body for unknown tenant, missing secr
         ->and($badSignature->json())->toMatchArray($expected)
         ->and($unknownTenant->json())->toBe($missingSecret->json())
         ->and($missingSecret->json())->toBe($badSignature->json());
+});
+
+it('accepts ingest signed with an enabled hub webhook provider secret and stamps hub metadata', function (): void {
+    $fx = gpsIngestFixture();
+    Config::set('gps.webhook_secrets', []);
+    $hubSecret = 'hub-webhook-secret-'.uniqid();
+
+    $providerId = withTenant($fx['tenant'], function () use ($fx, $hubSecret): int {
+        $provider = new GpsProvider;
+        $provider->forceFill([
+            'name' => 'Hub Webhook',
+            'code' => 'hub-wh-'.uniqid(),
+            'connection_method' => GpsConnectionMethod::Webhook->value,
+            'is_enabled' => true,
+            'credentials_ciphertext' => ['webhook_secret' => $hubSecret],
+            'last_health_status' => GpsProviderHealthStatus::Unknown->value,
+        ]);
+        $provider->save();
+
+        GpsDeviceBinding::query()
+            ->where('device_id', $fx['device_id'])
+            ->update(['gps_provider_id' => $provider->id]);
+
+        return (int) $provider->id;
+    });
+
+    gpsSignedPost(gpsIngestPayload($fx), $hubSecret)->assertCreated();
+
+    withTenant($fx['tenant'], function () use ($fx, $providerId): void {
+        $row = GpsVehicleLastKnown::query()
+            ->where('transport_season_vehicle_id', $fx['vehicle']->id)
+            ->first();
+
+        expect($row)->not->toBeNull()
+            ->and((int) $row->gps_provider_id)->toBe($providerId)
+            ->and($row->source)->toBe('webhook')
+            ->and($row->is_simulated)->toBeFalse()
+            ->and(Schema::hasTable('gps_vehicle_location_history'))->toBeFalse();
+    });
+});
+
+it('rejects hub webhook ingest when only a disabled provider secret exists', function (): void {
+    $fx = gpsIngestFixture();
+    Config::set('gps.webhook_secrets', []);
+    $hubSecret = 'disabled-hub-secret-'.uniqid();
+
+    withTenant($fx['tenant'], function () use ($hubSecret): void {
+        $provider = new GpsProvider;
+        $provider->forceFill([
+            'name' => 'Disabled Webhook',
+            'code' => 'hub-wh-off-'.uniqid(),
+            'connection_method' => GpsConnectionMethod::Webhook->value,
+            'is_enabled' => false,
+            'credentials_ciphertext' => ['webhook_secret' => $hubSecret],
+        ]);
+        $provider->save();
+    });
+
+    gpsSignedPost(gpsIngestPayload($fx), $hubSecret)->assertForbidden();
 });

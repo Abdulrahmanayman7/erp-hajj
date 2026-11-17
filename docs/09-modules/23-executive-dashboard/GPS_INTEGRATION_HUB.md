@@ -49,9 +49,11 @@ Process-wide `GpsProviderInterface` remains default `NullGpsProvider`; unknown `
 
 ### Webhook
 
-1. Method `webhook` + encrypted `webhook_secret` (and/or env `GPS_WEBHOOK_SECRETS`).  
-2. Bind `device_id` ↔ season vehicle.  
-3. Provider posts to `/api/v1/gps/ingest` with HMAC (`X-Gps-Signature`).
+1. Method `webhook` + encrypted `webhook_secret` (and/or legacy env `GPS_WEBHOOK_SECRETS`).  
+2. Bind `device_id` ↔ season vehicle (preferably with `gps_provider_id`).  
+3. Provider posts to `/api/v1/gps/ingest` with HMAC (`X-Gps-Signature`).  
+4. Ingest accepts any enabled hub webhook secret for the tenant (plus env map fallback) and stamps last-known `source=webhook` / `gps_provider_id` when bound.  
+5. Disabled providers’ secrets are ignored (fail-closed).
 
 ### Device mapping
 
@@ -89,6 +91,12 @@ Live attested disposable Browser UAT for the hub is recorded in
 [`docs/audits/gps-hub-browser-uat/REPORT.md`](../../audits/gps-hub-browser-uat/REPORT.md)
 (`erp_hajj_gps_uat`, Playwright journeys PASS on PR #66). GPS permissions remain
 **explicit-assignment-only** (not auto-granted via Tenant Owner template).
+
+## Readiness prep (not Live)
+
+- php artisan gps:verify-g4-readiness
+- [G4_VENDOR_ONBOARDING_RUNBOOK.md](G4_VENDOR_ONBOARDING_RUNBOOK.md)
+- [G5_RETENTION_POLICY_CONTRACT.md](G5_RETENTION_POLICY_CONTRACT.md)
 
 ## Remaining blockers
 

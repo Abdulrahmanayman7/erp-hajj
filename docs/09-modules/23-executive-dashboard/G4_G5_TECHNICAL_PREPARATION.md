@@ -43,6 +43,12 @@
 4. Deletion / erasure procedure  
 5. Explicit Owner authorization to create history storage
 
+## Non-production readiness commands
+
+- php artisan gps:verify-g4-readiness — asserts fail-closed G4/G5 posture; refuses production
+- Onboarding: [G4_VENDOR_ONBOARDING_RUNBOOK.md](G4_VENDOR_ONBOARDING_RUNBOOK.md)
+- Retention contracts: [G5_RETENTION_POLICY_CONTRACT.md](G5_RETENTION_POLICY_CONTRACT.md)
+
 ## Tests guarding BLOCKED posture
 
 - `tests/Feature/Gps/GpsProviderBindingTest.php` — Null default, unapproved provider fails closed, history writer unbound, history table absent  
