@@ -24,6 +24,84 @@ function homeForUser(user: AuthUser) {
     : { name: 'app-home' as const }
 }
 
+/** Skip a second /me round-trip when the cache was just refreshed for a denial check. */
+const PERMISSION_REVALIDATE_COOLDOWN_MS = 10_000
+
+function isPermissionDenied(
+  permissions: string[],
+  requiredPermission: string | undefined,
+  requiredAnyPermissions: string[] | undefined,
+  requiredAllPermissions: string[] | undefined,
+): boolean {
+  const deniedSingle =
+    !!requiredPermission && !permissions.includes(requiredPermission)
+  const deniedAny =
+    !!requiredAnyPermissions &&
+    !requiredAnyPermissions.some((permission) => permissions.includes(permission))
+  const deniedAll =
+    !!requiredAllPermissions &&
+    !requiredAllPermissions.every((permission) => permissions.includes(permission))
+
+  return deniedSingle || deniedAny || deniedAll
+}
+
+type PermissionRevalidateResult =
+  | { kind: 'user'; user: AuthUser }
+  | { kind: 'aborted' }
+  | { kind: 'unauthenticated' }
+  | { kind: 'blocked'; code: string }
+
+/**
+ * When cached permissions would deny navigation, re-fetch /auth/me once so freshly
+ * granted server permissions are not blocked by a stale TanStack Query cache.
+ * Respects sessionGeneration; cooldown prevents refresh loops on true denials.
+ */
+async function revalidateCurrentUserForPermissions(
+  queryClient: QueryClient,
+  cached: AuthUser,
+): Promise<PermissionRevalidateResult> {
+  const state = queryClient.getQueryState(currentUserQueryKey)
+  if (
+    state?.dataUpdatedAt &&
+    Date.now() - state.dataUpdatedAt < PERMISSION_REVALIDATE_COOLDOWN_MS
+  ) {
+    return { kind: 'user', user: cached }
+  }
+
+  const generation = sessionGeneration.value
+  try {
+    const fresh = await queryClient.fetchQuery({
+      queryKey: currentUserQueryKey,
+      queryFn: fetchCurrentUser,
+      staleTime: 0,
+      retry: false,
+    })
+    if (generation !== sessionGeneration.value) return { kind: 'aborted' }
+    return { kind: 'user', user: fresh }
+  } catch (error) {
+    if (generation !== sessionGeneration.value) return { kind: 'aborted' }
+
+    if (error instanceof ApiError && (error.status === 401 || isAuthBlockCode(error.code))) {
+      const setupStatus = queryClient.getQueryData(platformSetupStatusQueryKey)
+      await clearSession(queryClient, false, { advance: generation > 0 })
+      if (setupStatus !== undefined) {
+        queryClient.setQueryData(platformSetupStatusQueryKey, setupStatus)
+      }
+      queryClient.setQueryData(currentUserQueryKey, null)
+
+      if (isAuthBlockCode(error.code)) {
+        queryClient.removeQueries({ queryKey: currentUserQueryKey })
+        return { kind: 'blocked', code: error.code }
+      }
+
+      return { kind: 'unauthenticated' }
+    }
+
+    // Network / transient failure: fail closed on the cached denial (no bypass).
+    return { kind: 'user', user: cached }
+  }
+}
+
 async function resolveSetupAvailable(queryClient: QueryClient): Promise<boolean | null> {
   const cached = queryClient.getQueryData(platformSetupStatusQueryKey) as
     | { available: boolean }
@@ -150,25 +228,55 @@ export function createAuthGuard(queryClient: QueryClient): NavigationGuard {
       }
     }
 
-    if (authenticated) {
-      const permissions = user?.permissions ?? []
-      const deniedSingle =
-        !!requiredPermission && !permissions.includes(requiredPermission)
-      const deniedAny =
-        !!requiredAnyPermissions &&
-        !requiredAnyPermissions.some((permission) => permissions.includes(permission))
-      const deniedAll =
-        !!requiredAllPermissions &&
-        !requiredAllPermissions.every((permission) => permissions.includes(permission))
+    if (authenticated && user) {
+      const permissions = user.permissions ?? []
 
-      if (deniedSingle || deniedAny || deniedAll) {
-        if (user?.is_platform_user) {
-          // Soft: stay in platform area without a dedicated 403 page yet.
-          if (to.name !== 'platform-tenants') {
-            return { name: 'platform-tenants' }
+      if (
+        isPermissionDenied(
+          permissions,
+          requiredPermission,
+          requiredAnyPermissions,
+          requiredAllPermissions,
+        )
+      ) {
+        const refreshed = await revalidateCurrentUserForPermissions(queryClient, user)
+        if (refreshed.kind === 'aborted') return false
+
+        if (refreshed.kind === 'blocked') {
+          if (to.name !== 'access-blocked') {
+            return { name: 'access-blocked', query: { code: refreshed.code } }
           }
-        } else if (to.name !== 'app-forbidden') {
-          return { name: 'app-forbidden' }
+          return true
+        }
+
+        if (refreshed.kind === 'unauthenticated') {
+          return {
+            name: 'login',
+            query:
+              to.fullPath !== '/app' && to.fullPath !== '/platform/tenants'
+                ? { redirect: to.fullPath }
+                : undefined,
+          }
+        }
+
+        user = refreshed.user
+        const freshPermissions = user.permissions ?? []
+        const stillDenied = isPermissionDenied(
+          freshPermissions,
+          requiredPermission,
+          requiredAnyPermissions,
+          requiredAllPermissions,
+        )
+
+        if (stillDenied) {
+          if (user.is_platform_user) {
+            // Soft: stay in platform area without a dedicated 403 page yet.
+            if (to.name !== 'platform-tenants') {
+              return { name: 'platform-tenants' }
+            }
+          } else if (to.name !== 'app-forbidden') {
+            return { name: 'app-forbidden' }
+          }
         }
       }
     }
