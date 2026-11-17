@@ -4,8 +4,10 @@ namespace App\Modules\Gps\Support;
 
 use App\Core\Tenancy\Models\Tenant;
 use App\Core\Tenancy\TenantContext;
+use App\Modules\Gps\Enums\GpsConnectionMethod;
 use App\Modules\Gps\Exceptions\GpsIngestDeniedException;
 use App\Modules\Gps\Models\GpsDeviceBinding;
+use App\Modules\Gps\Models\GpsProvider;
 use App\Modules\Gps\Models\GpsVehicleLastKnown;
 use App\Modules\Transportation\Models\TransportSeasonVehicle;
 use Illuminate\Database\QueryException;
@@ -99,6 +101,13 @@ final class GpsIngestService
                     $row = new GpsVehicleLastKnown;
                 }
 
+                $providerId = $binding->gps_provider_id !== null ? (int) $binding->gps_provider_id : null;
+                $providerCode = null;
+                if ($providerId !== null) {
+                    $provider = GpsProvider::query()->whereKey($providerId)->first();
+                    $providerCode = $provider?->code;
+                }
+
                 $row->forceFill([
                     'season_id' => $vehicle->season_id,
                     'transport_season_vehicle_id' => $vehicle->id,
@@ -106,6 +115,11 @@ final class GpsIngestService
                     'longitude' => number_format($lng, 7, '.', ''),
                     'recorded_at' => $recordedAt,
                     'device_id' => $deviceId,
+                    'gps_provider_id' => $providerId,
+                    'provider_code' => $providerCode,
+                    'source' => 'webhook',
+                    'is_simulated' => false,
+                    'received_at' => Carbon::now('UTC'),
                 ]);
                 $row->save();
 
@@ -116,8 +130,8 @@ final class GpsIngestService
 
     private function assertValidSignature(string $rawBody, ?string $signatureHeader, Tenant $tenant): void
     {
-        $secret = $this->resolveTenantWebhookSecret($tenant);
-        if ($secret === null) {
+        $secrets = $this->resolveTenantWebhookSecrets($tenant);
+        if ($secrets === []) {
             $this->denyIngest('webhook_secret_missing', ['tenant_id' => (int) $tenant->id]);
         }
 
@@ -130,8 +144,15 @@ final class GpsIngestService
             $provided = substr($provided, 7);
         }
 
-        $expected = hash_hmac('sha256', $rawBody, $secret);
-        if (! hash_equals($expected, $provided)) {
+        $matched = false;
+        foreach ($secrets as $secret) {
+            $expected = hash_hmac('sha256', $rawBody, $secret);
+            if (hash_equals($expected, $provided)) {
+                $matched = true;
+            }
+        }
+
+        if (! $matched) {
             $this->denyIngest('signature_mismatch', ['tenant_id' => (int) $tenant->id]);
         }
     }
@@ -147,24 +168,49 @@ final class GpsIngestService
         throw new GpsIngestDeniedException;
     }
 
-    private function resolveTenantWebhookSecret(Tenant $tenant): ?string
+    /**
+     * Candidate HMAC secrets: enabled hub webhook provider credentials first,
+     * then legacy per-tenant env map (`GPS_WEBHOOK_SECRETS`). Empty ⇒ fail-closed.
+     *
+     * @return list<string>
+     */
+    private function resolveTenantWebhookSecrets(Tenant $tenant): array
     {
+        $candidates = [];
+
+        $hubSecrets = $this->tenantContext->runAsTenant($tenant, function (): array {
+            $out = [];
+            $providers = GpsProvider::query()
+                ->where('connection_method', GpsConnectionMethod::Webhook->value)
+                ->where('is_enabled', true)
+                ->orderBy('id')
+                ->get();
+
+            foreach ($providers as $provider) {
+                $secret = trim((string) ($provider->credentialBag()['webhook_secret'] ?? ''));
+                if ($secret !== '') {
+                    $out[] = $secret;
+                }
+            }
+
+            return $out;
+        });
+
+        foreach ($hubSecrets as $secret) {
+            $candidates[] = $secret;
+        }
+
         $secrets = config('gps.webhook_secrets', []);
-        if (! is_array($secrets) || $secrets === []) {
-            return null;
+        if (is_array($secrets)) {
+            foreach ([(string) $tenant->id, (string) $tenant->tenant_code] as $key) {
+                $value = $secrets[$key] ?? null;
+                if (is_string($value) && trim($value) !== '') {
+                    $candidates[] = trim($value);
+                }
+            }
         }
 
-        $byId = $secrets[(string) $tenant->id] ?? null;
-        if (is_string($byId) && trim($byId) !== '') {
-            return $byId;
-        }
-
-        $byCode = $secrets[(string) $tenant->tenant_code] ?? null;
-        if (is_string($byCode) && trim($byCode) !== '') {
-            return $byCode;
-        }
-
-        return null;
+        return array_values(array_unique($candidates));
     }
 
     private function assertAcceptableRecordedAt(string $raw): Carbon

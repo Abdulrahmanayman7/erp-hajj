@@ -27,10 +27,17 @@ final class VerifyComplaintSlaReadinessCommand extends Command
         }
 
         $configured = config('executive_alerts.complaint_sla_activated_at');
+        $hours = (int) config('executive_alerts.complaint_sla_hours', 48);
         $this->line('APP_ENV='.$env);
         $this->line('EXECUTIVE_COMPLAINT_SLA_ACTIVATED_AT='.(is_string($configured) && $configured !== '' ? '[set]' : '[unset]'));
-        $this->line('complaint_sla_hours='.(string) config('executive_alerts.complaint_sla_hours', 48));
+        $this->line('complaint_sla_hours='.(string) $hours);
         $this->line('policy_active_default='.($evaluator->isPolicyActive() ? 'true' : 'false'));
+        $this->line('alert_code=ALT-COMP-SLA');
+        $this->line('open_statuses=new,under_review,in_progress');
+        $this->line('prospective_only=true');
+        $this->line('runbook=docs/09-modules/23-executive-dashboard/S10_COMPLAINT_SLA_ACTIVATION_RUNBOOK.md');
+        $this->line('deactivation=unset EXECUTIVE_COMPLAINT_SLA_ACTIVATED_AT then rebuild config cache');
+        $this->line('ops_verify=schedule:list must include executive-alerts:scan before production activation');
 
         if ($this->option('smoke-activate')) {
             $ts = now()->toIso8601String();
@@ -40,6 +47,10 @@ final class VerifyComplaintSlaReadinessCommand extends Command
             $this->warn('No .env write. Production activation remains BLOCKED without Owner authorization.');
         } else {
             $this->comment('Pass --smoke-activate for disposable in-process activation smoke (local/testing only).');
+        }
+
+        if ($hours !== 48) {
+            $this->warn('complaint_sla_hours drifted from Owner-approved 48h — investigate before activation.');
         }
 
         $this->info('U03 readiness check complete. Production activation NOT authorized by this command.');

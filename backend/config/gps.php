@@ -27,12 +27,16 @@ return [
     | GPS provider (legacy process-wide pull binding)
     |--------------------------------------------------------------------------
     |
-    | Bound implementation of GpsProviderInterface. `null` selects NullGpsProvider
-    | (no live fetch). G4 Live vendor binding remains BLOCKED until authorized.
-    | Tenant-configurable hub providers live in `gps_providers` and use adapters.
+    | Bound implementation of GpsProviderInterface. The stable disabled key is the
+    | string "null" (selects NullGpsProvider — no live fetch). Dotenv converts an
+    | unquoted GPS_PROVIDER=null into PHP null; normalize that back to "null" so
+    | CI/local/prod share one representation. G4 Live remains BLOCKED until
+    | authorized. Tenant hub providers live in `gps_providers` and use adapters.
     |
     */
-    'provider' => env('GPS_PROVIDER', 'null'),
+    'provider' => (($gpsProvider = env('GPS_PROVIDER', 'null')) === null || $gpsProvider === '')
+        ? 'null'
+        : strtolower(trim((string) $gpsProvider)),
 
     /*
     |--------------------------------------------------------------------------
@@ -101,5 +105,30 @@ return [
     */
     'max_recorded_at_age_seconds' => (int) env('GPS_MAX_RECORDED_AT_AGE_SECONDS', 600),
     'max_recorded_at_future_seconds' => (int) env('GPS_MAX_RECORDED_AT_FUTURE_SECONDS', 60),
+
+    /*
+    |--------------------------------------------------------------------------
+    | G5 history / retention contracts (BLOCKED)
+    |--------------------------------------------------------------------------
+    |
+    | Technical preparation only. Do not invent retention periods or enable
+    | history persistence without an Owner + legal authorization record.
+    | `GpsLocationHistoryWriterInterface` remains unbound while enabled=false.
+    |
+    */
+    'history' => [
+        'enabled' => (bool) env('GPS_HISTORY_ENABLED', false),
+        // Explicit null = TBD. Never invent a production retention period here.
+        'retention_days' => env('GPS_HISTORY_RETENTION_DAYS'),
+        'deletion_policy' => env('GPS_HISTORY_DELETION_POLICY'), // TBD: soft_delete|hard_delete|legal_hold
+        'consent_required' => (bool) env('GPS_HISTORY_CONSENT_REQUIRED', true),
+        // Planned permissions (not routed until G5 authorized):
+        // gps.history.view | gps.history.export | gps.history.delete
+        'planned_permissions' => [
+            'gps.history.view',
+            'gps.history.export',
+            'gps.history.delete',
+        ],
+    ],
 
 ];
