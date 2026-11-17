@@ -124,6 +124,7 @@ export interface SeasonVehicleFormState {
 }
 
 export interface ListSeasonVehiclesParams {
+  search?: string
   is_active?: boolean | ''
   page?: number
   per_page?: number

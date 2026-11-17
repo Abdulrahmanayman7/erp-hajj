@@ -2,56 +2,61 @@
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
+import { Plus, RefreshCw } from 'lucide-vue-next'
+
 import AppPageHeader from '@/shared/components/AppPageHeader.vue'
-import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
+import { useConfirm } from '@/shared/composables/useConfirm'
 import { usePermissions } from '@/shared/composables/usePermissions'
+import { ApiError } from '@/shared/api/http'
+import GpsProviderFormDrawer, {
+  type GpsProviderFormState,
+} from '../components/GpsProviderFormDrawer.vue'
 import {
-  createGpsDeviceBinding,
   createGpsProvider,
-  deleteGpsDeviceBinding,
   deleteGpsProvider,
-  listGpsDeviceBindings,
   listGpsProviders,
   syncGpsProvider,
   testGpsProvider,
   updateGpsProvider,
 } from '../api/gpsProvidersApi'
 import type { GpsConnectionMethod, GpsProvider } from '../types/gpsProviders'
+import {
+  gpsToneClass,
+  isProviderVerified,
+  providerLifecycleLabel,
+  providerMethodLabelKey,
+  providerHealthLabelKey,
+} from '../utils/gpsStatus'
 
 const { t } = useI18n()
 const { can } = usePermissions()
+const { confirm } = useConfirm()
 const queryClient = useQueryClient()
 
 const canView = computed(() => can('gps.providers.view') || can('gps.providers.manage'))
 const canManage = computed(() => can('gps.providers.manage'))
-const canDevices = computed(() => can('gps.devices.manage'))
 
 const selectedId = ref<number | null>(null)
 const formOpen = ref(false)
-const formName = ref('')
-const formCode = ref('')
-const formMethod = ref<GpsConnectionMethod>('webhook')
-const formEnabled = ref(false)
-const formBaseUrl = ref('')
-const formEndpointUrl = ref('')
-const formSecret = ref('')
-const formToken = ref('')
-const formEmail = ref('')
-const formPassword = ref('')
-const formPoll = ref('300')
-const editingId = ref<number | null>(null)
+const formError = ref<string | null>(null)
+const editing = ref<GpsProvider | null>(null)
 const flash = ref<string | null>(null)
-const deviceId = ref('')
-const externalDeviceId = ref('')
-const vehicleId = ref('')
 
-const methodOptions = computed<AppSelectOption[]>(() => [
-  { value: 'webhook', label: 'Webhook آمن' },
-  { value: 'rest_pull', label: 'REST API (سحب)' },
-  { value: 'traccar', label: 'Traccar' },
-  { value: 'mobile_driver', label: 'جوال السائق (معطّل حتى التفويض)' },
-  { value: 'simulator', label: 'محاكي DEMO' },
-])
+const emptyForm = (): GpsProviderFormState => ({
+  name: '',
+  code: '',
+  connection_method: 'webhook',
+  is_enabled: false,
+  poll_interval_seconds: '300',
+  base_url: '',
+  endpoint_url: '',
+  webhook_secret: '',
+  api_token: '',
+  email: '',
+  password: '',
+})
+
+const form = ref<GpsProviderFormState>(emptyForm())
 
 const providersQuery = useQuery({
   queryKey: ['gps-providers'],
@@ -59,15 +64,18 @@ const providersQuery = useQuery({
   enabled: canView,
 })
 
-const bindingsQuery = useQuery({
-  queryKey: computed(() => ['gps-device-bindings', selectedId.value]),
-  queryFn: () => listGpsDeviceBindings({ providerId: selectedId.value ?? undefined }),
-  enabled: computed(() => canView.value && selectedId.value != null),
-})
-
 const selected = computed(
   () => providersQuery.data.value?.find((row) => row.id === selectedId.value) ?? null,
 )
+
+const summary = computed(() => {
+  const rows = providersQuery.data.value ?? []
+  return {
+    total: rows.length,
+    enabled: rows.filter((row) => row.is_enabled).length,
+    verified: rows.filter((row) => isProviderVerified(row)).length,
+  }
+})
 
 const simFailure = ref(false)
 const simOfflineDevices = ref('')
@@ -83,33 +91,6 @@ watch(selected, (row) => {
   simPoll.value = row.poll_interval_seconds != null ? String(row.poll_interval_seconds) : '60'
 })
 
-const simulatorMutation = useMutation({
-  mutationFn: async () => {
-    if (selectedId.value == null) throw new Error('no provider')
-    const offline = simOfflineDevices.value
-      .split(',')
-      .map((part) => part.trim())
-      .filter(Boolean)
-    return updateGpsProvider(selectedId.value, {
-      name: selected.value?.name ?? 'simulator',
-      connection_method: 'simulator',
-      is_enabled: selected.value?.is_enabled ?? true,
-      poll_interval_seconds: Number(simPoll.value) || 60,
-      settings: {
-        base_latitude: Number(selected.value?.settings.base_latitude ?? 21.4225),
-        base_longitude: Number(selected.value?.settings.base_longitude ?? 39.8262),
-        radius_km: Number(simRadius.value) || 3,
-        simulate_failure: simFailure.value,
-        offline_device_ids: offline,
-      },
-    })
-  },
-  onSuccess: async () => {
-    flash.value = t('gpsProviders.simulatorSaved')
-    await queryClient.invalidateQueries({ queryKey: ['gps-providers'] })
-  },
-})
-
 watch(
   () => providersQuery.data.value,
   (rows) => {
@@ -119,70 +100,83 @@ watch(
   },
 )
 
-function resetForm() {
-  editingId.value = null
-  formName.value = ''
-  formCode.value = ''
-  formMethod.value = 'webhook'
-  formEnabled.value = false
-  formBaseUrl.value = ''
-  formEndpointUrl.value = ''
-  formSecret.value = ''
-  formToken.value = ''
-  formEmail.value = ''
-  formPassword.value = ''
-  formPoll.value = '300'
-}
-
 function openCreate() {
-  resetForm()
+  editing.value = null
+  form.value = emptyForm()
+  formError.value = null
   formOpen.value = true
 }
 
 function openEdit(row: GpsProvider) {
-  editingId.value = row.id
-  formName.value = row.name
-  formCode.value = row.code
-  formMethod.value = row.connection_method
-  formEnabled.value = row.is_enabled
-  formPoll.value = row.poll_interval_seconds != null ? String(row.poll_interval_seconds) : ''
-  formBaseUrl.value = String(row.settings.base_url ?? '')
-  formEndpointUrl.value = String(row.settings.endpoint_url ?? '')
-  formSecret.value = ''
-  formToken.value = ''
-  formEmail.value = ''
-  formPassword.value = ''
+  editing.value = row
+  form.value = {
+    name: row.name,
+    code: row.code,
+    connection_method: row.connection_method,
+    is_enabled: row.is_enabled,
+    poll_interval_seconds: row.poll_interval_seconds != null ? String(row.poll_interval_seconds) : '',
+    base_url: String(row.settings.base_url ?? ''),
+    endpoint_url: String(row.settings.endpoint_url ?? ''),
+    webhook_secret: '',
+    api_token: '',
+    email: '',
+    password: '',
+  }
+  formError.value = null
   formOpen.value = true
+}
+
+async function closeForm() {
+  if (saveMutation.isPending.value) return
+  const dirty =
+    form.value.name.trim() !== (editing.value?.name ?? '') ||
+    form.value.webhook_secret.trim() !== '' ||
+    form.value.api_token.trim() !== '' ||
+    form.value.password.trim() !== ''
+  if (dirty) {
+    const ok = await confirm({
+      title: t('gpsProviders.unsavedTitle'),
+      message: t('gpsProviders.unsavedMessage'),
+      confirmLabel: t('gpsProviders.discard'),
+      cancelLabel: t('gpsProviders.cancel'),
+      variant: 'warning',
+    })
+    if (!ok) return
+  }
+  formOpen.value = false
 }
 
 const saveMutation = useMutation({
   mutationFn: async () => {
     const settings: Record<string, unknown> = {}
-    if (formBaseUrl.value.trim()) settings.base_url = formBaseUrl.value.trim()
-    if (formEndpointUrl.value.trim()) settings.endpoint_url = formEndpointUrl.value.trim()
-    if (formMethod.value === 'mobile_driver') {
+    if (form.value.base_url.trim()) settings.base_url = form.value.base_url.trim()
+    if (form.value.endpoint_url.trim()) settings.endpoint_url = form.value.endpoint_url.trim()
+    if (form.value.connection_method === 'mobile_driver') {
       settings.require_explicit_consent = true
       settings.tracking_enabled = false
     }
-    if (formMethod.value === 'simulator') {
+    if (form.value.connection_method === 'simulator') {
       settings.base_latitude = 21.4225
       settings.base_longitude = 39.8262
       settings.radius_km = 3
     }
 
     const credentials: Record<string, string> = {}
-    if (formSecret.value.trim()) credentials.webhook_secret = formSecret.value.trim()
-    if (formToken.value.trim()) credentials.api_token = formToken.value.trim()
-    if (formEmail.value.trim()) credentials.email = formEmail.value.trim()
-    if (formPassword.value.trim()) credentials.password = formPassword.value.trim()
+    if (form.value.webhook_secret.trim()) credentials.webhook_secret = form.value.webhook_secret.trim()
+    if (form.value.api_token.trim()) credentials.api_token = form.value.api_token.trim()
+    if (form.value.email.trim()) credentials.email = form.value.email.trim()
+    if (form.value.password.trim()) credentials.password = form.value.password.trim()
 
-    const poll = formPoll.value.trim() === '' ? null : Number(formPoll.value)
+    const poll =
+      form.value.poll_interval_seconds.trim() === ''
+        ? null
+        : Number(form.value.poll_interval_seconds)
 
-    if (editingId.value != null) {
-      return updateGpsProvider(editingId.value, {
-        name: formName.value.trim(),
-        connection_method: formMethod.value,
-        is_enabled: formEnabled.value,
+    if (editing.value != null) {
+      return updateGpsProvider(editing.value.id, {
+        name: form.value.name.trim(),
+        connection_method: form.value.connection_method,
+        is_enabled: form.value.is_enabled,
         poll_interval_seconds: poll,
         settings,
         credentials: Object.keys(credentials).length ? credentials : undefined,
@@ -190,10 +184,10 @@ const saveMutation = useMutation({
     }
 
     return createGpsProvider({
-      name: formName.value.trim(),
-      code: formCode.value.trim(),
-      connection_method: formMethod.value,
-      is_enabled: formEnabled.value,
+      name: form.value.name.trim(),
+      code: form.value.code.trim(),
+      connection_method: form.value.connection_method,
+      is_enabled: form.value.is_enabled,
       poll_interval_seconds: poll,
       settings,
       credentials: Object.keys(credentials).length ? credentials : undefined,
@@ -202,8 +196,13 @@ const saveMutation = useMutation({
   onSuccess: async (row) => {
     flash.value = t('gpsProviders.saved')
     formOpen.value = false
+    formError.value = null
     await queryClient.invalidateQueries({ queryKey: ['gps-providers'] })
     selectedId.value = row.id
+  },
+  onError: (error) => {
+    formError.value =
+      error instanceof ApiError ? error.message : t('gpsProviders.saveError')
   },
 })
 
@@ -238,154 +237,249 @@ const deleteMutation = useMutation({
   },
 })
 
-const bindMutation = useMutation({
-  mutationFn: () =>
-    createGpsDeviceBinding({
-      device_id: deviceId.value.trim(),
-      external_device_id: externalDeviceId.value.trim() || deviceId.value.trim(),
-      transport_season_vehicle_id: Number(vehicleId.value),
-      gps_provider_id: selectedId.value,
-      is_active: true,
-    }),
+async function onDelete(row: GpsProvider) {
+  const ok = await confirm({
+    title: t('gpsProviders.deleteTitle'),
+    message: t('gpsProviders.deleteMessage', { name: row.name }),
+    confirmLabel: t('gpsProviders.delete'),
+    cancelLabel: t('gpsProviders.cancel'),
+    variant: 'danger',
+  })
+  if (ok) deleteMutation.mutate(row.id)
+}
+
+const simulatorMutation = useMutation({
+  mutationFn: async () => {
+    if (selectedId.value == null) throw new Error('no provider')
+    const offline = simOfflineDevices.value
+      .split(',')
+      .map((part) => part.trim())
+      .filter(Boolean)
+    return updateGpsProvider(selectedId.value, {
+      name: selected.value?.name ?? 'simulator',
+      connection_method: 'simulator' as GpsConnectionMethod,
+      is_enabled: selected.value?.is_enabled ?? true,
+      poll_interval_seconds: Number(simPoll.value) || 60,
+      settings: {
+        base_latitude: Number(selected.value?.settings.base_latitude ?? 21.4225),
+        base_longitude: Number(selected.value?.settings.base_longitude ?? 39.8262),
+        radius_km: Number(simRadius.value) || 3,
+        simulate_failure: simFailure.value,
+        offline_device_ids: offline,
+      },
+    })
+  },
   onSuccess: async () => {
-    deviceId.value = ''
-    externalDeviceId.value = ''
-    vehicleId.value = ''
-    flash.value = t('gpsProviders.deviceLinked')
-    await queryClient.invalidateQueries({ queryKey: ['gps-device-bindings'] })
+    flash.value = t('gpsProviders.simulatorSaved')
+    await queryClient.invalidateQueries({ queryKey: ['gps-providers'] })
   },
 })
 
-const unbindMutation = useMutation({
-  mutationFn: (id: number) => deleteGpsDeviceBinding(id),
-  onSuccess: async () => {
-    flash.value = t('gpsProviders.deviceUnlinked')
-    await queryClient.invalidateQueries({ queryKey: ['gps-device-bindings'] })
-  },
-})
+function lifecycleChip(row: GpsProvider) {
+  const meta = providerLifecycleLabel(row)
+  return { label: t(meta.key), class: gpsToneClass[meta.tone] }
+}
 </script>
 
 <template>
-  <div class="mx-auto max-w-6xl space-y-6 p-4 md:p-6" dir="rtl">
-    <AppPageHeader :title="t('gpsProviders.title')" :subtitle="t('gpsProviders.subtitle')" />
+  <div class="mx-auto max-w-7xl space-y-4 p-4 md:p-5" dir="rtl">
+    <AppPageHeader :title="t('gpsProviders.title')" :subtitle="t('gpsProviders.subtitle')">
+      <template #actions>
+        <button
+          type="button"
+          class="inline-flex h-10 items-center gap-2 rounded-xl border border-brand-border bg-white px-3 text-sm font-semibold"
+          :disabled="providersQuery.isFetching.value"
+          @click="providersQuery.refetch()"
+        >
+          <RefreshCw class="h-4 w-4" :class="providersQuery.isFetching.value ? 'animate-spin' : ''" />
+          {{ t('gpsProviders.refresh') }}
+        </button>
+        <button
+          v-if="canManage"
+          type="button"
+          class="inline-flex h-10 items-center gap-2 rounded-xl bg-brand-primary px-3 text-sm font-semibold text-white"
+          data-test="gps-add-provider"
+          @click="openCreate"
+        >
+          <Plus class="h-4 w-4" />
+          {{ t('gpsProviders.add') }}
+        </button>
+      </template>
+    </AppPageHeader>
 
-    <p class="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-      {{ t('gpsProviders.g4Notice') }}
+    <p
+      class="rounded-lg border border-amber-200/80 bg-amber-50/90 px-3 py-2 text-xs leading-relaxed text-amber-950"
+      data-test="gps-g4-notice"
+    >
+      {{ t('gpsProviders.g4NoticeCompact') }}
     </p>
 
-    <p v-if="flash" class="rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-900" data-test="gps-flash">
+    <p v-if="flash" class="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900" data-test="gps-flash">
       {{ flash }}
     </p>
 
-    <div class="flex flex-wrap items-center gap-2">
+    <div class="grid gap-3 sm:grid-cols-3">
+      <div class="rounded-xl border border-brand-border bg-white px-4 py-3">
+        <p class="text-xs font-semibold text-brand-text-muted">{{ t('gpsProviders.kpiTotal') }}</p>
+        <p class="mt-1 text-2xl font-bold text-brand-text" data-test="gps-kpi-total">{{ summary.total }}</p>
+      </div>
+      <div class="rounded-xl border border-brand-border bg-white px-4 py-3">
+        <p class="text-xs font-semibold text-brand-text-muted">{{ t('gpsProviders.kpiEnabled') }}</p>
+        <p class="mt-1 text-2xl font-bold text-brand-text" data-test="gps-kpi-enabled">{{ summary.enabled }}</p>
+      </div>
+      <div class="rounded-xl border border-brand-border bg-white px-4 py-3">
+        <p class="text-xs font-semibold text-brand-text-muted">{{ t('gpsProviders.kpiVerified') }}</p>
+        <p class="mt-1 text-2xl font-bold text-brand-text" data-test="gps-kpi-verified">{{ summary.verified }}</p>
+        <p class="mt-1 text-[11px] text-brand-text-muted">{{ t('gpsProviders.kpiVerifiedHint') }}</p>
+      </div>
+    </div>
+
+    <div v-if="providersQuery.isLoading.value" class="space-y-3" data-test="gps-providers-loading">
+      <div v-for="n in 3" :key="n" class="h-20 animate-pulse rounded-xl bg-[var(--surface-subtle)]" />
+    </div>
+    <div
+      v-else-if="providersQuery.isError.value"
+      class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+    >
+      <p>{{ t('gpsProviders.loadError') }}</p>
+      <button type="button" class="mt-2 text-sm font-semibold underline" @click="providersQuery.refetch()">
+        {{ t('gpsProviders.retry') }}
+      </button>
+    </div>
+    <div
+      v-else-if="!(providersQuery.data.value?.length)"
+      class="rounded-2xl border border-dashed border-brand-border bg-white px-6 py-12 text-center"
+      data-test="gps-providers-empty"
+    >
+      <p class="text-base font-bold text-brand-text">{{ t('gpsProviders.emptyTitle') }}</p>
+      <p class="mx-auto mt-2 max-w-md text-sm text-brand-text-muted">{{ t('gpsProviders.empty') }}</p>
       <button
         v-if="canManage"
         type="button"
-        class="rounded-md bg-brand-primary px-3 py-2 text-sm font-semibold text-white"
-        data-test="gps-add-provider"
+        class="mt-5 inline-flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2.5 text-sm font-semibold text-white"
         @click="openCreate"
       >
+        <Plus class="h-4 w-4" />
         {{ t('gpsProviders.add') }}
       </button>
-      <button
-        type="button"
-        class="rounded-md border border-[var(--border-subtle)] px-3 py-2 text-sm"
-        :disabled="providersQuery.isFetching.value"
-        @click="providersQuery.refetch()"
-      >
-        {{ t('gpsProviders.refresh') }}
-      </button>
     </div>
-
-    <div v-if="providersQuery.isLoading.value" class="text-sm text-brand-text-muted">
-      {{ t('gpsProviders.loading') }}
-    </div>
-    <div v-else-if="providersQuery.isError.value" class="text-sm text-red-700">
-      {{ t('gpsProviders.loadError') }}
-    </div>
-    <div v-else class="grid gap-4 lg:grid-cols-2">
-      <section class="space-y-3 rounded-lg border border-[var(--border-subtle)] bg-white p-4">
-        <h2 class="text-sm font-bold">{{ t('gpsProviders.listTitle') }}</h2>
-        <p v-if="!(providersQuery.data.value?.length)" class="text-sm text-brand-text-muted">
-          {{ t('gpsProviders.empty') }}
-        </p>
+    <div v-else class="grid gap-4 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1.2fr)]">
+      <section class="space-y-2">
+        <h2 class="text-sm font-bold text-brand-text">{{ t('gpsProviders.listTitle') }}</h2>
         <ul class="space-y-2" data-test="gps-provider-list">
           <li
             v-for="row in providersQuery.data.value"
             :key="row.id"
-            class="cursor-pointer rounded-md border px-3 py-2"
-            :class="selectedId === row.id ? 'border-brand-primary bg-[var(--surface-subtle)]' : 'border-[var(--border-subtle)]'"
+            class="cursor-pointer rounded-xl border bg-white px-3 py-3 transition"
+            :class="
+              selectedId === row.id
+                ? 'border-brand-primary ring-1 ring-brand-primary/30'
+                : 'border-brand-border hover:border-brand-primary/40'
+            "
             @click="selectedId = row.id"
           >
-            <div class="flex items-center justify-between gap-2">
-              <div>
-                <p class="font-semibold text-brand-text">{{ row.name }}</p>
-                <p class="text-xs text-brand-text-muted">{{ row.code }} · {{ row.connection_method }}</p>
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <p class="truncate font-semibold text-brand-text">{{ row.name }}</p>
+                <p class="mt-0.5 text-xs text-brand-text-muted">
+                  <span dir="ltr">{{ row.code }}</span>
+                  · {{ t(providerMethodLabelKey(row.connection_method)) }}
+                </p>
               </div>
-              <span class="text-xs" :data-test="`gps-health-${row.id}`">
-                {{ row.last_health_status ?? 'unknown' }}
+              <span
+                class="shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-semibold"
+                :class="lifecycleChip(row).class"
+                :data-test="`gps-health-${row.id}`"
+              >
+                {{ lifecycleChip(row).label }}
               </span>
             </div>
+            <p class="mt-2 text-[11px] text-brand-text-muted">
+              {{ t(providerHealthLabelKey(row.last_health_status)) }}
+              <template v-if="row.last_sync_at"> · {{ row.last_sync_at }}</template>
+            </p>
           </li>
         </ul>
       </section>
 
-      <section v-if="selected" class="space-y-3 rounded-lg border border-[var(--border-subtle)] bg-white p-4">
-        <h2 class="text-sm font-bold">{{ selected.name }}</h2>
-        <dl class="grid grid-cols-2 gap-2 text-sm">
+      <section v-if="selected" class="space-y-4 rounded-xl border border-brand-border bg-white p-4">
+        <div class="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <dt class="text-brand-text-muted">{{ t('gpsProviders.method') }}</dt>
-            <dd>{{ selected.connection_method }}</dd>
+            <h2 class="text-base font-bold text-brand-text">{{ selected.name }}</h2>
+            <p class="mt-1 text-xs text-brand-text-muted">
+              {{ t(providerMethodLabelKey(selected.connection_method)) }}
+              ·
+              <span :class="lifecycleChip(selected).class" class="rounded-full border px-2 py-0.5 font-semibold">
+                {{ lifecycleChip(selected).label }}
+              </span>
+            </p>
           </div>
-          <div>
-            <dt class="text-brand-text-muted">{{ t('gpsProviders.enabled') }}</dt>
-            <dd>{{ selected.is_enabled ? t('gpsProviders.yes') : t('gpsProviders.no') }}</dd>
+          <div class="flex flex-wrap gap-2">
+            <button
+              v-if="canManage"
+              type="button"
+              class="rounded-lg border border-brand-border px-3 py-1.5 text-sm font-semibold"
+              @click="openEdit(selected)"
+            >
+              {{ t('gpsProviders.edit') }}
+            </button>
+            <button
+              v-if="canManage"
+              type="button"
+              class="rounded-lg border border-brand-border px-3 py-1.5 text-sm font-semibold"
+              :disabled="testMutation.isPending.value"
+              @click="testMutation.mutate(selected.id)"
+            >
+              {{ t('gpsProviders.testConnection') }}
+            </button>
+            <button
+              v-if="canManage"
+              type="button"
+              class="rounded-lg border border-brand-border px-3 py-1.5 text-sm font-semibold"
+              :disabled="syncMutation.isPending.value"
+              @click="syncMutation.mutate(selected.id)"
+            >
+              {{ t('gpsProviders.syncNow') }}
+            </button>
+            <button
+              v-if="canManage"
+              type="button"
+              class="rounded-lg border border-red-300 px-3 py-1.5 text-sm font-semibold text-red-700"
+              @click="onDelete(selected)"
+            >
+              {{ t('gpsProviders.delete') }}
+            </button>
           </div>
-          <div>
-            <dt class="text-brand-text-muted">{{ t('gpsProviders.credentials') }}</dt>
-            <dd>{{ selected.has_credentials ? selected.credentials_masked : t('gpsProviders.none') }}</dd>
+        </div>
+
+        <dl class="grid gap-3 sm:grid-cols-2 text-sm">
+          <div class="rounded-lg bg-[var(--surface-subtle)] px-3 py-2">
+            <dt class="text-xs text-brand-text-muted">{{ t('gpsProviders.enabled') }}</dt>
+            <dd class="mt-0.5 font-semibold">{{ selected.is_enabled ? t('gpsProviders.yes') : t('gpsProviders.no') }}</dd>
           </div>
-          <div>
-            <dt class="text-brand-text-muted">{{ t('gpsProviders.lastSync') }}</dt>
-            <dd>{{ selected.last_sync_at ?? '—' }}</dd>
+          <div class="rounded-lg bg-[var(--surface-subtle)] px-3 py-2">
+            <dt class="text-xs text-brand-text-muted">{{ t('gpsProviders.credentials') }}</dt>
+            <dd class="mt-0.5 font-semibold">
+              {{ selected.has_credentials ? selected.credentials_masked : t('gpsProviders.none') }}
+            </dd>
+          </div>
+          <div class="rounded-lg bg-[var(--surface-subtle)] px-3 py-2">
+            <dt class="text-xs text-brand-text-muted">{{ t('gpsProviders.lastSync') }}</dt>
+            <dd class="mt-0.5 font-semibold">{{ selected.last_sync_at ?? '—' }}</dd>
+          </div>
+          <div class="rounded-lg bg-[var(--surface-subtle)] px-3 py-2">
+            <dt class="text-xs text-brand-text-muted">{{ t('gpsProviders.healthLabel') }}</dt>
+            <dd class="mt-0.5 font-semibold">{{ t(providerHealthLabelKey(selected.last_health_status)) }}</dd>
           </div>
         </dl>
-        <p v-if="selected.last_error_sanitized" class="text-sm text-red-700">{{ selected.last_error_sanitized }}</p>
-        <div class="flex flex-wrap gap-2">
-          <button v-if="canManage" type="button" class="rounded-md border px-3 py-1.5 text-sm" @click="openEdit(selected)">
-            {{ t('gpsProviders.edit') }}
-          </button>
-          <button
-            v-if="canManage"
-            type="button"
-            class="rounded-md border px-3 py-1.5 text-sm"
-            :disabled="testMutation.isPending.value"
-            @click="testMutation.mutate(selected.id)"
-          >
-            {{ t('gpsProviders.testConnection') }}
-          </button>
-          <button
-            v-if="canManage"
-            type="button"
-            class="rounded-md border px-3 py-1.5 text-sm"
-            :disabled="syncMutation.isPending.value"
-            @click="syncMutation.mutate(selected.id)"
-          >
-            {{ t('gpsProviders.syncNow') }}
-          </button>
-          <button
-            v-if="canManage"
-            type="button"
-            class="rounded-md border border-red-300 px-3 py-1.5 text-sm text-red-700"
-            @click="deleteMutation.mutate(selected.id)"
-          >
-            {{ t('gpsProviders.delete') }}
-          </button>
-        </div>
+
+        <p v-if="selected.last_error_sanitized" class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+          {{ selected.last_error_sanitized }}
+        </p>
 
         <div
           v-if="selected.connection_method === 'simulator' && canManage"
-          class="space-y-2 border-t border-[var(--border-subtle)] pt-3"
+          class="space-y-2 border-t border-brand-border pt-3"
           data-test="gps-simulator-controls"
         >
           <h3 class="text-sm font-bold">{{ t('gpsProviders.simulatorTitle') }}</h3>
@@ -396,21 +490,21 @@ const unbindMutation = useMutation({
           </label>
           <label class="block text-sm">
             <span class="mb-1 block text-brand-text-muted">{{ t('gpsProviders.offlineDevices') }}</span>
-            <input v-model="simOfflineDevices" class="w-full rounded-md border px-2 py-1.5" data-test="gps-sim-offline" />
+            <input v-model="simOfflineDevices" class="w-full rounded-xl border px-3 py-2" data-test="gps-sim-offline" />
           </label>
           <div class="grid gap-2 md:grid-cols-2">
             <label class="block text-sm">
               <span class="mb-1 block text-brand-text-muted">{{ t('gpsProviders.radiusKm') }}</span>
-              <input v-model="simRadius" type="number" min="0.1" step="0.1" class="w-full rounded-md border px-2 py-1.5" />
+              <input v-model="simRadius" type="number" min="0.1" step="0.1" class="w-full rounded-xl border px-3 py-2" />
             </label>
             <label class="block text-sm">
               <span class="mb-1 block text-brand-text-muted">{{ t('gpsProviders.pollSeconds') }}</span>
-              <input v-model="simPoll" type="number" min="30" class="w-full rounded-md border px-2 py-1.5" />
+              <input v-model="simPoll" type="number" min="30" class="w-full rounded-xl border px-3 py-2" />
             </label>
           </div>
           <button
             type="button"
-            class="rounded-md border px-3 py-1.5 text-sm"
+            class="rounded-xl border px-3 py-2 text-sm font-semibold"
             :disabled="simulatorMutation.isPending.value"
             @click="simulatorMutation.mutate()"
           >
@@ -418,109 +512,21 @@ const unbindMutation = useMutation({
           </button>
         </div>
 
-        <div class="border-t border-[var(--border-subtle)] pt-3">
-          <h3 class="mb-2 text-sm font-bold">{{ t('gpsProviders.devicesTitle') }}</h3>
-          <ul class="mb-3 space-y-1 text-sm" data-test="gps-device-list">
-            <li
-              v-for="binding in bindingsQuery.data.value ?? []"
-              :key="binding.id"
-              class="flex items-center justify-between gap-2"
-            >
-              <span>{{ binding.device_id }} → مركبة #{{ binding.transport_season_vehicle_id }}</span>
-              <button
-                v-if="canDevices"
-                type="button"
-                class="rounded-md border px-2 py-1 text-xs"
-                @click="unbindMutation.mutate(binding.id)"
-              >
-                {{ t('gpsProviders.unlink') }}
-              </button>
-            </li>
-          </ul>
-          <div v-if="canDevices" class="grid gap-2 md:grid-cols-3">
-            <label class="text-sm">
-              <span class="mb-1 block text-brand-text-muted">{{ t('gpsProviders.deviceId') }}</span>
-              <input v-model="deviceId" class="w-full rounded-md border px-2 py-1.5" data-test="gps-device-id" />
-            </label>
-            <label class="text-sm">
-              <span class="mb-1 block text-brand-text-muted">{{ t('gpsProviders.externalDeviceId') }}</span>
-              <input v-model="externalDeviceId" class="w-full rounded-md border px-2 py-1.5" />
-            </label>
-            <label class="text-sm">
-              <span class="mb-1 block text-brand-text-muted">{{ t('gpsProviders.vehicleId') }}</span>
-              <input v-model="vehicleId" class="w-full rounded-md border px-2 py-1.5" data-test="gps-vehicle-id" />
-            </label>
-            <button
-              type="button"
-              class="rounded-md bg-brand-primary px-3 py-2 text-sm font-semibold text-white md:col-span-3"
-              :disabled="bindMutation.isPending.value"
-              @click="bindMutation.mutate()"
-            >
-              {{ t('gpsProviders.linkDevice') }}
-            </button>
-          </div>
-        </div>
+        <p class="border-t border-brand-border pt-3 text-xs text-brand-text-muted">
+          {{ t('gpsProviders.devicesMovedHint') }}
+        </p>
       </section>
     </div>
 
-    <div
-      v-if="formOpen"
-      class="fixed inset-0 z-40 flex items-end justify-center bg-black/40 p-4 md:items-center"
-      data-test="gps-provider-form"
-    >
-      <form class="w-full max-w-lg space-y-3 rounded-lg bg-white p-4 shadow-lg" @submit.prevent="saveMutation.mutate()">
-        <h2 class="text-lg font-bold">{{ editingId ? t('gpsProviders.edit') : t('gpsProviders.add') }}</h2>
-        <label class="block text-sm">
-          <span class="mb-1 block">{{ t('gpsProviders.name') }}</span>
-          <input v-model="formName" required class="w-full rounded-md border px-2 py-1.5" />
-        </label>
-        <label v-if="!editingId" class="block text-sm">
-          <span class="mb-1 block">{{ t('gpsProviders.code') }}</span>
-          <input v-model="formCode" required class="w-full rounded-md border px-2 py-1.5" />
-        </label>
-        <AppSelect v-model="formMethod" :label="t('gpsProviders.method')" :options="methodOptions" />
-        <label class="flex items-center gap-2 text-sm">
-          <input v-model="formEnabled" type="checkbox" />
-          {{ t('gpsProviders.enabled') }}
-        </label>
-        <label v-if="formMethod === 'traccar'" class="block text-sm">
-          <span class="mb-1 block">{{ t('gpsProviders.baseUrl') }}</span>
-          <input v-model="formBaseUrl" class="w-full rounded-md border px-2 py-1.5" />
-        </label>
-        <label v-if="formMethod === 'rest_pull'" class="block text-sm">
-          <span class="mb-1 block">{{ t('gpsProviders.endpointUrl') }}</span>
-          <input v-model="formEndpointUrl" class="w-full rounded-md border px-2 py-1.5" />
-        </label>
-        <label class="block text-sm">
-          <span class="mb-1 block">{{ t('gpsProviders.webhookSecret') }}</span>
-          <input v-model="formSecret" type="password" autocomplete="new-password" class="w-full rounded-md border px-2 py-1.5" />
-        </label>
-        <label class="block text-sm">
-          <span class="mb-1 block">{{ t('gpsProviders.apiToken') }}</span>
-          <input v-model="formToken" type="password" autocomplete="new-password" class="w-full rounded-md border px-2 py-1.5" />
-        </label>
-        <label v-if="formMethod === 'traccar'" class="block text-sm">
-          <span class="mb-1 block">{{ t('gpsProviders.email') }}</span>
-          <input v-model="formEmail" class="w-full rounded-md border px-2 py-1.5" />
-        </label>
-        <label v-if="formMethod === 'traccar'" class="block text-sm">
-          <span class="mb-1 block">{{ t('gpsProviders.password') }}</span>
-          <input v-model="formPassword" type="password" autocomplete="new-password" class="w-full rounded-md border px-2 py-1.5" />
-        </label>
-        <p class="text-xs text-brand-text-muted">{{ t('gpsProviders.secretHint') }}</p>
-        <div class="flex justify-end gap-2">
-          <button type="button" class="rounded-md border px-3 py-1.5 text-sm" @click="formOpen = false">
-            {{ t('gpsProviders.cancel') }}
-          </button>
-          <button
-            type="submit"
-            class="rounded-md bg-brand-primary px-3 py-1.5 text-sm font-semibold text-white"
-            :disabled="saveMutation.isPending.value"
-          >
-            {{ t('gpsProviders.save') }}
-          </button>
-        </div>
-      </form>
-    </div>
+    <GpsProviderFormDrawer
+      :open="formOpen"
+      :editing="editing"
+      :form="form"
+      :submitting="saveMutation.isPending.value"
+      :form-error="formError"
+      @update:form="form = $event"
+      @close="closeForm"
+      @submit="saveMutation.mutate()"
+    />
   </div>
 </template>
