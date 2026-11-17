@@ -143,7 +143,7 @@ Same Vue Router + SPA fallback (`vercel.json` / Hostinger rewrite to `index.html
 
 ### Hostinger co-located `public_html` (SPA + Laravel)
 
-Production document root (`~/domains/.../public_html`) contains both the Vue build and Laravel’s `index.php` (app code under `~/erp-hajj-app/backend`). Source of truth: **`frontend/public/.htaccess`** (copied into `dist/` on build; mirrored by `deploy/hostinger/public/.htaccess`).
+Production document root (`~/domains/.../public_html`) contains both the Vue build and Laravel’s `index.php`. The active backend release directory is an **ops-managed path** (observed 2026-11 example: `~/erp-hajj-release-f3c4c444/backend`). Do **not** assume the historical `~/erp-hajj-app/backend` path is active — see [HOSTINGER_RUNTIME.md](HOSTINGER_RUNTIME.md). Source of truth for SPA routing: **`frontend/public/.htaccess`** (copied into `dist/` on build; mirrored by `deploy/hostinger/public/.htaccess`).
 
 | Request | Target |
 |---|---|
@@ -176,7 +176,7 @@ Configured in:
 
 1. Bump `PWA_ASSET_VERSION` only when icons/manifest identity change; run `npm run build` (runs `pwa:sync`).
 2. Publish `dist` into `public_html` including `index.html`, `manifest.webmanifest`, `sw.js`, `icons/`, `assets/`, and **`.htaccess`** (must keep `DirectoryIndex index.html index.php` and `/api` → `index.php`).
-3. Keep Laravel `index.php` in `public_html` pointing at `~/erp-hajj-app/backend`.
+3. Keep Laravel `index.php` in `public_html` pointing at the **active** backend release directory (verify current symlink/path; do not hardcode a stale `erp-hajj-app` path).
 4. Ensure Hostinger serves the Cache-Control headers above (`mod_headers` enabled).
 5. After deploy, open the site once (or switch back to the installed PWA) so the new SW activates.
 6. If a device still shows the **old launcher icon**, use the uninstall/reinstall fallback — that is an OS limitation, not a missed deploy.

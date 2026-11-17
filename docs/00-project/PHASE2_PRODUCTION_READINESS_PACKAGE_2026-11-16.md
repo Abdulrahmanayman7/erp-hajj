@@ -3,7 +3,8 @@
 > **Engineering package only.**  
 > **Phase 2 final Owner acceptance:** **NOT GRANTED**  
 > **Production authorization:** **NOT_AUTHORIZED**  
-> **Baseline:** `origin/develop` @ `f3c4c44431a533f225d9f0977d26759026642557` (PRs #63–#66 MERGED)
+> **Baseline (package origin):** `f3c4c44431a533f225d9f0977d26759026642557` (PRs #63–#66)  
+> **Develop tip at 2026-11-17 refresh:** `e447c0f` (PR #68 MERGED — auth permission revalidate). See [PHASE2_ENGINEERING_COMPLETION_2026-11-17.md](PHASE2_ENGINEERING_COMPLETION_2026-11-17.md).
 
 ## Classification legend
 

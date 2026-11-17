@@ -2,8 +2,10 @@
 
 > **Date:** 2026-11-16  
 > **Develop baseline at package start:** `f3c4c44431a533f225d9f0977d26759026642557` (PR #66 merge)  
+> **Develop tip refresh:** `e447c0f` (PR #68 MERGED)  
 > **Production deploy:** **NOT_AUTHORIZED** by this checklist  
-> CI SUCCESS ≠ production readiness.
+> CI SUCCESS ≠ production readiness.  
+> Hostinger topology: [HOSTINGER_RUNTIME.md](../08-deployment/HOSTINGER_RUNTIME.md) (stale `erp-hajj-app` path is not the observed active backend).
 
 ## 1. Environment configuration
 

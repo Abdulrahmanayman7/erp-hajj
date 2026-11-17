@@ -1,7 +1,7 @@
 # Roadmap
 
 > **Status:** Draft (delivery order aligned to completed / next sprints)
-> **Last updated:** 2026-11-16 (PRs #63–#66 MERGED @ `f3c4c44`; GPS hub engineering complete; S05–S07/S12 Owner acceptance **PENDING**; G4/G5/U03 **BLOCKED**; production **NOT_AUTHORIZED**; [PHASE2_PRODUCTION_READINESS_PACKAGE_2026-11-16.md](PHASE2_PRODUCTION_READINESS_PACKAGE_2026-11-16.md))
+> **Last updated:** 2026-11-17 (develop @ `e447c0f` = PR #68 MERGED atop GPS hub `f3c4c44`; engineering completion package prepared; S05–S07/S12 Owner acceptance **PENDING**; G4/G5/U03 **BLOCKED**; production **NOT_AUTHORIZED**; [PHASE2_ENGINEERING_COMPLETION_2026-11-17.md](PHASE2_ENGINEERING_COMPLETION_2026-11-17.md))
 > **Phase 2 product scope:** [ADR-0020](../10-decisions/ADR-0020-FULL-PHASE2-OPERATIONAL-SCOPE.md) (Full Phase 2 Operational Scope Adoption). Matrix: [PHASE2_SCOPE_MATRIX.md](PHASE2_SCOPE_MATRIX.md). Reconciliation: [PHASE2_SCOPE_RECONCILIATION.md](PHASE2_SCOPE_RECONCILIATION.md).
 > **Status vocabulary (S08-D09):** distinguish **Implemented** / **Merged** / **Tested** / **Owner Accepted** — merge ≠ automatic Owner acceptance.
 
@@ -97,7 +97,7 @@ Sprint closure rules: ADR-0020 §9 + [DEFINITION_OF_DONE.md](DEFINITION_OF_DONE.
 
 See [OUT_OF_SCOPE.md](OUT_OF_SCOPE.md) for the deferred list. Representative exclusions: native/pilgrim mobile apps, full finance/accounting, advanced SOS/crisis suite, advanced command center, AI/predictive analytics, government integrations, full offline platform mode, full dynamic builders.
 
-**GPS / live tracking:** in Phase 2 product scope (ADR-0021). G0–G3 foundation plus multi-provider Integration Hub (PR #66) is **delivered** (DEMO + fail-closed outbound). **G4 Live** and **G5 retention** remain **BLOCKED Phase 2 carryover** — do **not** relocate them to Phase 3. Do not treat DEMO/simulator as Live. Pilgrim mobile GPS/SOS remain Phase 3.
+**GPS / live tracking:** in Phase 2 product scope (ADR-0021). G0–G3 foundation plus multi-provider Integration Hub (PR #66) and auth permission-refresh (PR #68) are **delivered** (DEMO + fail-closed outbound). **G4 Live** and **G5 retention** remain **BLOCKED Phase 2 carryover** — do **not** relocate them to Phase 3. Do not treat DEMO/simulator as Live. Pilgrim mobile GPS/SOS remain Phase 3.
 
 Authentication-related future items (not Sprint 005): MFA, SSO, email verification, Bearer/PAT login for mobile, `logout-all`.
 
