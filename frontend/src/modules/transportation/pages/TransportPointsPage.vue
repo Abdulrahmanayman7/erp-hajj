@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { ChevronLeft, ChevronRight, Pencil, Plus, Search } from 'lucide-vue-next'
 
 import { ApiError } from '@/shared/api/http'
+import AppFormDrawer from '@/shared/components/AppFormDrawer.vue'
 import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
@@ -89,15 +90,24 @@ const deactivateMutation = useDeactivatePointMutation()
 const drawerOpen = ref(false)
 const editing = ref<TransportPoint | null>(null)
 const form = reactive<PointFormState>(emptyPointForm())
+const baseline = ref<PointFormState>(emptyPointForm())
 const formError = ref('')
 const fieldErrors = reactive<Record<string, string>>({})
 const submitting = computed(
   () => createMutation.isPending.value || updateMutation.isPending.value,
 )
+const formDirty = computed(
+  () =>
+    form.code !== baseline.value.code ||
+    form.name !== baseline.value.name ||
+    form.point_type !== baseline.value.point_type ||
+    form.notes !== baseline.value.notes,
+)
 
 function openCreate(): void {
   editing.value = null
   Object.assign(form, emptyPointForm())
+  baseline.value = emptyPointForm()
   formError.value = ''
   Object.keys(fieldErrors).forEach((k) => delete fieldErrors[k])
   drawerOpen.value = true
@@ -105,12 +115,14 @@ function openCreate(): void {
 
 function openEdit(point: TransportPoint): void {
   editing.value = point
-  Object.assign(form, {
+  const next = {
     code: point.code,
     name: point.name,
     point_type: point.point_type,
     notes: point.notes ?? '',
-  })
+  }
+  Object.assign(form, next)
+  baseline.value = { ...next }
   formError.value = ''
   Object.keys(fieldErrors).forEach((k) => delete fieldErrors[k])
   drawerOpen.value = true
@@ -355,93 +367,69 @@ async function onDelete(point: TransportPoint): Promise<void> {
       </div>
     </div>
 
-    <Teleport to="body">
-      <div v-if="drawerOpen" class="fixed inset-0 z-50">
-        <div class="absolute inset-0 bg-[rgba(15,23,20,0.32)]" @click="drawerOpen = false" />
-        <aside
-          class="absolute inset-y-0 start-0 flex h-dvh w-full max-w-[440px] flex-col bg-brand-surface"
-          role="dialog"
-          aria-modal="true"
-        >
-          <header class="border-b border-brand-border px-5 py-4">
-            <h3 class="text-lg font-bold">
-              {{
-                editing
-                  ? t('transportation.points.editTitle')
-                  : t('transportation.points.createTitle')
-              }}
-            </h3>
-          </header>
-          <div class="flex-1 space-y-4 overflow-y-auto px-5 py-4">
-            <p v-if="formError" class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
-              {{ formError }}
-            </p>
-            <div>
-              <label class="mb-1 block text-sm font-medium">{{
-                t('transportation.points.fields.code')
-              }}</label>
-              <input
-                v-model="form.code"
-                type="text"
-                dir="ltr"
-                class="h-11 w-full rounded-xl border border-brand-border px-3 text-sm"
-              />
-              <p v-if="fieldMessage('code')" class="mt-1 text-xs text-red-600">
-                {{ fieldMessage('code') }}
-              </p>
-            </div>
-            <div>
-              <label class="mb-1 block text-sm font-medium">{{
-                t('transportation.points.fields.name')
-              }}</label>
-              <input
-                v-model="form.name"
-                type="text"
-                class="h-11 w-full rounded-xl border border-brand-border px-3 text-sm"
-              />
-              <p v-if="fieldMessage('name')" class="mt-1 text-xs text-red-600">
-                {{ fieldMessage('name') }}
-              </p>
-            </div>
-            <div>
-              <label class="mb-1 block text-sm font-medium">{{
-                t('transportation.points.fields.type')
-              }}</label>
-              <AppSelect v-model="form.point_type" :options="typeFormOptions" />
-              <p v-if="fieldMessage('point_type')" class="mt-1 text-xs text-red-600">
-                {{ fieldMessage('point_type') }}
-              </p>
-            </div>
-            <div>
-              <label class="mb-1 block text-sm font-medium">{{
-                t('transportation.points.fields.notes')
-              }}</label>
-              <textarea
-                v-model="form.notes"
-                rows="3"
-                class="w-full rounded-xl border border-brand-border px-3 py-2 text-sm"
-              />
-            </div>
-          </div>
-          <footer class="flex gap-2 border-t border-brand-border px-5 py-4">
-            <button
-              type="button"
-              class="h-11 flex-1 rounded-xl border border-brand-border text-sm font-semibold"
-              @click="drawerOpen = false"
-            >
-              {{ t('transportation.points.cancel') }}
-            </button>
-            <button
-              type="button"
-              class="h-11 flex-1 rounded-xl bg-brand-primary-dark text-sm font-semibold text-white disabled:opacity-50"
-              :disabled="submitting"
-              @click="submit"
-            >
-              {{ t('transportation.points.save') }}
-            </button>
-          </footer>
-        </aside>
+    <AppFormDrawer
+      v-model:open="drawerOpen"
+      :title="
+        editing
+          ? t('transportation.points.editTitle')
+          : t('transportation.points.createTitle')
+      "
+      size="sm"
+      :dirty="formDirty"
+      :submitting="submitting"
+      :cancel-label="t('transportation.points.cancel')"
+      :submit-label="t('transportation.points.save')"
+      @submit="submit"
+    >
+      <p v-if="formError" class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+        {{ formError }}
+      </p>
+      <div>
+        <label class="mb-1 block text-sm font-medium">{{
+          t('transportation.points.fields.code')
+        }}</label>
+        <input
+          v-model="form.code"
+          type="text"
+          dir="ltr"
+          class="h-11 w-full rounded-xl border border-brand-border px-3 text-sm"
+        />
+        <p v-if="fieldMessage('code')" class="mt-1 text-xs text-red-600">
+          {{ fieldMessage('code') }}
+        </p>
       </div>
-    </Teleport>
+      <div>
+        <label class="mb-1 block text-sm font-medium">{{
+          t('transportation.points.fields.name')
+        }}</label>
+        <input
+          v-model="form.name"
+          type="text"
+          class="h-11 w-full rounded-xl border border-brand-border px-3 text-sm"
+        />
+        <p v-if="fieldMessage('name')" class="mt-1 text-xs text-red-600">
+          {{ fieldMessage('name') }}
+        </p>
+      </div>
+      <div>
+        <label class="mb-1 block text-sm font-medium">{{
+          t('transportation.points.fields.type')
+        }}</label>
+        <AppSelect v-model="form.point_type" :options="typeFormOptions" />
+        <p v-if="fieldMessage('point_type')" class="mt-1 text-xs text-red-600">
+          {{ fieldMessage('point_type') }}
+        </p>
+      </div>
+      <div>
+        <label class="mb-1 block text-sm font-medium">{{
+          t('transportation.points.fields.notes')
+        }}</label>
+        <textarea
+          v-model="form.notes"
+          rows="3"
+          class="w-full rounded-xl border border-brand-border px-3 py-2 text-sm"
+        />
+      </div>
+    </AppFormDrawer>
   </div>
 </template>

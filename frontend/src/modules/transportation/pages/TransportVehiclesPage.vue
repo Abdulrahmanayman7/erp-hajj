@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { ChevronLeft, ChevronRight, Link2, Pencil, Plus, Search } from 'lucide-vue-next'
 
 import { ApiError } from '@/shared/api/http'
+import AppFormDrawer from '@/shared/components/AppFormDrawer.vue'
 import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
@@ -92,12 +93,19 @@ const linksOpen = ref(false)
 const linksVehicleId = ref<number | null>(null)
 const editing = ref<TransportVehicle | null>(null)
 const form = reactive<VehicleFormState>(emptyVehicleForm())
+const baseline = ref<VehicleFormState>(emptyVehicleForm())
 const formError = ref('')
 const fieldErrors = reactive<Record<string, string>>({})
 const submitting = computed(
   () => createMutation.isPending.value || updateMutation.isPending.value,
 )
 const showGpsGap = computed(() => !hasGpsBackendContract())
+const formDirty = computed(
+  () =>
+    form.plate_number !== baseline.value.plate_number ||
+    form.vehicle_class !== baseline.value.vehicle_class ||
+    form.notes !== baseline.value.notes,
+)
 
 function openLinks(vehicle: TransportVehicle): void {
   linksVehicleId.value = vehicle.id
@@ -107,6 +115,7 @@ function openLinks(vehicle: TransportVehicle): void {
 function openCreate(): void {
   editing.value = null
   Object.assign(form, emptyVehicleForm())
+  baseline.value = emptyVehicleForm()
   formError.value = ''
   Object.keys(fieldErrors).forEach((k) => delete fieldErrors[k])
   drawerOpen.value = true
@@ -114,11 +123,13 @@ function openCreate(): void {
 
 function openEdit(vehicle: TransportVehicle): void {
   editing.value = vehicle
-  Object.assign(form, {
+  const next = {
     plate_number: vehicle.plate_number,
     vehicle_class: vehicle.vehicle_class,
     notes: vehicle.notes ?? '',
-  })
+  }
+  Object.assign(form, next)
+  baseline.value = { ...next }
   formError.value = ''
   Object.keys(fieldErrors).forEach((k) => delete fieldErrors[k])
   drawerOpen.value = true
@@ -389,83 +400,59 @@ async function onDelete(vehicle: TransportVehicle): Promise<void> {
 
     <VehicleLinksDrawer v-model:open="linksOpen" :vehicle-id="linksVehicleId" />
 
-    <Teleport to="body">
-      <div v-if="drawerOpen" class="fixed inset-0 z-50">
-        <div class="absolute inset-0 bg-[rgba(15,23,20,0.32)]" @click="drawerOpen = false" />
-        <aside
-          class="absolute inset-y-0 start-0 flex h-dvh w-full max-w-[440px] flex-col bg-brand-surface"
-          role="dialog"
-          aria-modal="true"
-        >
-          <header class="border-b border-brand-border px-5 py-4">
-            <h3 class="text-lg font-bold">
-              {{
-                editing
-                  ? t('transportation.vehicles.editTitle')
-                  : t('transportation.vehicles.createTitle')
-              }}
-            </h3>
-          </header>
-          <div class="flex-1 space-y-4 overflow-y-auto px-5 py-4">
-            <p v-if="formError" class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
-              {{ formError }}
-            </p>
-            <div>
-              <label class="mb-1 block text-sm font-medium">{{
-                t('transportation.vehicles.fields.plate')
-              }}</label>
-              <input
-                v-model="form.plate_number"
-                type="text"
-                dir="ltr"
-                class="h-11 w-full rounded-xl border border-brand-border px-3 text-sm"
-              />
-              <p v-if="fieldMessage('plate_number')" class="mt-1 text-xs text-red-600">
-                {{ fieldMessage('plate_number') }}
-              </p>
-            </div>
-            <div>
-              <label class="mb-1 block text-sm font-medium">{{
-                t('transportation.vehicles.fields.class')
-              }}</label>
-              <AppSelect v-model="form.vehicle_class" :options="classFormOptions" />
-              <p v-if="fieldMessage('vehicle_class')" class="mt-1 text-xs text-red-600">
-                {{ fieldMessage('vehicle_class') }}
-              </p>
-            </div>
-            <div>
-              <label class="mb-1 block text-sm font-medium">{{
-                t('transportation.vehicles.fields.notes')
-              }}</label>
-              <textarea
-                v-model="form.notes"
-                rows="3"
-                class="w-full rounded-xl border border-brand-border px-3 py-2 text-sm"
-              />
-              <p v-if="fieldMessage('notes')" class="mt-1 text-xs text-red-600">
-                {{ fieldMessage('notes') }}
-              </p>
-            </div>
-          </div>
-          <footer class="flex gap-2 border-t border-brand-border px-5 py-4">
-            <button
-              type="button"
-              class="h-11 flex-1 rounded-xl border border-brand-border text-sm font-semibold"
-              @click="drawerOpen = false"
-            >
-              {{ t('transportation.vehicles.cancel') }}
-            </button>
-            <button
-              type="button"
-              class="h-11 flex-1 rounded-xl bg-brand-primary-dark text-sm font-semibold text-white disabled:opacity-50"
-              :disabled="submitting"
-              @click="submit"
-            >
-              {{ t('transportation.vehicles.save') }}
-            </button>
-          </footer>
-        </aside>
+    <AppFormDrawer
+      v-model:open="drawerOpen"
+      :title="
+        editing
+          ? t('transportation.vehicles.editTitle')
+          : t('transportation.vehicles.createTitle')
+      "
+      size="sm"
+      :dirty="formDirty"
+      :submitting="submitting"
+      :cancel-label="t('transportation.vehicles.cancel')"
+      :submit-label="t('transportation.vehicles.save')"
+      @submit="submit"
+    >
+      <p v-if="formError" class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+        {{ formError }}
+      </p>
+      <div>
+        <label class="mb-1 block text-sm font-medium">{{
+          t('transportation.vehicles.fields.plate')
+        }}</label>
+        <input
+          v-model="form.plate_number"
+          type="text"
+          dir="ltr"
+          class="h-11 w-full rounded-xl border border-brand-border px-3 text-sm"
+        />
+        <p v-if="fieldMessage('plate_number')" class="mt-1 text-xs text-red-600">
+          {{ fieldMessage('plate_number') }}
+        </p>
       </div>
-    </Teleport>
+      <div>
+        <label class="mb-1 block text-sm font-medium">{{
+          t('transportation.vehicles.fields.class')
+        }}</label>
+        <AppSelect v-model="form.vehicle_class" :options="classFormOptions" />
+        <p v-if="fieldMessage('vehicle_class')" class="mt-1 text-xs text-red-600">
+          {{ fieldMessage('vehicle_class') }}
+        </p>
+      </div>
+      <div>
+        <label class="mb-1 block text-sm font-medium">{{
+          t('transportation.vehicles.fields.notes')
+        }}</label>
+        <textarea
+          v-model="form.notes"
+          rows="3"
+          class="w-full rounded-xl border border-brand-border px-3 py-2 text-sm"
+        />
+        <p v-if="fieldMessage('notes')" class="mt-1 text-xs text-red-600">
+          {{ fieldMessage('notes') }}
+        </p>
+      </div>
+    </AppFormDrawer>
   </div>
 </template>

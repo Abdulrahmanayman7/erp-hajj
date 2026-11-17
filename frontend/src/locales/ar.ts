@@ -16,6 +16,15 @@ export const ar = {
     pageOf: 'صفحة {page} من {total}',
     skipToContent: 'تخطي إلى المحتوى الرئيسي',
   },
+  formDrawer: {
+    close: 'إغلاق',
+    cancel: 'إلغاء',
+    save: 'حفظ',
+    unsavedTitle: 'تجاهل التغييرات؟',
+    unsavedMessage: 'لديك بيانات لم يتم حفظها. هل تريد الخروج دون حفظها؟',
+    keepEditing: 'متابعة التعديل',
+    discard: 'تجاهل التغييرات',
+  },
   nav: {
     home: 'الرئيسية',
     dashboard: 'لوحة التحكم',
