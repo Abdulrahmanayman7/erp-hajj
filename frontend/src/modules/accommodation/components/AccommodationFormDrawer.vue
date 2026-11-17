@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, type ComponentPublicInstance } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import AppFormDrawer from '@/shared/components/AppFormDrawer.vue'
@@ -25,6 +25,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const drawerRef = ref<ComponentPublicInstance<{ requestClose: () => Promise<void> }> | null>(null)
 
 const { dirty: formDirty, capture, reset: resetFormDirty } = useFormDirty(() => props.form, {
   enabled: () => props.form != null,
@@ -41,6 +42,7 @@ function onOpenUpdate(value: boolean): void {
 
 <template>
   <AppFormDrawer
+    ref="drawerRef"
     :open="open"
     :title="titleText || t('accommodation.experience.eyebrow')"
     size="md"
@@ -48,9 +50,7 @@ function onOpenUpdate(value: boolean): void {
     :submit-disabled="disabled"
     :dirty="effectiveDirty"
     :cancel-label="t('accommodation.cancel')"
-    data-test="accommodation-form-drawer"
     @update:open="onOpenUpdate"
-    @close="emit('close')"
     @submit="emit('submit')"
   >
     <template v-if="$slots.title" #header>
@@ -61,7 +61,7 @@ function onOpenUpdate(value: boolean): void {
         <slot name="subtitle" />
       </p>
     </template>
-    <div class="accommodation-form-drawer space-y-4">
+    <div class="accommodation-form-drawer space-y-4" data-test="accommodation-form-drawer">
       <slot />
     </div>
     <template v-if="$slots['submit-label']" #footer>
@@ -69,7 +69,7 @@ function onOpenUpdate(value: boolean): void {
         type="button"
         class="inline-flex h-11 items-center justify-center rounded-xl border border-brand-border px-4 text-sm font-semibold"
         :disabled="submitting"
-        @click="emit('close')"
+        @click="drawerRef?.requestClose()"
       >
         {{ t('accommodation.cancel') }}
       </button>
