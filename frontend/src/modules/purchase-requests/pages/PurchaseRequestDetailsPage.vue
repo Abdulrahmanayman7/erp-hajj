@@ -328,36 +328,36 @@ async function onCancelApproved(reason: string): Promise<void> {
   <div class="mx-auto max-w-5xl space-y-6">
     <RouterLink
       to="/app/purchase-requests"
-      class="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+      class="inline-flex items-center gap-2 text-sm font-medium text-brand-text-secondary transition hover:text-brand-primary"
     >
       <ArrowRight class="h-4 w-4" />
       {{ t('purchaseRequests.backToList') }}
     </RouterLink>
 
-    <div v-if="isLoading" class="text-sm text-muted-foreground">{{ t('purchaseRequests.loading') }}</div>
-    <div v-else-if="isError || !pr" class="text-sm text-destructive">{{ t('purchaseRequests.loadError') }}</div>
+    <div v-if="isLoading" class="text-sm text-brand-text-muted">{{ t('purchaseRequests.loading') }}</div>
+    <div v-else-if="isError || !pr" class="text-sm text-red-700">{{ t('purchaseRequests.loadError') }}</div>
     <template v-else>
-      <header class="space-y-2">
+      <header class="rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)] sm:p-5">
         <div class="flex flex-wrap items-center gap-3">
-          <h1 class="text-2xl font-semibold">{{ pr.pr_number }}</h1>
-          <span class="rounded-md bg-muted px-2 py-1 text-xs">
+          <h1 class="text-2xl font-bold text-brand-text">{{ pr.pr_number }}</h1>
+          <span class="rounded-full bg-brand-primary-soft px-2.5 py-1 text-xs font-semibold text-brand-primary-dark">
             {{ t(`purchaseRequests.statuses.${pr.status === 'under_review' ? 'underReview' : pr.status}`) }}
           </span>
           <span
             v-if="pr.pending_approval_engine && !showRoutingBlocked"
-            class="rounded-md bg-amber-50 px-2 py-1 text-xs text-amber-800"
+            class="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800"
           >
             {{ t('purchaseRequests.pendingApprovalEngine') }}
           </span>
           <span
             v-if="pr.procurement_engaged_at"
             data-testid="pr-procurement-engaged-badge"
-            class="rounded-md bg-emerald-50 px-2 py-1 text-xs text-emerald-900"
+            class="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-900"
           >
             {{ t('purchaseRequests.procurementEngagement.engaged') }}
           </span>
         </div>
-        <p class="text-sm text-muted-foreground">
+        <p class="mt-2 text-sm text-brand-text-muted">
           {{ t('purchaseRequests.versionLabel', { n: pr.version_no }) }}
           · {{ t(`purchaseRequests.kinds.${pr.request_kind}`) }}
           · {{ t(`purchaseRequests.priorities.${pr.priority}`) }}
@@ -365,15 +365,15 @@ async function onCancelApproved(reason: string): Promise<void> {
       </header>
 
       <section
-        class="rounded-md border border-border p-4 text-sm space-y-2"
+        class="space-y-2 rounded-2xl border border-brand-border bg-brand-surface p-4 text-sm sm:p-5"
         data-testid="pr-procurement-engagement"
       >
-        <h2 class="font-medium">{{ t('purchaseRequests.procurementEngagement.title') }}</h2>
+        <h2 class="text-base font-bold text-brand-text">{{ t('purchaseRequests.procurementEngagement.title') }}</h2>
         <p
           v-if="cycleHint"
-          class="rounded-md border border-border bg-muted/30 px-3 py-2 text-sm text-muted-foreground"
+          class="rounded-xl border border-brand-border bg-brand-bg px-3 py-2 text-sm text-brand-text-secondary"
         >
-          <span class="font-medium text-foreground">{{ t('procurementCycle.nextAction') }}:</span>
+          <span class="font-semibold text-brand-text">{{ t('procurementCycle.nextAction') }}:</span>
           {{ t(cycleHint.labelKey) }}
         </p>
         <template v-if="pr.procurement_engaged_at">
@@ -382,7 +382,7 @@ async function onCancelApproved(reason: string): Promise<void> {
             {{ t('purchaseRequests.procurementEngagement.ref') }}:
             <strong>{{ pr.procurement_engagement_ref }}</strong>
           </p>
-          <p class="text-muted-foreground">
+          <p class="text-brand-text-muted">
             {{ t('purchaseRequests.procurementEngagement.at') }}: {{ pr.procurement_engaged_at }}
           </p>
           <p class="text-xs text-amber-800">
@@ -390,7 +390,7 @@ async function onCancelApproved(reason: string): Promise<void> {
           </p>
         </template>
         <template v-else>
-          <p class="text-muted-foreground">
+          <p class="text-brand-text-muted">
             {{ t('purchaseRequests.procurementEngagement.notEngaged') }}
           </p>
           <PermissionGuard
@@ -399,7 +399,7 @@ async function onCancelApproved(reason: string): Promise<void> {
           >
             <RouterLink
               data-testid="pr-create-rfq-cta"
-              class="inline-flex rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground"
+              class="inline-flex rounded-xl bg-brand-primary-dark px-3 py-2 text-sm font-semibold text-white"
               :to="`/app/rfqs/create?purchase_request_id=${pr.id}`"
             >
               {{ t('purchaseRequests.procurementEngagement.createRfq') }}
@@ -410,10 +410,10 @@ async function onCancelApproved(reason: string): Promise<void> {
 
       <section
         v-if="showRoutingBlocked"
-        class="rounded-md border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950"
+        class="rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950"
         data-testid="pr-routing-blocked-banner"
       >
-        <h2 class="font-medium">{{ t('purchaseRequests.routingBlocked.title') }}</h2>
+        <h2 class="font-bold">{{ t('purchaseRequests.routingBlocked.title') }}</h2>
         <p class="mt-1">
           {{ pr.routing_block_message || t('purchaseRequests.routingBlocked.fallback') }}
         </p>
@@ -421,28 +421,28 @@ async function onCancelApproved(reason: string): Promise<void> {
         <PermissionGuard permission="purchase_requests.manage_approval_config">
           <RouterLink
             to="/app/purchase-approval-settings"
-            class="mt-2 inline-block text-sm text-primary hover:underline"
+            class="mt-2 inline-block text-sm font-semibold text-brand-primary hover:underline"
           >
             {{ t('purchaseRequests.routingBlocked.adminCta') }}
           </RouterLink>
         </PermissionGuard>
       </section>
 
-      <section v-if="approvalSteps.length" class="space-y-3 rounded-md border border-border p-4">
-        <h2 class="text-lg font-medium">{{ t('purchaseRequests.approvalTimeline.title') }}</h2>
+      <section v-if="approvalSteps.length" class="space-y-3 rounded-2xl border border-brand-border bg-brand-surface p-4 sm:p-5">
+        <h2 class="text-base font-bold text-brand-text">{{ t('purchaseRequests.approvalTimeline.title') }}</h2>
         <ol class="space-y-2 text-sm">
           <li
             v-for="step in approvalSteps"
             :key="step.id"
-            class="rounded-md border border-border px-3 py-2"
+            class="rounded-xl border border-brand-border px-3 py-2"
           >
             <div class="flex flex-wrap items-center justify-between gap-2">
-              <span class="font-medium">
+              <span class="font-semibold text-brand-text">
                 {{ t('purchaseRequests.approvalTimeline.level', { n: step.level_order }) }}
               </span>
-              <span class="text-xs text-muted-foreground">{{ step.status }}</span>
+              <span class="text-xs text-brand-text-muted">{{ step.status }}</span>
             </div>
-            <div v-if="step.due_at" class="mt-1 text-xs text-muted-foreground">
+            <div v-if="step.due_at" class="mt-1 text-xs text-brand-text-muted">
               {{ t('purchaseRequests.approvalTimeline.due', { at: step.due_at }) }}
             </div>
             <div v-if="step.escalated_at" class="mt-1 text-xs text-amber-700">
@@ -462,19 +462,19 @@ async function onCancelApproved(reason: string): Promise<void> {
         @cancel-approved="onCancelApproved"
       />
 
-      <section class="grid gap-4 rounded-md border border-border p-4 sm:grid-cols-2">
+      <section class="grid gap-5 rounded-2xl border border-brand-border bg-brand-surface p-4 sm:grid-cols-2 sm:p-5">
         <template v-if="isEditable && can('purchase_requests.update')">
-          <label class="block space-y-1 text-sm sm:col-span-2">
-            <span>{{ t('purchaseRequests.fields.title') }}</span>
-            <input v-model="editTitle" type="text" class="w-full rounded-md border border-border bg-background px-3 py-2" />
+          <label class="app-field sm:col-span-2">
+            <span class="app-field__label">{{ t('purchaseRequests.fields.title') }}</span>
+            <input v-model="editTitle" type="text" class="app-field__control app-field__control--input">
           </label>
-          <label class="block space-y-1 text-sm sm:col-span-2">
-            <span>{{ t('purchaseRequests.fields.purpose') }}</span>
-            <textarea v-model="editPurpose" rows="3" class="w-full rounded-md border border-border bg-background px-3 py-2" />
+          <label class="app-field sm:col-span-2">
+            <span class="app-field__label">{{ t('purchaseRequests.fields.purpose') }}</span>
+            <textarea v-model="editPurpose" rows="3" class="app-field__control app-field__control--textarea" />
           </label>
           <button
             type="button"
-            class="rounded-md border border-border px-3 py-2 text-sm"
+            class="inline-flex h-11 items-center justify-center rounded-xl border border-brand-border px-4 text-sm font-semibold text-brand-text transition hover:bg-brand-bg"
             @click="saveHeader"
           >
             {{ t('purchaseRequests.saveHeader') }}
@@ -482,38 +482,38 @@ async function onCancelApproved(reason: string): Promise<void> {
         </template>
         <template v-else>
           <div>
-            <div class="text-xs text-muted-foreground">{{ t('purchaseRequests.fields.title') }}</div>
-            <div class="font-medium">{{ pr.title }}</div>
+            <div class="mb-2 text-sm font-semibold text-brand-text">{{ t('purchaseRequests.fields.title') }}</div>
+            <div class="font-medium text-brand-text">{{ pr.title }}</div>
           </div>
           <div class="sm:col-span-2">
-            <div class="text-xs text-muted-foreground">{{ t('purchaseRequests.fields.purpose') }}</div>
-            <div>{{ pr.purpose }}</div>
+            <div class="mb-2 text-sm font-semibold text-brand-text">{{ t('purchaseRequests.fields.purpose') }}</div>
+            <div class="text-brand-text-secondary">{{ pr.purpose }}</div>
           </div>
         </template>
         <div>
-          <div class="text-xs text-muted-foreground">{{ t('purchaseRequests.columns.total') }}</div>
-          <div class="font-medium">{{ pr.estimated_total_priced }} {{ pr.currency }}</div>
+          <div class="mb-2 text-sm font-semibold text-brand-text">{{ t('purchaseRequests.columns.total') }}</div>
+          <div class="font-medium text-brand-text">{{ pr.estimated_total_priced }} {{ pr.currency }}</div>
           <div v-if="pr.has_unpriced_lines" class="text-xs text-amber-700">
             {{ t('purchaseRequests.hasUnpriced') }}
           </div>
         </div>
         <div>
-          <div class="text-xs text-muted-foreground">{{ t('purchaseRequests.fields.requester') }}</div>
-          <div>{{ pr.requested_by?.name || '—' }}</div>
+          <div class="mb-2 text-sm font-semibold text-brand-text">{{ t('purchaseRequests.fields.requester') }}</div>
+          <div class="text-brand-text-secondary">{{ pr.requested_by?.name || '—' }}</div>
         </div>
         <div v-if="pr.optional_supplier_id">
-          <div class="text-xs text-muted-foreground">{{ t('purchaseRequests.fields.optionalSupplierId') }}</div>
-          <div>#{{ pr.optional_supplier_id }}</div>
+          <div class="mb-2 text-sm font-semibold text-brand-text">{{ t('purchaseRequests.fields.optionalSupplierId') }}</div>
+          <div class="text-brand-text-secondary">#{{ pr.optional_supplier_id }}</div>
         </div>
       </section>
 
-      <section class="space-y-3">
+      <section class="space-y-4 rounded-2xl border border-brand-border bg-brand-surface p-4 sm:p-5">
         <div class="flex items-center justify-between gap-3">
-          <h2 class="text-lg font-medium">{{ t('purchaseRequests.linesTitle') }}</h2>
+          <h2 class="text-base font-bold text-brand-text">{{ t('purchaseRequests.linesTitle') }}</h2>
           <button
             v-if="canEditLines"
             type="button"
-            class="text-sm text-primary"
+            class="text-sm font-semibold text-brand-primary"
             @click="addEditLine"
           >
             {{ t('purchaseRequests.addLine') }}
@@ -524,54 +524,54 @@ async function onCancelApproved(reason: string): Promise<void> {
           <div
             v-for="(line, index) in editLines"
             :key="index"
-            class="space-y-3 rounded-md border border-border p-4"
+            class="space-y-4 rounded-2xl border border-brand-border bg-brand-bg/40 p-4"
           >
-            <div class="flex items-center justify-between text-sm font-medium">
+            <div class="flex items-center justify-between text-sm font-semibold text-brand-text">
               <span>{{ t('purchaseRequests.lineN', { n: index + 1 }) }}</span>
               <button
                 v-if="editLines.length > 1"
                 type="button"
-                class="text-destructive"
+                class="text-red-700"
                 @click="removeEditLine(index)"
               >
                 {{ t('purchaseRequests.removeLine') }}
               </button>
             </div>
-            <div class="grid gap-3 sm:grid-cols-2">
-              <label class="block space-y-1 text-sm sm:col-span-2">
-                <span>{{ t('purchaseRequests.fields.description') }}</span>
-                <input v-model="line.description" type="text" class="w-full rounded-md border border-border bg-background px-3 py-2" />
+            <div class="grid gap-5 sm:grid-cols-2">
+              <label class="app-field sm:col-span-2">
+                <span class="app-field__label">{{ t('purchaseRequests.fields.description') }}</span>
+                <input v-model="line.description" type="text" class="app-field__control app-field__control--input">
               </label>
-              <label class="block space-y-1 text-sm sm:col-span-2">
-                <span>{{ t('purchaseRequests.fields.specifications') }}</span>
-                <input v-model="line.specifications" type="text" class="w-full rounded-md border border-border bg-background px-3 py-2" />
+              <label class="app-field sm:col-span-2">
+                <span class="app-field__label">{{ t('purchaseRequests.fields.specifications') }}</span>
+                <input v-model="line.specifications" type="text" class="app-field__control app-field__control--input">
               </label>
-              <label class="block space-y-1 text-sm">
-                <span>{{ t('purchaseRequests.fields.quantity') }}</span>
-                <input v-model.number="line.quantity" type="number" min="0.0001" step="any" class="w-full rounded-md border border-border bg-background px-3 py-2" />
+              <label class="app-field">
+                <span class="app-field__label">{{ t('purchaseRequests.fields.quantity') }}</span>
+                <input v-model.number="line.quantity" type="number" min="0.0001" step="any" class="app-field__control app-field__control--input">
               </label>
-              <label class="block space-y-1 text-sm">
-                <span>{{ t('purchaseRequests.fields.unitMeasure') }}</span>
-                <input v-model="line.unit" type="text" class="w-full rounded-md border border-border bg-background px-3 py-2" />
+              <label class="app-field">
+                <span class="app-field__label">{{ t('purchaseRequests.fields.unitMeasure') }}</span>
+                <input v-model="line.unit" type="text" class="app-field__control app-field__control--input">
               </label>
-              <label class="block space-y-1 text-sm">
-                <span>{{ t('purchaseRequests.fields.needDate') }}</span>
-                <input v-model="line.need_date" type="date" class="w-full rounded-md border border-border bg-background px-3 py-2" />
+              <label class="app-field">
+                <span class="app-field__label">{{ t('purchaseRequests.fields.needDate') }}</span>
+                <input v-model="line.need_date" type="date" class="app-field__control app-field__control--input">
               </label>
-              <label class="block space-y-1 text-sm">
-                <span>{{ t('purchaseRequests.fields.unitEstimate') }}</span>
-                <input v-model.number="line.unit_estimate" type="number" min="0" step="0.01" class="w-full rounded-md border border-border bg-background px-3 py-2" />
+              <label class="app-field">
+                <span class="app-field__label">{{ t('purchaseRequests.fields.unitEstimate') }}</span>
+                <input v-model.number="line.unit_estimate" type="number" min="0" step="0.01" class="app-field__control app-field__control--input">
               </label>
-              <label class="block space-y-1 text-sm sm:col-span-2">
-                <span>{{ t('purchaseRequests.fields.unpricedReason') }}</span>
-                <input v-model="line.unpriced_reason" type="text" class="w-full rounded-md border border-border bg-background px-3 py-2" />
+              <label class="app-field sm:col-span-2">
+                <span class="app-field__label">{{ t('purchaseRequests.fields.unpricedReason') }}</span>
+                <input v-model="line.unpriced_reason" type="text" class="app-field__control app-field__control--input">
               </label>
             </div>
           </div>
-          <p v-if="linesError" class="text-sm text-destructive">{{ linesError }}</p>
+          <p v-if="linesError" class="text-sm text-red-700">{{ linesError }}</p>
           <button
             type="button"
-            class="rounded-md border border-border px-3 py-2 text-sm"
+            class="inline-flex h-11 items-center justify-center rounded-xl border border-brand-border px-4 text-sm font-semibold text-brand-text transition hover:bg-brand-bg disabled:opacity-50"
             :disabled="replaceLinesMutation.isPending.value"
             @click="saveLines"
           >
@@ -579,9 +579,9 @@ async function onCancelApproved(reason: string): Promise<void> {
           </button>
         </template>
 
-        <div v-else class="overflow-x-auto rounded-md border border-border">
+        <div v-else class="overflow-x-auto rounded-xl border border-brand-border">
           <table class="min-w-full text-sm">
-            <thead class="bg-muted/40 text-muted-foreground">
+            <thead class="bg-brand-bg text-brand-text-muted">
               <tr>
                 <th class="px-3 py-2 text-start">#</th>
                 <th class="px-3 py-2 text-start">{{ t('purchaseRequests.fields.description') }}</th>
@@ -591,7 +591,7 @@ async function onCancelApproved(reason: string): Promise<void> {
               </tr>
             </thead>
             <tbody>
-              <tr v-for="line in pr.lines ?? []" :key="line.id ?? line.line_no" class="border-t border-border">
+              <tr v-for="line in pr.lines ?? []" :key="line.id ?? line.line_no" class="border-t border-brand-border">
                 <td class="px-3 py-2">{{ line.line_no }}</td>
                 <td class="px-3 py-2">
                   {{ line.description }}
@@ -608,8 +608,8 @@ async function onCancelApproved(reason: string): Promise<void> {
         </div>
       </section>
 
-      <section v-if="hints.length" class="rounded-md border border-amber-200 bg-amber-50 p-4 text-sm">
-        <h2 class="font-medium text-amber-900">{{ t('purchaseRequests.duplicatesTitle') }}</h2>
+      <section v-if="hints.length" class="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm">
+        <h2 class="font-bold text-amber-900">{{ t('purchaseRequests.duplicatesTitle') }}</h2>
         <ul class="mt-2 list-disc ps-5 text-amber-900">
           <li v-for="hint in hints" :key="hint.purchase_request_id">
             {{ hint.pr_number }}
@@ -617,7 +617,7 @@ async function onCancelApproved(reason: string): Promise<void> {
           </li>
         </ul>
         <label v-if="isEditable" class="mt-3 flex items-center gap-2">
-          <input v-model="ackDuplicate" type="checkbox" />
+          <input v-model="ackDuplicate" type="checkbox">
           <span>{{ t('purchaseRequests.acknowledgeDuplicates') }}</span>
         </label>
       </section>
@@ -626,7 +626,7 @@ async function onCancelApproved(reason: string): Promise<void> {
         <PermissionGuard v-if="isEditable" permission="purchase_requests.submit">
           <button
             type="button"
-            class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+            class="inline-flex h-11 items-center justify-center rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white"
             @click="submitPr"
           >
             {{ t('purchaseRequests.submit') }}
@@ -635,7 +635,7 @@ async function onCancelApproved(reason: string): Promise<void> {
         <PermissionGuard permission="purchase_requests.verify_priority">
           <button
             type="button"
-            class="rounded-md border border-border px-4 py-2 text-sm"
+            class="inline-flex h-11 items-center justify-center rounded-xl border border-brand-border px-4 text-sm font-semibold text-brand-text transition hover:bg-brand-bg"
             @click="verifyPriority"
           >
             {{ t('purchaseRequests.verifyPriority') }}
@@ -645,18 +645,21 @@ async function onCancelApproved(reason: string): Promise<void> {
 
       <section
         v-if="canCancel"
-        class="space-y-2 rounded-md border border-border p-4"
+        class="space-y-4 rounded-2xl border border-brand-border bg-brand-surface p-4 sm:p-5"
       >
-        <h2 class="text-lg font-medium">{{ t('purchaseRequests.cancelTitle') }}</h2>
-        <textarea
-          v-model="cancelReason"
-          rows="2"
-          class="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-          :placeholder="t('purchaseRequests.cancelReasonPlaceholder')"
-        />
+        <h2 class="text-base font-bold text-brand-text">{{ t('purchaseRequests.cancelTitle') }}</h2>
+        <label class="app-field">
+          <span class="app-field__label">{{ t('purchaseRequests.cancelReasonPlaceholder') }}</span>
+          <textarea
+            v-model="cancelReason"
+            rows="2"
+            class="app-field__control app-field__control--textarea"
+            :placeholder="t('purchaseRequests.cancelReasonPlaceholder')"
+          />
+        </label>
         <button
           type="button"
-          class="rounded-md border border-destructive px-3 py-2 text-sm text-destructive"
+          class="inline-flex h-11 items-center justify-center rounded-xl border border-red-300 px-4 text-sm font-semibold text-red-700 transition hover:bg-red-50"
           @click="cancelPr"
         >
           {{ t('purchaseRequests.cancelAction') }}
@@ -664,15 +667,15 @@ async function onCancelApproved(reason: string): Promise<void> {
       </section>
 
       <PermissionGuard permission="purchase_requests.financial_review">
-        <section class="space-y-3 rounded-md border border-border p-4">
-          <h2 class="text-lg font-medium">{{ t('purchaseRequests.financialReviewTitle') }}</h2>
-          <p class="text-xs text-muted-foreground">
+        <section class="space-y-4 rounded-2xl border border-brand-border bg-brand-surface p-4 sm:p-5">
+          <h2 class="text-base font-bold text-brand-text">{{ t('purchaseRequests.financialReviewTitle') }}</h2>
+          <p class="text-xs text-brand-text-muted">
             {{ t('purchaseRequests.financialReviewHint', { version: pr.version_no }) }}
           </p>
-          <div class="grid gap-3 sm:grid-cols-2">
-            <label class="block space-y-1 text-sm">
-              <span>{{ t('purchaseRequests.fields.outcome') }}</span>
-              <select v-model="reviewForm.outcome" class="w-full rounded-md border border-border bg-background px-3 py-2">
+          <div class="grid gap-5 sm:grid-cols-2">
+            <label class="app-field">
+              <span class="app-field__label">{{ t('purchaseRequests.fields.outcome') }}</span>
+              <select v-model="reviewForm.outcome" class="app-field__control app-field__control--input">
                 <option value="cleared">{{ t('purchaseRequests.outcomes.cleared') }}</option>
                 <option value="cleared_with_conditions">
                   {{ t('purchaseRequests.outcomes.clearedWithConditions') }}
@@ -680,18 +683,18 @@ async function onCancelApproved(reason: string): Promise<void> {
                 <option value="not_cleared">{{ t('purchaseRequests.outcomes.notCleared') }}</option>
               </select>
             </label>
-            <label class="block space-y-1 text-sm sm:col-span-2">
-              <span>{{ t('purchaseRequests.fields.justification') }}</span>
+            <label class="app-field sm:col-span-2">
+              <span class="app-field__label">{{ t('purchaseRequests.fields.justification') }}</span>
               <textarea
                 v-model="reviewForm.justification"
                 rows="2"
-                class="w-full rounded-md border border-border bg-background px-3 py-2"
+                class="app-field__control app-field__control--textarea"
               />
             </label>
           </div>
           <button
             type="button"
-            class="rounded-md border border-border px-3 py-2 text-sm"
+            class="inline-flex h-11 items-center justify-center rounded-xl border border-brand-border px-4 text-sm font-semibold text-brand-text transition hover:bg-brand-bg"
             @click="saveReview"
           >
             {{ t('purchaseRequests.recordReview') }}
@@ -699,32 +702,32 @@ async function onCancelApproved(reason: string): Promise<void> {
         </section>
       </PermissionGuard>
 
-      <section class="space-y-2">
-        <h2 class="text-lg font-medium">{{ t('purchaseRequests.reviewsHistory') }}</h2>
-        <div v-if="reviews.length === 0" class="text-sm text-muted-foreground">
+      <section class="space-y-3 rounded-2xl border border-brand-border bg-brand-surface p-4 sm:p-5">
+        <h2 class="text-base font-bold text-brand-text">{{ t('purchaseRequests.reviewsHistory') }}</h2>
+        <div v-if="reviews.length === 0" class="text-sm text-brand-text-muted">
           {{ t('purchaseRequests.noReviews') }}
         </div>
         <ul v-else class="space-y-2 text-sm">
           <li
             v-for="review in reviews"
             :key="review.id"
-            class="rounded-md border border-border px-3 py-2"
+            class="rounded-xl border border-brand-border px-3 py-2"
           >
             v{{ review.version_no }} · {{ review.outcome }} · {{ review.justification }}
           </li>
         </ul>
       </section>
 
-      <section class="space-y-2">
-        <h2 class="text-lg font-medium">{{ t('purchaseRequests.versionsTitle') }}</h2>
-        <div v-if="versions.length === 0" class="text-sm text-muted-foreground">
+      <section class="space-y-3 rounded-2xl border border-brand-border bg-brand-surface p-4 sm:p-5">
+        <h2 class="text-base font-bold text-brand-text">{{ t('purchaseRequests.versionsTitle') }}</h2>
+        <div v-if="versions.length === 0" class="text-sm text-brand-text-muted">
           {{ t('purchaseRequests.noVersions') }}
         </div>
         <ul v-else class="space-y-2 text-sm">
           <li
             v-for="version in versions"
             :key="version.id"
-            class="rounded-md border border-border px-3 py-2"
+            class="rounded-xl border border-brand-border px-3 py-2"
           >
             v{{ version.version_no }} · {{ version.status }} · {{ version.snapshot_at }}
             · {{ version.estimated_total_priced }}
@@ -738,7 +741,7 @@ async function onCancelApproved(reason: string): Promise<void> {
         :link-label="`${pr.pr_number} — ${pr.title}`"
       />
 
-      <p v-if="actionError" class="text-sm text-destructive">{{ actionError }}</p>
+      <p v-if="actionError" class="text-sm text-red-700">{{ actionError }}</p>
     </template>
   </div>
 </template>
