@@ -74,5 +74,5 @@ Full Pest and Vitest matrices live in [01-authentication/TEST_PLAN.md](../09-mod
 
 ## TBD
 
-- **E2E tooling** (Playwright proposed): still unresolved for full product E2E. **Recommended:** introduce Playwright after Authentication is implemented, covering login → shell → logout. **Impact:** new CI job; no effect on unit/feature suites.
+- **E2E tooling (Playwright):** introduced under [`e2e/`](../../e2e/) (`@playwright/test`) covering auth UI, authenticated API smoke, `/app` navigation smoke, and cross-module workflows. Credentials via `e2e/.env.e2e` (gitignored). CI job for E2E remains optional/manual against disposable or fixture tenants.
 - **Coverage thresholds**: unresolved because a numeric gate before several modules exist would measure scaffolding. **Recommended:** enforce category completeness now; add a line-coverage floor after Authentication + RBAC. **Impact:** CI configuration only.
