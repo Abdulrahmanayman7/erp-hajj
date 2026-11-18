@@ -128,30 +128,30 @@ watch(
         {{ formError }}
       </p>
 
-      <label class="block text-sm">
-        <span class="mb-1 block font-semibold">{{ t('gpsProviders.deviceId') }}</span>
+      <label class="app-field">
+        <span class="app-field__label">{{ t('gpsProviders.deviceId') }}</span>
         <input
           :value="form.device_id"
-          class="w-full rounded-xl border border-brand-border px-3 py-2.5 text-sm"
+          class="app-field__control app-field__control--input"
           data-test="gps-devices-device-id"
           :placeholder="t('gpsDevices.deviceIdExample')"
           @input="patch({ device_id: ($event.target as HTMLInputElement).value })"
-        />
+        >
       </label>
 
-      <label class="block text-sm">
-        <span class="mb-1 block font-semibold">{{ t('gpsProviders.externalDeviceId') }}</span>
+      <label class="app-field">
+        <span class="app-field__label">{{ t('gpsProviders.externalDeviceId') }}</span>
         <input
           :value="form.external_device_id"
-          class="w-full rounded-xl border border-brand-border px-3 py-2.5 text-sm"
+          class="app-field__control app-field__control--input"
           :placeholder="t('gpsDevices.externalIdExample')"
           @input="patch({ external_device_id: ($event.target as HTMLInputElement).value })"
-        />
-        <span class="mt-1 block text-xs text-brand-text-muted">{{ t('gpsDevices.externalIdHint') }}</span>
+        >
+        <span class="mt-1.5 block text-xs text-brand-text-muted">{{ t('gpsDevices.externalIdHint') }}</span>
       </label>
 
-      <div>
-        <p class="mb-1 text-sm font-semibold">{{ t('gpsDevices.providerFilter') }}</p>
+      <div class="app-field">
+        <p class="app-field__label">{{ t('gpsDevices.providerFilter') }}</p>
         <AppSelect
           :model-value="form.gps_provider_id"
           :options="providerOptions"
@@ -160,8 +160,8 @@ watch(
         />
       </div>
 
-      <div>
-        <p class="mb-1 text-sm font-semibold">{{ t('gpsMap.season') }}</p>
+      <div class="app-field">
+        <p class="app-field__label">{{ t('gpsMap.season') }}</p>
         <AppSelect
           :model-value="form.season_id"
           :options="seasonOptions"
@@ -170,8 +170,8 @@ watch(
         />
       </div>
 
-      <div>
-        <p class="mb-1 text-sm font-semibold">{{ t('gpsDevices.vehicle') }}</p>
+      <div class="app-field">
+        <p class="app-field__label">{{ t('gpsDevices.vehicle') }}</p>
         <AppRemoteSelect
           :model-value="form.transport_season_vehicle_id"
           :query-key="['gps-device-link-fleet', form.season_id]"
@@ -183,7 +183,7 @@ watch(
           data-test="gps-devices-vehicle-select"
           @update:model-value="patch({ transport_season_vehicle_id: ($event as number) ?? null })"
         />
-        <span class="mt-1 block text-xs text-brand-text-muted">{{ t('gpsDevices.vehicleHint') }}</span>
+        <span class="mt-1.5 block text-xs text-brand-text-muted">{{ t('gpsDevices.vehicleHint') }}</span>
       </div>
     </div>
 

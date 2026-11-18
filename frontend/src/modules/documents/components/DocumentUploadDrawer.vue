@@ -167,29 +167,29 @@ function requestDismiss(): void {
 
     <section class="space-y-3">
       <h3 class="text-sm font-bold text-brand-text">{{ t('documents.upload.metaSection') }}</h3>
-      <label class="block space-y-1.5">
-        <span class="text-sm font-medium">{{ t('documents.fields.title') }}</span>
+      <label class="app-field">
+        <span class="app-field__label">{{ t('documents.fields.title') }}</span>
         <input
           :value="form.title"
           type="text"
-          class="h-11 w-full rounded-xl border border-brand-border px-3"
+          class="app-field__control app-field__control--input"
           :placeholder="t('documents.upload.titlePlaceholder')"
           :disabled="submitting"
           @input="patch({ title: ($event.target as HTMLInputElement).value })"
         />
       </label>
-      <label class="block space-y-1.5">
-        <span class="text-sm font-medium">{{ t('documents.fields.description') }}</span>
+      <label class="app-field">
+        <span class="app-field__label">{{ t('documents.fields.description') }}</span>
         <textarea
           :value="form.description"
           rows="3"
-          class="w-full rounded-xl border border-brand-border px-3 py-2"
+          class="app-field__control app-field__control--textarea"
           :disabled="submitting"
           @input="patch({ description: ($event.target as HTMLTextAreaElement).value })"
         />
       </label>
-      <label class="block space-y-1.5">
-        <span class="text-sm font-medium">{{ t('documents.fields.category') }}</span>
+      <label class="app-field">
+        <span class="app-field__label">{{ t('documents.fields.category') }}</span>
         <AppSelect
           :model-value="form.category_id"
           :options="categoryOptions"
@@ -210,8 +210,8 @@ function requestDismiss(): void {
         </p>
       </template>
       <template v-else>
-        <label class="block space-y-1.5">
-          <span class="text-sm font-medium">{{ t('documents.fields.linkableType') }}</span>
+        <label class="app-field">
+          <span class="app-field__label">{{ t('documents.fields.linkableType') }}</span>
           <AppSelect
             :model-value="form.linkable_type"
             :options="linkTypeOptions"
@@ -224,8 +224,8 @@ function requestDismiss(): void {
             "
           />
         </label>
-        <label v-if="form.linkable_type" class="block space-y-1.5">
-          <span class="text-sm font-medium">{{ t('documents.fields.linkableId') }}</span>
+        <label v-if="form.linkable_type" class="app-field">
+          <span class="app-field__label">{{ t('documents.fields.linkableId') }}</span>
           <AppRemoteSelect
             v-if="form.linkable_type === 'contract'"
             :model-value="form.linkable_id"

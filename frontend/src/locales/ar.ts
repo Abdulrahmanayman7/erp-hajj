@@ -2427,6 +2427,7 @@ export const ar = {
         asset: 'أصل',
         custody: 'عهدة',
         supplier: 'مورد',
+        purchase_request: 'طلب شراء',
       },
     },
     actions: {

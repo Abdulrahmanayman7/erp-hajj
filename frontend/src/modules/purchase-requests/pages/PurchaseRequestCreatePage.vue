@@ -163,9 +163,14 @@ async function submit(): Promise<void> {
       class="space-y-6 rounded-2xl border border-brand-border bg-brand-surface p-4 shadow-[0_1px_2px_rgba(23,32,29,0.03)] sm:p-6"
       @submit.prevent="submit"
     >
-      <div class="grid gap-4 sm:grid-cols-2">
-        <label class="block space-y-1.5 text-sm sm:col-span-1">
-          <span class="font-semibold text-brand-text">{{ t('purchaseRequests.fields.kind') }}</span>
+      <section class="space-y-1">
+        <h2 class="text-base font-bold text-brand-text">{{ t('purchaseRequests.createTitle') }}</h2>
+        <p class="text-sm text-brand-text-muted">{{ t('purchaseRequests.createSubtitle') }}</p>
+      </section>
+
+      <div class="grid gap-5 sm:grid-cols-2">
+        <label class="app-field sm:col-span-1">
+          <span class="app-field__label">{{ t('purchaseRequests.fields.kind') }}</span>
           <AppSelect
             :model-value="form.request_kind"
             :options="kindSelectOptions"
@@ -175,8 +180,8 @@ async function submit(): Promise<void> {
           />
         </label>
 
-        <label v-if="form.request_kind === 'seasonal'" class="block space-y-1.5 text-sm">
-          <span class="font-semibold text-brand-text">{{ t('purchaseRequests.fields.seasonId') }}</span>
+        <label v-if="form.request_kind === 'seasonal'" class="app-field">
+          <span class="app-field__label">{{ t('purchaseRequests.fields.seasonId') }}</span>
           <AppSelect
             :model-value="form.season_id"
             :options="seasonOptions"
@@ -185,26 +190,26 @@ async function submit(): Promise<void> {
           />
         </label>
 
-        <label class="block space-y-1.5 text-sm sm:col-span-2">
-          <span class="font-semibold text-brand-text">{{ t('purchaseRequests.fields.title') }}</span>
+        <label class="app-field sm:col-span-2">
+          <span class="app-field__label">{{ t('purchaseRequests.fields.title') }}</span>
           <input
             v-model="form.title"
             type="text"
-            class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface px-3 text-sm text-brand-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/30"
-          />
+            class="app-field__control app-field__control--input"
+          >
         </label>
 
-        <label class="block space-y-1.5 text-sm sm:col-span-2">
-          <span class="font-semibold text-brand-text">{{ t('purchaseRequests.fields.purpose') }}</span>
+        <label class="app-field sm:col-span-2">
+          <span class="app-field__label">{{ t('purchaseRequests.fields.purpose') }}</span>
           <textarea
             v-model="form.purpose"
             rows="3"
-            class="w-full rounded-xl border border-brand-border bg-brand-surface px-3 py-2.5 text-sm text-brand-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/30"
+            class="app-field__control app-field__control--textarea"
           />
         </label>
 
-        <label class="block space-y-1.5 text-sm">
-          <span class="font-semibold text-brand-text">{{ t('purchaseRequests.fields.priority') }}</span>
+        <label class="app-field">
+          <span class="app-field__label">{{ t('purchaseRequests.fields.priority') }}</span>
           <AppSelect
             :model-value="form.priority"
             :options="prioritySelectOptions"
@@ -212,8 +217,8 @@ async function submit(): Promise<void> {
           />
         </label>
 
-        <label class="block space-y-1.5 text-sm">
-          <span class="font-semibold text-brand-text">{{ t('purchaseRequests.fields.unit') }}</span>
+        <label class="app-field">
+          <span class="app-field__label">{{ t('purchaseRequests.fields.unit') }}</span>
           <AppSelect
             :model-value="form.beneficiary_organization_unit_id"
             :options="unitOptions"
@@ -227,18 +232,18 @@ async function submit(): Promise<void> {
 
         <label
           v-if="form.priority !== 'normal'"
-          class="block space-y-1.5 text-sm sm:col-span-2"
+          class="app-field sm:col-span-2"
         >
-          <span class="font-semibold text-brand-text">{{ t('purchaseRequests.fields.urgency') }}</span>
+          <span class="app-field__label">{{ t('purchaseRequests.fields.urgency') }}</span>
           <textarea
             v-model="form.urgency_justification"
             rows="2"
-            class="w-full rounded-xl border border-brand-border bg-brand-surface px-3 py-2.5 text-sm text-brand-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/30"
+            class="app-field__control app-field__control--textarea"
           />
         </label>
 
-        <label class="block space-y-1.5 text-sm sm:col-span-2">
-          <span class="font-semibold text-brand-text">{{
+        <label class="app-field sm:col-span-2">
+          <span class="app-field__label">{{
             t('purchaseRequests.fields.optionalSupplierId')
           }}</span>
           <AppRemoteSelect
@@ -269,7 +274,7 @@ async function submit(): Promise<void> {
         <div
           v-for="(line, index) in form.lines"
           :key="index"
-          class="space-y-3 rounded-2xl border border-brand-border bg-brand-bg/40 p-4"
+          class="space-y-4 rounded-2xl border border-brand-border bg-brand-bg/40 p-4"
         >
           <div class="flex items-center justify-between gap-3">
             <span class="text-sm font-semibold text-brand-text">{{
@@ -286,56 +291,64 @@ async function submit(): Promise<void> {
             </button>
           </div>
 
-          <div class="grid gap-3 sm:grid-cols-2">
-            <label class="block space-y-1.5 text-sm sm:col-span-2">
-              <span class="font-medium text-brand-text">{{ t('purchaseRequests.fields.description') }}</span>
+          <div class="grid gap-5 sm:grid-cols-2">
+            <label class="app-field sm:col-span-2">
+              <span class="app-field__label">{{ t('purchaseRequests.fields.description') }}</span>
               <input
                 v-model="line.description"
                 type="text"
-                class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/30"
-              />
+                class="app-field__control app-field__control--input"
+              >
             </label>
-            <label class="block space-y-1.5 text-sm">
-              <span class="font-medium text-brand-text">{{ t('purchaseRequests.fields.quantity') }}</span>
+            <label class="app-field sm:col-span-2">
+              <span class="app-field__label">{{ t('purchaseRequests.fields.specifications') }}</span>
+              <input
+                v-model="line.specifications"
+                type="text"
+                class="app-field__control app-field__control--input"
+              >
+            </label>
+            <label class="app-field">
+              <span class="app-field__label">{{ t('purchaseRequests.fields.quantity') }}</span>
               <input
                 v-model.number="line.quantity"
                 type="number"
                 min="0.0001"
                 step="any"
-                class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/30"
-              />
+                class="app-field__control app-field__control--input"
+              >
             </label>
-            <label class="block space-y-1.5 text-sm">
-              <span class="font-medium text-brand-text">{{ t('purchaseRequests.fields.unitMeasure') }}</span>
+            <label class="app-field">
+              <span class="app-field__label">{{ t('purchaseRequests.fields.unitMeasure') }}</span>
               <input
                 v-model="line.unit"
                 type="text"
-                class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/30"
-              />
+                class="app-field__control app-field__control--input"
+              >
             </label>
-            <label class="block space-y-1.5 text-sm">
-              <span class="font-medium text-brand-text">{{ t('purchaseRequests.fields.needDate') }}</span>
+            <label class="app-field">
+              <span class="app-field__label">{{ t('purchaseRequests.fields.needDate') }}</span>
               <AppDateInput v-model="line.need_date" />
             </label>
-            <label class="block space-y-1.5 text-sm">
-              <span class="font-medium text-brand-text">{{ t('purchaseRequests.fields.unitEstimate') }}</span>
+            <label class="app-field">
+              <span class="app-field__label">{{ t('purchaseRequests.fields.unitEstimate') }}</span>
               <input
                 v-model.number="line.unit_estimate"
                 type="number"
                 min="0"
                 step="0.01"
-                class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/30"
-              />
+                class="app-field__control app-field__control--input"
+              >
             </label>
-            <label class="block space-y-1.5 text-sm sm:col-span-2">
-              <span class="font-medium text-brand-text">{{
+            <label class="app-field sm:col-span-2">
+              <span class="app-field__label">{{
                 t('purchaseRequests.fields.unpricedReason')
               }}</span>
               <input
                 v-model="line.unpriced_reason"
                 type="text"
-                class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/30"
-              />
+                class="app-field__control app-field__control--input"
+              >
             </label>
           </div>
         </div>
@@ -343,7 +356,7 @@ async function submit(): Promise<void> {
 
       <p
         v-if="formError"
-        class="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800"
+        class="rounded-xl border border-red-200 bg-red-50 px-3.5 py-3 text-sm text-red-800"
       >
         {{ formError }}
       </p>
