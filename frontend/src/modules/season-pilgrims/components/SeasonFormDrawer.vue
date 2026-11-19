@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import AppDateInput from '@/shared/components/AppDateInput.vue'
 import AppFormDrawer from '@/shared/components/AppFormDrawer.vue'
 import { useCaptureOnOpen, useFormDirty } from '@/shared/composables/useFormDirty'
 import type { Season, SeasonFormState } from '../types/seasons'
@@ -133,15 +134,11 @@ function onOpenUpdate(value: boolean): void {
       <span class="text-sm font-semibold text-brand-text">{{
         t('seasons.fields.startsOn')
       }}</span>
-      <input
-        :value="form.operational_starts_on"
-        type="date"
-        dir="ltr"
-        class="h-11 w-full rounded-xl border border-brand-border px-3 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15 disabled:bg-brand-bg"
+      <AppDateInput
+        :model-value="form.operational_starts_on"
         :disabled="locked || submitting"
-        @input="
-          patch({ operational_starts_on: ($event.target as HTMLInputElement).value })
-        "
+        :invalid="Boolean(fieldMessage('operational_starts_on'))"
+        @update:model-value="patch({ operational_starts_on: $event })"
       />
       <span v-if="fieldMessage('operational_starts_on')" class="text-xs text-red-600">{{
         fieldMessage('operational_starts_on')
@@ -152,15 +149,11 @@ function onOpenUpdate(value: boolean): void {
       <span class="text-sm font-semibold text-brand-text">{{
         t('seasons.fields.endsOn')
       }}</span>
-      <input
-        :value="form.operational_ends_on"
-        type="date"
-        dir="ltr"
-        class="h-11 w-full rounded-xl border border-brand-border px-3 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15 disabled:bg-brand-bg"
+      <AppDateInput
+        :model-value="form.operational_ends_on"
         :disabled="locked || submitting"
-        @input="
-          patch({ operational_ends_on: ($event.target as HTMLInputElement).value })
-        "
+        :invalid="Boolean(fieldMessage('operational_ends_on'))"
+        @update:model-value="patch({ operational_ends_on: $event })"
       />
       <span v-if="fieldMessage('operational_ends_on')" class="text-xs text-red-600">{{
         fieldMessage('operational_ends_on')

@@ -14,6 +14,7 @@ import {
   validateDocumentUploadForm,
 } from '@/modules/documents/validation/documentValidation'
 import { ApiError } from '@/shared/api/http'
+import AppDateInput from '@/shared/components/AppDateInput.vue'
 import AppFormDrawer from '@/shared/components/AppFormDrawer.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
@@ -568,12 +569,10 @@ const inputClass = 'w-full rounded-xl border border-brand-border px-3 py-2 text-
         <label class="mb-1 block text-sm font-semibold text-brand-text" for="rec-expires-at">
           {{ t('suppliers.documents.expiresAtField') }}
         </label>
-        <input
+        <AppDateInput
           id="rec-expires-at"
           v-model="recordForm.expires_at"
-          type="date"
-          dir="ltr"
-          :class="[inputClass, 'text-start']"
+          :invalid="Boolean(recordErrors.expires_at)"
         />
         <p v-if="recordErrors.expires_at" class="mt-1 text-xs text-red-600">
           {{ t('suppliers.documents.validation.date') }}
