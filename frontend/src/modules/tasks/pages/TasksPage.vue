@@ -300,7 +300,7 @@ async function save(): Promise<void> {
     </div>
     <template v-else>
       <div class="hidden overflow-hidden rounded-[14px] border border-brand-border bg-brand-surface outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/25 lg:block" tabindex="0" role="grid" :aria-rowcount="tasks.length" :aria-label="t('tasks.title')" @keydown="onTableKeydown">
-        <div class="overflow-x-auto"><table class="min-w-full border-separate border-spacing-0 text-sm">
+        <div class="overflow-x-auto"><table class="app-entity-table min-w-full border-separate border-spacing-0 text-sm">
           <thead><tr class="bg-[var(--surface-subtle)]"><th v-for="(key, columnIndex) in ['number','title','source','assignee','dueDate','priority','progress','status','actions']" :key="key" class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-center text-xs font-semibold tracking-wide text-brand-text" :class="columnIndex === 0 ? 'border-s-[3px] border-s-transparent' : ''">{{ t(`tasks.columns.${key}`) }}</th></tr></thead>
           <tbody>
             <tr v-for="(task, index) in tasks" :key="task.id" class="group" :class="rowToneClass(index)" role="row" :aria-selected="focusedRowIndex === index" @mouseenter="focusedRowIndex = index">

@@ -302,7 +302,7 @@ watch(draftBaseline, (draft) => {
         </div>
 
         <div class="overflow-x-auto">
-          <table class="min-w-full text-start text-xs">
+          <table class="app-entity-table min-w-full text-start text-xs">
             <thead class="text-brand-muted">
               <tr>
                 <th class="px-2 py-1 font-medium">{{ t('seasonProjects.baseline.effectiveAt') }}</th>

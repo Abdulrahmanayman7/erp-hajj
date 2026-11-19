@@ -277,7 +277,7 @@ function delayLabel(row: SeasonProject): string {
       {{ t('seasonProjects.empty') }}
     </section>
     <section v-else class="overflow-x-auto rounded-xl border border-brand-border bg-brand-surface">
-      <table class="min-w-full text-sm">
+      <table class="app-entity-table min-w-full text-sm">
         <thead class="bg-brand-primary-soft/40 text-start">
           <tr>
             <th class="px-3 py-2 font-semibold">{{ t('seasonProjects.columns.number') }}</th>

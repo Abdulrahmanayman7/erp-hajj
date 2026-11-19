@@ -308,8 +308,8 @@ async function onReopen(season: Season): Promise<void> {
       </PermissionGuard>
     </div>
     <template v-else>
-      <div class="hidden overflow-hidden rounded-2xl border border-brand-border bg-brand-surface lg:block">
-        <table class="min-w-full text-sm">
+      <div class="app-entity-table-card hidden overflow-hidden rounded-2xl border border-brand-border bg-brand-surface lg:block">
+        <table class="app-entity-table min-w-full text-sm">
           <thead class="bg-[#F4F6F5]">
             <tr>
               <th class="px-5 py-3.5 text-start text-xs font-bold text-brand-text-muted">

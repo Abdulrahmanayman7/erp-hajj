@@ -166,7 +166,7 @@ function unlink(purchaseRequestId: number): void {
             {{ t('purchaseDemandGroups.membershipLocked') }}
           </p>
         </PermissionGuard>
-        <table class="w-full text-sm">
+        <table class="app-entity-table w-full text-sm">
           <tbody>
             <tr v-for="m in group.members ?? []" :key="m.purchase_request_id" class="border-b">
               <td class="py-2">{{ m.pr_number ?? m.purchase_request_id }} — {{ m.title }}</td>

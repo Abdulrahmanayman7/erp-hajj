@@ -224,7 +224,7 @@ async function downloadCsv(): Promise<void> {
           {{ t('purchaseControlReports.empty') }}
         </div>
         <div v-else class="overflow-x-auto">
-          <table class="min-w-full text-sm">
+          <table class="app-entity-table min-w-full text-sm">
             <thead class="border-b border-brand-border bg-brand-bg/50 text-start text-brand-text-secondary">
               <tr v-if="active === 'approval-latency'">
                 <th class="px-4 py-3 font-semibold">{{ t('purchaseControlReports.columns.prNumber') }}</th>

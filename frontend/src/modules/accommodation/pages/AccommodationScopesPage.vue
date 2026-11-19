@@ -239,7 +239,7 @@ useAccommodationDialog(() => grantDrawer.value !== null, () => { if (!grantFacil
         </div>
         <template v-else>
           <div class="accommodation-table-surface overflow-x-auto rounded-2xl border">
-            <table class="min-w-full text-sm">
+            <table class="app-entity-table min-w-full text-sm">
               <thead class="bg-brand-bg text-brand-text-secondary">
                 <tr>
                   <th class="px-4 py-3 text-start">{{ t('accommodation.fields.userId') }}</th>
@@ -267,7 +267,7 @@ useAccommodationDialog(() => grantDrawer.value !== null, () => { if (!grantFacil
           <div v-if="revokedFacilityScopes.length" class="space-y-2">
             <h3 class="text-sm font-semibold text-brand-text-secondary">{{ t('accommodation.scopes.revokedHistory') }}</h3>
             <div class="accommodation-table-surface overflow-x-auto rounded-2xl border border-dashed">
-              <table class="min-w-full text-sm">
+              <table class="app-entity-table min-w-full text-sm">
                 <thead class="bg-brand-bg/60">
                   <tr>
                     <th class="px-4 py-2 text-start">{{ t('accommodation.fields.userId') }}</th>
@@ -312,7 +312,7 @@ useAccommodationDialog(() => grantDrawer.value !== null, () => { if (!grantFacil
         </div>
         <template v-else>
           <div class="accommodation-table-surface overflow-x-auto rounded-2xl border">
-            <table class="min-w-full text-sm">
+            <table class="app-entity-table min-w-full text-sm">
               <thead class="bg-brand-bg">
                 <tr>
                   <th class="px-4 py-3 text-start">{{ t('accommodation.fields.userId') }}</th>
@@ -338,7 +338,7 @@ useAccommodationDialog(() => grantDrawer.value !== null, () => { if (!grantFacil
           <div v-if="revokedSupervisorScopes.length" class="space-y-2">
             <h3 class="text-sm font-semibold text-brand-text-secondary">{{ t('accommodation.scopes.revokedHistory') }}</h3>
             <div class="accommodation-table-surface overflow-x-auto rounded-2xl border border-dashed">
-              <table class="min-w-full text-sm">
+              <table class="app-entity-table min-w-full text-sm">
                 <thead class="bg-brand-bg/60">
                   <tr>
                     <th class="px-4 py-2 text-start">{{ t('accommodation.fields.userId') }}</th>

@@ -122,8 +122,8 @@ async function onClose(id: number): Promise<void> {
     >
       {{ t('transportation.breakdowns.empty') }}
     </div>
-    <div v-else class="overflow-x-auto rounded-2xl border border-brand-border bg-brand-surface">
-      <table class="min-w-full text-sm">
+    <div v-else class="app-entity-table-card overflow-x-auto rounded-2xl border border-brand-border bg-brand-surface">
+      <table class="app-entity-table min-w-full text-sm">
         <thead class="bg-[#F4F6F5]">
           <tr>
             <th class="px-5 py-3 text-start text-xs font-bold text-brand-text-muted">#</th>

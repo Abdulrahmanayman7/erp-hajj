@@ -240,7 +240,7 @@ function openLink() {
     </div>
     <template v-else>
       <div class="hidden overflow-x-auto rounded-xl border border-brand-border bg-white md:block">
-        <table class="min-w-full text-sm" data-test="gps-devices-table">
+        <table class="app-entity-table min-w-full text-sm" data-test="gps-devices-table">
           <thead class="bg-[var(--surface-subtle)] text-start text-xs text-brand-text-muted">
             <tr>
               <th class="px-3 py-2.5 font-semibold">{{ t('gpsProviders.deviceId') }}</th>

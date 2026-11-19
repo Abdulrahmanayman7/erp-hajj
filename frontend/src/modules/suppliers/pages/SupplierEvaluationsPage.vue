@@ -343,7 +343,7 @@ function openCreate(): void {
         {{ t('evaluations.empty') }}
       </div>
       <div v-else class="overflow-x-auto">
-        <table class="min-w-full text-sm">
+        <table class="app-entity-table min-w-full text-sm">
           <thead class="border-b border-brand-border bg-brand-bg/50 text-start text-brand-text-secondary">
             <tr>
               <th class="px-4 py-3 font-semibold">{{ t('evaluations.columns.number') }}</th>
