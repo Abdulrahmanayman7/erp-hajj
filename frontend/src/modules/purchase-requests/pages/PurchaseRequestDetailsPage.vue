@@ -31,6 +31,7 @@ import {
   usePurchaseRequestVersionsQuery,
 } from '../queries/usePurchaseRequestsQuery'
 import { nextCycleHint } from '@/modules/purchase-orders/utils/procurementCycleHints'
+import { formatIsoTimestampAr } from '@/shared/utils/gregorianDate'
 
 import { mapPurchaseRequestErrorCode } from '../validation/purchaseRequestValidation'
 
@@ -116,6 +117,29 @@ const activeApprovalInstance = computed(() => {
   return instances.find((item) => item.status === 'active') ?? instances[0] ?? null
 })
 const approvalSteps = computed(() => activeApprovalInstance.value?.steps ?? [])
+
+function statusLabel(status: string): string {
+  if (status === 'under_review') return t('purchaseRequests.statuses.underReview')
+  const key = `purchaseRequests.statuses.${status}`
+  const label = t(key)
+  return label === key ? status : label
+}
+
+function outcomeLabel(outcome: string): string {
+  const map: Record<string, string> = {
+    cleared: 'purchaseRequests.outcomes.cleared',
+    cleared_with_conditions: 'purchaseRequests.outcomes.clearedWithConditions',
+    not_cleared: 'purchaseRequests.outcomes.notCleared',
+  }
+  const key = map[outcome]
+  return key ? t(key) : outcome
+}
+
+function approvalStepStatusLabel(status: string): string {
+  const key = `purchaseRequests.approvalTimeline.stepStatuses.${status}`
+  const label = t(key)
+  return label === key ? status : label
+}
 
 watch(
   pr,
@@ -342,7 +366,7 @@ async function onCancelApproved(reason: string): Promise<void> {
         <div class="flex flex-wrap items-center gap-3">
           <h1 class="text-2xl font-bold text-brand-text">{{ pr.pr_number }}</h1>
           <span class="rounded-full bg-brand-primary-soft px-2.5 py-1 text-xs font-semibold text-brand-primary-dark">
-            {{ t(`purchaseRequests.statuses.${pr.status === 'under_review' ? 'underReview' : pr.status}`) }}
+            {{ statusLabel(pr.status) }}
           </span>
           <span
             v-if="pr.pending_approval_engine && !showRoutingBlocked"
@@ -441,10 +465,14 @@ async function onCancelApproved(reason: string): Promise<void> {
               <span class="font-semibold text-brand-text">
                 {{ t('purchaseRequests.approvalTimeline.level', { n: step.level_order }) }}
               </span>
-              <span class="text-xs text-brand-text-muted">{{ step.status }}</span>
+              <span class="text-xs text-brand-text-muted">{{ approvalStepStatusLabel(step.status) }}</span>
             </div>
             <div v-if="step.due_at" class="mt-1 text-xs text-brand-text-muted">
-              {{ t('purchaseRequests.approvalTimeline.due', { at: step.due_at }) }}
+              {{
+                t('purchaseRequests.approvalTimeline.due', {
+                  at: formatIsoTimestampAr(step.due_at, undefined, step.due_at),
+                })
+              }}
             </div>
             <div v-if="step.escalated_at" class="mt-1 text-xs text-amber-700">
               {{ t('purchaseRequests.approvalTimeline.escalated') }}
@@ -714,7 +742,14 @@ async function onCancelApproved(reason: string): Promise<void> {
             :key="review.id"
             class="rounded-xl border border-brand-border px-3 py-2"
           >
-            v{{ review.version_no }} · {{ review.outcome }} · {{ review.justification }}
+            <div class="font-semibold text-brand-text">
+              {{ t('purchaseRequests.versionLabel', { n: review.version_no }) }}
+              · {{ outcomeLabel(review.outcome) }}
+            </div>
+            <div class="mt-1 text-brand-text-secondary">{{ review.justification }}</div>
+            <div v-if="review.reviewed_at" class="mt-1 text-xs text-brand-text-muted">
+              {{ formatIsoTimestampAr(review.reviewed_at, undefined, review.reviewed_at) }}
+            </div>
           </li>
         </ul>
       </section>
@@ -730,8 +765,23 @@ async function onCancelApproved(reason: string): Promise<void> {
             :key="version.id"
             class="rounded-xl border border-brand-border px-3 py-2"
           >
-            v{{ version.version_no }} · {{ version.status }} · {{ version.snapshot_at }}
-            · {{ version.estimated_total_priced }}
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="font-semibold text-brand-text">
+                {{ t('purchaseRequests.versionLabel', { n: version.version_no }) }}
+              </span>
+              <span class="rounded-full bg-brand-primary-soft px-2 py-0.5 text-xs font-semibold text-brand-primary-dark">
+                {{ statusLabel(version.status) }}
+              </span>
+            </div>
+            <div class="mt-1 text-brand-text-secondary">
+              {{ t('purchaseRequests.versionTotalPriced') }}:
+              <span dir="ltr">{{ version.estimated_total_priced }}</span>
+              <span v-if="version.has_unpriced_lines"> · {{ t('purchaseRequests.hasUnpriced') }}</span>
+            </div>
+            <div v-if="version.snapshot_at" class="mt-1 text-xs text-brand-text-muted">
+              {{ t('purchaseRequests.versionSnapshotAt') }}:
+              {{ formatIsoTimestampAr(version.snapshot_at, undefined, version.snapshot_at) }}
+            </div>
           </li>
         </ul>
       </section>
