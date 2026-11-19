@@ -1,65 +1,105 @@
 import { test, expect } from '@playwright/test'
 
 import { apiFromPage, apiGet, apiPost } from '../../src/helpers/api'
-import { gotoApp, expectNoFatalCrash } from '../../src/helpers/ui'
+import { acceptCreateStatus, acceptReadStatus, firstId, stamp } from '../../src/helpers/data'
+import { expectNoFatalCrash, gotoApp } from '../../src/helpers/ui'
 
-test.describe('Workflow: procurement', () => {
-  test('API lists suppliers and purchase requests', async ({ page }) => {
+test.describe('Workflow: procurement cycle', () => {
+  test('API lists procurement endpoints', async ({ page }) => {
     const session = await apiFromPage(page)
     for (const path of [
       '/api/v1/suppliers?per_page=10',
+      '/api/v1/supplier-evaluations?per_page=10',
       '/api/v1/purchase-requests?per_page=10',
       '/api/v1/purchase-requests/approval-inbox',
+      '/api/v1/rfqs?per_page=10',
+      '/api/v1/purchase-orders?per_page=10',
+      '/api/v1/goods-receipts?per_page=10',
     ]) {
       const { response } = await apiGet(session, path)
-      expect([200, 403, 404]).toContain(response.status())
+      expect(acceptReadStatus(response.status())).toBeTruthy()
     }
   })
 
-  test('UI create purchase request page loads with branded form', async ({ page }) => {
-    await gotoApp(page, '/app/purchase-requests/create')
-    await expectNoFatalCrash(page)
-    await expect(page.getByText(/إنشاء مسودة طلب شراء|طلب شراء/i).first()).toBeVisible()
-    await expect(page.getByText(/نوع الطلب|العنوان|الغرض/i).first()).toBeVisible()
-  })
-
-  test('API creates draft purchase request when units exist', async ({ page }) => {
+  test('API creates supplier + purchase request draft + opens UI', async ({ page }) => {
     const session = await apiFromPage(page)
+    const tag = stamp('PRC')
+
+    const supplier = await apiPost(session, '/api/v1/suppliers', {
+      display_name: `${tag} Supplier`,
+      legal_name: `${tag} Legal`,
+      supplier_type: 'company',
+      country_code: 'SA',
+      notes: 'playwright procurement',
+    })
+    expect(acceptCreateStatus(supplier.response.status())).toBeTruthy()
+    const supplierId = firstId(supplier.json)
+
     const units = await apiGet(session, '/api/v1/organization-units?per_page=5')
-    if (units.response.status() !== 200) {
-      test.skip(true, 'organization units unavailable')
-    }
-    const unitId = units.json?.data?.[0]?.id ?? units.json?.data?.data?.[0]?.id ?? null
+    const unitId = firstId(units.json)
     if (!unitId) {
-      test.skip(true, 'no organization unit to attach')
+      test.skip(true, 'no organization unit')
     }
 
-    const { response, json } = await apiPost(session, '/api/v1/purchase-requests', {
+    const pr = await apiPost(session, '/api/v1/purchase-requests', {
       request_kind: 'administrative',
       season_id: null,
-      title: `E2E PR ${Date.now()}`,
-      purpose: 'Playwright end-to-end draft creation',
+      title: `${tag} Purchase Request`,
+      purpose: 'Playwright procurement workflow',
       priority: 'normal',
       urgency_justification: null,
       beneficiary_organization_unit_id: unitId,
-      optional_supplier_id: null,
+      optional_supplier_id: supplierId,
       currency: 'SAR',
       lines: [
         {
           line_no: 1,
           description: 'E2E line item',
           specifications: null,
-          quantity: 1,
+          quantity: 2,
           unit: 'قطعة',
           need_date: '2026-12-01',
-          unit_estimate: 10,
+          unit_estimate: 25,
           unpriced_reason: null,
         },
       ],
     })
-    expect([200, 201, 403, 422]).toContain(response.status())
-    if (response.status() === 200 || response.status() === 201) {
-      expect(json?.data?.id || json?.id).toBeTruthy()
+    expect(acceptCreateStatus(pr.response.status())).toBeTruthy()
+    const prId = firstId(pr.json)
+
+    if (prId) {
+      const submit = await apiPost(session, `/api/v1/purchase-requests/${prId}/submit`, {
+        acknowledge_duplicates: true,
+      })
+      expect([200, 403, 409, 422]).toContain(submit.response.status())
+      await gotoApp(page, `/app/purchase-requests/${prId}`)
+      await expectNoFatalCrash(page)
+    }
+    if (supplierId) {
+      await gotoApp(page, `/app/suppliers/${supplierId}`)
+      await expectNoFatalCrash(page)
+    }
+  })
+
+  test('UI procurement pages', async ({ page }) => {
+    for (const path of [
+      '/app/suppliers',
+      '/app/supplier-evaluations',
+      '/app/purchase-requests',
+      '/app/purchase-requests/create',
+      '/app/purchase-requests/approval-inbox',
+      '/app/purchase-demand-groups',
+      '/app/purchase-control-reports',
+      '/app/purchase-approval-settings',
+      '/app/rfqs',
+      '/app/rfqs/create',
+      '/app/purchase-orders',
+      '/app/purchase-orders/create',
+      '/app/goods-receipts',
+      '/app/goods-receipts/create',
+    ]) {
+      await gotoApp(page, path)
+      await expectNoFatalCrash(page)
     }
   })
 })

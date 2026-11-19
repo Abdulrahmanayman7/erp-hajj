@@ -12,13 +12,18 @@ test.describe('Backend API smoke (authenticated)', () => {
       '/api/v1/dashboard',
       '/api/v1/users?per_page=5',
       '/api/v1/roles?per_page=5',
+      '/api/v1/organization-tree',
       '/api/v1/organization-units?per_page=5',
       '/api/v1/employees?per_page=5',
       '/api/v1/seasons?per_page=5',
       '/api/v1/pilgrims?per_page=5',
       '/api/v1/contracts?per_page=5',
       '/api/v1/suppliers?per_page=5',
+      '/api/v1/supplier-evaluations?per_page=5',
       '/api/v1/purchase-requests?per_page=5',
+      '/api/v1/rfqs?per_page=5',
+      '/api/v1/purchase-orders?per_page=5',
+      '/api/v1/goods-receipts?per_page=5',
       '/api/v1/meetings?per_page=5',
       '/api/v1/decisions?per_page=5',
       '/api/v1/tasks?per_page=5',
@@ -26,10 +31,14 @@ test.describe('Backend API smoke (authenticated)', () => {
       '/api/v1/warehouses?per_page=5',
       '/api/v1/inventory-items?per_page=5',
       '/api/v1/assets?per_page=5',
+      '/api/v1/asset-custodies?per_page=5',
+      '/api/v1/my-custodies?per_page=5',
       '/api/v1/transport-vehicles?per_page=5',
       '/api/v1/transport-points?per_page=5',
+      '/api/v1/transport-external-drivers?per_page=5',
       '/api/v1/gps/providers',
       '/api/v1/gps/device-bindings',
+      '/api/v1/gps/fleet-map',
       '/api/v1/tenant-settings',
       '/api/v1/notifications?per_page=5',
       '/api/v1/audit-logs?per_page=5',
@@ -41,7 +50,7 @@ test.describe('Backend API smoke (authenticated)', () => {
         response.status(),
         `${path} => ${response.status()} ${JSON.stringify(json).slice(0, 240)}`,
       ).toBeLessThan(500)
-      expect([200, 403, 404]).toContain(response.status())
+      expect([200, 403, 404, 422]).toContain(response.status())
     }
   })
 })

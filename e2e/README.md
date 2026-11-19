@@ -33,9 +33,19 @@ npm run report           # open HTML report
 |---|---|
 | `auth.setup.ts` | Saves authenticated storage state |
 | `auth.spec.ts` | Login success + invalid password |
-| `api-smoke.spec.ts` | Sanctum login + authenticated list endpoints |
-| `nav-smoke.spec.ts` | Opens major `/app/*` pages |
-| `workflows/*` | Seasons/pilgrims, procurement, transport/GPS, governance, inventory/assets |
+| `api-smoke.spec.ts` | Sanctum session + authenticated list endpoints |
+| `nav-smoke.spec.ts` | Opens all static `/app` list/create pages |
+| `pages-details.spec.ts` | Opens detail pages when fixture data exists |
+| `workflows/governance` | Meeting → Decision → Task chain |
+| `workflows/contracts` | Contract draft + submit-review |
+| `workflows/seasons-pilgrims` | Season + pilgrim + program + enroll |
+| `workflows/procurement` | Supplier + purchase request draft/submit |
+| `workflows/transport-gps` | Vehicles/points/drivers + GPS simulator provider |
+| `workflows/inventory-assets` | Warehouse → item → asset |
+| `workflows/risks-complaints` | Risk + complaint create (season-scoped) |
+| `workflows/season-projects` | Season project create/activate |
+| `workflows/hr-org` | Org unit + employee |
+| `workflows/accommodation` | Facility create + accommodation pages |
 
 ## Notes
 

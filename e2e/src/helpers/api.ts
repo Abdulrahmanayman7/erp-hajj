@@ -1,6 +1,7 @@
 import { APIRequestContext, expect, type Page } from '@playwright/test'
 
 import { e2eEnv } from '../env'
+import { firstId } from './data'
 
 export type ApiSession = {
   request: APIRequestContext
@@ -8,7 +9,7 @@ export type ApiSession = {
   user: Record<string, unknown>
 }
 
-async function headersFor(page: Page) {
+async function headersFor(page: Page, extra?: Record<string, string>) {
   const origin = e2eEnv.apiURL.replace(/\/$/, '')
   const cookies = await page.context().cookies()
   const raw = cookies.find((c) => c.name === 'XSRF-TOKEN')?.value
@@ -19,6 +20,7 @@ async function headersFor(page: Page) {
     Origin: origin,
     Referer: `${origin}/app`,
     ...(xsrf ? { 'X-XSRF-TOKEN': xsrf } : {}),
+    ...(extra ?? {}),
   }
 }
 
@@ -39,28 +41,65 @@ export async function apiFromPage(page: Page): Promise<ApiSession> {
   }
 }
 
-export async function apiGet(session: ApiSession, path: string) {
-  const response = await session.request.get(path, { headers: await headersFor(session.page) })
+export async function apiGet(
+  session: ApiSession,
+  path: string,
+  options?: { seasonId?: number | null; headers?: Record<string, string> },
+) {
+  const extra = {
+    ...(options?.headers ?? {}),
+    ...(options?.seasonId ? { 'X-Season-Id': String(options.seasonId) } : {}),
+  }
+  const response = await session.request.get(path, {
+    headers: await headersFor(session.page, extra),
+  })
   const json = await response.json().catch(() => ({}))
   return { response, json }
 }
 
-export async function apiPost(session: ApiSession, path: string, data: unknown) {
+export async function apiPost(
+  session: ApiSession,
+  path: string,
+  data: unknown,
+  options?: { seasonId?: number | null; headers?: Record<string, string> },
+) {
   await session.request.get('/sanctum/csrf-cookie')
+  const extra = {
+    ...(options?.headers ?? {}),
+    ...(options?.seasonId ? { 'X-Season-Id': String(options.seasonId) } : {}),
+  }
   const response = await session.request.post(path, {
     data,
-    headers: await headersFor(session.page),
+    headers: await headersFor(session.page, extra),
   })
   const json = await response.json().catch(() => ({}))
   return { response, json }
 }
 
-export async function apiPatch(session: ApiSession, path: string, data: unknown) {
+export async function apiPatch(
+  session: ApiSession,
+  path: string,
+  data: unknown,
+  options?: { seasonId?: number | null; headers?: Record<string, string> },
+) {
   await session.request.get('/sanctum/csrf-cookie')
+  const extra = {
+    ...(options?.headers ?? {}),
+    ...(options?.seasonId ? { 'X-Season-Id': String(options.seasonId) } : {}),
+  }
   const response = await session.request.patch(path, {
     data,
-    headers: await headersFor(session.page),
+    headers: await headersFor(session.page, extra),
   })
   const json = await response.json().catch(() => ({}))
   return { response, json }
+}
+
+/** Prefer active season; fall back to first listed season. */
+export async function resolveSeasonId(session: ApiSession): Promise<number | null> {
+  const active = await apiGet(session, '/api/v1/seasons?per_page=5&status=active')
+  const fromActive = firstId(active.json)
+  if (fromActive) return fromActive
+  const any = await apiGet(session, '/api/v1/seasons?per_page=5')
+  return firstId(any.json)
 }
