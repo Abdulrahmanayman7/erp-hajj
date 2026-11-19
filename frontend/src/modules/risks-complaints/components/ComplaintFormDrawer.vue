@@ -56,22 +56,22 @@ function onOpenUpdate(value: boolean): void {
     @close="emit('close')"
     @submit="emit('submit')"
   >
-    <label class="block">
-      <span class="mb-1.5 block text-sm font-semibold">{{ t('complaints.fields.title') }}</span>
+    <label class="app-field">
+      <span class="app-field__label">{{ t('complaints.fields.title') }}</span>
       <input
         :value="form.title"
         required
-        class="h-11 w-full rounded-xl border border-brand-border px-3 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+        class="app-field__control app-field__control--input"
         data-testid="complaint-title-input"
         @input="patch({ title: ($event.target as HTMLInputElement).value })"
       />
-      <p v-if="fieldErrors.title" class="mt-1 text-xs text-red-600">
+      <p v-if="fieldErrors.title" class="text-xs text-red-600">
         {{ t(`complaints.validation.${fieldErrors.title}`) }}
       </p>
     </label>
 
-    <label class="block">
-      <span class="mb-1.5 block text-sm font-semibold">{{ t('complaints.fields.category') }}</span>
+    <label class="app-field">
+      <span class="app-field__label">{{ t('complaints.fields.category') }}</span>
       <AppSelect
         :model-value="form.category_code"
         :options="categoryOptions"
@@ -79,22 +79,22 @@ function onOpenUpdate(value: boolean): void {
           patch({ category_code: String($event || '') as ComplaintCategory | '' })
         "
       />
-      <p v-if="fieldErrors.category_code" class="mt-1 text-xs text-red-600">
+      <p v-if="fieldErrors.category_code" class="text-xs text-red-600">
         {{ t(`complaints.validation.${fieldErrors.category_code}`) }}
       </p>
     </label>
 
-    <label class="block">
-      <span class="mb-1.5 block text-sm font-semibold">{{ t('complaints.fields.body') }}</span>
+    <label class="app-field">
+      <span class="app-field__label">{{ t('complaints.fields.body') }}</span>
       <textarea
         :value="form.body"
         required
         rows="5"
-        class="w-full rounded-xl border border-brand-border p-3 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+        class="app-field__control app-field__control--textarea"
         data-testid="complaint-body-input"
         @input="patch({ body: ($event.target as HTMLTextAreaElement).value })"
       />
-      <p v-if="fieldErrors.body" class="mt-1 text-xs text-red-600">
+      <p v-if="fieldErrors.body" class="text-xs text-red-600">
         {{ t(`complaints.validation.${fieldErrors.body}`) }}
       </p>
     </label>

@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight, Pencil, Plus, Search } from 'lucide-vue-next
 import { ApiError } from '@/shared/api/http'
 import AppFormDrawer from '@/shared/components/AppFormDrawer.vue'
 import AppPageHeader from '@/shared/components/AppPageHeader.vue'
+import AppPhoneInput from '@/shared/components/AppPhoneInput.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
 import { useConfirm } from '@/shared/composables/useConfirm'
@@ -359,43 +360,39 @@ async function onDelete(driver: TransportExternalDriver): Promise<void> {
       <p v-if="formError" class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
         {{ formError }}
       </p>
-      <div>
-        <label class="mb-1 block text-sm font-medium">{{
-          t('transportation.drivers.fields.fullName')
-        }}</label>
+      <label class="app-field">
+        <span class="app-field__label">{{ t('transportation.drivers.fields.fullName') }}</span>
         <input
           v-model="form.full_name"
           type="text"
-          class="h-11 w-full rounded-xl border border-brand-border px-3 text-sm"
+          class="app-field__control app-field__control--input"
+          :disabled="submitting"
         />
-        <p v-if="fieldMessage('full_name')" class="mt-1 text-xs text-red-600">
+        <p v-if="fieldMessage('full_name')" class="text-xs text-red-600">
           {{ fieldMessage('full_name') }}
         </p>
-      </div>
-      <div>
-        <label class="mb-1 block text-sm font-medium">{{
-          t('transportation.drivers.fields.phone')
-        }}</label>
-        <input
-          v-model="form.phone"
-          type="text"
-          dir="ltr"
-          class="h-11 w-full rounded-xl border border-brand-border px-3 text-sm"
+      </label>
+      <label class="app-field">
+        <span class="app-field__label">{{ t('transportation.drivers.fields.phone') }}</span>
+        <AppPhoneInput
+          :model-value="form.phone"
+          :disabled="submitting"
+          :invalid="Boolean(fieldMessage('phone'))"
+          @update:model-value="form.phone = $event"
         />
-        <p v-if="fieldMessage('phone')" class="mt-1 text-xs text-red-600">
+        <p v-if="fieldMessage('phone')" class="text-xs text-red-600">
           {{ fieldMessage('phone') }}
         </p>
-      </div>
-      <div>
-        <label class="mb-1 block text-sm font-medium">{{
-          t('transportation.drivers.fields.notes')
-        }}</label>
+      </label>
+      <label class="app-field">
+        <span class="app-field__label">{{ t('transportation.drivers.fields.notes') }}</span>
         <textarea
           v-model="form.notes"
           rows="3"
-          class="w-full rounded-xl border border-brand-border px-3 py-2 text-sm"
+          class="app-field__control app-field__control--textarea"
+          :disabled="submitting"
         />
-      </div>
+      </label>
     </AppFormDrawer>
   </div>
 </template>

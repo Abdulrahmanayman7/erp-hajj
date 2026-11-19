@@ -27,6 +27,7 @@ import {
   validateSupplierForm,
 } from '../validation/supplierValidation'
 import { ApiError } from '@/shared/api/http'
+import AppPhoneInput from '@/shared/components/AppPhoneInput.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
 import { usePermissions } from '@/shared/composables/usePermissions'
@@ -414,10 +415,40 @@ function onTabSelect(tab: TabKey): void {
           <section class="rounded-2xl border border-brand-border bg-brand-surface p-5">
             <h3 class="font-bold text-brand-text">{{ t('suppliers.addContact') }}</h3>
             <div class="mt-4 grid gap-3 sm:grid-cols-2">
-              <input v-model="contactForm.name" type="text" class="rounded-xl border px-3 py-2 text-sm" :placeholder="t('suppliers.fields.contactName')" />
-              <input v-model="contactForm.role_title" type="text" class="rounded-xl border px-3 py-2 text-sm" :placeholder="t('suppliers.fields.contactRole')" />
-              <input v-model="contactForm.email" type="email" class="rounded-xl border px-3 py-2 text-sm" :placeholder="t('suppliers.fields.contactEmail')" />
-              <input v-model="contactForm.phone" type="text" class="rounded-xl border px-3 py-2 text-sm" :placeholder="t('suppliers.fields.contactPhone')" />
+              <label class="app-field">
+                <span class="app-field__label">{{ t('suppliers.fields.contactName') }}</span>
+                <input
+                  v-model="contactForm.name"
+                  type="text"
+                  class="app-field__control app-field__control--input"
+                  :placeholder="t('suppliers.fields.contactName')"
+                />
+              </label>
+              <label class="app-field">
+                <span class="app-field__label">{{ t('suppliers.fields.contactRole') }}</span>
+                <input
+                  v-model="contactForm.role_title"
+                  type="text"
+                  class="app-field__control app-field__control--input"
+                  :placeholder="t('suppliers.fields.contactRole')"
+                />
+              </label>
+              <label class="app-field">
+                <span class="app-field__label">{{ t('suppliers.fields.contactEmail') }}</span>
+                <input
+                  v-model="contactForm.email"
+                  type="email"
+                  class="app-field__control app-field__control--input"
+                  :placeholder="t('suppliers.fields.contactEmail')"
+                />
+              </label>
+              <label class="app-field">
+                <span class="app-field__label">{{ t('suppliers.fields.contactPhone') }}</span>
+                <AppPhoneInput
+                  :model-value="contactForm.phone"
+                  @update:model-value="contactForm.phone = $event"
+                />
+              </label>
             </div>
             <label class="mt-3 flex items-center gap-2 text-sm">
               <input v-model="contactForm.is_primary_contact" type="checkbox" />

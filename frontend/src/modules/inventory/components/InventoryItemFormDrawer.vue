@@ -62,21 +62,21 @@ function onOpenUpdate(value: boolean): void {
     @close="emit('close')"
     @submit="emit('submit')"
   >
-    <label class="block">
-      <span class="text-sm font-medium text-brand-text">{{ t('inventory.fields.itemNumber') }}</span>
+    <label class="app-field">
+      <span class="app-field__label">{{ t('inventory.fields.itemNumber') }}</span>
       <input
         readonly
         :value="editing?.item_number ?? t('inventory.numberPlaceholder')"
-        class="mt-1 h-11 w-full rounded-xl border border-brand-border bg-brand-bg px-3 text-sm text-brand-text-muted"
+        class="app-field__control app-field__control--input bg-brand-bg text-brand-text-muted"
       />
     </label>
 
-    <label class="block">
-      <span class="text-sm font-medium text-brand-text">{{ t('inventory.fields.name') }}</span>
+    <label class="app-field">
+      <span class="app-field__label">{{ t('inventory.fields.name') }}</span>
       <input
         :value="form.name"
         required
-        class="mt-1 h-11 w-full rounded-xl border border-brand-border px-3 text-sm"
+        class="app-field__control app-field__control--input"
         @input="patch({ name: ($event.target as HTMLInputElement).value })"
       />
       <p v-if="fieldErrors.name" class="mt-1 text-xs text-red-600">
@@ -84,10 +84,9 @@ function onOpenUpdate(value: boolean): void {
       </p>
     </label>
 
-    <label class="block">
-      <span class="text-sm font-medium text-brand-text">{{ t('inventory.fields.category') }}</span>
+    <label class="app-field">
+      <span class="app-field__label">{{ t('inventory.fields.category') }}</span>
       <AppSelect
-        class="mt-1"
         :model-value="form.category_id"
         :options="categoryOptions"
         searchable
@@ -97,10 +96,9 @@ function onOpenUpdate(value: boolean): void {
       />
     </label>
 
-    <label class="block">
-      <span class="text-sm font-medium text-brand-text">{{ t('inventory.fields.unit') }}</span>
+    <label class="app-field">
+      <span class="app-field__label">{{ t('inventory.fields.unit') }}</span>
       <AppSelect
-        class="mt-1"
         :model-value="form.unit"
         :options="unitOptions"
         @update:model-value="patch({ unit: ($event || '') as InventoryItemFormState['unit'] })"
@@ -110,20 +108,20 @@ function onOpenUpdate(value: boolean): void {
       </p>
     </label>
 
-    <label class="block">
-      <span class="text-sm font-medium text-brand-text">{{ t('inventory.fields.barcode') }}</span>
+    <label class="app-field">
+      <span class="app-field__label">{{ t('inventory.fields.barcode') }}</span>
       <input
         :value="form.barcode"
-        class="mt-1 h-11 w-full rounded-xl border border-brand-border px-3 text-sm"
+        class="app-field__control app-field__control--input"
         @input="patch({ barcode: ($event.target as HTMLInputElement).value })"
       />
     </label>
 
-    <label class="block">
-      <span class="text-sm font-medium text-brand-text">{{ t('inventory.fields.minimumStock') }}</span>
+    <label class="app-field">
+      <span class="app-field__label">{{ t('inventory.fields.minimumStock') }}</span>
       <AppNumberInput
         :model-value="form.minimum_stock"
-        class="mt-1 h-11 w-full rounded-xl border border-brand-border px-3 text-sm"
+        class="app-field__control app-field__control--input"
         min="0"
         @update:model-value="patch({ minimum_stock: $event })"
       />
@@ -132,12 +130,12 @@ function onOpenUpdate(value: boolean): void {
       </p>
     </label>
 
-    <label class="block">
-      <span class="text-sm font-medium text-brand-text">{{ t('inventory.fields.description') }}</span>
+    <label class="app-field">
+      <span class="app-field__label">{{ t('inventory.fields.description') }}</span>
       <textarea
         :value="form.description"
         rows="3"
-        class="mt-1 w-full rounded-xl border border-brand-border p-3 text-sm"
+        class="app-field__control app-field__control--textarea"
         @input="patch({ description: ($event.target as HTMLTextAreaElement).value })"
       />
     </label>
@@ -152,12 +150,12 @@ function onOpenUpdate(value: boolean): void {
       <span class="text-sm text-brand-text">{{ t('inventory.fields.isActive') }}</span>
     </label>
 
-    <label class="block">
-      <span class="text-sm font-medium text-brand-text">{{ t('inventory.fields.notes') }}</span>
+    <label class="app-field">
+      <span class="app-field__label">{{ t('inventory.fields.notes') }}</span>
       <textarea
         :value="form.notes"
         rows="2"
-        class="mt-1 w-full rounded-xl border border-brand-border p-3 text-sm"
+        class="app-field__control app-field__control--textarea"
         @input="patch({ notes: ($event.target as HTMLTextAreaElement).value })"
       />
     </label>

@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import AppFormDrawer from '@/shared/components/AppFormDrawer.vue'
+import AppPhoneInput from '@/shared/components/AppPhoneInput.vue'
 import { useCaptureOnOpen, useFormDirty } from '@/shared/composables/useFormDirty'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
 
@@ -79,15 +80,14 @@ function onOpenUpdate(value: boolean): void {
       {{ formError }}
     </p>
 
-    <label class="block space-y-1.5">
-      <span class="text-sm font-semibold text-brand-text">{{
-        t('pilgrims.fields.fullName')
-      }}</span>
+    <label class="app-field">
+      <span class="app-field__label">{{ t('pilgrims.fields.fullName') }}</span>
       <input
         :value="form.full_name"
         type="text"
         maxlength="255"
-        class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface px-3 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+        class="app-field__control app-field__control--input"
+        :disabled="submitting"
         @input="patch({ full_name: ($event.target as HTMLInputElement).value })"
       />
       <span v-if="fieldMessage('full_name')" class="text-xs text-red-600">{{
@@ -95,13 +95,12 @@ function onOpenUpdate(value: boolean): void {
       }}</span>
     </label>
 
-    <label class="block space-y-1.5">
-      <span class="text-sm font-semibold text-brand-text">{{
-        t('pilgrims.fields.gender')
-      }}</span>
+    <label class="app-field">
+      <span class="app-field__label">{{ t('pilgrims.fields.gender') }}</span>
       <AppSelect
         :model-value="form.gender"
         :options="genderOptions"
+        :disabled="submitting"
         @update:model-value="
           patch({ gender: ($event === '' ? '' : String($event)) as PilgrimFormState['gender'] })
         "
@@ -111,52 +110,44 @@ function onOpenUpdate(value: boolean): void {
       }}</span>
     </label>
 
-    <label class="block space-y-1.5">
-      <span class="text-sm font-semibold text-brand-text">{{
-        t('pilgrims.fields.nationality')
-      }}</span>
+    <label class="app-field">
+      <span class="app-field__label">{{ t('pilgrims.fields.nationality') }}</span>
       <input
         :value="form.nationality"
         type="text"
         maxlength="3"
         dir="ltr"
-        class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface px-3 text-sm uppercase outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+        class="app-field__control app-field__control--input uppercase"
+        :disabled="submitting"
         @input="patch({ nationality: ($event.target as HTMLInputElement).value })"
       />
-      <span class="text-xs text-brand-text-muted">{{
-        t('pilgrims.fields.nationalityHint')
-      }}</span>
+      <span class="text-xs text-brand-text-muted">{{ t('pilgrims.fields.nationalityHint') }}</span>
       <span v-if="fieldMessage('nationality')" class="block text-xs text-red-600">{{
         fieldMessage('nationality')
       }}</span>
     </label>
 
-    <label class="block space-y-1.5">
-      <span class="text-sm font-semibold text-brand-text">{{
-        t('pilgrims.fields.phone')
-      }}</span>
-      <input
-        :value="form.phone"
-        type="text"
-        maxlength="32"
-        dir="ltr"
-        class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface px-3 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
-        @input="patch({ phone: ($event.target as HTMLInputElement).value })"
+    <label class="app-field">
+      <span class="app-field__label">{{ t('pilgrims.fields.phone') }}</span>
+      <AppPhoneInput
+        :model-value="form.phone"
+        :disabled="submitting"
+        :invalid="Boolean(fieldMessage('phone'))"
+        @update:model-value="patch({ phone: $event })"
       />
       <span v-if="fieldMessage('phone')" class="text-xs text-red-600">{{
         fieldMessage('phone')
       }}</span>
     </label>
 
-    <label class="block space-y-1.5">
-      <span class="text-sm font-semibold text-brand-text">{{
-        t('pilgrims.fields.notes')
-      }}</span>
+    <label class="app-field">
+      <span class="app-field__label">{{ t('pilgrims.fields.notes') }}</span>
       <textarea
         :value="form.notes"
         rows="4"
         maxlength="5000"
-        class="w-full rounded-xl border border-brand-border bg-brand-surface px-3 py-2 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+        class="app-field__control app-field__control--textarea"
+        :disabled="submitting"
         @input="patch({ notes: ($event.target as HTMLTextAreaElement).value })"
       />
       <span v-if="fieldMessage('notes')" class="text-xs text-red-600">{{

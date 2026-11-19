@@ -48,30 +48,26 @@ function onOpenUpdate(value: boolean): void {
     @close="emit('close')"
     @submit="emit('submit')"
   >
-    <label class="block">
-      <span class="mb-1.5 block text-sm font-semibold text-brand-text">
-        {{ t('risks.fields.title') }}
-      </span>
+    <label class="app-field">
+      <span class="app-field__label">{{ t('risks.fields.title') }}</span>
       <input
         :value="form.title"
         required
-        class="h-11 w-full rounded-xl border border-brand-border bg-brand-surface px-3 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+        class="app-field__control app-field__control--input"
         data-testid="risk-title-input"
         @input="patch({ title: ($event.target as HTMLInputElement).value })"
       />
-      <p v-if="fieldErrors.title" class="mt-1 text-xs text-red-600">
+      <p v-if="fieldErrors.title" class="text-xs text-red-600">
         {{ t(`risks.validation.${fieldErrors.title}`) }}
       </p>
     </label>
 
-    <label class="block">
-      <span class="mb-1.5 block text-sm font-semibold text-brand-text">
-        {{ t('risks.fields.description') }}
-      </span>
+    <label class="app-field">
+      <span class="app-field__label">{{ t('risks.fields.description') }}</span>
       <textarea
         :value="form.description"
         rows="4"
-        class="w-full rounded-xl border border-brand-border bg-brand-surface p-3 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+        class="app-field__control app-field__control--textarea"
         @input="patch({ description: ($event.target as HTMLTextAreaElement).value })"
       />
     </label>

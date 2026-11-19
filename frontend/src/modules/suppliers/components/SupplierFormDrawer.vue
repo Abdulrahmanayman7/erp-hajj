@@ -100,53 +100,45 @@ watch(
       {{ formError }}
     </p>
 
-    <div>
-      <label class="mb-1 block text-sm font-semibold text-brand-text">{{
-        t('suppliers.fields.displayName')
-      }}</label>
+    <label class="app-field">
+      <span class="app-field__label">{{ t('suppliers.fields.displayName') }}</span>
       <input
         :value="form.display_name"
         type="text"
-        class="w-full rounded-xl border border-brand-border px-3 py-2 text-sm"
+        class="app-field__control app-field__control--input"
         @input="patch({ display_name: ($event.target as HTMLInputElement).value })"
       />
       <p v-if="fieldErrors.display_name" class="mt-1 text-xs text-red-600">
         {{ t(`suppliers.validation.${fieldErrors.display_name}`) }}
       </p>
-    </div>
+    </label>
 
-    <div>
-      <label class="mb-1 block text-sm font-semibold text-brand-text">{{
-        t('suppliers.fields.legalName')
-      }}</label>
+    <label class="app-field">
+      <span class="app-field__label">{{ t('suppliers.fields.legalName') }}</span>
       <input
         :value="form.legal_name"
         type="text"
-        class="w-full rounded-xl border border-brand-border px-3 py-2 text-sm"
+        class="app-field__control app-field__control--input"
         @input="patch({ legal_name: ($event.target as HTMLInputElement).value })"
       />
-    </div>
+    </label>
 
-    <div>
-      <label class="mb-1 block text-sm font-semibold text-brand-text">{{
-        t('suppliers.fields.supplierType')
-      }}</label>
+    <label class="app-field">
+      <span class="app-field__label">{{ t('suppliers.fields.supplierType') }}</span>
       <AppSelect
         :model-value="form.supplier_type"
         :options="typeOptions"
         @update:model-value="patch({ supplier_type: $event as SupplierType })"
       />
-    </div>
+    </label>
 
-    <div>
-      <label class="mb-1 block text-sm font-semibold text-brand-text">{{
-        t('suppliers.fields.countryCode')
-      }}</label>
+    <label class="app-field">
+      <span class="app-field__label">{{ t('suppliers.fields.countryCode') }}</span>
       <input
         :value="form.country_code"
         type="text"
         maxlength="2"
-        class="w-full rounded-xl border border-brand-border px-3 py-2 text-sm uppercase"
+        class="app-field__control app-field__control--input uppercase"
         @input="
           patch({
             country_code: ($event.target as HTMLInputElement).value.toUpperCase(),
@@ -156,47 +148,41 @@ watch(
       <p v-if="fieldErrors.country_code" class="mt-1 text-xs text-red-600">
         {{ t(`suppliers.validation.${fieldErrors.country_code}`) }}
       </p>
-    </div>
+    </label>
 
     <div class="grid grid-cols-2 gap-3">
-      <div>
-        <label class="mb-1 block text-sm font-semibold text-brand-text">{{
-          t('suppliers.fields.legalIdType')
-        }}</label>
+      <label class="app-field">
+        <span class="app-field__label">{{ t('suppliers.fields.legalIdType') }}</span>
         <input
           :value="form.legal_id_type"
           type="text"
-          class="w-full rounded-xl border border-brand-border px-3 py-2 text-sm"
+          class="app-field__control app-field__control--input"
           @input="patch({ legal_id_type: ($event.target as HTMLInputElement).value })"
         />
-      </div>
-      <div>
-        <label class="mb-1 block text-sm font-semibold text-brand-text">{{
-          t('suppliers.fields.legalIdValue')
-        }}</label>
+      </label>
+      <label class="app-field">
+        <span class="app-field__label">{{ t('suppliers.fields.legalIdValue') }}</span>
         <input
           :value="form.legal_id_value"
           type="text"
-          class="w-full rounded-xl border border-brand-border px-3 py-2 text-sm"
+          class="app-field__control app-field__control--input"
           @input="patch({ legal_id_value: ($event.target as HTMLInputElement).value })"
         />
-      </div>
+      </label>
     </div>
 
-    <div>
-      <label class="mb-1 block text-sm font-semibold text-brand-text">{{
-        t('suppliers.fields.notes')
-      }}</label>
+    <label class="app-field">
+      <span class="app-field__label">{{ t('suppliers.fields.notes') }}</span>
       <textarea
         :value="form.notes"
         rows="3"
-        class="w-full rounded-xl border border-brand-border px-3 py-2 text-sm"
+        class="app-field__control app-field__control--textarea"
         @input="patch({ notes: ($event.target as HTMLTextAreaElement).value })"
       />
-    </div>
+    </label>
 
     <div>
-      <p class="mb-2 text-sm font-semibold text-brand-text">{{ t('suppliers.fields.categories') }}</p>
+      <p class="app-field__label">{{ t('suppliers.fields.categories') }}</p>
       <div v-if="categoryOptions.length === 0" class="text-sm text-brand-text-muted">
         {{ t('suppliers.noCategories') }}
       </div>

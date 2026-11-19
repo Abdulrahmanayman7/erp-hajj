@@ -149,29 +149,29 @@ function onPrimaryFooterAction(): void {
       </p>
 
       <div v-show="step === 1" class="space-y-4">
-        <label class="block text-sm">
-          <span class="mb-1 block font-semibold text-brand-text">{{ t('gpsProviders.name') }}</span>
+        <label class="app-field">
+          <span class="app-field__label">{{ t('gpsProviders.name') }}</span>
           <input
             :value="form.name"
             required
-            class="w-full rounded-xl border border-brand-border px-3 py-2.5 text-sm"
+            class="app-field__control app-field__control--input"
             data-test="gps-provider-name"
             @input="patch({ name: ($event.target as HTMLInputElement).value })"
           />
         </label>
-        <label v-if="!isEdit" class="block text-sm">
-          <span class="mb-1 block font-semibold text-brand-text">{{ t('gpsProviders.code') }}</span>
+        <label v-if="!isEdit" class="app-field">
+          <span class="app-field__label">{{ t('gpsProviders.code') }}</span>
           <input
             :value="form.code"
             required
-            class="w-full rounded-xl border border-brand-border px-3 py-2.5 text-sm"
+            class="app-field__control app-field__control--input"
             data-test="gps-provider-code"
             @input="patch({ code: ($event.target as HTMLInputElement).value })"
           />
           <span class="mt-1 block text-xs text-brand-text-muted">{{ t('gpsProviders.codeHint') }}</span>
         </label>
-        <div>
-          <p class="mb-1 text-sm font-semibold text-brand-text">{{ t('gpsProviders.method') }}</p>
+        <div class="app-field">
+          <p class="app-field__label">{{ t('gpsProviders.method') }}</p>
           <AppSelect
             :model-value="form.connection_method"
             :options="methodOptions"
@@ -197,65 +197,65 @@ function onPrimaryFooterAction(): void {
           {{ t('gpsProviders.simulatorHint') }}
         </p>
 
-        <label v-if="showTraccarFields" class="block text-sm">
-          <span class="mb-1 block font-semibold">{{ t('gpsProviders.baseUrl') }}</span>
+        <label v-if="showTraccarFields" class="app-field">
+          <span class="app-field__label">{{ t('gpsProviders.baseUrl') }}</span>
           <input
             :value="form.base_url"
-            class="w-full rounded-xl border border-brand-border px-3 py-2.5 text-sm"
+            class="app-field__control app-field__control--input"
             dir="ltr"
             @input="patch({ base_url: ($event.target as HTMLInputElement).value })"
           />
         </label>
 
-        <label v-if="showRestFields" class="block text-sm">
-          <span class="mb-1 block font-semibold">{{ t('gpsProviders.endpointUrl') }}</span>
+        <label v-if="showRestFields" class="app-field">
+          <span class="app-field__label">{{ t('gpsProviders.endpointUrl') }}</span>
           <input
             :value="form.endpoint_url"
-            class="w-full rounded-xl border border-brand-border px-3 py-2.5 text-sm"
+            class="app-field__control app-field__control--input"
             dir="ltr"
             @input="patch({ endpoint_url: ($event.target as HTMLInputElement).value })"
           />
         </label>
 
         <template v-if="showWebhookFields">
-          <label class="block text-sm">
-            <span class="mb-1 block font-semibold">{{ t('gpsProviders.webhookSecret') }}</span>
+          <label class="app-field">
+            <span class="app-field__label">{{ t('gpsProviders.webhookSecret') }}</span>
             <input
               :value="form.webhook_secret"
               type="password"
               autocomplete="new-password"
-              class="w-full rounded-xl border border-brand-border px-3 py-2.5 text-sm"
+              class="app-field__control app-field__control--input"
               @input="patch({ webhook_secret: ($event.target as HTMLInputElement).value })"
             />
           </label>
-          <label class="block text-sm">
-            <span class="mb-1 block font-semibold">{{ t('gpsProviders.apiToken') }}</span>
+          <label class="app-field">
+            <span class="app-field__label">{{ t('gpsProviders.apiToken') }}</span>
             <input
               :value="form.api_token"
               type="password"
               autocomplete="new-password"
-              class="w-full rounded-xl border border-brand-border px-3 py-2.5 text-sm"
+              class="app-field__control app-field__control--input"
               @input="patch({ api_token: ($event.target as HTMLInputElement).value })"
             />
           </label>
         </template>
 
         <template v-if="showTraccarFields">
-          <label class="block text-sm">
-            <span class="mb-1 block font-semibold">{{ t('gpsProviders.email') }}</span>
+          <label class="app-field">
+            <span class="app-field__label">{{ t('gpsProviders.email') }}</span>
             <input
               :value="form.email"
-              class="w-full rounded-xl border border-brand-border px-3 py-2.5 text-sm"
+              class="app-field__control app-field__control--input"
               @input="patch({ email: ($event.target as HTMLInputElement).value })"
             />
           </label>
-          <label class="block text-sm">
-            <span class="mb-1 block font-semibold">{{ t('gpsProviders.password') }}</span>
+          <label class="app-field">
+            <span class="app-field__label">{{ t('gpsProviders.password') }}</span>
             <input
               :value="form.password"
               type="password"
               autocomplete="new-password"
-              class="w-full rounded-xl border border-brand-border px-3 py-2.5 text-sm"
+              class="app-field__control app-field__control--input"
               @input="patch({ password: ($event.target as HTMLInputElement).value })"
             />
           </label>
@@ -263,14 +263,14 @@ function onPrimaryFooterAction(): void {
 
         <label
           v-if="form.connection_method === 'rest_pull' || form.connection_method === 'traccar' || form.connection_method === 'simulator'"
-          class="block text-sm"
+          class="app-field"
         >
-          <span class="mb-1 block font-semibold">{{ t('gpsProviders.pollSeconds') }}</span>
+          <span class="app-field__label">{{ t('gpsProviders.pollSeconds') }}</span>
           <input
             :value="form.poll_interval_seconds"
             type="number"
             min="30"
-            class="w-full rounded-xl border border-brand-border px-3 py-2.5 text-sm"
+            class="app-field__control app-field__control--input"
             @input="patch({ poll_interval_seconds: ($event.target as HTMLInputElement).value })"
           />
         </label>

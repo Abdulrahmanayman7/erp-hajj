@@ -200,35 +200,35 @@ async function togglePanel() {
         </div>
       </div>
 
-      <div class="grid gap-2 rounded-xl border border-brand-border bg-white p-3 md:grid-cols-2 lg:grid-cols-5">
-        <div>
-          <p class="mb-1 text-xs text-brand-text-muted">{{ t('gpsMap.season') }}</p>
+      <div class="grid gap-3 rounded-xl border border-brand-border bg-white p-3 md:grid-cols-2 lg:grid-cols-5">
+        <label class="app-field">
+          <span class="app-field__label">{{ t('gpsMap.season') }}</span>
           <AppSelect v-model="seasonId" :options="seasonOptions" />
-        </div>
-        <label class="block text-sm">
-          <span class="mb-1 block text-xs text-brand-text-muted">{{ t('gpsMap.refreshSeconds') }}</span>
+        </label>
+        <label class="app-field">
+          <span class="app-field__label">{{ t('gpsMap.refreshSeconds') }}</span>
           <input
             v-model.number="refreshSeconds"
             type="number"
             min="10"
             max="300"
-            class="w-full rounded-xl border px-3 py-2 text-sm"
+            class="app-field__control app-field__control--input"
             data-test="gps-map-refresh"
           />
         </label>
-        <div>
-          <p class="mb-1 text-xs text-brand-text-muted">{{ t('gpsMap.filterProvider') }}</p>
+        <label class="app-field">
+          <span class="app-field__label">{{ t('gpsMap.filterProvider') }}</span>
           <AppSelect v-model="filterProvider" :options="providerOptions" />
-        </div>
-        <div>
-          <p class="mb-1 text-xs text-brand-text-muted">{{ t('gpsMap.filterStatus') }}</p>
+        </label>
+        <label class="app-field">
+          <span class="app-field__label">{{ t('gpsMap.filterStatus') }}</span>
           <AppSelect v-model="filterStatus" :options="statusOptions" />
-        </div>
-        <label class="block text-sm lg:col-span-1 md:col-span-2">
-          <span class="mb-1 block text-xs text-brand-text-muted">{{ t('gpsMap.filterVehicle') }}</span>
+        </label>
+        <label class="app-field md:col-span-2 lg:col-span-1">
+          <span class="app-field__label">{{ t('gpsMap.filterVehicle') }}</span>
           <input
             v-model="filterVehicle"
-            class="w-full rounded-xl border px-3 py-2 text-sm"
+            class="app-field__control app-field__control--input"
             data-test="gps-map-vehicle-filter"
           />
         </label>

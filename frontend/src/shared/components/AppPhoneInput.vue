@@ -165,7 +165,7 @@ defineExpose({ focus })
 <template>
   <div ref="root" class="relative w-full" :class="attrs.class" dir="ltr">
     <input v-if="name" type="hidden" :name="name" :value="modelValue ?? ''" />
-    <div class="flex h-11 overflow-hidden rounded-xl border transition" :class="frameClass">
+    <div class="flex h-12 overflow-hidden rounded-[11px] border transition" :class="frameClass">
       <button
         type="button"
         class="inline-flex shrink-0 items-center gap-1.5 border-e border-brand-border bg-brand-bg/70 px-2.5 text-sm font-semibold text-brand-text transition hover:bg-brand-primary-soft disabled:cursor-not-allowed"
