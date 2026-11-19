@@ -424,9 +424,9 @@ async function removeAsset(asset: Asset): Promise<void> {
       {{ t('assets.list.empty') }}
     </div>
     <template v-else>
-      <div class="hidden overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-[0_1px_2px_rgba(23,32,29,0.03)] lg:block">
+      <div class="app-entity-table-card hidden overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-[0_1px_2px_rgba(23,32,29,0.03)] lg:block">
         <div class="overflow-x-auto">
-        <table class="min-w-full border-separate border-spacing-0 text-sm">
+        <table class="app-entity-table min-w-full border-separate border-spacing-0 text-sm">
           <thead>
             <tr class="bg-[#F4F6F5]">
               <th class="whitespace-nowrap border-b border-s-[3px] border-brand-border border-s-transparent px-5 py-3.5 text-start text-xs font-bold tracking-wide text-brand-text">

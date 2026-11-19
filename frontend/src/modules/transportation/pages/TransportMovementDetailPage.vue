@@ -267,7 +267,7 @@ const mapFleet = (row: TransportSeasonVehicle): AppSelectOption => ({
         <div v-if="!(movement.runs && movement.runs.length)" class="p-8 text-center text-sm text-brand-text-muted">
           {{ t('transportation.runs.empty') }}
         </div>
-        <table v-else class="min-w-full text-sm">
+        <table v-else class="app-entity-table min-w-full text-sm">
           <thead class="bg-[#F4F6F5]">
             <tr>
               <th class="px-5 py-3 text-start text-xs font-bold text-brand-text-muted">

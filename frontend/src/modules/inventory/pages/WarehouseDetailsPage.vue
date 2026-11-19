@@ -412,7 +412,7 @@ function assignForm(next: WarehouseFormState): void {
               </div>
 
               <div class="hidden overflow-x-auto lg:block">
-                <table class="min-w-full border-separate border-spacing-0 text-sm">
+                <table class="app-entity-table min-w-full border-separate border-spacing-0 text-sm">
                   <thead>
                     <tr class="bg-[#F4F6F5]">
                       <th

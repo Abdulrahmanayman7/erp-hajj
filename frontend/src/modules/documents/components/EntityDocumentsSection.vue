@@ -225,7 +225,7 @@ async function onDelete(doc: Document): Promise<void> {
       </p>
       <template v-else>
         <div class="mt-4 hidden overflow-x-auto rounded-xl border border-brand-border lg:block">
-          <table class="min-w-full text-sm">
+          <table class="app-entity-table min-w-full text-sm">
             <thead>
               <tr class="bg-brand-bg">
                 <th class="px-3 py-2 text-start">{{ t('documents.columns.number') }}</th>

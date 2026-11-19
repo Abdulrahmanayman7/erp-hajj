@@ -580,7 +580,7 @@ async function onCancelApproved(reason: string): Promise<void> {
         </template>
 
         <div v-else class="overflow-x-auto rounded-xl border border-brand-border">
-          <table class="min-w-full text-sm">
+          <table class="app-entity-table min-w-full text-sm">
             <thead class="bg-brand-bg text-brand-text-muted">
               <tr>
                 <th class="px-3 py-2 text-start">#</th>

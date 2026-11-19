@@ -459,7 +459,7 @@ useAccommodationDialog(() => drawerSection.value !== null, () => { if (!saving.v
           {{ t('accommodation.allocation.emptySeasonFacilities') }}
         </div>
         <div v-else class="accommodation-table-surface overflow-x-auto rounded-2xl border border-brand-border">
-          <table class="min-w-full text-sm">
+          <table class="app-entity-table min-w-full text-sm">
             <thead class="bg-brand-bg text-brand-text-secondary">
               <tr>
                 <th class="px-4 py-3 text-start">{{ t('accommodation.fields.facilityId') }}</th>
@@ -515,7 +515,7 @@ useAccommodationDialog(() => drawerSection.value !== null, () => { if (!saving.v
         </div>
         <div v-else-if="suListState === 'empty'" class="rounded-xl border border-dashed px-4 py-8 text-center text-sm">{{ t('accommodation.allocation.emptySeasonUnits') }}</div>
         <div v-else class="accommodation-table-surface overflow-x-auto rounded-2xl border">
-          <table class="min-w-full text-sm">
+          <table class="app-entity-table min-w-full text-sm">
             <thead class="bg-brand-bg text-brand-text-secondary">
               <tr>
                 <th class="px-4 py-3 text-start">{{ t('accommodation.fields.unitId') }}</th>
@@ -571,7 +571,7 @@ useAccommodationDialog(() => drawerSection.value !== null, () => { if (!saving.v
         </div>
         <div v-else-if="spListState === 'empty'" class="rounded-xl border border-dashed px-4 py-8 text-center text-sm">{{ t('accommodation.allocation.emptySeasonPositions') }}</div>
         <div v-else class="accommodation-table-surface overflow-x-auto rounded-2xl border">
-          <table class="min-w-full text-sm">
+          <table class="app-entity-table min-w-full text-sm">
             <thead class="bg-brand-bg">
               <tr>
                 <th class="px-4 py-3 text-start">{{ t('accommodation.fields.positionId') }}</th>

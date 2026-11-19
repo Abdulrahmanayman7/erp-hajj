@@ -290,7 +290,7 @@ function canArchive(tenant: PlatformTenant): boolean {
     <template v-else>
       <div class="hidden overflow-hidden rounded-[14px] border border-brand-border bg-brand-surface lg:block">
         <div class="overflow-x-auto">
-          <table class="min-w-full border-separate border-spacing-0 text-sm">
+          <table class="app-entity-table min-w-full border-separate border-spacing-0 text-sm">
             <thead>
               <tr class="bg-[var(--surface-subtle)]">
                 <th class="whitespace-nowrap border-b border-brand-border px-5 py-3.5 text-start text-xs font-semibold text-brand-text">

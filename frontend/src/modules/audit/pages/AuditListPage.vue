@@ -278,9 +278,9 @@ function formatTime(iso: string): string {
 
     <template v-else>
       <div
-        class="hidden overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-[0_1px_2px_rgba(23,32,29,0.03)] lg:block"
+        class="app-entity-table-card hidden overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-[0_1px_2px_rgba(23,32,29,0.03)] lg:block"
       >
-        <table class="min-w-full text-sm">
+        <table class="app-entity-table min-w-full text-sm">
           <thead class="bg-[#F4F6F5] text-brand-text-muted">
             <tr>
               <th class="px-4 py-3 text-start font-medium">{{ t('audit.columns.time') }}</th>

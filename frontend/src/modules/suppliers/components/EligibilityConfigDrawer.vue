@@ -323,7 +323,7 @@ const inputClass = 'w-full rounded-xl border border-brand-border px-3 py-2 text-
               {{ t('suppliers.eligibility.listEmpty') }}
             </div>
             <div v-else class="overflow-x-auto rounded-xl border border-brand-border">
-              <table class="min-w-full text-sm">
+              <table class="app-entity-table min-w-full text-sm">
                 <thead class="bg-brand-bg/50 text-start text-brand-text-secondary">
                   <tr>
                     <th class="px-3 py-2 text-start font-semibold">{{ t('suppliers.eligibility.columns.configKey') }}</th>

@@ -217,7 +217,7 @@ useAccommodationDialog(drawerOpen, () => { if (!createMutation.isPending.value) 
     </div>
     <div v-else>
       <div class="accommodation-table-surface overflow-x-auto rounded-2xl border border-brand-border bg-brand-surface shadow-[0_1px_2px_rgba(23,32,29,0.03)]">
-        <table class="min-w-full border-separate border-spacing-0 text-sm">
+        <table class="app-entity-table min-w-full border-separate border-spacing-0 text-sm">
           <thead><tr><th>{{ t('accommodation.fields.code') }}</th><th>{{ t('accommodation.fields.name') }}</th><th>{{ t('accommodation.fields.kind') }}</th><th>{{ t('accommodation.fields.status') }}</th><th>{{ t('accommodation.fields.actions') }}</th></tr></thead>
           <tbody>
             <tr v-for="row in facilities" :key="row.id" class="group">

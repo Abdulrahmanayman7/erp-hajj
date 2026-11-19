@@ -352,10 +352,10 @@ function formatDate(value: string | null): string {
     </div>
     <template v-else>
       <div
-        class="hidden overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-[0_1px_2px_rgba(23,32,29,0.03)] lg:block"
+        class="app-entity-table-card hidden overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-[0_1px_2px_rgba(23,32,29,0.03)] lg:block"
       >
         <div class="overflow-x-auto">
-          <table class="min-w-full border-separate border-spacing-0 text-sm">
+          <table class="app-entity-table min-w-full border-separate border-spacing-0 text-sm">
             <thead>
               <tr class="bg-[#F4F6F5]">
                 <th

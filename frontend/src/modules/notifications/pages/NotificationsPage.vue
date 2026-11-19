@@ -210,8 +210,8 @@ async function onMarkAll(): Promise<void> {
     </div>
     <template v-else>
       <!-- Desktop table -->
-      <div class="hidden overflow-hidden rounded-2xl border border-brand-border bg-brand-surface lg:block">
-        <table class="min-w-full text-sm">
+      <div class="app-entity-table-card hidden overflow-hidden rounded-2xl border border-brand-border bg-brand-surface lg:block">
+        <table class="app-entity-table min-w-full text-sm">
           <thead>
             <tr class="bg-brand-bg text-brand-text-secondary">
               <th class="px-4 py-3 text-start font-semibold">{{ t('notifications.columns.title') }}</th>

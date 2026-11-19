@@ -115,7 +115,7 @@ function submit(): void {
     </div>
 
     <div class="overflow-x-auto">
-      <table class="min-w-[280px] border-collapse text-center text-xs" aria-hidden="true">
+      <table class="app-entity-table min-w-[280px] border-collapse text-center text-xs" aria-hidden="true">
         <tbody>
           <tr v-for="row in 5" :key="`row-${row}`">
             <td

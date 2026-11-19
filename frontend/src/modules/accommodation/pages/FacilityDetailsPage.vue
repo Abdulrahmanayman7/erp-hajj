@@ -514,7 +514,7 @@ useAccommodationDialog(() => drawerKind.value !== null, () => { if (!formSubmitt
           {{ t('accommodation.facilityDetails.structuresEmpty') }}
         </div>
         <div v-else class="accommodation-table-surface overflow-x-auto rounded-2xl border border-brand-border">
-          <table class="min-w-full text-sm">
+          <table class="app-entity-table min-w-full text-sm">
             <thead class="bg-brand-bg text-brand-text-secondary">
               <tr>
                 <th class="px-4 py-3 text-start font-medium">{{ t('accommodation.fields.name') }}</th>
@@ -636,7 +636,7 @@ useAccommodationDialog(() => drawerKind.value !== null, () => { if (!formSubmitt
           </PermissionGuard>
         </div>
         <div class="accommodation-table-surface overflow-x-auto rounded-2xl border border-brand-border">
-          <table class="min-w-full text-sm">
+          <table class="app-entity-table min-w-full text-sm">
             <tbody>
               <tr v-for="unit in orphanUnits" :key="unit.id" class="border-t border-brand-border first:border-t-0">
                 <td class="px-4 py-3">

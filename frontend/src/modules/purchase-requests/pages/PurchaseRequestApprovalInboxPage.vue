@@ -37,7 +37,7 @@ const rows = computed(() => data.value ?? [])
       {{ t('purchaseRequests.inbox.empty') }}
     </div>
     <div v-else class="overflow-x-auto rounded-md border border-border">
-      <table class="min-w-full text-sm">
+      <table class="app-entity-table min-w-full text-sm">
         <thead class="bg-muted/40 text-muted-foreground">
           <tr>
             <th class="px-3 py-2 text-start">{{ t('purchaseRequests.columns.number') }}</th>

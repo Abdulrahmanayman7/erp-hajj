@@ -28,8 +28,8 @@ function reasonLabel(code: string | null): string {
   <div v-if="lines.length === 0" class="rounded-xl border border-brand-border bg-brand-bg p-5 text-center text-sm text-brand-text-muted">
     {{ t('seasonalTemplates.runs.noLines') }}
   </div>
-  <div v-else class="overflow-x-auto rounded-2xl border border-brand-border bg-brand-surface">
-    <table class="min-w-full text-sm" data-testid="run-lines-table">
+  <div v-else class="app-entity-table-card overflow-x-auto rounded-2xl border border-brand-border bg-brand-surface">
+    <table class="app-entity-table min-w-full text-sm" data-testid="run-lines-table">
       <thead class="bg-[#F4F6F5]">
         <tr>
           <th class="px-4 py-3 text-start text-xs font-bold text-brand-text-muted">{{ t('seasonalTemplates.copy.columns.kind') }}</th>
