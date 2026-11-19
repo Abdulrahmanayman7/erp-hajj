@@ -70,50 +70,49 @@ function onOpenUpdate(value: boolean): void {
   >
     <section class="space-y-3">
       <h4 class="font-bold">{{ t('tasks.sections.basics') }}</h4>
-      <label class="block">
-        <span>{{ t('tasks.fields.taskNumber') }}</span>
+      <label class="app-field">
+        <span class="app-field__label">{{ t('tasks.fields.taskNumber') }}</span>
         <input
           readonly
           :value="editing?.task_number ?? t('tasks.numberPlaceholder')"
-          class="mt-1 h-11 w-full rounded-xl border border-brand-border bg-brand-bg px-3"
+          class="app-field__control app-field__control--input bg-brand-bg text-brand-text-muted"
         />
       </label>
-      <label class="block">
-        <span>{{ t('tasks.fields.title') }}</span>
+      <label class="app-field">
+        <span class="app-field__label">{{ t('tasks.fields.title') }}</span>
         <input
           :value="form.title"
           required
-          class="mt-1 h-11 w-full rounded-xl border border-brand-border px-3"
+          class="app-field__control app-field__control--input"
           @input="patch({ title: ($event.target as HTMLInputElement).value })"
         />
         <p v-if="fieldErrors.title" class="text-xs text-red-600">
           {{ t(`tasks.validation.${fieldErrors.title}`) }}
         </p>
       </label>
-      <label class="block">
-        <span>{{ t('tasks.fields.description') }}</span>
+      <label class="app-field">
+        <span class="app-field__label">{{ t('tasks.fields.description') }}</span>
         <textarea
           :value="form.description"
           rows="3"
-          class="mt-1 w-full rounded-xl border border-brand-border p-3"
+          class="app-field__control app-field__control--textarea"
           @input="patch({ description: ($event.target as HTMLTextAreaElement).value })"
         />
       </label>
-      <label class="block">
-        <span>{{ t('tasks.fields.priority') }}</span>
+      <label class="app-field">
+        <span class="app-field__label">{{ t('tasks.fields.priority') }}</span>
         <AppSelect
-          class="mt-1"
           :model-value="form.priority"
           :options="priorityOptions"
           @update:model-value="patch({ priority: $event as TaskFormState['priority'] })"
         />
       </label>
-      <label class="block">
-        <span>{{ t('tasks.fields.notes') }}</span>
+      <label class="app-field">
+        <span class="app-field__label">{{ t('tasks.fields.notes') }}</span>
         <textarea
           :value="form.notes"
           rows="2"
-          class="mt-1 w-full rounded-xl border border-brand-border p-3"
+          class="app-field__control app-field__control--textarea"
           @input="patch({ notes: ($event.target as HTMLTextAreaElement).value })"
         />
       </label>
@@ -139,21 +138,19 @@ function onOpenUpdate(value: boolean): void {
     </section>
     <section class="space-y-3">
       <h4 class="font-bold">{{ t('tasks.sections.assignment') }}</h4>
-      <label class="block">
-        <span>{{ t('tasks.fields.organizationUnit') }}</span>
+      <label class="app-field">
+        <span class="app-field__label">{{ t('tasks.fields.organizationUnit') }}</span>
         <AppSelect
-          class="mt-1"
           :model-value="form.organization_unit_id"
           :options="orgUnitOptions"
           searchable
           @update:model-value="patch({ organization_unit_id: toSelectId($event) })"
         />
       </label>
-      <label class="block">
-        <span>{{ t('tasks.fields.assignee') }}</span>
+      <label class="app-field">
+        <span class="app-field__label">{{ t('tasks.fields.assignee') }}</span>
         <AppRemoteSelect
           v-if="!isEdit"
-          class="mt-1"
           :model-value="form.assigned_to_employee_id"
           query-key="employees-active"
           :fetcher="fetchActiveEmployees"
@@ -162,7 +159,7 @@ function onOpenUpdate(value: boolean): void {
           :enabled="open"
           @update:model-value="patch({ assigned_to_employee_id: toSelectId($event) })"
         />
-        <p v-else class="mt-1 rounded-xl bg-brand-bg p-3 text-sm text-brand-text-secondary">
+        <p v-else class="rounded-xl bg-brand-bg p-3 text-sm text-brand-text-secondary">
           {{ editing?.assigned_to_employee?.full_name ?? t('tasks.noEmployee') }} —
           {{ t('tasks.assigneeChangeHint') }}
         </p>
@@ -170,18 +167,16 @@ function onOpenUpdate(value: boolean): void {
     </section>
     <section class="space-y-3">
       <h4 class="font-bold">{{ t('tasks.sections.dates') }}</h4>
-      <label class="block">
-        <span>{{ t('tasks.fields.startDate') }}</span>
+      <label class="app-field">
+        <span class="app-field__label">{{ t('tasks.fields.startDate') }}</span>
         <AppDateInput
-          class="mt-1"
           :model-value="form.start_date"
           @update:model-value="patch({ start_date: $event })"
         />
       </label>
-      <label class="block">
-        <span>{{ t('tasks.fields.dueDate') }}</span>
+      <label class="app-field">
+        <span class="app-field__label">{{ t('tasks.fields.dueDate') }}</span>
         <AppDateInput
-          class="mt-1"
           :model-value="form.due_date"
           :invalid="Boolean(fieldErrors.due_date)"
           @update:model-value="patch({ due_date: $event })"

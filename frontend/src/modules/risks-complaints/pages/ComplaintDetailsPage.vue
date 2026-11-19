@@ -87,8 +87,8 @@ function formatWhen(iso: string | null | undefined): string {
     </div>
 
     <template v-else>
-      <div class="grid gap-6 xl:grid-cols-[1fr_280px]">
-        <div class="space-y-6">
+      <div class="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <div class="order-2 min-w-0 space-y-6 xl:order-1">
           <section class="rounded-2xl border border-brand-border bg-brand-surface p-4">
             <div class="flex flex-wrap items-center gap-2">
               <span
@@ -159,9 +159,20 @@ function formatWhen(iso: string | null | undefined): string {
           <OperationalTimelinePanel entity="complaint" :entity-id="complaint.id" />
         </div>
 
-        <aside class="space-y-4">
-          <h3 class="text-sm font-bold text-brand-text">{{ t('complaints.tabs.actions') }}</h3>
-          <ComplaintLifecycleActions :complaint="complaint" @refreshed="() => refetch()" />
+        <aside class="order-1 space-y-5 xl:order-2 xl:sticky xl:top-4 xl:self-start">
+          <section class="rounded-2xl border border-brand-border bg-brand-surface">
+            <header class="border-b border-brand-border px-5 py-4">
+              <h3 class="text-sm font-bold text-brand-text">
+                {{ t('complaints.lifecycleTitle') }}
+              </h3>
+              <p class="mt-1 text-xs text-brand-text-secondary">
+                {{ t('complaints.lifecycleHint') }}
+              </p>
+            </header>
+            <div class="px-4 py-4">
+              <ComplaintLifecycleActions :complaint="complaint" @refreshed="() => refetch()" />
+            </div>
+          </section>
         </aside>
       </div>
     </template>

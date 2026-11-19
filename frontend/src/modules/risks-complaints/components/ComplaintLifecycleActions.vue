@@ -36,6 +36,8 @@ import {
   mapComplaintErrorCode,
 } from '../validation/complaintValidation'
 
+type ComplaintPanelAction = 'assign' | 'escalate' | 'resolve' | 'close' | 'reopen'
+
 const props = defineProps<{
   complaint: OperationalComplaint
 }>()
@@ -59,6 +61,7 @@ const close = useCloseComplaintMutation()
 const reopen = useReopenComplaintMutation()
 const remove = useDeleteComplaintMutation()
 
+const activeAction = ref<ComplaintPanelAction | null>(null)
 const assigneeId = ref<number | ''>(props.complaint.assignee_employee_id ?? '')
 const escalateToId = ref<number | ''>('')
 const escalateReason = ref('')
@@ -131,8 +134,41 @@ function apiMessage(error: unknown): string {
     : error.message || t('complaints.errors.generic')
 }
 
+function openPanel(action: ComplaintPanelAction): void {
+  actionError.value = ''
+  activeAction.value = action
+  if (action === 'assign') {
+    assigneeId.value = props.complaint.assignee_employee_id ?? ''
+  }
+  if (action === 'escalate') {
+    escalateToId.value = ''
+    escalateReason.value = ''
+  }
+  if (action === 'resolve') {
+    resolutionText.value = props.complaint.resolution_text ?? ''
+  }
+  if (action === 'close') {
+    closeReason.value = ''
+  }
+  if (action === 'reopen') {
+    reopenReason.value = ''
+  }
+}
+
+function closePanel(): void {
+  activeAction.value = null
+  actionError.value = ''
+}
+
 async function runStartReview(): Promise<void> {
   actionError.value = ''
+  const ok = await confirm({
+    title: t('complaints.confirm.startReview.title'),
+    message: t('complaints.confirm.startReview.body'),
+    confirmLabel: t('complaints.actions.startReview'),
+    cancelLabel: t('complaints.cancel'),
+  })
+  if (!ok) return
   try {
     await update.mutateAsync({
       id: props.complaint.id,
@@ -160,6 +196,7 @@ async function runAssign(): Promise<void> {
       seasonId: selectedSeasonId.value,
     })
     toast.success(t('complaints.toasts.assigned'))
+    closePanel()
     emit('refreshed')
   } catch (error) {
     actionError.value = apiMessage(error)
@@ -183,6 +220,7 @@ async function runEscalate(): Promise<void> {
       seasonId: selectedSeasonId.value,
     })
     toast.success(t('complaints.toasts.escalated'))
+    closePanel()
     emit('refreshed')
   } catch (error) {
     actionError.value = apiMessage(error)
@@ -203,6 +241,7 @@ async function runResolve(): Promise<void> {
       seasonId: selectedSeasonId.value,
     })
     toast.success(t('complaints.toasts.resolved'))
+    closePanel()
     emit('refreshed')
   } catch (error) {
     actionError.value = apiMessage(error)
@@ -230,6 +269,7 @@ async function runClose(): Promise<void> {
       seasonId: selectedSeasonId.value,
     })
     toast.success(t('complaints.toasts.closed'))
+    closePanel()
     emit('refreshed')
   } catch (error) {
     actionError.value = apiMessage(error)
@@ -258,6 +298,7 @@ async function runReopen(): Promise<void> {
       seasonId: selectedSeasonId.value,
     })
     toast.success(t('complaints.toasts.reopened'))
+    closePanel()
     emit('refreshed')
   } catch (error) {
     actionError.value = apiMessage(error)
@@ -287,141 +328,86 @@ async function runDelete(): Promise<void> {
 </script>
 
 <template>
-  <div class="space-y-4" data-testid="complaint-lifecycle-actions">
-    <button
-      v-if="showStartReview"
-      type="button"
-      class="inline-flex h-10 w-full items-center justify-center rounded-xl border border-sky-200 bg-sky-50 px-4 text-sm font-semibold text-sky-950 disabled:opacity-50"
-      :disabled="isPending"
-      data-testid="complaint-start-review-btn"
-      @click="runStartReview"
-    >
-      {{ t('complaints.actions.startReview') }}
-    </button>
-
-    <div v-if="showAssign" class="space-y-2 rounded-xl border border-brand-border bg-brand-bg p-3">
-      <p class="text-sm font-semibold">{{ t('complaints.actions.assign') }}</p>
-      <AppRemoteSelect
-        :model-value="assigneeId"
-        query-key="employees-active"
-        :fetcher="fetchActiveEmployees"
-        :map-option="employeeSelectOption"
-        :empty-option="emptyEmployee"
-        :selected-option="selectedAssignee"
-        :placeholder="t('complaints.fields.assignee')"
-        @update:model-value="assigneeId = toSelectId($event)"
-      />
+  <div class="space-y-3" data-testid="complaint-lifecycle-actions">
+    <div class="flex flex-col gap-2">
       <button
+        v-if="showStartReview"
         type="button"
-        class="inline-flex h-10 w-full items-center justify-center rounded-xl border border-sky-200 bg-sky-50 px-4 text-sm font-semibold text-sky-950 disabled:opacity-50"
+        class="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-4 text-sm font-semibold text-sky-950 transition hover:bg-sky-100 disabled:opacity-50 xl:justify-start"
         :disabled="isPending"
-        data-testid="complaint-assign-btn"
-        @click="runAssign"
+        data-testid="complaint-start-review-btn"
+        @click="runStartReview"
       >
         <Loader2 v-if="isPending" class="h-3.5 w-3.5 animate-spin" />
+        {{ t('complaints.actions.startReview') }}
+      </button>
+
+      <button
+        v-if="showAssign"
+        type="button"
+        class="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-4 text-sm font-semibold text-sky-950 transition hover:bg-sky-100 disabled:opacity-50 xl:justify-start"
+        :disabled="isPending"
+        data-testid="complaint-assign-btn"
+        @click="openPanel('assign')"
+      >
         {{ t('complaints.actions.assign') }}
       </button>
-    </div>
 
-    <div v-if="showEscalate" class="space-y-2 rounded-xl border border-brand-border bg-brand-bg p-3">
-      <p class="text-sm font-semibold">{{ t('complaints.actions.escalate') }}</p>
-      <AppRemoteSelect
-        :model-value="escalateToId"
-        query-key="employees-active"
-        :fetcher="fetchActiveEmployees"
-        :map-option="employeeSelectOption"
-        :empty-option="emptyEmployee"
-        :placeholder="t('complaints.fields.escalateTo')"
-        @update:model-value="escalateToId = toSelectId($event)"
-      />
-      <textarea
-        v-model="escalateReason"
-        rows="2"
-        class="w-full rounded-xl border border-brand-border p-2.5 text-sm"
-        :placeholder="t('complaints.fields.escalateReason')"
-        data-testid="complaint-escalate-reason"
-      />
       <button
+        v-if="showEscalate"
         type="button"
-        class="inline-flex h-10 w-full items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-4 text-sm font-semibold text-amber-950 disabled:opacity-50"
+        class="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 text-sm font-semibold text-amber-950 transition hover:bg-amber-100 disabled:opacity-50 xl:justify-start"
         :disabled="isPending"
         data-testid="complaint-escalate-btn"
-        @click="runEscalate"
+        @click="openPanel('escalate')"
       >
         {{ t('complaints.actions.escalate') }}
       </button>
-    </div>
 
-    <div v-if="showResolve" class="space-y-2 rounded-xl border border-brand-border bg-brand-bg p-3">
-      <p class="text-sm font-semibold">{{ t('complaints.actions.resolve') }}</p>
-      <textarea
-        v-model="resolutionText"
-        rows="3"
-        class="w-full rounded-xl border border-brand-border p-2.5 text-sm"
-        :placeholder="t('complaints.fields.resolutionText')"
-        data-testid="complaint-resolution-input"
-      />
       <button
+        v-if="showResolve"
         type="button"
-        class="inline-flex h-10 w-full items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 px-4 text-sm font-semibold text-emerald-950 disabled:opacity-50"
+        class="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 text-sm font-semibold text-emerald-950 transition hover:bg-emerald-100 disabled:opacity-50 xl:justify-start"
         :disabled="isPending"
         data-testid="complaint-resolve-btn"
-        @click="runResolve"
+        @click="openPanel('resolve')"
       >
         {{ t('complaints.actions.resolve') }}
       </button>
-    </div>
 
-    <div v-if="showClose" class="space-y-2 rounded-xl border border-brand-border bg-brand-bg p-3">
-      <p class="text-sm font-semibold">{{ t('complaints.actions.close') }}</p>
-      <textarea
-        v-model="closeReason"
-        rows="2"
-        class="w-full rounded-xl border border-brand-border p-2.5 text-sm"
-        :placeholder="t('complaints.fields.closeReason')"
-        data-testid="complaint-close-reason"
-      />
       <button
+        v-if="showClose"
         type="button"
-        class="inline-flex h-10 w-full items-center justify-center rounded-xl border border-teal-200 bg-teal-50 px-4 text-sm font-semibold text-teal-950 disabled:opacity-50"
+        class="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-teal-200 bg-teal-50 px-4 text-sm font-semibold text-teal-950 transition hover:bg-teal-100 disabled:opacity-50 xl:justify-start"
         :disabled="isPending"
         data-testid="complaint-close-btn"
-        @click="runClose"
+        @click="openPanel('close')"
       >
         {{ t('complaints.actions.close') }}
       </button>
-    </div>
 
-    <div v-if="showReopen" class="space-y-2 rounded-xl border border-brand-border bg-brand-bg p-3">
-      <p class="text-sm font-semibold">{{ t('complaints.actions.reopen') }}</p>
-      <textarea
-        v-model="reopenReason"
-        rows="2"
-        class="w-full rounded-xl border border-brand-border p-2.5 text-sm"
-        :placeholder="t('complaints.fields.reopenReason')"
-        data-testid="complaint-reopen-reason"
-      />
       <button
+        v-if="showReopen"
         type="button"
-        class="inline-flex h-10 w-full items-center justify-center rounded-xl border border-orange-200 bg-orange-50 px-4 text-sm font-semibold text-orange-950 disabled:opacity-50"
+        class="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-orange-200 bg-orange-50 px-4 text-sm font-semibold text-orange-950 transition hover:bg-orange-100 disabled:opacity-50 xl:justify-start"
         :disabled="isPending"
         data-testid="complaint-reopen-btn"
-        @click="runReopen"
+        @click="openPanel('reopen')"
       >
         {{ t('complaints.actions.reopen') }}
       </button>
-    </div>
 
-    <button
-      v-if="showDelete"
-      type="button"
-      class="inline-flex h-10 w-full items-center justify-center rounded-xl border border-red-300 bg-red-50 px-4 text-sm font-semibold text-red-800 disabled:opacity-50"
-      :disabled="isPending"
-      data-testid="complaint-delete-btn"
-      @click="runDelete"
-    >
-      {{ t('complaints.actions.delete') }}
-    </button>
+      <button
+        v-if="showDelete"
+        type="button"
+        class="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-red-300 bg-red-50 px-4 text-sm font-semibold text-red-800 transition hover:bg-red-100 disabled:opacity-50 xl:justify-start"
+        :disabled="isPending"
+        data-testid="complaint-delete-btn"
+        @click="runDelete"
+      >
+        {{ t('complaints.actions.delete') }}
+      </button>
+    </div>
 
     <p
       v-if="actionError"
@@ -430,5 +416,187 @@ async function runDelete(): Promise<void> {
     >
       {{ actionError }}
     </p>
+
+    <div
+      v-if="activeAction === 'assign'"
+      class="rounded-xl border border-brand-border bg-brand-bg p-3"
+    >
+      <label class="app-field">
+        <span class="app-field__label">{{ t('complaints.fields.assignee') }}</span>
+        <AppRemoteSelect
+          :model-value="assigneeId"
+          query-key="employees-active"
+          :fetcher="fetchActiveEmployees"
+          :map-option="employeeSelectOption"
+          :empty-option="emptyEmployee"
+          :selected-option="selectedAssignee"
+          :placeholder="t('complaints.fields.assignee')"
+          @update:model-value="assigneeId = toSelectId($event)"
+        />
+      </label>
+      <div class="mt-2 flex flex-wrap gap-2">
+        <button
+          type="button"
+          class="inline-flex h-10 items-center rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white disabled:opacity-50"
+          :disabled="isPending"
+          @click="runAssign"
+        >
+          <Loader2 v-if="isPending" class="me-2 h-3.5 w-3.5 animate-spin" />
+          {{ t('complaints.actions.assign') }}
+        </button>
+        <button
+          type="button"
+          class="inline-flex h-10 items-center rounded-xl border border-brand-border px-4 text-sm font-semibold text-brand-text"
+          :disabled="isPending"
+          @click="closePanel"
+        >
+          {{ t('complaints.cancel') }}
+        </button>
+      </div>
+    </div>
+
+    <div
+      v-if="activeAction === 'escalate'"
+      class="rounded-xl border border-brand-border bg-brand-bg p-3"
+    >
+      <label class="app-field">
+        <span class="app-field__label">{{ t('complaints.fields.escalateTo') }}</span>
+        <AppRemoteSelect
+          :model-value="escalateToId"
+          query-key="employees-active"
+          :fetcher="fetchActiveEmployees"
+          :map-option="employeeSelectOption"
+          :empty-option="emptyEmployee"
+          :placeholder="t('complaints.fields.escalateTo')"
+          @update:model-value="escalateToId = toSelectId($event)"
+        />
+      </label>
+      <label class="app-field mt-3">
+        <span class="app-field__label">{{ t('complaints.fields.escalateReason') }}</span>
+        <textarea
+          v-model="escalateReason"
+          rows="2"
+          class="app-field__control app-field__control--textarea"
+          data-testid="complaint-escalate-reason"
+        />
+      </label>
+      <div class="mt-2 flex flex-wrap gap-2">
+        <button
+          type="button"
+          class="inline-flex h-10 items-center rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white disabled:opacity-50"
+          :disabled="isPending"
+          @click="runEscalate"
+        >
+          {{ t('complaints.actions.escalate') }}
+        </button>
+        <button
+          type="button"
+          class="inline-flex h-10 items-center rounded-xl border border-brand-border px-4 text-sm font-semibold text-brand-text"
+          :disabled="isPending"
+          @click="closePanel"
+        >
+          {{ t('complaints.cancel') }}
+        </button>
+      </div>
+    </div>
+
+    <div
+      v-if="activeAction === 'resolve'"
+      class="rounded-xl border border-brand-border bg-brand-bg p-3"
+    >
+      <label class="app-field">
+        <span class="app-field__label">{{ t('complaints.fields.resolutionText') }}</span>
+        <textarea
+          v-model="resolutionText"
+          rows="3"
+          class="app-field__control app-field__control--textarea"
+          data-testid="complaint-resolution-input"
+        />
+      </label>
+      <div class="mt-2 flex flex-wrap gap-2">
+        <button
+          type="button"
+          class="inline-flex h-10 items-center rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white disabled:opacity-50"
+          :disabled="isPending"
+          @click="runResolve"
+        >
+          {{ t('complaints.actions.resolve') }}
+        </button>
+        <button
+          type="button"
+          class="inline-flex h-10 items-center rounded-xl border border-brand-border px-4 text-sm font-semibold text-brand-text"
+          :disabled="isPending"
+          @click="closePanel"
+        >
+          {{ t('complaints.cancel') }}
+        </button>
+      </div>
+    </div>
+
+    <div
+      v-if="activeAction === 'close'"
+      class="rounded-xl border border-brand-border bg-brand-bg p-3"
+    >
+      <label class="app-field">
+        <span class="app-field__label">{{ t('complaints.fields.closeReason') }}</span>
+        <textarea
+          v-model="closeReason"
+          rows="2"
+          class="app-field__control app-field__control--textarea"
+          data-testid="complaint-close-reason"
+        />
+      </label>
+      <div class="mt-2 flex flex-wrap gap-2">
+        <button
+          type="button"
+          class="inline-flex h-10 items-center rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white disabled:opacity-50"
+          :disabled="isPending"
+          @click="runClose"
+        >
+          {{ t('complaints.actions.close') }}
+        </button>
+        <button
+          type="button"
+          class="inline-flex h-10 items-center rounded-xl border border-brand-border px-4 text-sm font-semibold text-brand-text"
+          :disabled="isPending"
+          @click="closePanel"
+        >
+          {{ t('complaints.cancel') }}
+        </button>
+      </div>
+    </div>
+
+    <div
+      v-if="activeAction === 'reopen'"
+      class="rounded-xl border border-brand-border bg-brand-bg p-3"
+    >
+      <label class="app-field">
+        <span class="app-field__label">{{ t('complaints.fields.reopenReason') }}</span>
+        <textarea
+          v-model="reopenReason"
+          rows="2"
+          class="app-field__control app-field__control--textarea"
+          data-testid="complaint-reopen-reason"
+        />
+      </label>
+      <div class="mt-2 flex flex-wrap gap-2">
+        <button
+          type="button"
+          class="inline-flex h-10 items-center rounded-xl bg-brand-primary-dark px-4 text-sm font-semibold text-white disabled:opacity-50"
+          :disabled="isPending"
+          @click="runReopen"
+        >
+          {{ t('complaints.actions.reopen') }}
+        </button>
+        <button
+          type="button"
+          class="inline-flex h-10 items-center rounded-xl border border-brand-border px-4 text-sm font-semibold text-brand-text"
+          :disabled="isPending"
+          @click="closePanel"
+        >
+          {{ t('complaints.cancel') }}
+        </button>
+      </div>
+    </div>
   </div>
 </template>

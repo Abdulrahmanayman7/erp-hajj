@@ -91,26 +91,22 @@ function onOpenUpdate(value: boolean): void {
       {{ formError }}
     </p>
 
-    <label class="block">
-      <span class="mb-1.5 block text-sm font-medium text-brand-ink">{{
-        t('organization.fields.name')
-      }}</span>
+    <label class="app-field">
+      <span class="app-field__label">{{ t('organization.fields.name') }}</span>
       <input
         :value="form.name"
         type="text"
-        class="w-full rounded-xl border border-brand-border bg-white px-3 py-2.5 text-sm text-brand-ink outline-none focus:border-brand-primary"
+        class="app-field__control app-field__control--input"
         @input="patch({ name: ($event.target as HTMLInputElement).value })"
       />
     </label>
 
-    <label class="block">
-      <span class="mb-1.5 block text-sm font-medium text-brand-ink">{{
-        t('organization.fields.code')
-      }}</span>
+    <label class="app-field">
+      <span class="app-field__label">{{ t('organization.fields.code') }}</span>
       <input
         :value="form.code"
         type="text"
-        class="w-full rounded-xl border border-brand-border bg-white px-3 py-2.5 font-mono text-sm uppercase text-brand-ink outline-none focus:border-brand-primary disabled:bg-brand-canvas"
+        class="app-field__control app-field__control--input font-mono uppercase"
         :disabled="isEdit"
         :readonly="isEdit"
         @input="
@@ -124,10 +120,8 @@ function onOpenUpdate(value: boolean): void {
       }}</span>
     </label>
 
-    <div>
-      <span class="mb-1.5 block text-sm font-medium text-brand-ink">{{
-        t('organization.fields.type')
-      }}</span>
+    <div class="app-field">
+      <span class="app-field__label">{{ t('organization.fields.type') }}</span>
       <AppSelect
         :model-value="form.type || null"
         :options="typeOptions"
@@ -136,10 +130,8 @@ function onOpenUpdate(value: boolean): void {
       />
     </div>
 
-    <div v-if="!isEdit">
-      <span class="mb-1.5 block text-sm font-medium text-brand-ink">{{
-        t('organization.fields.parent')
-      }}</span>
+    <div v-if="!isEdit" class="app-field">
+      <span class="app-field__label">{{ t('organization.fields.parent') }}</span>
       <AppSelect
         :model-value="form.parent_id"
         :options="parentOptions"
@@ -153,10 +145,8 @@ function onOpenUpdate(value: boolean): void {
       />
     </div>
 
-    <div>
-      <span class="mb-1.5 block text-sm font-medium text-brand-ink">{{
-        t('organization.fields.manager')
-      }}</span>
+    <div class="app-field">
+      <span class="app-field__label">{{ t('organization.fields.manager') }}</span>
       <AppRemoteSelect
         :model-value="form.manager_user_id"
         query-key="users-active"
@@ -173,15 +163,13 @@ function onOpenUpdate(value: boolean): void {
       }}</span>
     </div>
 
-    <label class="block">
-      <span class="mb-1.5 block text-sm font-medium text-brand-ink">{{
-        t('organization.fields.sortOrder')
-      }}</span>
+    <label class="app-field">
+      <span class="app-field__label">{{ t('organization.fields.sortOrder') }}</span>
       <AppNumberInput
         :model-value="form.sort_order"
         integer
         min="0"
-        class="w-full rounded-xl border border-brand-border bg-white px-3 py-2.5 text-sm text-brand-ink outline-none focus:border-brand-primary"
+        class="app-field__control app-field__control--input"
         @update:model-value="
           patch({
             sort_order: $event === '' ? 0 : Number($event),

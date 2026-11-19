@@ -63,33 +63,33 @@ function onOpenUpdate(value: boolean): void {
   >
     <section class="space-y-3">
       <h4 class="font-bold">{{ t('decisions.sections.basics') }}</h4>
-      <label class="block">
-        <span>{{ t('decisions.fields.decisionNumber') }}</span>
+      <label class="app-field">
+        <span class="app-field__label">{{ t('decisions.fields.decisionNumber') }}</span>
         <input
           readonly
           :value="editing?.decision_number ?? t('decisions.numberPlaceholder')"
-          class="mt-1 h-11 w-full rounded-xl border border-brand-border bg-brand-bg px-3"
+          class="app-field__control app-field__control--input bg-brand-bg text-brand-text-muted"
         />
       </label>
-      <label class="block">
-        <span>{{ t('decisions.fields.title') }}</span>
+      <label class="app-field">
+        <span class="app-field__label">{{ t('decisions.fields.title') }}</span>
         <input
           :value="form.title"
           required
-          class="mt-1 h-11 w-full rounded-xl border border-brand-border px-3"
+          class="app-field__control app-field__control--input"
           @input="patch({ title: ($event.target as HTMLInputElement).value })"
         />
         <p v-if="fieldErrors.title" class="text-xs text-red-600">
           {{ t(`decisions.validation.${fieldErrors.title}`) }}
         </p>
       </label>
-      <label class="block">
-        <span>{{ t('decisions.fields.body') }}</span>
+      <label class="app-field">
+        <span class="app-field__label">{{ t('decisions.fields.body') }}</span>
         <textarea
           :value="form.body"
           required
           rows="4"
-          class="mt-1 w-full rounded-xl border border-brand-border p-3"
+          class="app-field__control app-field__control--textarea"
           @input="patch({ body: ($event.target as HTMLTextAreaElement).value })"
         />
         <p v-if="fieldErrors.body" class="text-xs text-red-600">
@@ -105,8 +105,8 @@ function onOpenUpdate(value: boolean): void {
     </section>
     <section class="space-y-3">
       <h4 class="font-bold">{{ t('decisions.sections.responsibility') }}</h4>
-      <label class="block">
-        <span class="mb-1.5 block text-sm font-semibold text-brand-text">{{ t('decisions.fields.organizationUnit') }}</span>
+      <label class="app-field">
+        <span class="app-field__label">{{ t('decisions.fields.organizationUnit') }}</span>
         <AppSelect
           :model-value="form.organization_unit_id"
           :options="orgUnitOptions"
@@ -114,8 +114,8 @@ function onOpenUpdate(value: boolean): void {
           @update:model-value="patch({ organization_unit_id: toSelectId($event) })"
         />
       </label>
-      <label class="block">
-        <span class="mb-1.5 block text-sm font-semibold text-brand-text">{{ t('decisions.fields.issuedBy') }}</span>
+      <label class="app-field">
+        <span class="app-field__label">{{ t('decisions.fields.issuedBy') }}</span>
         <AppRemoteSelect
           :model-value="form.issued_by_employee_id"
           query-key="employees-active"
@@ -128,8 +128,8 @@ function onOpenUpdate(value: boolean): void {
           @update:model-value="patch({ issued_by_employee_id: toSelectId($event) })"
         />
       </label>
-      <label class="block">
-        <span class="mb-1.5 block text-sm font-semibold text-brand-text">{{ t('decisions.fields.responsible') }}</span>
+      <label class="app-field">
+        <span class="app-field__label">{{ t('decisions.fields.responsible') }}</span>
         <AppRemoteSelect
           :model-value="form.responsible_employee_id"
           query-key="employees-active"
@@ -145,18 +145,16 @@ function onOpenUpdate(value: boolean): void {
     </section>
     <section class="space-y-3">
       <h4 class="font-bold">{{ t('decisions.sections.dates') }}</h4>
-      <label>
-        <span>{{ t('decisions.fields.effectiveDate') }}</span>
+      <label class="app-field">
+        <span class="app-field__label">{{ t('decisions.fields.effectiveDate') }}</span>
         <AppDateInput
-          class="mt-1"
           :model-value="form.effective_date"
           @update:model-value="patch({ effective_date: $event })"
         />
       </label>
-      <label>
-        <span>{{ t('decisions.fields.dueDate') }}</span>
+      <label class="app-field">
+        <span class="app-field__label">{{ t('decisions.fields.dueDate') }}</span>
         <AppDateInput
-          class="mt-1"
           :model-value="form.due_date"
           @update:model-value="patch({ due_date: $event })"
         />
@@ -167,7 +165,7 @@ function onOpenUpdate(value: boolean): void {
       <textarea
         :value="form.notes"
         rows="3"
-        class="mt-2 w-full rounded-xl border border-brand-border p-3"
+        class="mt-2 app-field__control app-field__control--textarea"
         @input="patch({ notes: ($event.target as HTMLTextAreaElement).value })"
       />
     </section>

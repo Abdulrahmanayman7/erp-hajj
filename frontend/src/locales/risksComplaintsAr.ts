@@ -166,6 +166,8 @@ export const risksComplaintsAr = {
     retry: 'إعادة المحاولة',
     searchPlaceholder: 'بحث بالعنوان أو الرقم',
     notesEmpty: 'لا توجد ملاحظات بعد',
+    lifecycleTitle: 'إجراءات دورة الحياة',
+    lifecycleHint: 'الإجراءات المتاحة حسب حالة الشكوى وصلاحياتك.',
     filters: {
       allStatuses: 'كل الحالات',
       allCategories: 'كل الفئات',
@@ -229,6 +231,10 @@ export const risksComplaintsAr = {
       required: 'هذا الحقل مطلوب',
     },
     confirm: {
+      startReview: {
+        title: 'بدء المراجعة',
+        body: 'سيتم نقل الشكوى إلى حالة قيد المراجعة.',
+      },
       close: {
         title: 'إغلاق الشكوى',
         body: 'الإغلاق صلاحية حساسة ويتطلب سببًا إلزاميًا.',
