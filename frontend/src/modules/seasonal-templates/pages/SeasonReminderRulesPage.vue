@@ -283,7 +283,7 @@ function recipientLabel(permission: string): string {
     <div v-else-if="listState === 'empty'" class="rounded-2xl border border-brand-border bg-brand-surface p-10 text-center text-sm text-brand-text-muted" data-testid="reminders-empty">
       {{ t('seasonalTemplates.reminders.empty') }}
     </div>
-    <div v-else class="overflow-hidden rounded-2xl border border-brand-border bg-brand-surface" data-testid="reminders-table">
+    <div v-else class="overflow-x-auto rounded-2xl border border-brand-border bg-brand-surface" data-testid="reminders-table">
       <div class="overflow-x-auto">
         <table class="min-w-full text-sm">
           <thead class="bg-[#F4F6F5]">

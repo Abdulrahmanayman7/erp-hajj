@@ -229,7 +229,7 @@ function fieldMessage(key: string): string {
       {{ t('seasonOps.families.empty') }}
     </div>
     <div v-else class="grid gap-4 lg:grid-cols-2">
-      <div class="overflow-hidden rounded-2xl border border-brand-border bg-brand-surface">
+      <div class="overflow-x-auto rounded-2xl border border-brand-border bg-brand-surface">
         <table class="min-w-full text-sm">
           <thead class="bg-[#F4F6F5]">
             <tr>

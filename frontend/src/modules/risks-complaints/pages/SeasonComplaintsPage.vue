@@ -218,7 +218,7 @@ function formatWhen(iso: string | null): string {
     >
       {{ t('complaints.empty') }}
     </div>
-    <div v-else class="overflow-hidden rounded-2xl border border-brand-border bg-brand-surface" data-testid="complaints-table">
+    <div v-else class="overflow-x-auto rounded-2xl border border-brand-border bg-brand-surface" data-testid="complaints-table">
       <table class="min-w-full text-sm">
         <thead class="bg-[#F4F6F5]">
           <tr>

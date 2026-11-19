@@ -54,10 +54,10 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
 
 <template>
   <Teleport to="body">
-    <div v-if="open" class="fixed inset-0 z-50" role="presentation" data-testid="run-detail-drawer">
+    <div v-if="open" class="fixed inset-0 z-[70]" role="presentation" data-testid="run-detail-drawer">
       <div class="absolute inset-0 bg-[rgba(15,23,20,0.32)]" aria-hidden="true" @click="emit('close')" />
       <aside
-        class="absolute inset-y-0 start-0 flex h-dvh w-full max-w-[720px] flex-col bg-brand-surface shadow-[-12px_0_40px_-24px_rgba(23,32,29,0.35)]"
+        class="app-drawer-panel absolute inset-y-0 start-0 flex h-dvh w-full max-w-[720px] flex-col bg-brand-surface shadow-[-12px_0_40px_-24px_rgba(23,32,29,0.35)]"
         role="dialog"
         aria-modal="true"
         :aria-label="t('seasonalTemplates.runs.detailTitle')"

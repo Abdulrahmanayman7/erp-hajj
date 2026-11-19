@@ -173,7 +173,9 @@ onUnmounted(() => {
         <span class="app-brand-mark app-brand-mark--sm">
           <img :src="rafeeaLogo" alt="" class="app-brand-mark__img" width="40" height="40" decoding="async" />
         </span>
-        <span class="text-[15px] font-extrabold tracking-tight text-brand-primary-dark">
+        <span
+          class="max-w-[10rem] truncate text-[15px] font-extrabold tracking-tight text-brand-primary-dark sm:max-w-[14rem]"
+        >
           {{ t('auth.companyName') }}
         </span>
       </RouterLink>

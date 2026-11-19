@@ -485,7 +485,7 @@ function collapseAll(): void {
     <Teleport to="body">
       <div
         v-if="mobileDetailsOpen && selected"
-        class="fixed inset-0 z-50 lg:hidden"
+        class="fixed inset-0 z-[70] lg:hidden"
         role="dialog"
         aria-modal="true"
         :aria-label="selected.name"
@@ -498,7 +498,7 @@ function collapseAll(): void {
         />
         <div
           class="absolute inset-x-0 bottom-0 flex max-h-[88dvh] flex-col overflow-hidden rounded-t-[1.5rem] border border-brand-border bg-brand-surface shadow-[0_-18px_40px_-24px_rgba(23,32,29,0.45)]"
-          style="padding-bottom: max(8px, env(safe-area-inset-bottom))"
+          style="padding-bottom: max(12px, calc(env(safe-area-inset-bottom, 0px) + var(--app-bottom-nav-height, 49px)))"
         >
           <OrganizationUnitDetailsPanel
             :unit="selected"

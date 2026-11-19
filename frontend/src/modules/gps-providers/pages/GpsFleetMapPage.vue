@@ -6,6 +6,7 @@ import { ChevronDown, ChevronUp, RefreshCw } from 'lucide-vue-next'
 
 import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
+import { useBreakpoint } from '@/shared/composables/useBreakpoint'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import { useSeasonsQuery } from '@/modules/season-pilgrims/queries/useSeasonsQuery'
 import { fetchGpsFleetMap } from '../api/gpsProvidersApi'
@@ -24,7 +25,16 @@ const filterProvider = ref<string | null>('')
 const filterStatus = ref<GpsMarkerStatus | 'all'>('all')
 const filterVehicle = ref('')
 const selectedVehicleId = ref<number | null>(null)
+const { isMobile } = useBreakpoint()
 const panelOpen = ref(true)
+
+watch(
+  isMobile,
+  (mobile) => {
+    if (mobile) panelOpen.value = false
+  },
+  { immediate: true },
+)
 const mapRef = ref<{ invalidateSize: () => void; focusVehicle: (id: number | null) => void } | null>(
   null,
 )
@@ -244,7 +254,7 @@ async function togglePanel() {
             :filter-status="filterStatus"
             :filter-vehicle="filterVehicle"
             :selected-vehicle-id="selectedVehicleId"
-            height-class="h-[58vh] min-h-[22rem] lg:h-[66vh]"
+            height-class="h-[42vh] min-h-[16rem] max-h-[50dvh] sm:h-[50vh] sm:min-h-[18rem] sm:max-h-none lg:h-[66vh] lg:max-h-none"
             @select="selectVehicle"
           />
         </div>

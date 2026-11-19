@@ -780,6 +780,33 @@ html.is-standalone .app-shell {
   z-index: 70;
 }
 
+/*
+ * Centered modals/sheets that still use Tailwind `z-50` must clear the
+ * mobile bottom nav (z-60). Prefer raising the overlay rather than
+ * hiding the whole page with overflow-x hacks.
+ */
+.fixed.inset-0.z-50 {
+  z-index: 70;
+}
+
+/* Soft-hide bottom nav while a full-screen overlay dialog is open. */
+body:has(.fixed.inset-0[role='presentation']) .app-bottom-nav,
+body:has(.fixed.inset-0[role='dialog']) .app-bottom-nav,
+body:has(.app-form-drawer-root) .app-bottom-nav {
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(110%);
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body:has(.fixed.inset-0[role='presentation']) .app-bottom-nav,
+  body:has(.fixed.inset-0[role='dialog']) .app-bottom-nav,
+  body:has(.app-form-drawer-root) .app-bottom-nav {
+    transition: none;
+  }
+}
+
 @media (max-width: 767px) {
   .app-drawer-panel,
   [class*="-drawer-panel"] {
