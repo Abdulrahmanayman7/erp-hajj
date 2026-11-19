@@ -340,6 +340,7 @@ html.is-standalone .app-shell {
   letter-spacing: 0.025em;
   color: var(--text) !important;
   background-color: transparent !important;
+  text-align: center !important;
 }
 
 .app-entity-table th:first-child {
@@ -357,6 +358,7 @@ html.is-standalone .app-shell {
 .app-entity-table td {
   border-bottom: 1px solid color-mix(in srgb, var(--border) 80%, transparent) !important;
   padding: 0.875rem 1.25rem !important;
+  text-align: center !important;
   transition:
     background-color 150ms ease,
     border-color 150ms ease,
