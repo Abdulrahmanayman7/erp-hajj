@@ -171,7 +171,7 @@ function unlink(purchaseRequestId: number): void {
             <tr v-for="m in group.members ?? []" :key="m.purchase_request_id" class="border-b">
               <td class="py-2">{{ m.pr_number ?? m.purchase_request_id }} — {{ m.title }}</td>
               <td class="py-2">{{ m.status }}</td>
-              <td class="py-2 text-left">
+              <td class="py-2 text-start">
                 <PermissionGuard permission="purchase_requests.consolidate_planning">
                   <button
                     v-if="!membershipLocked"

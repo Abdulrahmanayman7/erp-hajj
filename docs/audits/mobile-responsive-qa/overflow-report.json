@@ -1,0 +1,77 @@
+{
+  "overflowCount": 0,
+  "overflowReports": [],
+  "blocked": [
+    {
+      "route": "/app/executive-dashboard",
+      "reason": "forbidden",
+      "viewport": "narrow-320"
+    },
+    {
+      "route": "/app/purchase-requests/approval-inbox",
+      "reason": "forbidden",
+      "viewport": "narrow-320"
+    },
+    {
+      "route": "/app/purchase-approval-settings",
+      "reason": "forbidden",
+      "viewport": "narrow-320"
+    },
+    {
+      "route": "/app/executive-dashboard",
+      "reason": "forbidden",
+      "viewport": "iphone-375"
+    },
+    {
+      "route": "/app/purchase-requests/approval-inbox",
+      "reason": "forbidden",
+      "viewport": "iphone-375"
+    },
+    {
+      "route": "/app/purchase-approval-settings",
+      "reason": "forbidden",
+      "viewport": "iphone-375"
+    },
+    {
+      "route": "/app/executive-dashboard",
+      "reason": "forbidden",
+      "viewport": "large-430"
+    },
+    {
+      "route": "/app/purchase-requests/approval-inbox",
+      "reason": "forbidden",
+      "viewport": "large-430"
+    },
+    {
+      "route": "/app/purchase-approval-settings",
+      "reason": "forbidden",
+      "viewport": "large-430"
+    },
+    {
+      "route": "/app/executive-dashboard",
+      "reason": "forbidden",
+      "viewport": "tablet-portrait"
+    },
+    {
+      "route": "/app/purchase-requests/approval-inbox",
+      "reason": "forbidden",
+      "viewport": "tablet-portrait"
+    },
+    {
+      "route": "/app/purchase-approval-settings",
+      "reason": "forbidden",
+      "viewport": "tablet-portrait"
+    }
+  ],
+  "evidenceIndex": [
+    "D:\\erp-hajj-1\\e2e\\test-results\\mobile-evidence\\dashboard\\_app\\iphone-375.png",
+    "D:\\erp-hajj-1\\e2e\\test-results\\mobile-evidence\\tasks\\_app_tasks\\iphone-375.png",
+    "D:\\erp-hajj-1\\e2e\\test-results\\mobile-evidence\\transport\\_app_transport-vehicles\\iphone-375.png",
+    "D:\\erp-hajj-1\\e2e\\test-results\\mobile-evidence\\gps\\_app_gps-fleet-map\\iphone-375.png",
+    "D:\\erp-hajj-1\\e2e\\test-results\\mobile-evidence\\procurement\\_app_purchase-requests\\iphone-375.png",
+    "D:\\erp-hajj-1\\e2e\\test-results\\mobile-evidence\\accommodation\\_app_accommodation\\iphone-375.png",
+    "D:\\erp-hajj-1\\e2e\\test-results\\mobile-evidence\\risks\\_app_risks\\iphone-375.png",
+    "D:\\erp-hajj-1\\e2e\\test-results\\mobile-evidence\\organization\\_app_organization\\iphone-375.png"
+  ],
+  "routesScanned": 61
+}

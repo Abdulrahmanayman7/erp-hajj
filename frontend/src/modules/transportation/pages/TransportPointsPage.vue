@@ -266,7 +266,7 @@ async function onDelete(point: TransportPoint): Promise<void> {
     >
       {{ t('transportation.points.empty') }}
     </div>
-    <div v-else class="overflow-hidden rounded-2xl border border-brand-border bg-brand-surface">
+    <div v-else class="overflow-x-auto rounded-2xl border border-brand-border bg-brand-surface">
       <table class="min-w-full text-sm">
         <thead class="bg-[#F4F6F5]">
           <tr>
