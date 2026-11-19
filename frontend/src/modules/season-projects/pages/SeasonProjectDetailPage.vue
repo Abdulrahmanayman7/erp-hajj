@@ -19,6 +19,7 @@ import {
 import { useTasksQuery } from '@/modules/tasks/queries/useTasksQuery'
 import type { Task, TaskPriority } from '@/modules/tasks/types/tasks'
 import { ApiError } from '@/shared/api/http'
+import AppDateInput from '@/shared/components/AppDateInput.vue'
 import AppFormDrawer from '@/shared/components/AppFormDrawer.vue'
 import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
@@ -1068,11 +1069,17 @@ watch(
       </label>
       <label class="block text-sm">
         <span class="mb-1 block">{{ t('seasonProjects.fields.startsOn') }}</span>
-        <input v-model="phaseForm.starts_on" type="date" class="w-full rounded-lg border px-3 py-2">
+        <AppDateInput
+          v-model="phaseForm.starts_on"
+          :invalid="Boolean(phaseFieldErrors.starts_on)"
+        />
       </label>
       <label class="block text-sm">
         <span class="mb-1 block">{{ t('seasonProjects.fields.endsOn') }}</span>
-        <input v-model="phaseForm.ends_on" type="date" class="w-full rounded-lg border px-3 py-2">
+        <AppDateInput
+          v-model="phaseForm.ends_on"
+          :invalid="Boolean(phaseFieldErrors.ends_on)"
+        />
         <span v-if="phaseFieldErrors.ends_on" class="text-xs text-red-600">{{ phaseFieldErrors.ends_on }}</span>
       </label>
       <label class="block text-sm">

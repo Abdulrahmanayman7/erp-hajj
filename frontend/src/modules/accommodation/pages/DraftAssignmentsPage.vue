@@ -20,6 +20,7 @@ import {
   XCircle,
 } from 'lucide-vue-next'
 
+import AppDateTimeInput from '@/shared/components/AppDateTimeInput.vue'
 import AppFormDrawer from '@/shared/components/AppFormDrawer.vue'
 import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
@@ -919,11 +920,11 @@ useAccommodationDialog(() => drawerOpen.value || familyPanelOpen.value || checko
       <div class="accommodation-form-step"><span>3</span>{{ t('accommodation.experience.datesStep') }}</div>
       <label class="block text-sm">
         <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.startsAt') }}</span>
-        <input v-model="form.starts_at" type="datetime-local" class="w-full rounded-lg border px-3 py-2">
+        <AppDateTimeInput v-model="form.starts_at" />
       </label>
       <label class="block text-sm">
         <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.endsAt') }}</span>
-        <input v-model="form.original_ends_at" type="datetime-local" class="w-full rounded-lg border px-3 py-2">
+        <AppDateTimeInput v-model="form.original_ends_at" />
       </label>
       <p v-if="formError" class="text-sm text-red-700">{{ formError }}</p>
       <template #submit-label>{{ t('accommodation.experience.saveDraft') }}</template>
@@ -1020,7 +1021,7 @@ useAccommodationDialog(() => drawerOpen.value || familyPanelOpen.value || checko
         </div>
         <label class="block text-sm">
           <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.occurredAt') }}</span>
-          <input v-model="checkoutOccurredAt" type="datetime-local" class="w-full rounded-lg border px-3 py-2" :disabled="actionBusy">
+          <AppDateTimeInput v-model="checkoutOccurredAt" :disabled="actionBusy" />
         </label>
         <p v-if="checkoutError" class="text-sm text-red-700">{{ checkoutError }}</p>
       </template>
@@ -1066,7 +1067,7 @@ useAccommodationDialog(() => drawerOpen.value || familyPanelOpen.value || checko
         </label>
         <label class="block text-sm">
           <span class="mb-1 block text-brand-text-secondary">{{ t('accommodation.fields.occurredAt') }}</span>
-          <input v-model="relocateOccurredAt" type="datetime-local" class="w-full rounded-lg border px-3 py-2" :disabled="actionBusy">
+          <AppDateTimeInput v-model="relocateOccurredAt" :disabled="actionBusy" />
         </label>
         <label v-if="can('accommodation.check_in')" class="flex items-center gap-2 text-sm">
           <input v-model="relocateCheckInAfter" type="checkbox" :disabled="actionBusy">

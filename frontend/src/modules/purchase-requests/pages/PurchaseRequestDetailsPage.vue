@@ -6,6 +6,7 @@ import { ArrowRight } from 'lucide-vue-next'
 
 import EntityDocumentsSection from '@/modules/documents/components/EntityDocumentsSection.vue'
 import { ApiError } from '@/shared/api/http'
+import AppDateInput from '@/shared/components/AppDateInput.vue'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import { useToast } from '@/shared/composables/useToast'
@@ -556,7 +557,7 @@ async function onCancelApproved(reason: string): Promise<void> {
               </label>
               <label class="app-field">
                 <span class="app-field__label">{{ t('purchaseRequests.fields.needDate') }}</span>
-                <input v-model="line.need_date" type="date" class="app-field__control app-field__control--input">
+                <AppDateInput v-model="line.need_date" />
               </label>
               <label class="app-field">
                 <span class="app-field__label">{{ t('purchaseRequests.fields.unitEstimate') }}</span>

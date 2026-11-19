@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import AppDateInput from '@/shared/components/AppDateInput.vue'
 import AppFormDrawer from '@/shared/components/AppFormDrawer.vue'
 import { useCaptureOnOpen, useFormDirty } from '@/shared/composables/useFormDirty'
 import AppSelect, { type AppSelectOption } from '@/shared/components/AppSelect.vue'
@@ -212,14 +213,12 @@ function onOpenUpdate(value: boolean): void {
 
     <label v-if="form.trigger_mode === 'absolute_date'" class="block space-y-1.5 text-start">
       <span class="text-sm font-semibold text-brand-text">{{ t('seasonalTemplates.reminders.form.triggerOn') }}</span>
-      <input
-        :value="form.trigger_on"
-        type="date"
-        dir="ltr"
-        class="h-11 w-full rounded-xl border border-brand-border px-3 text-start text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15 disabled:bg-brand-bg"
+      <AppDateInput
+        :model-value="form.trigger_on"
         :disabled="submitting"
+        :invalid="Boolean(fieldMessage('trigger_on'))"
         data-testid="reminder-trigger-on-input"
-        @input="patch({ trigger_on: ($event.target as HTMLInputElement).value })"
+        @update:model-value="patch({ trigger_on: $event })"
       />
       <span v-if="fieldMessage('trigger_on')" class="text-xs text-red-600">{{ fieldMessage('trigger_on') }}</span>
     </label>

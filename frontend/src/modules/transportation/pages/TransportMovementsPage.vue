@@ -9,6 +9,7 @@ import { useAccommodationSeasonStore } from '@/modules/accommodation/stores/seas
 import SeasonWorkspaceBar from '@/modules/season-pilgrims/components/SeasonWorkspaceBar.vue'
 import { useSeasonsQuery } from '@/modules/season-pilgrims/queries/useSeasonsQuery'
 import { ApiError } from '@/shared/api/http'
+import AppDateTimeInput from '@/shared/components/AppDateTimeInput.vue'
 import AppFormDrawer from '@/shared/components/AppFormDrawer.vue'
 import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import AppRemoteSelect from '@/shared/components/AppRemoteSelect.vue'
@@ -390,10 +391,9 @@ const mapPoint = (row: TransportPoint): AppSelectOption => ({
         <label class="mb-1 block text-sm font-medium">{{
           t('transportation.movements.fields.departure')
         }}</label>
-        <input
+        <AppDateTimeInput
           v-model="form.planned_departure_at"
-          type="datetime-local"
-          class="h-11 w-full rounded-xl border border-brand-border px-3 text-sm"
+          :invalid="Boolean(fieldMessage('planned_departure_at'))"
         />
         <p v-if="fieldMessage('planned_departure_at')" class="mt-1 text-xs text-red-600">
           {{ fieldMessage('planned_departure_at') }}
@@ -403,10 +403,9 @@ const mapPoint = (row: TransportPoint): AppSelectOption => ({
         <label class="mb-1 block text-sm font-medium">{{
           t('transportation.movements.fields.arrival')
         }}</label>
-        <input
+        <AppDateTimeInput
           v-model="form.planned_arrival_at"
-          type="datetime-local"
-          class="h-11 w-full rounded-xl border border-brand-border px-3 text-sm"
+          :invalid="Boolean(fieldMessage('planned_arrival_at'))"
         />
         <p v-if="fieldMessage('planned_arrival_at')" class="mt-1 text-xs text-red-600">
           {{ fieldMessage('planned_arrival_at') }}

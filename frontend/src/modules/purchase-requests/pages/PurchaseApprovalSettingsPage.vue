@@ -5,6 +5,7 @@ import { RouterLink } from 'vue-router'
 import { ArrowRight } from 'lucide-vue-next'
 
 import { ApiError } from '@/shared/api/http'
+import AppDateInput from '@/shared/components/AppDateInput.vue'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import { useToast } from '@/shared/composables/useToast'
 
@@ -189,11 +190,7 @@ async function onUpsertSla(): Promise<void> {
           class="rounded-md border border-border bg-background px-3 py-2 text-sm"
           :placeholder="t('purchaseRequests.settings.maxAmount')"
         />
-        <input
-          v-model="authorityForm.effective_from"
-          type="date"
-          class="rounded-md border border-border bg-background px-3 py-2 text-sm"
-        />
+        <AppDateInput v-model="authorityForm.effective_from" />
         <label class="flex items-center gap-2 text-sm">
           <input v-model="authorityForm.covers_unpriced" type="checkbox" />
           {{ t('purchaseRequests.settings.coversUnpriced') }}

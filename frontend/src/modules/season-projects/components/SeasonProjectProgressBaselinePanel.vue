@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { ApiError } from '@/shared/api/http'
+import AppDateTimeInput from '@/shared/components/AppDateTimeInput.vue'
 import AppFormDrawer from '@/shared/components/AppFormDrawer.vue'
 import PermissionGuard from '@/shared/components/PermissionGuard.vue'
 import { useConfirm } from '@/shared/composables/useConfirm'
@@ -365,11 +366,10 @@ watch(draftBaseline, (draft) => {
       </div>
       <label class="mb-2 block text-sm">
         <span class="mb-1 block">{{ t('seasonProjects.baseline.effectiveAt') }}</span>
-        <input
+        <AppDateTimeInput
           v-model="row.effective_at"
-          type="datetime-local"
-          class="w-full rounded-lg border border-brand-border px-3 py-2"
-        >
+          :invalid="Boolean(fieldErrors[`checkpoints.${index}.effective_at`])"
+        />
         <span
           v-if="fieldErrors[`checkpoints.${index}.effective_at`]"
           class="text-xs text-red-600"
