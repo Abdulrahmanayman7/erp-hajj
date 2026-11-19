@@ -1568,6 +1568,8 @@ export const ar = {
     versionsTitle: 'إصدارات الطلب',
     noVersions: 'لا توجد لقطات إصدار بعد الإرسال.',
     versionLabel: 'الإصدار {n}',
+    versionSnapshotAt: 'وقت اللقطة',
+    versionTotalPriced: 'الإجمالي المسعّر',
     hasUnpriced: 'يتضمن بنوداً غير مسعّرة',
     procurementEngagement: {
       title: 'ارتباط دورة المشتريات',
@@ -1594,6 +1596,13 @@ export const ar = {
       level: 'المستوى {n}',
       due: 'الاستحقاق: {at}',
       escalated: 'تم التصعيد بسبب تجاوز المهلة',
+      stepStatuses: {
+        pending: 'بانتظار الاعتماد',
+        approved: 'معتمد',
+        rejected: 'مرفوض',
+        returned: 'مُعاد للتعديل',
+        cancelled: 'ملغى',
+      },
     },
     actions: {
       approve: 'اعتماد',
